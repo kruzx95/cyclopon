@@ -36,7 +36,7 @@ const Router = {
         <div style="font-size:64px;margin-bottom:16px">🚧</div>
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Halaman tidak ditemukan</h1>
         <p style="color:#8B949E;margin-bottom:24px">Path: ${cleanPath}</p>
-        <a href="/" data-link style="color:#00E5FF;text-decoration:none;font-weight:600">← Kembali ke beranda</a>
+        <a href="/" data-link style="color:var(--color-yellow);text-decoration:none;font-weight:700">← Kembali ke beranda</a>
       </div>
     `;
   },

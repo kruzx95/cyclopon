@@ -83,16 +83,16 @@ function renderRiderSetup() {
           <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">Isi field berikut sesuai konfigurasi di atas:</p>
           <ul style="font-size:13px;color:var(--text-secondary);padding-left:16px;line-height:2.2">
             <li><strong style="color:var(--text-primary)">Device Identifier:</strong>
-              <code style="color:var(--color-cyan);background:rgba(0,229,255,0.08);padding:1px 8px;border-radius:4px">${traccar.deviceIdentifier}</code>
+              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">${traccar.deviceIdentifier}</code>
             </li>
             <li><strong style="color:var(--text-primary)">Server URL:</strong>
-              <code style="color:var(--color-cyan);background:rgba(0,229,255,0.08);padding:1px 8px;border-radius:4px">${osmandUrl}</code>
+              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">${osmandUrl}</code>
             </li>
             <li><strong style="color:var(--text-primary)">Frequency:</strong>
-              <code style="color:var(--color-cyan);background:rgba(0,229,255,0.08);padding:1px 8px;border-radius:4px">${traccar.interval} detik</code>
+              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">${traccar.interval} detik</code>
             </li>
             <li><strong style="color:var(--text-primary)">Accuracy:</strong>
-              <code style="color:var(--color-cyan);background:rgba(0,229,255,0.08);padding:1px 8px;border-radius:4px">High</code>
+              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">High</code>
             </li>
           </ul>
         </div>
@@ -109,8 +109,8 @@ function renderRiderSetup() {
         </div>
       </div>
 
-      <div class="setup-step fade-in" style="border-color:rgba(0,229,255,0.25);background:rgba(0,229,255,0.03)">
-        <div class="step-number" style="background:var(--color-green)">4</div>
+      <div class="setup-step fade-in" style="border-color:rgba(255,230,0,0.3);background:rgba(255,230,0,0.03)">
+        <div class="step-number" style="background:var(--color-green);color:#080A0F">4</div>
         <div>
           <p style="font-weight:600;margin-bottom:4px">Matikan layar — tracking tetap jalan! 🎉</p>
           <p style="font-size:13px;color:var(--text-secondary)">

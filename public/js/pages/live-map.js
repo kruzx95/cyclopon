@@ -195,17 +195,17 @@ async function renderLiveMap(params) {
       routeKm       = totalRouteKm(routeCoords);
 
       if (routeCoords.length) {
-        const poly = L.polyline(routeCoords, { color: '#00E5FF', weight: 3.5, opacity: 0.85 }).addTo(map);
+        const poly = L.polyline(routeCoords, { color: '#FFE600', weight: 4, opacity: 0.95 }).addTo(map);
         polylineBounds = poly.getBounds();
         map.fitBounds(polylineBounds, { padding: [40, 40] });
 
         // Start / Finish flags
         const flagIcon = (label, bg) => L.divIcon({
-          html: `<div style="background:${bg};color:#0D1117;font-weight:800;font-size:10px;padding:3px 8px;border-radius:100px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.4)">${label}</div>`,
+          html: `<div style="background:${bg};color:#080A0F;font-weight:900;font-size:10px;padding:4px 10px;border-radius:100px;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,0.6)">${label}</div>`,
           className: '', iconAnchor: [0, 8]
         });
-        L.marker(routeCoords[0], { icon: flagIcon('▶ START', '#3FB950') }).addTo(map);
-        L.marker(routeCoords[routeCoords.length - 1], { icon: flagIcon('🏁 FINISH', '#FF6B35') }).addTo(map);
+        L.marker(routeCoords[0], { icon: flagIcon('▶ START', '#10B981') }).addTo(map);
+        L.marker(routeCoords[routeCoords.length - 1], { icon: flagIcon('🏁 FINISH', '#EF4444') }).addTo(map);
 
         document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider`;
       } else {
@@ -237,11 +237,11 @@ async function renderLiveMap(params) {
       return L.divIcon({
         html: `<div style="
           width:36px;height:36px;border-radius:50%;
-          background:rgba(13,17,23,0.92);
-          border:2px solid #00E5FF;
+          background:rgba(8,10,15,0.94);
+          border:2px solid #FFE600;
           display:flex;align-items:center;justify-content:center;
-          color:#00E5FF;font-weight:800;font-size:13px;
-          box-shadow:0 0 14px rgba(0,229,255,0.25)
+          color:#FFE600;font-weight:900;font-size:13px;
+          box-shadow:0 0 16px rgba(255,230,0,0.4)
         ">${n}</div>`,
         className: '', iconSize: [36, 36], iconAnchor: [18, 18]
       });

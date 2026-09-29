@@ -1,4 +1,4 @@
-/* ── CycloPon Modern Live Map Styles ── */
+/* ── CycloPon Tour de France 2025 Live Map Styles ── */
 
 .live-map-wrapper {
   display: flex;
@@ -11,15 +11,15 @@
 
 /* ── Top Navigation / Info Bar ── */
 .live-map-header {
-  height: 56px;
-  background: rgba(13, 17, 23, 0.94);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  height: 58px;
+  background: rgba(8, 10, 15, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 18px;
   z-index: 1000;
   flex-shrink: 0;
   gap: 16px;
@@ -42,29 +42,32 @@
   gap: 8px;
   text-decoration: none;
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 15px;
-  padding-right: 12px;
+  padding-right: 14px;
   border-right: 1px solid var(--border);
   flex-shrink: 0;
   transition: var(--transition);
 }
 .header-logo:hover {
-  color: var(--color-cyan);
+  color: var(--color-yellow);
+}
+.header-logo .logo-icon {
+  font-size: 18px;
 }
 
 .live-status-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(63, 185, 80, 0.12);
-  border: 1px solid rgba(63, 185, 80, 0.35);
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
   padding: 4px 10px;
   border-radius: 100px;
   font-size: 11px;
   font-weight: 800;
   color: var(--color-green);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   flex-shrink: 0;
 }
 
@@ -81,14 +84,14 @@
 .event-info-cluster {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   overflow: hidden;
 }
 
 .header-event-title {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -101,10 +104,11 @@
   color: var(--text-secondary);
   white-space: nowrap;
   background: var(--bg-surface);
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 /* ── Segmented Layer Switch Buttons ── */
@@ -126,7 +130,7 @@
   border-radius: var(--radius-lg);
   font-family: inherit;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   display: inline-flex;
@@ -138,8 +142,9 @@
 }
 .layer-pill-btn.active {
   background: var(--bg-card);
-  color: var(--color-cyan);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  color: var(--color-yellow);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 230, 0, 0.25);
 }
 
 /* ── Action Buttons ── */
@@ -154,19 +159,19 @@
   border-radius: var(--radius-lg);
   font-family: inherit;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   flex-shrink: 0;
 }
 .header-action-btn:hover {
-  border-color: var(--color-cyan);
-  color: var(--color-cyan);
+  border-color: var(--color-yellow);
+  color: var(--color-yellow);
 }
 .header-action-btn.active {
-  background: rgba(0, 229, 255, 0.12);
-  border-color: var(--color-cyan);
-  color: var(--color-cyan);
+  background: rgba(255, 230, 0, 0.12);
+  border-color: var(--color-yellow);
+  color: var(--color-yellow);
 }
 
 /* ── Viewport Grid ── */
@@ -199,7 +204,7 @@
 #leaflet-map {
   width: 100%;
   height: 100%;
-  background: #0D1117;
+  background: #080A0F;
 }
 
 /* ── Repositioned Leaflet Controls (Bottom-Right) ── */
@@ -212,33 +217,33 @@
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-md) !important;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6) !important;
   margin: 0 !important;
 }
 
 .leaflet-control-zoom a {
-  background: rgba(13, 17, 23, 0.92) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(8, 10, 15, 0.94) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: var(--text-primary) !important;
   border: none !important;
-  width: 36px !important;
-  height: 36px !important;
-  line-height: 36px !important;
+  width: 38px !important;
+  height: 38px !important;
+  line-height: 38px !important;
   font-size: 18px !important;
   font-weight: 700 !important;
   transition: var(--transition);
 }
 .leaflet-control-zoom a:hover {
-  background: rgba(22, 27, 34, 0.98) !important;
-  color: var(--color-cyan) !important;
+  background: rgba(24, 29, 41, 0.98) !important;
+  color: var(--color-yellow) !important;
 }
 .leaflet-control-zoom a:first-child {
   border-bottom: 1px solid var(--border) !important;
 }
 
 .leaflet-control-attribution {
-  background: rgba(13, 17, 23, 0.75) !important;
+  background: rgba(8, 10, 15, 0.8) !important;
   color: var(--text-secondary) !important;
   font-size: 10px !important;
   border-radius: 4px;
@@ -297,7 +302,7 @@
 }
 .sidebar-title-row h2 {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
 }
 
@@ -317,8 +322,8 @@
   transition: var(--transition);
 }
 .sidebar-search-input:focus {
-  border-color: var(--color-cyan);
-  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+  border-color: var(--color-yellow);
+  box-shadow: 0 0 0 2px rgba(255, 230, 0, 0.2);
 }
 .search-icon-placeholder {
   position: absolute;
@@ -349,12 +354,12 @@
 }
 .leaderboard-item:hover {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(0, 229, 255, 0.2);
+  border-color: rgba(255, 230, 0, 0.25);
 }
 
 .leaderboard-rank {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-secondary);
   width: 24px;
   text-align: center;
@@ -362,6 +367,7 @@
 }
 .leaderboard-rank.top {
   font-size: 16px;
+  color: var(--color-yellow);
 }
 
 .rider-avatar {
@@ -373,9 +379,9 @@
   justify-content: center;
   font-size: 10px;
   font-weight: 800;
-  color: #0D1117;
+  color: #080A0F;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .leaderboard-info {
@@ -384,7 +390,7 @@
 }
 .leaderboard-name {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -393,6 +399,7 @@
   font-size: 11px;
   color: var(--text-secondary);
   margin-top: 1px;
+  font-weight: 600;
 }
 
 .leaderboard-stat {
@@ -401,13 +408,14 @@
 }
 .leaderboard-km {
   font-size: 13px;
-  font-weight: 700;
-  color: var(--color-cyan);
+  font-weight: 800;
+  color: var(--color-yellow);
 }
 .leaderboard-pct {
   font-size: 10px;
   color: var(--text-secondary);
   margin-top: 1px;
+  font-weight: 600;
 }
 
 /* ── Responsive Adaptations ── */
