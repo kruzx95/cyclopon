@@ -223,9 +223,10 @@ async function renderLiveMap(params) {
   // ── Auto-Mapping Rider & Device State ──
   const riderById    = {};  // numeric deviceId → rider
   const bibToRider   = {};  // "001" or "BIB-001" → rider
-  const markerById   = {};  // numeric deviceId → Leaflet marker
-  const progressById = {};  // numeric deviceId → { progressPct, distanceKm, speed, lastTime }
-  let searchQuery    = '';
+  const markerById    = {};  // numeric deviceId → Leaflet marker
+  const progressById  = {};  // numeric deviceId → { progressPct, distanceKm, speed, lastTime }
+  const telemetryById = {}; // numeric deviceId → { history: [], movingAvg, currentSpeed, remainingKm, etaTime, etaDuration, etaBadgeClass, isFinished }
+  let searchQuery     = '';
 
   riders.forEach(r => {
     const cleanBib = String(r.bib).trim();
@@ -760,7 +761,121 @@ async function renderLiveMap(params) {
 
     const latlng = [pos.latitude, pos.longitude];
     const fixTime = pos.fixTime || pos.deviceTime || new Date().toISOString();
-    const speed = pos.speed != null ? Math.round(pos.speed) : null;
+
+    // 1. Determine base speed in km/h
+    let speedKmh = null;
+    if (pos.speed != null) {
+      const raw = Number(pos.speed);
+      if (!isNaN(raw)) {
+        speedKmh = Math.max(0, Math.round(pos.isKmh ? raw : (raw * 1.852)));
+      }
+    }
+
+    // 2. Nearest-point route calculation
+    let calc = { progressPct: 0, distanceKm: 0 };
+    if (routeCoords.length) {
+      calc = findNearestRoutePoint(pos.latitude, pos.longitude, routeCoords, routeKm);
+    }
+
+    // 3. Initialize or retrieve rider telemetry state
+    if (!telemetryById[deviceId]) {
+      telemetryById[deviceId] = {
+        history: [],
+        movingAvg: 0,
+        currentSpeed: 0,
+        remainingKm: 0,
+        etaTime: '-',
+        etaDuration: '-',
+        etaBadgeClass: 'eta-idle',
+        isFinished: false
+      };
+    }
+    const telem = telemetryById[deviceId];
+
+    // 4. Compute ground speed from distance delta if speed is missing or 0 while advancing
+    const nowMs = new Date(fixTime).getTime() || Date.now();
+    const prevPt = telem.history[telem.history.length - 1];
+    if (prevPt) {
+      const dtHr = (nowMs - prevPt.timeMs) / 3600000;
+      const dDistKm = calc.distanceKm - prevPt.distanceKm;
+      if (dtHr > 0.001 && dDistKm > 0) {
+        const derivedSpeed = Math.round((dDistKm / dtHr) * 10) / 10;
+        if (speedKmh == null || (speedKmh === 0 && derivedSpeed > 1)) {
+          speedKmh = Math.min(90, Math.max(0, Math.round(derivedSpeed)));
+        }
+      }
+    }
+    if (speedKmh == null) speedKmh = 0;
+
+    // 5. Push into rolling history window (up to 8 points)
+    telem.history.push({
+      timeMs: nowMs,
+      distanceKm: calc.distanceKm,
+      speed: speedKmh
+    });
+    if (telem.history.length > 8) telem.history.shift();
+
+    // 6. Calculate Moving Average Speed (filtering out stops)
+    const validMoving = telem.history.filter(h => h.speed > 2);
+    if (validMoving.length >= 2) {
+      const first = validMoving[0];
+      const last = validMoving[validMoving.length - 1];
+      const dtHr = (last.timeMs - first.timeMs) / 3600000;
+      const dKm = last.distanceKm - first.distanceKm;
+      if (dtHr > 0.001 && dKm > 0) {
+        telem.movingAvg = Math.round((dKm / dtHr) * 10) / 10;
+      } else {
+        const sum = validMoving.reduce((acc, h) => acc + h.speed, 0);
+        telem.movingAvg = Math.round((sum / validMoving.length) * 10) / 10;
+      }
+    } else if (validMoving.length === 1) {
+      telem.movingAvg = validMoving[0].speed;
+    } else {
+      telem.movingAvg = speedKmh > 0 ? speedKmh : 0;
+    }
+
+    telem.currentSpeed = speedKmh;
+
+    // 7. Route distance remaining & ETA calculation
+    const totalDist = routeKm || (gpxData && gpxData.stats ? gpxData.stats.totalKm : 0);
+    const remainingKm = Math.max(0, Math.round((totalDist - calc.distanceKm) * 10) / 10);
+    telem.remainingKm = remainingKm;
+
+    const isFinished = calc.progressPct >= 99 || (totalDist > 0 && remainingKm <= 0.15);
+    telem.isFinished = isFinished;
+
+    if (isFinished) {
+      telem.etaTime = 'FINISH';
+      telem.etaDuration = 'Tiba di Finish';
+      telem.etaBadgeClass = 'eta-finished';
+    } else if (totalDist > 0 && remainingKm > 0) {
+      const speedRef = telem.movingAvg > 3 ? telem.movingAvg : (telem.currentSpeed > 3 ? telem.currentSpeed : 0);
+      if (speedRef >= 3) {
+        const hoursLeft = remainingKm / speedRef;
+        const etaDate = new Date(Date.now() + (hoursLeft * 3600 * 1000));
+        const hh = String(etaDate.getHours()).padStart(2, '0');
+        const mm = String(etaDate.getMinutes()).padStart(2, '0');
+        telem.etaTime = `${hh}:${mm}`;
+
+        const totalMin = Math.round(hoursLeft * 60);
+        if (totalMin < 60) {
+          telem.etaDuration = `~${totalMin}m`;
+        } else {
+          const h = Math.floor(totalMin / 60);
+          const m = totalMin % 60;
+          telem.etaDuration = m > 0 ? `~${h}j ${m}m` : `~${h}j`;
+        }
+        telem.etaBadgeClass = 'eta-active';
+      } else {
+        telem.etaTime = 'Diam';
+        telem.etaDuration = 'Berhenti';
+        telem.etaBadgeClass = 'eta-idle';
+      }
+    } else {
+      telem.etaTime = '-';
+      telem.etaDuration = '-';
+      telem.etaBadgeClass = 'eta-idle';
+    }
 
     // Remove old marker from cluster
     if (markerById[deviceId]) {
@@ -769,30 +884,65 @@ async function renderLiveMap(params) {
 
     const status = getRiderStatus(fixTime);
 
-    // Create new marker with popup
+    // Create new marker with comprehensive telemetry popup
     const marker = L.marker(latlng, { icon: createRiderIcon(rider) });
     marker.bindPopup(`
-      <div style="min-width:170px">
-        <div style="font-weight:800;font-size:15px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
-          <span>${rider.name}</span>
-          <span style="font-size:11px;color:${status.color}">${status.dot} ${status.text}</span>
+      <div class="rider-map-popup">
+        <div class="popup-header">
+          <div class="popup-title-group">
+            <div class="popup-rider-name">${rider.name}</div>
+            <div class="popup-rider-bib" style="color:${rider.color || 'var(--color-yellow)'}">BIB #${rider.bib}</div>
+          </div>
+          <span class="popup-status-badge" style="background:${status.color}22;color:${status.color};border:1px solid ${status.color}55">
+            ${status.dot} ${status.text}
+          </span>
         </div>
-        <div style="color:#94A3B8;font-size:12px">BIB: <strong style="color:${rider.color || '#FFE600'}">#${rider.bib}</strong></div>
-        ${speed != null ? `<div style="color:#94A3B8;font-size:12px;margin-top:2px">Kecepatan: <strong style="color:#FFFFFF">${speed} km/h</strong></div>` : ''}
-        <div style="color:#94A3B8;font-size:11px;margin-top:6px">Update: <strong>${formatTimeAgo(fixTime)}</strong></div>
+
+        <div class="popup-metrics-grid">
+          <div class="popup-metric-box">
+            <div class="popup-metric-label">⚡ Kecepatan</div>
+            <div class="popup-metric-value">${telem.currentSpeed} <span class="popup-metric-unit">km/h</span></div>
+            <div class="popup-metric-sub">Avg: ${telem.movingAvg || telem.currentSpeed} km/h</div>
+          </div>
+
+          <div class="popup-metric-box">
+            <div class="popup-metric-label">📏 Jarak Ditempuh</div>
+            <div class="popup-metric-value">${calc.distanceKm} <span class="popup-metric-unit">km</span></div>
+            <div class="popup-metric-sub">Sisa: ${telem.remainingKm} km</div>
+          </div>
+
+          <div class="popup-metric-box full-width">
+            <div class="popup-metric-label">🏁 Estimasi Finish (ETA)</div>
+            <div class="popup-metric-value highlight">
+              ${isFinished ? '🏁 Selesai di Garis Finish' : `${telem.etaTime} (${telem.etaDuration})`}
+            </div>
+            <div class="popup-metric-sub">
+              ${isFinished ? 'Rute 100% tuntas' : `Ritme rata-rata ${telem.movingAvg || telem.currentSpeed || 20} km/h`}
+            </div>
+          </div>
+        </div>
+
+        <div class="popup-footer">
+          Update: <strong>${formatTimeAgo(fixTime)}</strong>
+        </div>
       </div>
     `);
 
     clusterGroup.addLayer(marker);
     markerById[deviceId] = marker;
 
-    // Nearest-point route calculation
-    if (routeCoords.length) {
-      const calc = findNearestRoutePoint(pos.latitude, pos.longitude, routeCoords, routeKm);
-      progressById[deviceId] = { ...calc, speed, lastTime: fixTime };
-    } else {
-      progressById[deviceId] = { progressPct: 0, distanceKm: 0, speed, lastTime: fixTime };
-    }
+    // Save state for leaderboard
+    progressById[deviceId] = {
+      ...calc,
+      speed: telem.currentSpeed,
+      movingAvg: telem.movingAvg,
+      remainingKm: telem.remainingKm,
+      etaTime: telem.etaTime,
+      etaDuration: telem.etaDuration,
+      etaBadgeClass: telem.etaBadgeClass,
+      isFinished: telem.isFinished,
+      lastTime: fixTime
+    };
 
     updateLeaderboard();
   }
@@ -825,19 +975,34 @@ async function renderLiveMap(params) {
 
     leaderboardEl.innerHTML = entries.map((e, i) => {
       const status = getRiderStatus(e.lastTime);
+      const isMoving = e.speed > 2;
       return `
         <div class="leaderboard-item fade-in" onclick="panToRider(${e.rider.traccar_device_id})">
           <div class="leaderboard-rank ${i < 3 ? 'top' : ''}">${i < 3 ? ['🥇','🥈','🥉'][i] : i + 1}</div>
           <div class="rider-avatar" style="background:${e.rider.color || '#FFE600'}">${e.rider.bib}</div>
           <div class="leaderboard-info">
-            <div class="leaderboard-name">${e.rider.name}</div>
-            <div class="leaderboard-bib" style="display:flex;align-items:center;gap:6px">
-              <span>#${e.rider.bib}</span>
-              <span style="font-size:10px;color:${status.color}">${status.dot} ${formatTimeAgo(e.lastTime)}</span>
+            <div class="leaderboard-name-row">
+              <span class="leaderboard-name">${e.rider.name}</span>
+              <span class="leaderboard-bib-tag">#${e.rider.bib}</span>
+            </div>
+            <div class="leaderboard-telemetry-row">
+              <span class="telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}">
+                ⚡ ${e.speed} km/h
+              </span>
+              <span class="telemetry-pill eta-pill ${e.etaBadgeClass || 'eta-idle'}">
+                🏁 ${e.isFinished ? 'Finish' : `${e.etaTime} (${e.etaDuration})`}
+              </span>
+            </div>
+            <div class="leaderboard-status-sub">
+              <span style="font-size:10px;color:${status.color}">${status.dot} ${status.text}</span>
+              <span class="time-ago-sub">• ${formatTimeAgo(e.lastTime)}</span>
             </div>
           </div>
           <div class="leaderboard-stat">
-            <div class="leaderboard-km">${e.distanceKm} km</div>
+            <div class="leaderboard-km">${e.distanceKm} <span class="km-unit">km</span></div>
+            <div class="leaderboard-progress-bar-wrap">
+              <div class="leaderboard-progress-bar-fill" style="width:${e.progressPct}%;background:${e.rider.color || 'var(--color-yellow)'}"></div>
+            </div>
             <div class="leaderboard-pct">${e.progressPct}%</div>
           </div>
         </div>
@@ -904,12 +1069,16 @@ async function renderLiveMap(params) {
       const devId = r.traccar_device_id || (idx + 9001);
       r.traccar_device_id = devId;
       riderById[devId] = r;
+      bibToRider[r.bib] = r;
+
+      // Stagger initial progress along route
+      const staggerIndex = Math.min(Math.floor((idx + 1) * (routeCoords.length / (demoRiders.length + 3))), routeCoords.length - 2);
       return {
         rider: r,
         devId,
-        currentIndex: Math.min(idx * 4, routeCoords.length - 1),
-        speed: 26 + (idx * 2) + Math.random() * 4,
-        stepSize: Math.max(1, Math.floor(routeCoords.length / 80)) + idx
+        currentIndex: staggerIndex,
+        baseSpeed: 24 + (idx * 3.5),
+        stepSize: Math.max(1, Math.floor(routeCoords.length / 100)) + (idx * 2)
       };
     });
 
@@ -919,11 +1088,13 @@ async function renderLiveMap(params) {
         const pt = routeCoords[sim.currentIndex];
         const lat = pt[0] + (Math.random() - 0.5) * 0.00015;
         const lng = pt[1] + (Math.random() - 0.5) * 0.00015;
+        const currentSpeed = Math.round(sim.baseSpeed + (Math.random() - 0.5) * 3);
 
         updateRiderPosition(sim.devId, {
           latitude: lat,
           longitude: lng,
-          speed: sim.speed + (Math.random() - 0.5) * 3,
+          speed: currentSpeed,
+          isKmh: true,
           fixTime: new Date().toISOString()
         });
       });

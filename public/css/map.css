@@ -272,7 +272,109 @@
   color: var(--text-primary) !important;
   font-family: inherit !important;
   font-size: 13px !important;
-  margin: 14px 16px !important;
+  margin: 12px 14px !important;
+}
+
+/* ── Enhanced Rider Popup ── */
+.rider-map-popup {
+  min-width: 210px;
+  max-width: 250px;
+  font-family: inherit;
+}
+
+.popup-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 6px;
+}
+
+.popup-title-group {
+  min-width: 0;
+}
+
+.popup-rider-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.popup-rider-bib {
+  font-size: 11px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.popup-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.popup-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.popup-metric-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.popup-metric-box.full-width {
+  grid-column: span 2;
+  background: rgba(255, 230, 0, 0.06);
+  border-color: rgba(255, 230, 0, 0.25);
+}
+
+.popup-metric-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.popup-metric-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+
+.popup-metric-value.highlight {
+  color: var(--color-yellow);
+}
+
+.popup-metric-unit {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.popup-metric-sub {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.popup-footer {
+  font-size: 10px;
+  color: var(--text-secondary);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
 }
 
 /* ── Sidebar ── */
@@ -388,29 +490,129 @@
   flex: 1;
   min-width: 0;
 }
+
+.leaderboard-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .leaderboard-name {
   font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text-primary);
 }
-.leaderboard-bib {
-  font-size: 11px;
+
+.leaderboard-bib-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--color-yellow);
+  background: rgba(255, 230, 0, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.leaderboard-telemetry-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.telemetry-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.speed-pill.moving {
+  background: rgba(0, 229, 255, 0.12);
+  color: #00E5FF;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.speed-pill.idle {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94A3B8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.eta-pill.eta-active {
+  background: rgba(255, 230, 0, 0.12);
+  color: var(--color-yellow);
+  border: 1px solid rgba(255, 230, 0, 0.3);
+}
+
+.eta-pill.eta-idle {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94A3B8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.eta-pill.eta-finished {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.leaderboard-status-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.time-ago-sub {
   color: var(--text-secondary);
-  margin-top: 1px;
-  font-weight: 600;
+  font-size: 10px;
 }
 
 .leaderboard-stat {
   text-align: right;
   flex-shrink: 0;
+  min-width: 62px;
 }
+
 .leaderboard-km {
   font-size: 13px;
   font-weight: 800;
   color: var(--color-yellow);
+  line-height: 1.2;
 }
+
+.km-unit {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.leaderboard-progress-bar-wrap {
+  width: 58px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 3px 0 2px auto;
+}
+
+.leaderboard-progress-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
 .leaderboard-pct {
   font-size: 10px;
   color: var(--text-secondary);
