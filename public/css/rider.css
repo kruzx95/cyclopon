@@ -149,6 +149,28 @@
   border: 1px solid rgba(255, 230, 0, 0.2);
 }
 
+.copy-field-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.copy-field-btn:hover {
+  color: var(--color-yellow);
+  border-color: var(--color-yellow);
+  background: rgba(255, 230, 0, 0.08);
+}
+.copy-field-btn:active {
+  transform: scale(0.92);
+}
+
 /* ── Mobile ── */
 @media (max-width: 480px) {
   .pin-keypad {
