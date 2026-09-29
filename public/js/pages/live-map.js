@@ -47,6 +47,11 @@ async function renderLiveMap(params) {
             🎯 <span class="action-btn-label">Fit Rute</span>
           </button>
 
+          <!-- Elevation Profile Toggle -->
+          <button class="header-action-btn active" id="btnToggleElevation" title="Tampilkan / Sembunyikan Profil Elevasi Komoot">
+            ⛰️ <span class="action-btn-label">Elevasi</span>
+          </button>
+
           <!-- Toggle Leaderboard -->
           <button class="header-action-btn active" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
             📊 <span class="action-btn-label">Leaderboard</span>
@@ -57,8 +62,52 @@ async function renderLiveMap(params) {
 
       <!-- ── Viewport Grid (Map + Sidebar) ── -->
       <div class="map-viewport" id="mapViewport">
-        <div class="map-container">
+        <div class="map-container elev-open" id="mapContainer">
           <div id="leaflet-map"></div>
+
+          <!-- ── Komoot Elevation Profile Drawer ── -->
+          <div class="elevation-drawer" id="elevationDrawer">
+            <div class="elev-header">
+              <div class="elev-metrics-group">
+                <div class="elev-metric">
+                  <div class="elev-metric-val"><span id="elevStatDist">-</span><span class="elev-unit">km</span></div>
+                  <div class="elev-metric-lbl">Distance</div>
+                </div>
+                <div class="elev-metric">
+                  <div class="elev-metric-val" id="elevStatTime">-</div>
+                  <div class="elev-metric-lbl">Est. time</div>
+                </div>
+                <div class="elev-metric">
+                  <div class="elev-metric-val"><span id="elevStatGain">-</span><span class="elev-unit">m</span></div>
+                  <div class="elev-metric-lbl">Elevation gain</div>
+                </div>
+                <div class="elev-metric">
+                  <div class="elev-metric-val"><span id="elevStatLoss">-</span><span class="elev-unit">m</span></div>
+                  <div class="elev-metric-lbl">Elevation loss</div>
+                </div>
+                <div class="elev-metric">
+                  <div class="elev-pill-badge diff-moderate" id="elevStatDiff">Moderate</div>
+                  <div class="elev-metric-lbl">Difficulty</div>
+                </div>
+                <div class="elev-metric">
+                  <div class="elev-pill-badge speed-badge" id="elevStatSpeed">Moderate: 20 km/h</div>
+                  <div class="elev-metric-lbl">Speed</div>
+                </div>
+              </div>
+
+              <div class="elev-header-controls">
+                <div class="elev-badge-pill">
+                  <span>Elevation</span>
+                </div>
+                <button class="elev-btn-icon" id="btnCloseElevation" title="Tutup Profil Elevasi">✕</button>
+              </div>
+            </div>
+
+            <div class="elev-chart-wrapper" id="elevChartBox">
+              <canvas id="elevationCanvas"></canvas>
+              <div class="elev-tooltip" id="elevTooltip"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Leaderboard Sidebar -->
@@ -171,59 +220,6 @@ async function renderLiveMap(params) {
     switchTileLayer(satLayer, e.currentTarget);
   });
 
-  // ── Sidebar Toggle & Fit Route Handlers ──
-  const mapViewport = document.getElementById('mapViewport');
-  const btnToggleSidebar = document.getElementById('btnToggleSidebar');
-
-  btnToggleSidebar.addEventListener('click', () => {
-    const isCollapsed = mapViewport.classList.toggle('sidebar-collapsed');
-    btnToggleSidebar.classList.toggle('active', !isCollapsed);
-    setTimeout(() => map.invalidateSize(), 300);
-  });
-
-  let polylineBounds = null;
-  document.getElementById('btnFitRoute').addEventListener('click', () => {
-    if (polylineBounds) {
-      map.fitBounds(polylineBounds, { padding: [40, 40] });
-    } else {
-      map.setView([-2.5, 118], 5);
-    }
-  });
-
-  // ── Load GPX route ──
-  let routeCoords = [];
-  let routeKm     = 0;
-
-  if (event.gpx_path) {
-    try {
-      const gpxText = await fetch(event.gpx_path).then(r => r.text());
-      routeCoords   = parseGpxToCoords(gpxText);
-      routeKm       = totalRouteKm(routeCoords);
-
-      if (routeCoords.length) {
-        const poly = L.polyline(routeCoords, { color: '#FFE600', weight: 4, opacity: 0.95 }).addTo(map);
-        polylineBounds = poly.getBounds();
-        map.fitBounds(polylineBounds, { padding: [40, 40] });
-
-        // Start / Finish flags
-        const flagIcon = (label, bg) => L.divIcon({
-          html: `<div style="background:${bg};color:#080A0F;font-weight:900;font-size:10px;padding:4px 10px;border-radius:100px;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,0.6)">${label}</div>`,
-          className: '', iconAnchor: [0, 8]
-        });
-        L.marker(routeCoords[0], { icon: flagIcon('▶ START', '#10B981') }).addTo(map);
-        L.marker(routeCoords[routeCoords.length - 1], { icon: flagIcon('🏁 FINISH', '#EF4444') }).addTo(map);
-
-        document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider`;
-      } else {
-        document.getElementById('eventStats').textContent = `${riders.length} Rider`;
-      }
-    } catch {
-      document.getElementById('eventStats').textContent = `${riders.length} Rider`;
-    }
-  } else {
-    document.getElementById('eventStats').textContent = `Belum ada rute GPX · ${riders.length} Rider`;
-  }
-
   // ── Auto-Mapping Rider & Device State ──
   const riderById    = {};  // numeric deviceId → rider
   const bibToRider   = {};  // "001" or "BIB-001" → rider
@@ -240,6 +236,440 @@ async function renderLiveMap(params) {
       riderById[r.traccar_device_id] = r;
     }
   });
+
+  // ── Sidebar Toggle & Fit Route Handlers ──
+  const mapViewport = document.getElementById('mapViewport');
+  const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+
+  btnToggleSidebar.addEventListener('click', () => {
+    const isCollapsed = mapViewport.classList.toggle('sidebar-collapsed');
+    btnToggleSidebar.classList.toggle('active', !isCollapsed);
+    setTimeout(() => {
+      map.invalidateSize();
+      redrawElevationChart();
+    }, 310);
+  });
+
+  let polylineBounds = null;
+  document.getElementById('btnFitRoute').addEventListener('click', () => {
+    if (polylineBounds) {
+      map.fitBounds(polylineBounds, { padding: [40, 40] });
+    } else {
+      map.setView([-2.5, 118], 5);
+    }
+  });
+
+  // ── Komoot Elevation Drawer & Chart Engine ──
+  const btnToggleElevation = document.getElementById('btnToggleElevation');
+  const btnCloseElevation  = document.getElementById('btnCloseElevation');
+  const elevationDrawer    = document.getElementById('elevationDrawer');
+  const mapContainer       = document.getElementById('mapContainer');
+  const canvas             = document.getElementById('elevationCanvas');
+  const tooltip            = document.getElementById('elevTooltip');
+
+  let gpxData         = null;
+  let activeHoverDist = null;
+  let scrubMarker     = null;
+  let routeCoords     = [];
+  let routeKm         = 0;
+
+  const scrubIcon = L.divIcon({
+    html: `<div style="
+      width:18px;height:18px;border-radius:50%;
+      background:#FFE600;border:3px solid #080A0F;
+      box-shadow:0 0 16px #FFE600, 0 0 0 4px rgba(255,230,0,0.35);
+      animation:pulse 1s infinite alternate;
+    "></div>`,
+    className: '',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+
+  function toggleElevation(show) {
+    const isVisible = typeof show === 'boolean' ? show : elevationDrawer.classList.contains('collapsed');
+    elevationDrawer.classList.toggle('collapsed', !isVisible);
+    mapContainer.classList.toggle('elev-open', isVisible);
+    if (btnToggleElevation) btnToggleElevation.classList.toggle('active', isVisible);
+    if (isVisible && gpxData) {
+      setTimeout(redrawElevationChart, 50);
+    }
+  }
+
+  if (btnToggleElevation) btnToggleElevation.addEventListener('click', () => toggleElevation());
+  if (btnCloseElevation) btnCloseElevation.addEventListener('click', () => toggleElevation(false));
+
+  function getGradeColor(gradePct) {
+    if (gradePct >= 8) {
+      return {
+        stroke: '#EF4444',
+        fill: 'rgba(239, 68, 68, 0.40)',
+        badgeBg: 'rgba(239, 68, 68, 0.25)',
+        badgeColor: '#F87171'
+      };
+    }
+    if (gradePct >= 4) {
+      return {
+        stroke: '#F59E0B',
+        fill: 'rgba(245, 158, 11, 0.38)',
+        badgeBg: 'rgba(245, 158, 11, 0.25)',
+        badgeColor: '#FBBF24'
+      };
+    }
+    return {
+      stroke: '#10B981',
+      fill: 'rgba(16, 185, 129, 0.30)',
+      badgeBg: 'rgba(16, 185, 129, 0.25)',
+      badgeColor: '#34D399'
+    };
+  }
+
+  function findNearestPointByDist(pts, targetKm) {
+    if (!pts || !pts.length) return null;
+    let low = 0;
+    let high = pts.length - 1;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (pts[mid].distKm < targetKm) low = mid + 1;
+      else high = mid - 1;
+    }
+    const idx = Math.min(pts.length - 1, Math.max(0, low));
+    return pts[idx];
+  }
+
+  function redrawElevationChart() {
+    if (!canvas || !gpxData || !gpxData.points || gpxData.points.length < 2) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    canvas.width  = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const w = rect.width;
+    const h = rect.height;
+
+    const padL = 48;
+    const padR = 20;
+    const padT = 16;
+    const padB = 24;
+    const plotW = Math.max(10, w - padL - padR);
+    const plotH = Math.max(10, h - padT - padB);
+
+    const totalDist = gpxData.stats.totalKm || 1;
+    const minEle = gpxData.stats.minEle;
+    const maxEle = gpxData.stats.maxEle;
+    const eleSpan = Math.max(50, maxEle - minEle);
+    const yMin = Math.max(0, Math.floor((minEle - eleSpan * 0.08) / 50) * 50);
+    const yMax = Math.ceil((maxEle + eleSpan * 0.08) / 50) * 50;
+
+    const getX = dist => padL + (dist / totalDist) * plotW;
+    const getY = ele => padT + (1 - (ele - yMin) / (yMax - yMin)) * plotH;
+    const baselineY = padT + plotH;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // ── Horizontal Grid Lines & Elevation Labels ──
+    const yTicks = 4;
+    ctx.font = '500 10px Inter, system-ui, sans-serif';
+    ctx.fillStyle = '#94A3B8';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    for (let i = 0; i <= yTicks; i++) {
+      const ele = Math.round(yMin + (i / yTicks) * (yMax - yMin));
+      const y = getY(ele);
+
+      ctx.beginPath();
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1;
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + plotW, y);
+      ctx.stroke();
+
+      ctx.fillText(`${ele.toLocaleString()} m`, padL - 8, y);
+    }
+
+    // ── Vertical Distance Grid Lines & Ticks ──
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    const distStep = totalDist > 120 ? 20 : (totalDist > 60 ? 10 : 5);
+    for (let d = 0; d <= totalDist; d += distStep) {
+      const x = getX(d);
+      ctx.beginPath();
+      ctx.moveTo(x, padT);
+      ctx.lineTo(x, baselineY);
+      ctx.stroke();
+
+      ctx.fillText(`${d} km`, x, baselineY + 6);
+    }
+    if (totalDist % distStep > distStep * 0.4) {
+      const finalX = getX(totalDist);
+      ctx.fillText(`${Math.round(totalDist)} km`, finalX, baselineY + 6);
+    }
+
+    ctx.setLineDash([]); // Reset dashed lines
+
+    // ── Draw Elevation Profile with Komoot Gradient Slices ──
+    const pts = gpxData.points;
+    const step = Math.max(1, Math.floor(pts.length / 400));
+
+    for (let i = step; i < pts.length; i += step) {
+      const p0 = pts[i - step];
+      const p1 = pts[i];
+      const x0 = getX(p0.distKm);
+      const y0 = getY(p0.ele);
+      const x1 = getX(p1.distKm);
+      const y1 = getY(p1.ele);
+
+      const colors = getGradeColor(p1.gradePct);
+
+      // Vertical slice fill
+      const grad = ctx.createLinearGradient(0, Math.min(y0, y1), 0, baselineY);
+      grad.addColorStop(0, colors.fill);
+      grad.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
+
+      ctx.beginPath();
+      ctx.moveTo(x0, baselineY);
+      ctx.lineTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.lineTo(x1, baselineY);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Top line segment
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.strokeStyle = colors.stroke;
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    // ── Komoot Start (A) & Finish (B) Badges ──
+    const drawBadge = (label, bg, x, y) => {
+      ctx.beginPath();
+      ctx.arc(x, y, 8.5, 0, Math.PI * 2);
+      ctx.fillStyle = bg;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.font = 'bold 9px Inter, system-ui, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, x, y);
+    };
+
+    drawBadge('A', '#10B981', padL + 10, padT + 12);
+    drawBadge('B', '#EF4444', padL + plotW - 10, padT + 12);
+
+    // ── Live Riders on Elevation Curve ──
+    Object.entries(progressById).forEach(([devId, prog]) => {
+      const rider = riderById[devId];
+      if (!rider || prog.distanceKm == null) return;
+      const rDist = Math.max(0, Math.min(totalDist, prog.distanceKm));
+      const rPt = findNearestPointByDist(pts, rDist);
+      if (!rPt) return;
+
+      const rx = getX(rDist);
+      const ry = getY(rPt.ele);
+      const rColor = rider.color || '#FFE600';
+
+      // Outer glow
+      ctx.beginPath();
+      ctx.arc(rx, ry, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = rColor;
+      ctx.shadowColor = rColor;
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Inner white dot
+      ctx.beginPath();
+      ctx.arc(rx, ry, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+
+      // BIB tag above dot
+      ctx.font = '800 9px Inter, system-ui, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`#${rider.bib}`, rx, ry - 6);
+    });
+
+    // ── Hover Crosshair & Scrubbing Indicator ──
+    if (activeHoverDist != null) {
+      const hPt = findNearestPointByDist(pts, activeHoverDist);
+      if (hPt) {
+        const hx = getX(hPt.distKm);
+        const hy = getY(hPt.ele);
+
+        // Vertical guide line
+        ctx.beginPath();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = '#FFE600';
+        ctx.lineWidth = 1.5;
+        ctx.moveTo(hx, padT);
+        ctx.lineTo(hx, baselineY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Highlight circle on curve
+        ctx.beginPath();
+        ctx.arc(hx, hy, 5.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFE600';
+        ctx.shadowColor = '#FFE600';
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.beginPath();
+        ctx.arc(hx, hy, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#080A0F';
+        ctx.fill();
+      }
+    }
+  }
+
+  // ── Scrubbing Handlers (Mouse & Touch) ──
+  function handleScrub(clientX) {
+    if (!gpxData || !gpxData.points || !canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const padL = 48;
+    const padR = 20;
+    const plotW = rect.width - padL - padR;
+    const totalDist = gpxData.stats.totalKm;
+
+    const mx = clientX - rect.left;
+    if (mx < padL || mx > rect.width - padR) {
+      endScrub();
+      return;
+    }
+
+    const distRatio = Math.max(0, Math.min(1, (mx - padL) / plotW));
+    const targetKm = distRatio * totalDist;
+    activeHoverDist = targetKm;
+
+    const pt = findNearestPointByDist(gpxData.points, targetKm);
+    if (!pt) return;
+
+    redrawElevationChart();
+
+    // Update floating tooltip
+    const colors = getGradeColor(pt.gradePct);
+    tooltip.innerHTML = `
+      <div class="elev-tooltip-row">
+        <span><strong>${pt.distKm}</strong> km</span>
+        <span style="opacity:0.4">·</span>
+        <span><strong>${Math.round(pt.ele)}</strong> m</span>
+        <span class="elev-tooltip-grade" style="background:${colors.badgeBg};color:${colors.badgeColor}">
+          ${pt.gradePct >= 0 ? '+' : ''}${pt.gradePct}%
+        </span>
+      </div>
+    `;
+    tooltip.style.display = 'block';
+    const tooltipX = Math.max(40, Math.min(rect.width - 40, mx));
+    tooltip.style.left = `${tooltipX}px`;
+
+    // Sync to Leaflet Map Marker
+    if (!scrubMarker) {
+      scrubMarker = L.marker([pt.lat, pt.lng], { icon: scrubIcon, zIndexOffset: 2000 }).addTo(map);
+    } else {
+      scrubMarker.setLatLng([pt.lat, pt.lng]);
+      if (!map.hasLayer(scrubMarker)) scrubMarker.addTo(map);
+    }
+  }
+
+  function endScrub() {
+    activeHoverDist = null;
+    if (tooltip) tooltip.style.display = 'none';
+    if (scrubMarker && map.hasLayer(scrubMarker)) {
+      map.removeLayer(scrubMarker);
+    }
+    redrawElevationChart();
+  }
+
+  if (canvas) {
+    canvas.addEventListener('mousemove', e => handleScrub(e.clientX));
+    canvas.addEventListener('mouseleave', endScrub);
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length) handleScrub(e.touches[0].clientX);
+    }, { passive: true });
+    canvas.addEventListener('touchmove', e => {
+      if (e.touches.length) handleScrub(e.touches[0].clientX);
+    }, { passive: true });
+    canvas.addEventListener('touchend', endScrub);
+  }
+
+  let resizeTimeout = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      map.invalidateSize();
+      redrawElevationChart();
+    }, 120);
+  });
+
+  // ── Load GPX route & Komoot Stats ──
+  if (event.gpx_path) {
+    try {
+      const gpxText = await fetch(event.gpx_path).then(r => r.text());
+      gpxData       = parseGpxData(gpxText);
+      routeCoords   = gpxData.coords;
+      routeKm       = gpxData.stats.totalKm;
+
+      if (routeCoords.length) {
+        const poly = L.polyline(routeCoords, { color: '#FFE600', weight: 4, opacity: 0.95 }).addTo(map);
+        polylineBounds = poly.getBounds();
+        map.fitBounds(polylineBounds, { padding: [40, 40] });
+
+        // Start / Finish flags
+        const flagIcon = (label, bg) => L.divIcon({
+          html: `<div style="background:${bg};color:#080A0F;font-weight:900;font-size:10px;padding:4px 10px;border-radius:100px;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,0.6)">${label}</div>`,
+          className: '', iconAnchor: [0, 8]
+        });
+        L.marker(routeCoords[0], { icon: flagIcon('▶ START', '#10B981') }).addTo(map);
+        L.marker(routeCoords[routeCoords.length - 1], { icon: flagIcon('🏁 FINISH', '#EF4444') }).addTo(map);
+
+        document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider`;
+
+        // ── Populate Komoot Elevation Metrics ──
+        document.getElementById('elevStatDist').textContent = gpxData.stats.totalKm;
+        document.getElementById('elevStatTime').textContent = gpxData.stats.estTime;
+        document.getElementById('elevStatGain').textContent = `+${gpxData.stats.elevGain.toLocaleString()}`;
+        document.getElementById('elevStatLoss').textContent = `-${gpxData.stats.elevLoss.toLocaleString()}`;
+
+        const diffEl = document.getElementById('elevStatDiff');
+        diffEl.textContent = gpxData.stats.difficulty;
+        diffEl.className = `elev-pill-badge diff-${gpxData.stats.difficulty.toLowerCase()}`;
+
+        document.getElementById('elevStatSpeed').textContent = `${gpxData.stats.difficulty}: ${gpxData.stats.avgSpeed}`;
+
+        setTimeout(redrawElevationChart, 60);
+      } else {
+        document.getElementById('eventStats').textContent = `${riders.length} Rider`;
+        toggleElevation(false);
+      }
+    } catch (err) {
+      console.warn('GPX parse error:', err);
+      document.getElementById('eventStats').textContent = `${riders.length} Rider`;
+      toggleElevation(false);
+    }
+  } else {
+    document.getElementById('eventStats').textContent = `Belum ada rute GPX · ${riders.length} Rider`;
+    toggleElevation(false);
+  }
 
   // ── Marker cluster group ──
   const clusterGroup = L.markerClusterGroup({
@@ -396,6 +826,26 @@ async function renderLiveMap(params) {
         </div>
       `;
     }).join('');
+
+    redrawElevationChart();
+  }
+
+  if (canvas) {
+    canvas.addEventListener('click', e => {
+      if (!gpxData || !gpxData.points) return;
+      const rect = canvas.getBoundingClientRect();
+      const padL = 48;
+      const padR = 20;
+      const plotW = rect.width - padL - padR;
+      const totalDist = gpxData.stats.totalKm;
+      const mx = e.clientX - rect.left;
+      if (mx < padL || mx > rect.width - padR) return;
+      const targetKm = ((mx - padL) / plotW) * totalDist;
+      const pt = findNearestPointByDist(gpxData.points, targetKm);
+      if (pt) {
+        map.panTo([pt.lat, pt.lng]);
+      }
+    });
   }
 
   document.getElementById('riderSearchInput').addEventListener('input', e => {

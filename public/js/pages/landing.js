@@ -73,7 +73,7 @@ function renderLanding() {
 
       <!-- ── Footer ── -->
       <footer class="landing-footer">
-        <p>CycloPon Live Tracker · Tour de France 2025 Edition · Terintegrasi dengan Traccar Open Source GPS</p>
+        <p>CycloPon Live Tracker · Rushamidiwinata</p>
       </footer>
     </div>
   `;
