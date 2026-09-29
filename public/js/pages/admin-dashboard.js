@@ -29,12 +29,15 @@ function renderAdminLogin() {
         </div>
         <form id="adminLoginForm">
           <div class="form-group">
-            <label for="adminEmail">Email</label>
-            <input class="input" type="email" id="adminEmail" placeholder="admin@example.com" required autocomplete="username">
+            <label for="adminEmail">Username / Email</label>
+            <input class="input" type="text" id="adminEmail" placeholder="admin atau email" value="admin" required autocomplete="username">
           </div>
           <div class="form-group">
             <label for="adminPassword">Password</label>
-            <input class="input" type="password" id="adminPassword" placeholder="••••••••" required autocomplete="current-password">
+            <input class="input" type="password" id="adminPassword" placeholder="••••••••" value="admin" required autocomplete="current-password">
+          </div>
+          <div style="background:rgba(0,229,255,0.06);border:1px dashed rgba(0,229,255,0.25);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);text-align:center">
+            💡 <strong style="color:var(--color-cyan)">Mode Dev:</strong> default user <code style="color:#fff">admin</code>, pass <code style="color:#fff">admin</code>
           </div>
           <p id="loginError" style="color:var(--color-red);font-size:13px;margin-bottom:10px;min-height:18px"></p>
           <button class="btn btn-primary" type="submit" id="loginSubmit" style="width:100%;padding:14px;font-size:15px">

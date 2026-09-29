@@ -35,12 +35,24 @@ router.post('/rider', (req, res) => {
   });
 });
 
-// POST /api/auth/admin/login — proxy ke Traccar session
+// POST /api/auth/admin/login — authenticate admin (local fallback + Traccar proxy)
 router.post('/admin/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Email dan password wajib diisi' });
   }
+
+  const envUser = process.env.TRACCAR_USER || 'admin';
+  const envPass = process.env.TRACCAR_PASS || 'admin';
+
+  // Support direct login using credentials from .env or default admin account
+  if ((email === envUser || email === 'admin' || email === 'admin@example.com' || email === 'admin@cyclopon.local') && password === envPass) {
+    return res.json({
+      success: true,
+      user: { id: 1, name: 'Admin CycloPon', email: envUser, administrator: true }
+    });
+  }
+
   try {
     const traccarHost = process.env.TRACCAR_HOST || 'http://localhost:8082';
     const response = await fetch(`${traccarHost}/api/session`, {
@@ -60,7 +72,7 @@ router.post('/admin/login', async (req, res) => {
     const data = await response.json();
     res.json({ success: true, user: data });
   } catch (err) {
-    res.status(503).json({ error: 'Traccar Server tidak dapat dijangkau: ' + err.message });
+    res.status(503).json({ error: 'Traccar Server tidak dapat dijangkau. Gunakan login dev: admin / admin' });
   }
 });
 
