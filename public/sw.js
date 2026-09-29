@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v3';
+const CACHE_NAME = 'cyclopon-v4';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [

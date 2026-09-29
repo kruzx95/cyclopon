@@ -5,32 +5,76 @@ async function renderLiveMap(params) {
   const app     = document.getElementById('app');
 
   app.innerHTML = `
-    <div class="map-layout">
-      <div class="map-container">
-        <div class="map-top-bar">
-          <div class="map-top-badge">
-            <span class="live-indicator">
-              <span class="live-dot pulse" id="liveDot"></span>
-              LIVE
-            </span>
+    <div class="live-map-wrapper">
+      <!-- ── Unified Top Navigation Bar ── -->
+      <header class="live-map-header">
+        <div class="header-left">
+          <a href="/" data-link class="header-logo" title="Kembali ke Beranda CycloPon">
+            <span>🚴</span>
+            <span class="logo-text">CycloPon</span>
+          </a>
+          <div class="live-status-pill">
+            <span class="live-dot pulse" id="liveDot"></span>
+            <span>LIVE</span>
           </div>
-          <div class="map-top-badge" id="eventBadge" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-            Memuat...
+          <div class="event-info-cluster">
+            <h1 class="header-event-title" id="eventBadge">Memuat Event...</h1>
+            <span class="header-event-stats" id="eventStats">Menghitung...</span>
           </div>
         </div>
-        <div id="leaflet-map"></div>
+
+        <div class="header-right">
+          <!-- Segmented Layer Selector -->
+          <div class="layer-pill-group">
+            <button class="layer-pill-btn active" id="btnLayerDark" title="Ganti ke Tampilan Gelap (Dark Mode)">
+              🌙 <span class="layer-btn-label">Dark</span>
+            </button>
+            <button class="layer-pill-btn" id="btnLayerCycle" title="Ganti ke Peta Rute Sepeda (CyclOSM)">
+              🚴 <span class="layer-btn-label">Sepeda</span>
+            </button>
+            <button class="layer-pill-btn" id="btnLayerSat" title="Ganti ke Citra Satelit">
+              🛰️ <span class="layer-btn-label">Satelit</span>
+            </button>
+          </div>
+
+          <!-- Fit Route Button -->
+          <button class="header-action-btn" id="btnFitRoute" title="Pusatkan peta ke seluruh rute GPX">
+            🎯 <span class="action-btn-label">Fit Rute</span>
+          </button>
+
+          <!-- Toggle Leaderboard -->
+          <button class="header-action-btn active" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
+            📊 <span class="action-btn-label">Leaderboard</span>
+            <span class="badge badge-cyan" id="headerRiderCount">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ── Viewport Grid (Map + Sidebar) ── -->
+      <div class="map-viewport" id="mapViewport">
+        <div class="map-container">
+          <div id="leaflet-map"></div>
+        </div>
+
+        <!-- Leaderboard Sidebar -->
+        <aside class="map-sidebar" id="mapSidebar">
+          <div class="map-sidebar-header">
+            <div class="sidebar-title-row">
+              <h2 id="sidebarTitle">Leaderboard</h2>
+              <span class="badge badge-cyan" id="sidebarRiderBadge">0 Rider</span>
+            </div>
+            <div class="sidebar-search-box">
+              <span class="search-icon-placeholder">🔍</span>
+              <input type="text" class="sidebar-search-input" id="riderSearchInput" placeholder="Cari nama atau nomor BIB...">
+            </div>
+          </div>
+          <div class="leaderboard" id="leaderboard">
+            <div style="padding:28px 16px;text-align:center;color:var(--text-secondary);font-size:13px">
+              ⏳ Menunggu posisi pertama...
+            </div>
+          </div>
+        </aside>
       </div>
-      <aside class="map-sidebar">
-        <div class="map-sidebar-header">
-          <h2 id="sidebarTitle">Leaderboard</h2>
-          <p id="sidebarSub">Memuat rider...</p>
-        </div>
-        <div class="leaderboard" id="leaderboard">
-          <div style="padding:24px;text-align:center;color:var(--text-secondary);font-size:14px">
-            ⏳ Menunggu posisi pertama...
-          </div>
-        </div>
-      </aside>
     </div>
   `;
 
@@ -55,41 +99,90 @@ async function renderLiveMap(params) {
     event  = await evRes.json();
     riders = await rRes.json();
   } catch (err) {
-    app.innerHTML = `<div style="padding:48px;text-align:center;color:var(--text-secondary)">⚠️ ${err.message}</div>`;
+    app.innerHTML = `
+      <div style="padding:60px 20px;text-align:center;color:var(--text-secondary)">
+        <h2 style="font-size:24px;color:var(--color-red);margin-bottom:12px">⚠️ Gagal Memuat Peta</h2>
+        <p>${err.message}</p>
+        <a href="/" data-link style="display:inline-block;margin-top:20px;color:var(--color-cyan);text-decoration:none">← Kembali ke Beranda</a>
+      </div>
+    `;
     return;
   }
 
+  // Update header titles & count
   document.getElementById('eventBadge').textContent = event.name;
   document.getElementById('sidebarTitle').textContent = event.name;
-  document.getElementById('sidebarSub').textContent = `${riders.length} rider terdaftar`;
+  document.getElementById('sidebarRiderBadge').textContent = `${riders.length} Rider`;
+  document.getElementById('headerRiderCount').textContent = riders.length;
   document.title = `${event.name} — CycloPon Live`;
 
-  // ── Init Leaflet map with clean, watermark-free tile layers ──
-  const map = L.map('leaflet-map', { zoomControl: true }).setView([-2.5, 118], 5);
+  // ── Init Leaflet Map with Zoom Control on Bottom-Right ──
+  const map = L.map('leaflet-map', {
+    zoomControl: false,
+    attributionControl: true
+  }).setView([-2.5, 118], 5);
 
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // ── Tile Layers ──
   const darkLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     className: 'dark-tile'
   });
 
-  const cyclOsmLayer = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+  const cycleLayer = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
     maxZoom: 19,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://www.cyclosm.org">CyclOSM</a>'
+    attribution: '© OpenStreetMap | <a href="https://www.cyclosm.org">CyclOSM</a>'
   });
 
-  const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  const satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
     maxZoom: 19,
-    attribution: '© <a href="https://www.esri.com">Esri</a>'
+    attribution: '© Esri'
   });
 
+  // Default to Dark layer
+  let currentLayer = darkLayer;
   darkLayer.addTo(map);
 
-  L.control.layers({
-    "🌙 Dark Mode": darkLayer,
-    "🚴 Rute Sepeda (CyclOSM)": cyclOsmLayer,
-    "🛰️ Citra Satelit": satelliteLayer
-  }, null, { position: 'topright' }).addTo(map);
+  function switchTileLayer(layer, activeBtn) {
+    if (currentLayer === layer) return;
+    map.removeLayer(currentLayer);
+    layer.addTo(map);
+    currentLayer = layer;
+
+    document.querySelectorAll('.layer-pill-btn').forEach(b => b.classList.remove('active'));
+    activeBtn.classList.add('active');
+  }
+
+  document.getElementById('btnLayerDark').addEventListener('click', e => {
+    switchTileLayer(darkLayer, e.currentTarget);
+  });
+  document.getElementById('btnLayerCycle').addEventListener('click', e => {
+    switchTileLayer(cycleLayer, e.currentTarget);
+  });
+  document.getElementById('btnLayerSat').addEventListener('click', e => {
+    switchTileLayer(satLayer, e.currentTarget);
+  });
+
+  // ── Sidebar Toggle & Fit Route Handlers ──
+  const mapViewport = document.getElementById('mapViewport');
+  const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+
+  btnToggleSidebar.addEventListener('click', () => {
+    const isCollapsed = mapViewport.classList.toggle('sidebar-collapsed');
+    btnToggleSidebar.classList.toggle('active', !isCollapsed);
+    setTimeout(() => map.invalidateSize(), 300);
+  });
+
+  let polylineBounds = null;
+  document.getElementById('btnFitRoute').addEventListener('click', () => {
+    if (polylineBounds) {
+      map.fitBounds(polylineBounds, { padding: [40, 40] });
+    } else {
+      map.setView([-2.5, 118], 5);
+    }
+  });
 
   // ── Load GPX route ──
   let routeCoords = [];
@@ -102,8 +195,9 @@ async function renderLiveMap(params) {
       routeKm       = totalRouteKm(routeCoords);
 
       if (routeCoords.length) {
-        const poly = L.polyline(routeCoords, { color: '#00E5FF', weight: 3, opacity: 0.8 }).addTo(map);
-        map.fitBounds(poly.getBounds(), { padding: [40, 40] });
+        const poly = L.polyline(routeCoords, { color: '#00E5FF', weight: 3.5, opacity: 0.85 }).addTo(map);
+        polylineBounds = poly.getBounds();
+        map.fitBounds(polylineBounds, { padding: [40, 40] });
 
         // Start / Finish flags
         const flagIcon = (label, bg) => L.divIcon({
@@ -112,14 +206,23 @@ async function renderLiveMap(params) {
         });
         L.marker(routeCoords[0], { icon: flagIcon('▶ START', '#3FB950') }).addTo(map);
         L.marker(routeCoords[routeCoords.length - 1], { icon: flagIcon('🏁 FINISH', '#FF6B35') }).addTo(map);
+
+        document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider`;
+      } else {
+        document.getElementById('eventStats').textContent = `${riders.length} Rider`;
       }
-    } catch { /* GPX load failed silently */ }
+    } catch {
+      document.getElementById('eventStats').textContent = `${riders.length} Rider`;
+    }
+  } else {
+    document.getElementById('eventStats').textContent = `Belum ada rute GPX · ${riders.length} Rider`;
   }
 
   // ── Rider state ──
   const riderById    = {};  // traccar_device_id → rider
   const markerById   = {};  // traccar_device_id → Leaflet marker
   const progressById = {};  // traccar_device_id → { progressPct, distanceKm }
+  let searchQuery    = '';
 
   riders.forEach(r => {
     if (r.traccar_device_id) riderById[r.traccar_device_id] = r;
@@ -170,16 +273,33 @@ async function renderLiveMap(params) {
     });
   }
 
-  // ── Leaderboard updater ──
+  // ── Leaderboard renderer & search filter ──
   function updateLeaderboard() {
-    const entries = Object.entries(progressById)
+    let entries = Object.entries(progressById)
       .map(([deviceId, prog]) => ({ rider: riderById[deviceId], ...prog }))
       .filter(e => e.rider)
       .sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
 
-    if (!entries.length) return;
+    // If search filter active
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      entries = entries.filter(e =>
+        e.rider.name.toLowerCase().includes(q) ||
+        String(e.rider.bib).includes(q)
+      );
+    }
 
-    document.getElementById('leaderboard').innerHTML = entries.map((e, i) => `
+    const leaderboardEl = document.getElementById('leaderboard');
+    if (!entries.length) {
+      leaderboardEl.innerHTML = `
+        <div style="padding:28px 16px;text-align:center;color:var(--text-secondary);font-size:13px">
+          ${searchQuery ? 'Tidak ada rider yang cocok dengan pencarian.' : '⏳ Menunggu data GPS posisi rider...'}
+        </div>
+      `;
+      return;
+    }
+
+    leaderboardEl.innerHTML = entries.map((e, i) => `
       <div class="leaderboard-item fade-in" onclick="panToRider(${e.rider.traccar_device_id})">
         <div class="leaderboard-rank ${i < 3 ? 'top' : ''}">${i < 3 ? ['🥇','🥈','🥉'][i] : i + 1}</div>
         <div class="rider-avatar" style="background:${e.rider.color}">${e.rider.bib}</div>
@@ -195,9 +315,17 @@ async function renderLiveMap(params) {
     `).join('');
   }
 
+  document.getElementById('riderSearchInput').addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
+    updateLeaderboard();
+  });
+
   window.panToRider = deviceId => {
     const m = markerById[deviceId];
-    if (m) { map.setView(m.getLatLng(), 15); }
+    if (m) {
+      map.setView(m.getLatLng(), 15);
+      m.openPopup();
+    }
   };
 
   // ── WebSocket connection to Traccar proxy ──
@@ -235,7 +363,7 @@ async function renderLiveMap(params) {
             <div style="min-width:160px">
               <div style="font-weight:700;font-size:15px;margin-bottom:4px">${rider.name}</div>
               <div style="color:#8B949E;font-size:12px">BIB: <strong style="color:${rider.color}">#${rider.bib}</strong></div>
-              ${pos.speed != null ? `<div style="color:#8B949E;font-size:12px;margin-top:2px">Speed: <strong style="color:#E6EDF3">${Math.round(pos.speed)} km/h</strong></div>` : ''}
+              ${pos.speed != null ? `<div style="color:#8B949E;font-size:12px;margin-top:2px">Kecepatan: <strong style="color:#E6EDF3">${Math.round(pos.speed)} km/h</strong></div>` : ''}
               <div style="color:#8B949E;font-size:11px;margin-top:6px">${new Date(pos.fixTime || pos.deviceTime).toLocaleTimeString('id-ID')}</div>
             </div>
           `);
