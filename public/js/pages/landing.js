@@ -1,50 +1,127 @@
 function renderLanding() {
   const app = document.getElementById('app');
+
   app.innerHTML = `
-    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:radial-gradient(ellipse at 50% 0%, rgba(255,230,0,0.1) 0%, transparent 60%)">
-      <div style="font-size:80px;margin-bottom:12px;filter:drop-shadow(0 0 32px rgba(255,230,0,0.45));animation:fadeIn 0.6s ease">🚴</div>
-      <h1 class="fade-in" style="font-size:48px;font-weight:900;letter-spacing:-0.03em;background:linear-gradient(135deg,#FFE600 0%,#FFFFFF 70%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;line-height:1.1">CycloPon</h1>
-      <p class="fade-in" style="color:var(--text-secondary);font-size:16px;margin-bottom:44px;max-width:440px;line-height:1.6">Live GPS tracking untuk event bersepeda jarak jauh.<br>Layar HP mati, pelacakan tetap berjalan lancar.</p>
+    <div class="landing-page-wrapper">
+      <!-- ── Clean Solid Top Nav ── -->
+      <nav class="landing-nav">
+        <a href="/" data-link class="brand-title">
+          <span style="font-size:20px">🚴</span>
+          <span>Cyclo<span class="brand-accent">Pon</span></span>
+        </a>
+        <a href="/admin" data-link class="btn btn-outline" style="font-size:13px;padding:8px 16px">
+          ⚙️ &nbsp;Admin Panel
+        </a>
+      </nav>
 
-      <div style="display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px">
-        <button id="btnRider" class="btn btn-primary fade-in" style="font-size:16px;padding:18px 24px;border-radius:16px">
-          🚴‍♂️ &nbsp;Saya Rider (Pesepeda)
-        </button>
-
-        <div id="activeEventSection" style="display:none">
-          <p style="color:var(--text-secondary);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px">Event Sedang Berlangsung</p>
-          <div id="activeEventLinks"></div>
+      <!-- ── Hero Section (Solid Dark Background, No Blurry Gradients) ── -->
+      <main class="landing-hero fade-in">
+        <div class="hero-tag">
+          <span>🏆</span>
+          <span>Live GPS Cycling Tracker</span>
         </div>
 
-        <button id="btnAdmin" class="btn btn-outline fade-in" style="font-size:14px;padding:14px;margin-top:4px">
-          ⚙️ &nbsp;Admin Panel
-        </button>
-      </div>
+        <h1 class="hero-title">
+          Pantau Setiap Kilometer<br>
+          <span class="title-accent">Secara Real-Time</span>
+        </h1>
 
-      <p style="color:var(--text-secondary);font-size:12px;margin-top:54px;opacity:0.6">
-        Tour de France 2025 Edition · Powered by Traccar GPS
-      </p>
+        <p class="hero-subtitle">
+          Platform pelacakan langsung rute GPX dan posisi rider untuk kegiatan bersepeda jarak jauh.
+          Layar HP mati, pelacakan tetap berjalan otomatis & hemat baterai.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="hero-cta-row">
+          <button id="btnRider" class="btn btn-primary" style="font-size:15px;padding:16px 28px">
+            🚴‍♂️ &nbsp;Masuk Sebagai Rider
+          </button>
+          <button id="btnWatchMap" class="btn btn-outline" style="font-size:15px;padding:16px 28px">
+            🗺️ &nbsp;Pantau Live Map
+          </button>
+        </div>
+
+        <!-- Featured Active Event Container -->
+        <div id="activeEventContainer" style="width:100%;max-width:580px;display:none">
+          <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;text-align:left">
+            Event Sedang Berlangsung:
+          </div>
+          <div id="activeEventList"></div>
+        </div>
+
+        <!-- 3 Feature Highlight Cards -->
+        <div class="landing-features-grid">
+          <div class="feature-item-card">
+            <div class="feature-item-icon">🔋</div>
+            <div class="feature-item-title">Interval 30 Detik</div>
+            <div class="feature-item-desc">Hemat daya baterai smartphone secara maksimal untuk kegiatan rute ratusan kilometer.</div>
+          </div>
+
+          <div class="feature-item-card">
+            <div class="feature-item-icon">📱</div>
+            <div class="feature-item-title">Layar Mati Tetap Jalan</div>
+            <div class="feature-item-desc">Memanfaatkan background service resmi Traccar Client di Android dan iOS tanpa henti.</div>
+          </div>
+
+          <div class="feature-item-card">
+            <div class="feature-item-icon">📊</div>
+            <div class="feature-item-title">Rute GPX & Leaderboard</div>
+            <div class="feature-item-desc">Visualisasi rute GPX interaktif dengan kalkulasi jarak tempuh (km) dan ranking real-time.</div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ── Footer ── -->
+      <footer class="landing-footer">
+        <p>CycloPon Live Tracker · Tour de France 2025 Edition · Terintegrasi dengan Traccar Open Source GPS</p>
+      </footer>
     </div>
   `;
 
   document.getElementById('btnRider').addEventListener('click', () => Router.navigate('/rider'));
-  document.getElementById('btnAdmin').addEventListener('click', () => Router.navigate('/admin'));
 
-  // Fetch active events for spectator quick links
+  let firstEventId = null;
+  document.getElementById('btnWatchMap').addEventListener('click', () => {
+    if (firstEventId) {
+      Router.navigate(`/watch/${firstEventId}`);
+    } else {
+      Router.navigate('/watch/1');
+    }
+  });
+
+  // Fetch active events for direct access
   fetch('/api/events')
     .then(r => r.json())
     .then(events => {
-      const active = events.filter(e => e.active);
-      if (!active.length) return;
+      if (!Array.isArray(events) || !events.length) return;
 
-      document.getElementById('activeEventSection').style.display = 'block';
-      document.getElementById('activeEventLinks').innerHTML = active.map(ev => `
-        <a class="btn btn-outline fade-in" style="display:flex;width:100%;margin-bottom:8px;font-size:14px;padding:14px 18px;justify-content:flex-start;gap:10px"
-           href="/watch/${ev.id}" data-link>
-          <span>📍</span>
-          <span style="flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.name}</span>
-          <span style="color:var(--color-green);font-size:11px;font-weight:800;letter-spacing:0.05em">LIVE</span>
-        </a>
+      const active = events.filter(e => e.active);
+      const targetEvents = active.length ? active : events.slice(0, 1);
+      firstEventId = targetEvents[0].id;
+
+      const container = document.getElementById('activeEventContainer');
+      const list = document.getElementById('activeEventList');
+      container.style.display = 'block';
+
+      list.innerHTML = targetEvents.map(ev => `
+        <div class="featured-event-box">
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="live-status-pill" style="padding:2px 8px;font-size:10px">
+                <span class="live-dot pulse"></span>
+                <span>LIVE</span>
+              </span>
+              <span style="font-size:12px;color:var(--text-secondary)">📅 ${ev.date}</span>
+            </div>
+            <div style="font-size:15px;font-weight:800;color:#FFFFFF;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              ${ev.name}
+            </div>
+          </div>
+
+          <a href="/watch/${ev.id}" data-link class="btn btn-primary" style="padding:10px 18px;font-size:13px;flex-shrink:0">
+            Buka Peta →
+          </a>
+        </div>
       `).join('');
     })
     .catch(() => {});
