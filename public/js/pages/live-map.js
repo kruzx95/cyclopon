@@ -276,8 +276,8 @@ async function renderLiveMap(params) {
   const scrubIcon = L.divIcon({
     html: `<div style="
       width:18px;height:18px;border-radius:50%;
-      background:#FFE600;border:3px solid #080A0F;
-      box-shadow:0 0 16px #FFE600, 0 0 0 4px rgba(255,230,0,0.35);
+      background:#FF1A5E;border:3px solid #FFFFFF;
+      box-shadow:0 0 16px #FF1A5E, 0 0 0 4px rgba(255,26,94,0.4);
       animation:pulse 1s infinite alternate;
     "></div>`,
     className: '',
@@ -630,7 +630,24 @@ async function renderLiveMap(params) {
       routeKm       = gpxData.stats.totalKm;
 
       if (routeCoords.length) {
-        const poly = L.polyline(routeCoords, { color: '#FFE600', weight: 4, opacity: 0.95 }).addTo(map);
+        // High-contrast dark casing/halo so the route pops against any map layer
+        L.polyline(routeCoords, {
+          color: '#080A0F',
+          weight: 6.5,
+          opacity: 0.85,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
+
+        // Core route polyline — Neon Crimson / Rose (#FF1A5E) stands out sharply against yellow roads, green terrain & gray streets
+        const poly = L.polyline(routeCoords, {
+          color: '#FF1A5E',
+          weight: 3.5,
+          opacity: 1,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
+
         polylineBounds = poly.getBounds();
         map.fitBounds(polylineBounds, { padding: [40, 40] });
 
