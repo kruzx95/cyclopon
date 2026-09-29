@@ -64,14 +64,32 @@ async function renderLiveMap(params) {
   document.getElementById('sidebarSub').textContent = `${riders.length} rider terdaftar`;
   document.title = `${event.name} — CycloPon Live`;
 
-  // ── Init Leaflet map with dark tiles ──
+  // ── Init Leaflet map with clean, watermark-free tile layers ──
   const map = L.map('leaflet-map', { zoomControl: true }).setView([-2.5, 118], 5);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19
-  }).addTo(map);
+  const darkLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    className: 'dark-tile'
+  });
+
+  const cyclOsmLayer = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://www.cyclosm.org">CyclOSM</a>'
+  });
+
+  const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19,
+    attribution: '© <a href="https://www.esri.com">Esri</a>'
+  });
+
+  darkLayer.addTo(map);
+
+  L.control.layers({
+    "🌙 Dark Mode": darkLayer,
+    "🚴 Rute Sepeda (CyclOSM)": cyclOsmLayer,
+    "🛰️ Citra Satelit": satelliteLayer
+  }, null, { position: 'topright' }).addTo(map);
 
   // ── Load GPX route ──
   let routeCoords = [];

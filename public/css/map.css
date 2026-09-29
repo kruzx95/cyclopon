@@ -133,6 +133,45 @@
 }
 .leaflet-control-attribution a { color: var(--text-secondary) !important; }
 
+/* ── Leaflet dark tile filter (No API key, zero watermark) ── */
+.leaflet-tile.dark-tile {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(95%);
+}
+
+/* ── Leaflet layers control styling ── */
+.leaflet-control-layers {
+  background: rgba(13,17,23,0.9) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 10px 14px !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+}
+.leaflet-control-layers-toggle {
+  background-color: var(--bg-card) !important;
+  border-radius: var(--radius-sm) !important;
+  filter: invert(1);
+}
+.leaflet-control-layers-base label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 6px !important;
+  cursor: pointer !important;
+  color: var(--text-primary) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.leaflet-control-layers-base input {
+  accent-color: var(--color-cyan);
+}
+
 /* ── Mobile ── */
 @media (max-width: 768px) {
   .map-layout {
