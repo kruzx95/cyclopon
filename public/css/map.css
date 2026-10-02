@@ -437,6 +437,43 @@
   pointer-events: none;
 }
 
+/* ── Sidebar Sort Mode Toggle ── */
+.sidebar-sort-group {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+.sort-tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.sort-tab-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+.sort-tab-btn.active {
+  background: var(--bg-surface);
+  color: var(--color-yellow);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
 /* ── Leaderboard List ── */
 .leaderboard {
   flex: 1;
@@ -885,4 +922,214 @@
     bottom: 180px !important;
   }
 }
+
+/* ── Safety & Emergency Alert Banner ── */
+.live-emergency-bar {
+  background: linear-gradient(90deg, #DC2626 0%, #991B1B 100%);
+  color: #FFFFFF;
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+  z-index: 999;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  animation: emergencyFlash 1.5s infinite alternate;
+}
+@keyframes emergencyFlash {
+  0% { background: linear-gradient(90deg, #DC2626 0%, #991B1B 100%); }
+  100% { background: linear-gradient(90deg, #EF4444 0%, #B91C1C 100%); }
+}
+
+.emergency-info-cluster {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.emergency-badge {
+  background: #FFFFFF;
+  color: #DC2626;
+  font-weight: 900;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.emergency-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.btn-emergency-focus {
+  background: #FFFFFF;
+  color: #080A0F;
+  border: none;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.btn-emergency-focus:hover {
+  transform: scale(1.05);
+}
+.btn-emergency-resolve {
+  background: rgba(0, 0, 0, 0.35);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-emergency-resolve:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: #FFFFFF;
+}
+
+/* ── Telemetry: Off-Route & Battery Indicators ── */
+.offroute-pill {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  border: 1px solid #EF4444;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  animation: pulse 1.2s infinite;
+}
+
+.battery-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94A3B8;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: 100px;
+}
+.battery-pill.battery-low {
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  animation: pulse 1s infinite;
+}
+.battery-pill.battery-good {
+  color: #10B981;
+}
+
+/* ── SOS Marker on Map ── */
+.sos-map-marker-beacon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #EF4444;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 0 20px #EF4444, 0 0 40px #EF4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 900;
+  animation: sosMarkerPulse 1.2s infinite alternate;
+}
+@keyframes sosMarkerPulse {
+  0% { transform: scale(0.9); box-shadow: 0 0 10px #EF4444; }
+  100% { transform: scale(1.15); box-shadow: 0 0 25px #EF4444, 0 0 50px rgba(239, 68, 68, 0.6); }
+}
+
+/* ── Checkpoints & Audax Cut-Off Time (COT) ── */
+.cp-map-marker {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.cp-map-marker:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.7), 0 4px 10px rgba(0, 0, 0, 0.8) !important;
+}
+
+.popup-cp-splits {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.popup-cp-title {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--color-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.popup-cp-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cp-split-chip {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+.cp-split-chip.split-pass {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34D399;
+}
+.cp-split-chip.split-fail {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #F87171;
+}
+.cp-split-chip.split-pending {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.cp-pill {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cp-pill.cp-in-time {
+  background: rgba(0, 229, 255, 0.12);
+  color: #00E5FF;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+}
+.cp-pill.cp-over-cot {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
 

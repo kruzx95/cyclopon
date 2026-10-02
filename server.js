@@ -23,10 +23,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const riderRoutes = require('./routes/riders');
+const alertRoutes = require('./routes/alerts');
+const checkpointRoutes = require('./routes/checkpoints');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/admin/riders', riderRoutes);
+app.use('/api', alertRoutes);
+app.use('/api', checkpointRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -49,8 +53,12 @@ const httpServer = http.createServer(app);
 const { setupTraccarWsProxy } = require('./lib/traccar-ws-proxy');
 setupTraccarWsProxy(httpServer);
 
-httpServer.listen(PORT, () => {
-  console.log(`CycloPon server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  httpServer.listen(PORT, () => {
+    console.log(`CycloPon server running on http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app;
+module.exports.httpServer = httpServer;
+

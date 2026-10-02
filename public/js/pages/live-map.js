@@ -60,6 +60,18 @@ async function renderLiveMap(params) {
         </div>
       </header>
 
+      <!-- ── Dynamic Safety & Emergency Alert Bar ── -->
+      <div id="liveEmergencyBar" class="live-emergency-bar" style="display:none">
+        <div class="emergency-info-cluster">
+          <span class="emergency-badge">🚨 SOS DARURAT</span>
+          <span id="emergencyText">Memuat informasi darurat...</span>
+        </div>
+        <div class="emergency-actions">
+          <button class="btn-emergency-focus" id="btnFocusEmergency">🎯 Fokus Lokasi</button>
+          <button class="btn-emergency-resolve" id="btnResolveEmergency">✓ Selesai</button>
+        </div>
+      </div>
+
       <!-- ── Viewport Grid (Map + Sidebar) ── -->
       <div class="map-viewport" id="mapViewport">
         <div class="map-container elev-open" id="mapContainer">
@@ -117,6 +129,15 @@ async function renderLiveMap(params) {
               <h2 id="sidebarTitle">Leaderboard</h2>
               <span class="badge badge-yellow" id="sidebarRiderBadge">0 Rider</span>
             </div>
+            <!-- Sort Toggle Button Group -->
+            <div class="sidebar-sort-group">
+              <button class="sort-tab-btn active" id="btnSortBib" title="Urutkan tetap berdasarkan nomor BIB agar kartu tidak lompat-lompat">
+                🔢 No. BIB (Diam)
+              </button>
+              <button class="sort-tab-btn" id="btnSortRank" title="Urutkan berdasarkan posisi terdepan lomba">
+                🏆 Live Rank
+              </button>
+            </div>
             <div class="sidebar-search-box">
               <span class="search-icon-placeholder">🔍</span>
               <input type="text" class="sidebar-search-input" id="riderSearchInput" placeholder="Cari nama atau nomor BIB...">
@@ -143,16 +164,25 @@ async function renderLiveMap(params) {
   loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css');
   loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css');
 
-  // ── Fetch event + riders ──
+  // ── Fetch event + riders + checkpoints + splits ──
   let event, riders;
+  let checkpoints = [];
+  const splitsCache = {};
   try {
-    const [evRes, rRes] = await Promise.all([
+    const [evRes, rRes, cpRes, spRes] = await Promise.all([
       fetch(`/api/events/${eventId}`),
-      fetch(`/api/events/${eventId}/riders`)
+      fetch(`/api/events/${eventId}/riders`),
+      fetch(`/api/events/${eventId}/checkpoints`),
+      fetch(`/api/events/${eventId}/splits`)
     ]);
     if (!evRes.ok) throw new Error('Event tidak ditemukan');
-    event  = await evRes.json();
-    riders = await rRes.json();
+    event       = await evRes.json();
+    riders      = await rRes.json();
+    checkpoints = cpRes.ok ? await cpRes.json() : [];
+    const initialSplits = spRes.ok ? await spRes.json() : [];
+    initialSplits.forEach(sp => {
+      splitsCache[`${sp.rider_id}_${sp.checkpoint_id}`] = sp;
+    });
   } catch (err) {
     app.innerHTML = `
       <div style="padding:60px 20px;text-align:center;color:var(--text-secondary)">
@@ -509,6 +539,43 @@ async function renderLiveMap(params) {
       ctx.fillText(`#${rider.bib}`, rx, ry - 6);
     });
 
+    // ── Checkpoint Markers on Elevation Profile ──
+    if (checkpoints && checkpoints.length && pts.length) {
+      checkpoints.forEach((cp, idx) => {
+        if (cp.km_distance > totalDist) return;
+        const cpx = getX(cp.km_distance);
+        const cpPt = findNearestPointByDist(pts, cp.km_distance);
+        if (!cpPt) return;
+        const cpy = getY(cpPt.ele);
+
+        // Vertical cyan dashed guide line
+        ctx.beginPath();
+        ctx.setLineDash([2, 4]);
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.7)';
+        ctx.lineWidth = 1.3;
+        ctx.moveTo(cpx, padT);
+        ctx.lineTo(cpx, baselineY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Cyan glow circle on elevation contour
+        ctx.beginPath();
+        ctx.arc(cpx, cpy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#00E5FF';
+        ctx.shadowColor = '#00E5FF';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Label above
+        ctx.font = '700 9px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#00E5FF';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`🚩 CP${idx + 1} (${cp.km_distance}k)`, cpx, padT + 12);
+      });
+    }
+
     // ── Hover Crosshair & Scrubbing Indicator ──
     if (activeHoverDist != null) {
       const hPt = findNearestPointByDist(pts, activeHoverDist);
@@ -659,8 +726,9 @@ async function renderLiveMap(params) {
         });
         L.marker(routeCoords[0], { icon: flagIcon('▶ START', '#10B981') }).addTo(map);
         L.marker(routeCoords[routeCoords.length - 1], { icon: flagIcon('🏁 FINISH', '#EF4444') }).addTo(map);
+        renderCheckpointMarkers();
 
-        document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider`;
+        document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider · ${checkpoints.length} CP`;
 
         // ── Populate Komoot Elevation Metrics ──
         document.getElementById('elevStatDist').textContent = gpxData.stats.totalKm;
@@ -710,11 +778,105 @@ async function renderLiveMap(params) {
   });
   map.addLayer(clusterGroup);
 
-  function createRiderIcon(rider) {
-    const color = rider.color || '#FFE600';
+  // ── Checkpoint Markers & Cut-Off Time (COT) Engine ──
+  const cpMarkers = [];
+  function renderCheckpointMarkers() {
+    cpMarkers.forEach(m => map.removeLayer(m));
+    cpMarkers.length = 0;
+
+    if (!checkpoints || !checkpoints.length) return;
+
+    checkpoints.forEach((cp, idx) => {
+      let lat = cp.latitude;
+      let lng = cp.longitude;
+      if ((lat == null || lng == null) && gpxData && gpxData.points && gpxData.points.length) {
+        const nearestPt = findNearestPointByDist(gpxData.points, cp.km_distance);
+        if (nearestPt) {
+          lat = nearestPt.lat;
+          lng = nearestPt.lon;
+        }
+      }
+
+      if (lat != null && lng != null) {
+        const cpIcon = L.divIcon({
+          html: `
+            <div class="cp-map-marker" style="
+              background: rgba(8, 10, 15, 0.92);
+              border: 2px solid var(--color-cyan);
+              color: var(--color-cyan);
+              padding: 3px 8px;
+              border-radius: 6px;
+              font-size: 11px;
+              font-weight: 800;
+              white-space: nowrap;
+              box-shadow: 0 0 12px rgba(0, 229, 255, 0.4), 0 3px 6px rgba(0,0,0,0.6);
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              cursor: pointer;
+            ">
+              <span>🚩</span>
+              <span>${cp.name}</span>
+              <span style="color:#FFF;background:rgba(0,229,255,0.25);padding:1px 5px;border-radius:4px;font-size:10px">${cp.km_distance}K</span>
+            </div>
+          `,
+          className: '',
+          iconAnchor: [30, 14]
+        });
+
+        const popupHtml = `
+          <div style="font-family:Inter,sans-serif;min-width:180px">
+            <div style="font-size:11px;font-weight:800;color:var(--color-cyan);text-transform:uppercase;letter-spacing:0.5px">CHECKPOINT ${idx + 1}</div>
+            <div style="font-size:14px;font-weight:700;color:#FFF;margin:4px 0">${cp.name}</div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;margin-top:6px">
+              <span>Jarak: <strong style="color:var(--color-yellow)">${cp.km_distance} km</strong></span>
+              <span>COT: <strong style="color:var(--color-red)">${cp.close_time || '—'}</strong></span>
+            </div>
+          </div>
+        `;
+
+        const m = L.marker([lat, lng], { icon: cpIcon }).addTo(map);
+        m.bindPopup(popupHtml);
+        cpMarkers.push(m);
+      }
+    });
+  }
+
+  function checkCotStatus(arrivalDate, openTimeStr, closeTimeStr) {
+    if (!closeTimeStr) return 'IN_TIME';
+    try {
+      if (closeTimeStr.includes(':')) {
+        const parts = closeTimeStr.split(':');
+        const closeDate = new Date(arrivalDate);
+        closeDate.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), parseInt(parts[2] || 0, 10), 0);
+        return arrivalDate.getTime() <= closeDate.getTime() ? 'IN_TIME' : 'OVER_COT';
+      } else {
+        const closeDate = new Date(closeTimeStr);
+        if (!isNaN(closeDate.getTime())) {
+          return arrivalDate.getTime() <= closeDate.getTime() ? 'IN_TIME' : 'OVER_COT';
+        }
+      }
+    } catch (e) {
+      console.warn('COT check parse error:', e);
+    }
+    return 'IN_TIME';
+  }
+
+  function createRiderIcon(rider, isOffRoute) {
+    const color = isOffRoute ? '#EF4444' : (rider.color || '#FFE600');
+    const offRouteTag = isOffRoute
+      ? `<div style="
+          position:absolute;top:-34px;left:50%;transform:translateX(-50%);
+          background:#EF4444;color:#FFFFFF;font-size:9px;font-weight:900;
+          padding:1px 6px;border-radius:100px;white-space:nowrap;
+          box-shadow:0 0 12px #EF4444;animation:pulse 1.2s infinite;
+        ">⚠️ NYASAR</div>`
+      : '';
+
     return L.divIcon({
       html: `
         <div style="position:relative;width:20px;height:20px">
+          ${offRouteTag}
           <div style="
             width:14px;height:14px;border-radius:50%;
             background:${color};
@@ -771,10 +933,60 @@ async function renderLiveMap(params) {
       }
     }
 
-    // 2. Nearest-point route calculation
+    // 2. Nearest-point route calculation & Off-Route detection
     let calc = { progressPct: 0, distanceKm: 0 };
     if (routeCoords.length) {
       calc = findNearestRoutePoint(pos.latitude, pos.longitude, routeCoords, routeKm);
+    }
+
+    // Auto-detect Checkpoint crossing & record split time
+    if (checkpoints && checkpoints.length && calc.distanceKm > 0) {
+      checkpoints.forEach(cp => {
+        const cacheKey = `${rider.id}_${cp.id}`;
+        if (!splitsCache[cacheKey] && calc.distanceKm >= cp.km_distance) {
+          const now = new Date(fixTime || Date.now());
+          const cotStatus = checkCotStatus(now, cp.open_time, cp.close_time);
+          const arrivalIso = now.toISOString();
+
+          splitsCache[cacheKey] = {
+            rider_id: rider.id,
+            checkpoint_id: cp.id,
+            cp_name: cp.name,
+            km_distance: cp.km_distance,
+            arrival_time: arrivalIso,
+            status: cotStatus
+          };
+
+          fetch(`/api/events/${eventId}/splits`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              rider_id: rider.id,
+              checkpoint_id: cp.id,
+              arrival_time: arrivalIso,
+              status: cotStatus
+            })
+          }).then(res => res.json()).then(saved => {
+            if (saved && saved.id) splitsCache[cacheKey] = saved;
+          }).catch(e => console.warn('Gagal simpan split:', e));
+
+          const clockStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const cotMsg = cotStatus === 'IN_TIME' ? '✅ Lolos COT' : '⏱️ Melebihi COT';
+          showToast(`🚩 #${rider.bib} ${rider.name} tiba di ${cp.name} (${clockStr}) — ${cotMsg}!`, cotStatus === 'IN_TIME' ? 'success' : 'warning');
+        }
+      });
+    }
+
+    let offRoute = { isOffRoute: false, deviationMeters: 0 };
+    if (routeCoords.length && typeof checkOffRoute === 'function') {
+      offRoute = checkOffRoute(pos.latitude, pos.longitude, routeCoords, 100);
+    }
+
+    let batteryLevel = null;
+    if (pos.attributes && pos.attributes.batteryLevel != null) {
+      batteryLevel = Math.round(Number(pos.attributes.batteryLevel));
+    } else if (pos.battery != null) {
+      batteryLevel = Math.round(Number(pos.battery));
     }
 
     // 3. Initialize or retrieve rider telemetry state
@@ -787,10 +999,16 @@ async function renderLiveMap(params) {
         etaTime: '-',
         etaDuration: '-',
         etaBadgeClass: 'eta-idle',
+        batteryLevel: null,
+        isOffRoute: false,
+        deviationMeters: 0,
         isFinished: false
       };
     }
     const telem = telemetryById[deviceId];
+    if (batteryLevel != null) telem.batteryLevel = batteryLevel;
+    telem.isOffRoute = offRoute.isOffRoute;
+    telem.deviationMeters = offRoute.deviationMeters;
 
     // 4. Compute ground speed from distance delta if speed is missing or 0 while advancing
     const nowMs = new Date(fixTime).getTime() || Date.now();
@@ -883,9 +1101,14 @@ async function renderLiveMap(params) {
     }
 
     const status = getRiderStatus(fixTime);
+    const batBadge = telem.batteryLevel != null
+      ? `<span class="battery-pill ${telem.batteryLevel < 20 ? 'battery-low' : 'battery-good'}">
+           ${telem.batteryLevel < 20 ? '🪫' : '🔋'} ${telem.batteryLevel}%
+         </span>`
+      : '';
 
     // Create new marker with comprehensive telemetry popup
-    const marker = L.marker(latlng, { icon: createRiderIcon(rider) });
+    const marker = L.marker(latlng, { icon: createRiderIcon(rider, telem.isOffRoute) });
     marker.bindPopup(`
       <div class="rider-map-popup">
         <div class="popup-header">
@@ -893,10 +1116,19 @@ async function renderLiveMap(params) {
             <div class="popup-rider-name">${rider.name}</div>
             <div class="popup-rider-bib" style="color:${rider.color || 'var(--color-yellow)'}">BIB #${rider.bib}</div>
           </div>
-          <span class="popup-status-badge" style="background:${status.color}22;color:${status.color};border:1px solid ${status.color}55">
-            ${status.dot} ${status.text}
-          </span>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${batBadge}
+            <span class="popup-status-badge" style="background:${status.color}22;color:${status.color};border:1px solid ${status.color}55">
+              ${status.dot} ${status.text}
+            </span>
+          </div>
         </div>
+
+        ${telem.isOffRoute ? `
+          <div style="background:rgba(239,68,68,0.2);color:#F87171;border:1px solid #EF4444;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">
+            ⚠️ PERINGATAN: KELUAR DARI RUTE RESMI (+${telem.deviationMeters} meter)
+          </div>
+        ` : ''}
 
         <div class="popup-metrics-grid">
           <div class="popup-metric-box">
@@ -922,6 +1154,30 @@ async function renderLiveMap(params) {
           </div>
         </div>
 
+        ${checkpoints && checkpoints.length ? `
+          <div class="popup-cp-splits">
+            <div class="popup-cp-title">🚩 CHECKPOINTS & CUT-OFF TIME</div>
+            <div class="popup-cp-grid">
+              ${checkpoints.map((cp, idx) => {
+                const sp = splitsCache[`${rider.id}_${cp.id}`];
+                if (sp) {
+                  const d = new Date(sp.arrival_time);
+                  const tStr = !isNaN(d.getTime()) ? d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : sp.arrival_time;
+                  const isPass = sp.status === 'IN_TIME';
+                  return `<div class="cp-split-chip ${isPass ? 'split-pass' : 'split-fail'}" title="${cp.name}">
+                    <span>${cp.name.split(' ')[0] || `CP${idx+1}`}: <strong>${tStr}</strong></span>
+                    <span>${isPass ? '✓' : '⚠️ COT'}</span>
+                  </div>`;
+                } else {
+                  return `<div class="cp-split-chip split-pending" title="${cp.name}">
+                    <span>${cp.name.split(' ')[0] || `CP${idx+1}`}: ${cp.km_distance}km</span>
+                  </div>`;
+                }
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
         <div class="popup-footer">
           Update: <strong>${formatTimeAgo(fixTime)}</strong>
         </div>
@@ -940,6 +1196,9 @@ async function renderLiveMap(params) {
       etaTime: telem.etaTime,
       etaDuration: telem.etaDuration,
       etaBadgeClass: telem.etaBadgeClass,
+      batteryLevel: telem.batteryLevel,
+      isOffRoute: telem.isOffRoute,
+      deviationMeters: telem.deviationMeters,
       isFinished: telem.isFinished,
       lastTime: fixTime
     };
@@ -947,14 +1206,56 @@ async function renderLiveMap(params) {
     updateLeaderboard();
   }
 
+  // ── Leaderboard Sort Mode Toggle State ──
+  let leaderboardSortMode = 'bib'; // 'bib' (default, cards stay static & fixed) or 'rank' (sorted by distance)
+
+  const btnSortBib = document.getElementById('btnSortBib');
+  const btnSortRank = document.getElementById('btnSortRank');
+  if (btnSortBib && btnSortRank) {
+    btnSortBib.addEventListener('click', () => {
+      leaderboardSortMode = 'bib';
+      btnSortBib.classList.add('active');
+      btnSortRank.classList.remove('active');
+      updateLeaderboard();
+    });
+    btnSortRank.addEventListener('click', () => {
+      leaderboardSortMode = 'rank';
+      btnSortRank.classList.add('active');
+      btnSortBib.classList.remove('active');
+      updateLeaderboard();
+    });
+  }
+
   // ── Leaderboard renderer & search filter ──
   function updateLeaderboard() {
-    let entries = Object.entries(progressById)
-      .map(([deviceId, prog]) => ({ rider: riderById[deviceId], ...prog }))
-      .filter(e => e.rider)
+    // 1. Calculate live race ranks based on distance
+    const rankByDevId = {};
+    const sortedRanks = Object.entries(progressById)
+      .map(([devId, prog]) => ({ devId, ...prog }))
       .sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
 
-    // If search filter active
+    sortedRanks.forEach((item, idx) => {
+      rankByDevId[item.devId] = idx + 1;
+    });
+
+    let entries = Object.entries(progressById)
+      .map(([deviceId, prog]) => ({ rider: riderById[deviceId], ...prog }))
+      .filter(e => e.rider);
+
+    // 2. Sort according to user preference
+    if (leaderboardSortMode === 'bib') {
+      // Sort by BIB number (stays completely fixed & static)
+      entries.sort((a, b) => {
+        const numA = parseInt(String(a.rider.bib).replace(/\D/g, ''), 10) || 0;
+        const numB = parseInt(String(b.rider.bib).replace(/\D/g, ''), 10) || 0;
+        return numA - numB;
+      });
+    } else {
+      // Sort by distance (race rank leader)
+      entries.sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
+    }
+
+    // 3. Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       entries = entries.filter(e =>
@@ -973,12 +1274,25 @@ async function renderLiveMap(params) {
       return;
     }
 
-    leaderboardEl.innerHTML = entries.map((e, i) => {
+    // Clear placeholder message if it was shown
+    const emptyPlaceholder = leaderboardEl.querySelector(':scope > div:not(.leaderboard-item)');
+    if (emptyPlaceholder) emptyPlaceholder.remove();
+
+    entries.forEach((e, i) => {
+      const devId = e.rider.traccar_device_id;
+      const raceRank = rankByDevId[devId] || (i + 1);
+      const rankDisplay = raceRank <= 3 ? ['🥇','🥈','🥉'][raceRank - 1] : `#${raceRank}`;
       const status = getRiderStatus(e.lastTime);
       const isMoving = e.speed > 2;
-      return `
-        <div class="leaderboard-item fade-in" onclick="panToRider(${e.rider.traccar_device_id})">
-          <div class="leaderboard-rank ${i < 3 ? 'top' : ''}">${i < 3 ? ['🥇','🥈','🥉'][i] : i + 1}</div>
+
+      let card = document.getElementById(`rider-card-${devId}`);
+      if (!card) {
+        card = document.createElement('div');
+        card.id = `rider-card-${devId}`;
+        card.className = 'leaderboard-item';
+        card.onclick = () => panToRider(devId);
+        card.innerHTML = `
+          <div class="leaderboard-rank ${raceRank <= 3 ? 'top' : ''}">${rankDisplay}</div>
           <div class="rider-avatar" style="background:${e.rider.color || '#FFE600'}">${e.rider.bib}</div>
           <div class="leaderboard-info">
             <div class="leaderboard-name-row">
@@ -987,27 +1301,126 @@ async function renderLiveMap(params) {
             </div>
             <div class="leaderboard-telemetry-row">
               <span class="telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}">
-                ⚡ ${e.speed} km/h
+                ⚡ <span class="val-speed">${e.speed}</span> km/h
               </span>
               <span class="telemetry-pill eta-pill ${e.etaBadgeClass || 'eta-idle'}">
-                🏁 ${e.isFinished ? 'Finish' : `${e.etaTime} (${e.etaDuration})`}
+                🏁 <span class="val-eta">${e.isFinished ? 'Finish' : `${e.etaTime} (${e.etaDuration})`}</span>
               </span>
+              <span class="offroute-pill" style="display:${e.isOffRoute ? 'inline-flex' : 'none'}">
+                ⚠️ NYASAR (+<span class="val-deviation">${e.deviationMeters}</span>m)
+              </span>
+              <span class="battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}" style="display:${e.batteryLevel != null ? 'inline-flex' : 'none'}">
+                <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span> <span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
+              </span>
+              ${(() => {
+                const rSplits = checkpoints ? checkpoints.map(cp => splitsCache[`${e.rider.id}_${cp.id}`]).filter(Boolean) : [];
+                const latSp = rSplits.length ? rSplits[rSplits.length - 1] : null;
+                if (!latSp) return '';
+                const arrD = new Date(latSp.arrival_time);
+                const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
+                const isPass = latSp.status === 'IN_TIME';
+                return `<span class="cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}">🚩 ${latSp.cp_name || 'CP'}: ${tStr} (${isPass ? '✓' : '⚠️ COT'})</span>`;
+              })()}
             </div>
             <div class="leaderboard-status-sub">
-              <span style="font-size:10px;color:${status.color}">${status.dot} ${status.text}</span>
-              <span class="time-ago-sub">• ${formatTimeAgo(e.lastTime)}</span>
+              <span class="val-status" style="font-size:10px;color:${status.color}">${status.dot} ${status.text}</span>
+              <span class="time-ago-sub">• <span class="val-timeago">${formatTimeAgo(e.lastTime)}</span></span>
             </div>
           </div>
           <div class="leaderboard-stat">
-            <div class="leaderboard-km">${e.distanceKm} <span class="km-unit">km</span></div>
+            <div class="leaderboard-km"><span class="val-km">${e.distanceKm}</span> <span class="km-unit">km</span></div>
             <div class="leaderboard-progress-bar-wrap">
               <div class="leaderboard-progress-bar-fill" style="width:${e.progressPct}%;background:${e.rider.color || 'var(--color-yellow)'}"></div>
             </div>
-            <div class="leaderboard-pct">${e.progressPct}%</div>
+            <div class="leaderboard-pct"><span class="val-pct">${e.progressPct}</span>%</div>
           </div>
-        </div>
-      `;
-    }).join('');
+        `;
+        leaderboardEl.appendChild(card);
+      } else {
+        // In-place updates: zero flickering, zero vertical jumping!
+        const rankEl = card.querySelector('.leaderboard-rank');
+        if (rankEl) {
+          rankEl.textContent = rankDisplay;
+          rankEl.className = `leaderboard-rank ${raceRank <= 3 ? 'top' : ''}`;
+        }
+
+        const speedPill = card.querySelector('.speed-pill');
+        if (speedPill) {
+          speedPill.className = `telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}`;
+          const valSpeed = speedPill.querySelector('.val-speed');
+          if (valSpeed) valSpeed.textContent = e.speed;
+        }
+
+        const etaPill = card.querySelector('.eta-pill');
+        if (etaPill) {
+          etaPill.className = `telemetry-pill eta-pill ${e.etaBadgeClass || 'eta-idle'}`;
+          const valEta = etaPill.querySelector('.val-eta');
+          if (valEta) valEta.textContent = e.isFinished ? 'Finish' : `${e.etaTime} (${e.etaDuration})`;
+        }
+
+        const offRoutePill = card.querySelector('.offroute-pill');
+        if (offRoutePill) {
+          offRoutePill.style.display = e.isOffRoute ? 'inline-flex' : 'none';
+          const valDev = offRoutePill.querySelector('.val-deviation');
+          if (valDev) valDev.textContent = e.deviationMeters;
+        }
+
+        const batPill = card.querySelector('.battery-pill');
+        if (batPill) {
+          batPill.style.display = e.batteryLevel != null ? 'inline-flex' : 'none';
+          batPill.className = `battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}`;
+          const valBatIcon = batPill.querySelector('.val-bat-icon');
+          if (valBatIcon) valBatIcon.textContent = e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋';
+          const valBat = batPill.querySelector('.val-bat');
+          if (valBat) valBat.textContent = e.batteryLevel != null ? e.batteryLevel : '';
+        }
+
+        // Checkpoint in-place update
+        const rSplits = checkpoints ? checkpoints.map(cp => splitsCache[`${e.rider.id}_${cp.id}`]).filter(Boolean) : [];
+        const latSp = rSplits.length ? rSplits[rSplits.length - 1] : null;
+        let cpPill = card.querySelector('.cp-pill');
+        if (latSp) {
+          const arrD = new Date(latSp.arrival_time);
+          const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
+          const isPass = latSp.status === 'IN_TIME';
+          if (!cpPill) {
+            const telemRow = card.querySelector('.leaderboard-telemetry-row');
+            if (telemRow) {
+              cpPill = document.createElement('span');
+              telemRow.appendChild(cpPill);
+            }
+          }
+          if (cpPill) {
+            cpPill.style.display = 'inline-flex';
+            cpPill.className = `cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}`;
+            cpPill.innerHTML = `🚩 ${latSp.cp_name || 'CP'}: ${tStr} (${isPass ? '✓' : '⚠️ COT'})`;
+          }
+        } else if (cpPill) {
+          cpPill.style.display = 'none';
+        }
+
+        const statusEl = card.querySelector('.val-status');
+        if (statusEl) {
+          statusEl.textContent = `${status.dot} ${status.text}`;
+          statusEl.style.color = status.color;
+        }
+
+        const timeAgoEl = card.querySelector('.val-timeago');
+        if (timeAgoEl) timeAgoEl.textContent = formatTimeAgo(e.lastTime);
+
+        const kmEl = card.querySelector('.val-km');
+        if (kmEl) kmEl.textContent = e.distanceKm;
+
+        const pctEl = card.querySelector('.val-pct');
+        if (pctEl) pctEl.textContent = e.progressPct;
+
+        const barFill = card.querySelector('.leaderboard-progress-bar-fill');
+        if (barFill) barFill.style.width = `${e.progressPct}%`;
+
+        // Reorder card DOM position smoothly
+        leaderboardEl.appendChild(card);
+      }
+    });
 
     redrawElevationChart();
   }
@@ -1065,6 +1478,8 @@ async function renderLiveMap(params) {
       { id: 103, bib: '003', name: 'Citra Dewi (Simulasi)', color: '#FF6B35' }
     ];
 
+    const baseBatteries = [94, 78, 17]; // Rider 3 has low battery (17%) to demonstrate low battery alert
+
     const simState = demoRiders.map((r, idx) => {
       const devId = r.traccar_device_id || (idx + 9001);
       r.traccar_device_id = devId;
@@ -1078,16 +1493,25 @@ async function renderLiveMap(params) {
         devId,
         currentIndex: staggerIndex,
         baseSpeed: 24 + (idx * 3.5),
-        stepSize: Math.max(1, Math.floor(routeCoords.length / 100)) + (idx * 2)
+        stepSize: Math.max(1, Math.floor(routeCoords.length / 100)) + (idx * 2),
+        battery: baseBatteries[idx % baseBatteries.length],
+        tick: 0
       };
     });
 
     function advanceSim() {
       simState.forEach(sim => {
+        sim.tick++;
         sim.currentIndex = (sim.currentIndex + sim.stepSize) % routeCoords.length;
         const pt = routeCoords[sim.currentIndex];
-        const lat = pt[0] + (Math.random() - 0.5) * 0.00015;
-        const lng = pt[1] + (Math.random() - 0.5) * 0.00015;
+
+        // Rider 2 occasionally simulates a wrong turn off-route (+150m) to test warning pill
+        const isOffRouteSim = (sim.rider.bib === '002' || sim.rider.bib === '2') && (sim.tick % 8 >= 4);
+        const latOffset = isOffRouteSim ? 0.0015 : (Math.random() - 0.5) * 0.00015;
+        const lngOffset = isOffRouteSim ? 0.0015 : (Math.random() - 0.5) * 0.00015;
+
+        const lat = pt[0] + latOffset;
+        const lng = pt[1] + lngOffset;
         const currentSpeed = Math.round(sim.baseSpeed + (Math.random() - 0.5) * 3);
 
         updateRiderPosition(sim.devId, {
@@ -1095,6 +1519,7 @@ async function renderLiveMap(params) {
           longitude: lng,
           speed: currentSpeed,
           isKmh: true,
+          battery: sim.battery,
           fixTime: new Date().toISOString()
         });
       });
@@ -1117,6 +1542,131 @@ async function renderLiveMap(params) {
     if (isSimulating) stopSimulator();
     else startSimulator();
   });
+
+  // ── Active SOS Alerts System ──
+  const emergencyBar        = document.getElementById('liveEmergencyBar');
+  const emergencyText       = document.getElementById('emergencyText');
+  const btnFocusEmergency   = document.getElementById('btnFocusEmergency');
+  const btnResolveEmergency = document.getElementById('btnResolveEmergency');
+  let currentAlerts         = [];
+  let alertMarkers          = {};
+  let notifiedAlertIds      = new Set();
+
+  function playEmergencyChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.45);
+    } catch (err) {}
+  }
+
+  async function checkActiveAlerts() {
+    try {
+      const res = await fetch(`/api/events/${eventId}/alerts?active=1`);
+      if (!res.ok) return;
+      currentAlerts = await res.json();
+
+      // Clear old alert markers
+      Object.values(alertMarkers).forEach(m => map.removeLayer(m));
+      alertMarkers = {};
+
+      if (currentAlerts.length > 0) {
+        const topAlert = currentAlerts[0];
+        if (emergencyBar) emergencyBar.style.display = 'flex';
+        if (emergencyText) {
+          emergencyText.innerHTML = `
+            <strong>#${topAlert.rider_bib || '?'} ${topAlert.rider_name || 'Rider'}</strong>
+            — ${topAlert.type}: ${topAlert.message || 'Butuh bantuan segera'}
+            <span style="opacity:0.75;margin-left:4px">(${formatTimeAgo(topAlert.created_at)})</span>
+          `;
+        }
+
+        if (!notifiedAlertIds.has(topAlert.id)) {
+          notifiedAlertIds.add(topAlert.id);
+          playEmergencyChime();
+        }
+
+        // Add beacon markers on map
+        currentAlerts.forEach(a => {
+          if (a.latitude && a.longitude) {
+            const sosIcon = L.divIcon({
+              html: `<div class="sos-map-marker-beacon">🚨</div>`,
+              className: '',
+              iconSize: [28, 28],
+              iconAnchor: [14, 14]
+            });
+            const m = L.marker([a.latitude, a.longitude], { icon: sosIcon, zIndexOffset: 3000 }).addTo(map);
+            m.bindPopup(`
+              <div style="color:#080A0F;padding:4px">
+                <strong style="color:#EF4444;font-size:13px">🚨 SINYAL SOS DARURAT</strong><br>
+                <strong>#${a.rider_bib || '?'} ${a.rider_name || 'Rider'}</strong><br>
+                <span>Jenis: <strong>${a.type}</strong></span><br>
+                <p style="margin:4px 0 8px 0;font-size:12px">${a.message || '-'}</p>
+                <button onclick="resolveAlertDirect(${a.id})" style="background:#10B981;color:#FFF;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:700;font-size:11px">
+                  ✓ Tandai Kasus Selesai
+                </button>
+              </div>
+            `);
+            alertMarkers[a.id] = m;
+          }
+        });
+      } else {
+        if (emergencyBar) emergencyBar.style.display = 'none';
+      }
+    } catch (err) {
+      console.warn('Alerts check error:', err);
+    }
+  }
+
+  if (btnFocusEmergency) {
+    btnFocusEmergency.addEventListener('click', () => {
+      if (currentAlerts.length > 0) {
+        const a = currentAlerts[0];
+        if (a.latitude && a.longitude) {
+          map.setView([a.latitude, a.longitude], 16);
+          if (alertMarkers[a.id]) alertMarkers[a.id].openPopup();
+        } else {
+          showToast('Koordinat GPS darurat tidak tersedia.', 'info');
+        }
+      }
+    });
+  }
+
+  if (btnResolveEmergency) {
+    btnResolveEmergency.addEventListener('click', async () => {
+      if (currentAlerts.length > 0) {
+        const topAlert = currentAlerts[0];
+        await resolveAlertDirect(topAlert.id);
+      }
+    });
+  }
+
+  window.resolveAlertDirect = async id => {
+    try {
+      const res = await fetch(`/api/alerts/${id}/resolve`, { method: 'PUT' });
+      if (res.ok) {
+        showToast('Kasus darurat berhasil diselesaikan ✓', 'success');
+        checkActiveAlerts();
+      }
+    } catch (err) {
+      showToast('Gagal update status alert', 'error');
+    }
+  };
+
+  checkActiveAlerts();
+  const alertCheckInterval = setInterval(checkActiveAlerts, 8000);
+
 
   // ── WebSocket Connection to Traccar Proxy ──
   function connectWs() {

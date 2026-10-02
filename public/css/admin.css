@@ -177,8 +177,8 @@
   height: 100%;
 }
 
-/* ── Inline add-rider form ── */
-.add-rider-panel {
+/* ── Inline add-rider & add-cp form ── */
+.add-rider-panel, .add-cp-panel {
   background: var(--bg-surface);
   border: 1px solid var(--color-yellow);
   border-radius: var(--radius-md);
