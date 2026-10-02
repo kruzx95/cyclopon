@@ -137,12 +137,76 @@ function renderRiderSetup() {
         </div>
       </div>
 
+      <!-- Emergency SOS Card -->
+      <div class="rider-sos-card fade-in">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:18px">🚨</span>
+          <strong style="color:#EF4444;font-size:14px;letter-spacing:0.02em">Pusat Bantuan & Keselamatan Rider</strong>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:14px">
+          Jika Anda mengalami kecelakaan, cedera fisik, atau masalah mekanikal berat di tengah rute dan butuh bantuan evakuasi segera:
+        </p>
+        <button id="btnOpenSosModal" class="btn-sos-emergency">
+          <span>🚨</span>
+          <span>KIRIM SINYAL DARURAT (SOS)</span>
+        </button>
+      </div>
+
       <!-- CTA -->
-      <div style="margin-top:28px;text-align:center;padding-bottom:32px">
+      <div style="margin-top:20px;text-align:center;padding-bottom:32px">
         <a class="btn btn-primary fade-in" style="font-size:15px;padding:16px 36px"
            href="/watch/${event.id}" data-link>
           🗺️ &nbsp;Lihat Posisi di Live Map
         </a>
+      </div>
+    </div>
+
+    <!-- SOS Modal Container -->
+    <div id="sosModalOverlay" class="sos-modal-overlay" style="display:none">
+      <div class="sos-modal-content">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:22px">🚨</span>
+            <h3 style="font-size:17px;font-weight:800;color:#EF4444;margin:0">Kirim Sinyal SOS Darurat</h3>
+          </div>
+          <button id="btnCloseSosModal" style="background:none;border:none;color:var(--text-secondary);font-size:20px;cursor:pointer">✕</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px">
+          Pemberitahuan darurat ini akan langsung dibroadcast ke panitia, tim medis, dan ditampilkan di layar Live Map utama.
+        </p>
+
+        <label style="font-size:12px;font-weight:700;color:var(--text-primary);display:block;margin-bottom:6px">Pilih Jenis Situasi:</label>
+        <div class="sos-type-grid">
+          <button type="button" class="sos-type-btn active" data-type="MEDICAL">
+            <strong>🚑 Medis / Cedera</strong>
+            <small>Kram parah / pusing / luka</small>
+          </button>
+          <button type="button" class="sos-type-btn" data-type="CRASH">
+            <strong>💥 Tabrakan / Jatuh</strong>
+            <small>Butuh penanganan ambulans</small>
+          </button>
+          <button type="button" class="sos-type-btn" data-type="MECHANICAL">
+            <strong>🚲 Kerusakan Sepeda</strong>
+            <small>Patah rantai / frame / roda</small>
+          </button>
+          <button type="button" class="sos-type-btn" data-type="EVACUATION">
+            <strong>⚠️ Evakuasi DNF</strong>
+            <small>Tidak bisa lanjut gowes</small>
+          </button>
+        </div>
+
+        <div style="margin-top:12px;margin-bottom:16px">
+          <label style="font-size:12px;font-weight:700;color:var(--text-primary);display:block;margin-bottom:6px">Catatan Tambahan (Opsional):</label>
+          <input type="text" id="sosMessageInput" placeholder="Contoh: Turunan setelah jembatan KM 45"
+                 style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:#FFF;font-size:13px">
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button type="button" id="btnCancelSos" class="btn btn-outline" style="flex:1;padding:12px">Batal</button>
+          <button type="button" id="btnSubmitSos" class="btn" style="flex:2;background:#EF4444;color:#FFF;font-weight:800;padding:12px;box-shadow:0 0 15px rgba(239,68,68,0.5)">
+            🚨 KIRIM SEKARANG
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -170,4 +234,87 @@ function renderRiderSetup() {
       showToast('Gagal menyalin.', 'error');
     }
   });
+
+  // ── SOS Modal Logic ──
+  const modalOverlay = document.getElementById('sosModalOverlay');
+  const btnOpenSos   = document.getElementById('btnOpenSosModal');
+  const btnCloseSos  = document.getElementById('btnCloseSosModal');
+  const btnCancelSos = document.getElementById('btnCancelSos');
+  const btnSubmitSos = document.getElementById('btnSubmitSos');
+  let selectedType   = 'MEDICAL';
+
+  btnOpenSos.addEventListener('click', () => {
+    modalOverlay.style.display = 'flex';
+  });
+
+  function closeSosModal() {
+    modalOverlay.style.display = 'none';
+  }
+
+  btnCloseSos.addEventListener('click', closeSosModal);
+  btnCancelSos.addEventListener('click', closeSosModal);
+
+  document.querySelectorAll('.sos-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sos-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedType = btn.dataset.type;
+    });
+  });
+
+  btnSubmitSos.addEventListener('click', async () => {
+    btnSubmitSos.disabled = true;
+    btnSubmitSos.textContent = '⏳ Mengirim Sinyal GPS...';
+
+    const message = document.getElementById('sosMessageInput').value.trim();
+
+    // Try to get instant coordinate via browser geolocation
+    let lat = null;
+    let lng = null;
+
+    if (navigator.geolocation) {
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 10000
+          });
+        });
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } catch (err) {
+        console.warn('Geolocation warning/denied:', err);
+      }
+    }
+
+    try {
+      const res = await fetch(`/api/events/${event.id}/alerts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rider_id: rider.id,
+          type: selectedType,
+          latitude: lat,
+          longitude: lng,
+          message: message || `Bantuan darurat (${selectedType}) dari rider #${rider.bib}`
+        })
+      });
+
+      if (!res.ok) throw new Error('Gagal mengirim sinyal darurat');
+
+      closeSosModal();
+      showToast('🚨 Sinyal SOS Darurat berhasil dikirim ke panitia!', 'success');
+
+      // Update SOS button state
+      btnOpenSos.innerHTML = '<span>✅</span><span>SINYAL SOS AKTIF (PANITIA TERNOTIFIKASI)</span>';
+      btnOpenSos.style.background = '#10B981';
+      btnOpenSos.style.animation = 'none';
+    } catch (err) {
+      showToast(err.message || 'Gagal mengirim SOS', 'error');
+      btnSubmitSos.disabled = false;
+      btnSubmitSos.textContent = '🚨 KIRIM SEKARANG';
+    }
+  });
 }
+

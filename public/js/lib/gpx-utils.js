@@ -183,3 +183,49 @@ function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm) {
     distanceKm:  Math.round(coveredKm * 10) / 10
   };
 }
+
+/**
+ * Check if a rider has deviated from the GPX route
+ * @param {number} lat
+ * @param {number} lng
+ * @param {Array<[number, number]>} routeCoords
+ * @param {number} [thresholdMeters=100]
+ * @returns {{ isOffRoute: boolean, deviationMeters: number, nearestIndex: number, nearestPoint: [number, number] | null }}
+ */
+function checkOffRoute(lat, lng, routeCoords, thresholdMeters = 100) {
+  if (!routeCoords || !routeCoords.length) {
+    return { isOffRoute: false, deviationMeters: 0, nearestIndex: 0, nearestPoint: null };
+  }
+
+  let minDist = Infinity;
+  let nearestIndex = 0;
+
+  for (let i = 0; i < routeCoords.length; i++) {
+    const d = haversineKm(lat, lng, routeCoords[i][0], routeCoords[i][1]);
+    if (d < minDist) {
+      minDist = d;
+      nearestIndex = i;
+    }
+  }
+
+  const deviationMeters = Math.round(minDist * 1000);
+  const isOffRoute = deviationMeters > thresholdMeters;
+
+  return {
+    isOffRoute,
+    deviationMeters,
+    nearestIndex,
+    nearestPoint: routeCoords[nearestIndex]
+  };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    haversineKm,
+    totalRouteKm,
+    parseGpxData,
+    parseGpxToCoords,
+    findNearestRoutePoint,
+    checkOffRoute
+  };
+}
