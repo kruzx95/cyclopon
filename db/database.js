@@ -68,6 +68,20 @@ db.exec(`
     created_at     TEXT DEFAULT (datetime('now')),
     UNIQUE(rider_id, checkpoint_id)
   );
+
+  CREATE TABLE IF NOT EXISTS position_history (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id     INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    rider_id     INTEGER NOT NULL REFERENCES riders(id) ON DELETE CASCADE,
+    latitude     REAL NOT NULL,
+    longitude    REAL NOT NULL,
+    speed        REAL DEFAULT 0,
+    distance_km  REAL DEFAULT 0,
+    recorded_at  TEXT NOT NULL,
+    created_at   TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_history_event_time ON position_history(event_id, recorded_at);
+  CREATE INDEX IF NOT EXISTS idx_history_rider ON position_history(rider_id, recorded_at);
 `);
 
 module.exports = {
@@ -104,4 +118,9 @@ module.exports = {
   getSplitById:     db.prepare('SELECT * FROM rider_splits WHERE id = ?'),
   getSplitsByEvent: db.prepare('SELECT s.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color, c.name as checkpoint_name, c.km_distance as checkpoint_km, c.close_time as checkpoint_cot FROM rider_splits s JOIN riders r ON s.rider_id = r.id JOIN checkpoints c ON s.checkpoint_id = c.id WHERE s.event_id = ? ORDER BY c.km_distance ASC, s.arrival_time ASC'),
   getSplitsByRider: db.prepare('SELECT s.*, c.name as checkpoint_name, c.km_distance as checkpoint_km, c.close_time as checkpoint_cot FROM rider_splits s JOIN checkpoints c ON s.checkpoint_id = c.id WHERE s.rider_id = ? ORDER BY c.km_distance ASC'),
+
+  // Position History (Replay & Time Machine)
+  recordPositionHistory: db.prepare('INSERT INTO position_history (event_id, rider_id, latitude, longitude, speed, distance_km, recorded_at) VALUES (@event_id, @rider_id, @latitude, @longitude, @speed, @distance_km, @recorded_at)'),
+  getHistoryByEvent: db.prepare('SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM position_history h JOIN riders r ON h.rider_id = r.id WHERE h.event_id = ? ORDER BY h.recorded_at ASC'),
+  getHistoryByEventAndRider: db.prepare('SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM position_history h JOIN riders r ON h.rider_id = r.id WHERE h.event_id = ? AND h.rider_id = ? ORDER BY h.recorded_at ASC'),
 };

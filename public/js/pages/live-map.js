@@ -42,6 +42,11 @@ async function renderLiveMap(params) {
             🎮 <span class="action-btn-label" id="simBtnLabel">Simulasi</span>
           </button>
 
+          <!-- Time Machine Replay Button -->
+          <button class="header-action-btn" id="btnToggleReplay" title="Buka Kontrol Replay Time Machine">
+            ⏮️ <span class="action-btn-label">Replay</span>
+          </button>
+
           <!-- Fit Route Button -->
           <button class="header-action-btn" id="btnFitRoute" title="Pusatkan peta ke seluruh rute GPX">
             🎯 <span class="action-btn-label">Fit Rute</span>
@@ -70,6 +75,37 @@ async function renderLiveMap(params) {
           <button class="btn-emergency-focus" id="btnFocusEmergency">🎯 Fokus Lokasi</button>
           <button class="btn-emergency-resolve" id="btnResolveEmergency">✓ Selesai</button>
         </div>
+      </div>
+
+      <!-- ── Time Machine Replay Control Bar ── -->
+      <div id="replayControlBar" class="replay-control-bar" style="display:none">
+        <div class="replay-bar-inner">
+          <button class="replay-btn replay-play-btn" id="btnReplayPlay" title="Play / Pause Replay">▶</button>
+          <div class="replay-time-display">
+            <span class="replay-badge">REPLAY</span>
+            <span id="replayClock" class="replay-clock">--:--:--</span>
+          </div>
+
+          <div class="replay-slider-wrap">
+            <span class="replay-time-bound" id="replayStartTime">00:00</span>
+            <input type="range" class="replay-slider" id="replaySlider" min="0" max="100" value="0" step="0.2">
+            <span class="replay-time-bound" id="replayEndTime">00:00</span>
+          </div>
+
+          <div class="replay-speed-group">
+            <button class="replay-speed-btn active" data-speed="1">1x</button>
+            <button class="replay-speed-btn" data-speed="5">5x</button>
+            <button class="replay-speed-btn" data-speed="15">15x</button>
+            <button class="replay-speed-btn" data-speed="60">60x</button>
+          </div>
+
+          <button class="replay-btn replay-exit-btn" id="btnExitReplay" title="Kembali ke Mode Live">🔴 Live</button>
+        </div>
+      </div>
+
+      <!-- ── Head-to-Head Comparison Modal ── -->
+      <div id="h2hModalBackdrop" class="h2h-modal-backdrop" style="display:none">
+        <div class="h2h-modal" id="h2hModalContent"></div>
       </div>
 
       <!-- ── Viewport Grid (Map + Sidebar) ── -->
@@ -1010,6 +1046,27 @@ async function renderLiveMap(params) {
     telem.isOffRoute = offRoute.isOffRoute;
     telem.deviationMeters = offRoute.deviationMeters;
 
+    // Periodic telemetry history logging (every ~4s per rider)
+    if (rider && rider.id && !isReplayActive) {
+      const nowMs = Date.now();
+      const lastLogged = lastHistoryLogByRider[rider.id] || 0;
+      if (nowMs - lastLogged >= 4000) {
+        lastHistoryLogByRider[rider.id] = nowMs;
+        fetch(`/api/events/${eventId}/history`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rider_id: rider.id,
+            latitude: pos.latitude,
+            longitude: pos.longitude,
+            speed: speedKmh,
+            distance_km: calc.distanceKm,
+            recorded_at: fixTime
+          })
+        }).catch(() => {});
+      }
+    }
+
     // 4. Compute ground speed from distance delta if speed is missing or 0 while advancing
     const nowMs = new Date(fixTime).getTime() || Date.now();
     const prevPt = telem.history[telem.history.length - 1];
@@ -1298,6 +1355,9 @@ async function renderLiveMap(params) {
             <div class="leaderboard-name-row">
               <span class="leaderboard-name">${e.rider.name}</span>
               <span class="leaderboard-bib-tag">#${e.rider.bib}</span>
+              <button class="btn-compare-rider ${comparingRiderId === e.rider.id ? 'active' : ''}" onclick="event.stopPropagation(); triggerCompareRider(${e.rider.id})" title="Bandingkan rider">
+                ⚔️ ${comparingRiderId === e.rider.id ? 'Batal' : 'VS'}
+              </button>
             </div>
             <div class="leaderboard-telemetry-row">
               <span class="telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}">
@@ -1338,6 +1398,12 @@ async function renderLiveMap(params) {
         leaderboardEl.appendChild(card);
       } else {
         // In-place updates: zero flickering, zero vertical jumping!
+        const btnComp = card.querySelector('.btn-compare-rider');
+        if (btnComp) {
+          btnComp.className = `btn-compare-rider ${comparingRiderId === e.rider.id ? 'active' : ''}`;
+          btnComp.innerHTML = `⚔️ ${comparingRiderId === e.rider.id ? 'Batal' : 'VS'}`;
+        }
+
         const rankEl = card.querySelector('.leaderboard-rank');
         if (rankEl) {
           rankEl.textContent = rankDisplay;
@@ -1667,6 +1733,306 @@ async function renderLiveMap(params) {
   checkActiveAlerts();
   const alertCheckInterval = setInterval(checkActiveAlerts, 8000);
 
+
+  // ── Time Machine Replay State & Handlers ──
+  let isReplayActive = false;
+  let isReplayPlaying = false;
+  let replaySpeed = 1;
+  let replayTimer = null;
+  let replayHistory = [];
+  let replayMinTime = 0;
+  let replayMaxTime = 0;
+  let replayCurrentTime = 0;
+  const lastHistoryLogByRider = {};
+
+  const replayControlBar = document.getElementById('replayControlBar');
+  const btnToggleReplay = document.getElementById('btnToggleReplay');
+  const btnReplayPlay = document.getElementById('btnReplayPlay');
+  const replayClock = document.getElementById('replayClock');
+  const replaySlider = document.getElementById('replaySlider');
+  const replayStartTime = document.getElementById('replayStartTime');
+  const replayEndTime = document.getElementById('replayEndTime');
+  const btnExitReplay = document.getElementById('btnExitReplay');
+
+  async function enterReplayMode() {
+    isReplayActive = true;
+    btnToggleReplay.classList.add('active');
+    replayControlBar.style.display = 'block';
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/history`);
+      replayHistory = res.ok ? await res.json() : [];
+    } catch {
+      replayHistory = [];
+    }
+
+    // If history is empty, synthesize a replay history trail from GPX route
+    if (!replayHistory.length && routeCoords.length) {
+      const simRiders = riders.length ? riders : [
+        { id: 1, bib: '001', name: 'Ahmad Rider', color: '#00E5FF' },
+        { id: 2, bib: '002', name: 'Budi Santoso', color: '#FF6B35' }
+      ];
+      const baseStart = Date.now() - (7200 * 1000); // 2 hours ago
+      simRiders.forEach((r, rIdx) => {
+        const totalSteps = 40;
+        for (let s = 0; s <= totalSteps; s++) {
+          const coordIdx = Math.min(routeCoords.length - 1, Math.floor((s / totalSteps) * (routeCoords.length - (rIdx * 12))));
+          const pt = routeCoords[coordIdx];
+          const distKm = Math.round(((coordIdx / routeCoords.length) * (routeKm || 100)) * 10) / 10;
+          const recTime = new Date(baseStart + (s * 180 * 1000) + (rIdx * 60 * 1000)).toISOString();
+          replayHistory.push({
+            rider_id: r.id,
+            rider_name: r.name,
+            rider_bib: r.bib,
+            rider_color: r.color,
+            latitude: pt[0],
+            longitude: pt[1],
+            speed: 25 + (rIdx * 2) + (s % 5),
+            distance_km: distKm,
+            recorded_at: recTime
+          });
+        }
+      });
+      replayHistory.sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+    }
+
+    if (!replayHistory.length) {
+      showToast('Belum ada data rekaman race untuk replay.', 'warning');
+      exitReplayMode();
+      return;
+    }
+
+    replayMinTime = new Date(replayHistory[0].recorded_at).getTime();
+    replayMaxTime = new Date(replayHistory[replayHistory.length - 1].recorded_at).getTime();
+    if (replayMaxTime <= replayMinTime) replayMaxTime = replayMinTime + 3600000;
+
+    replayStartTime.textContent = new Date(replayMinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    replayEndTime.textContent = new Date(replayMaxTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    replayCurrentTime = replayMinTime;
+    replaySlider.value = 0;
+    applyReplayFrame(replayCurrentTime);
+    showToast('Mode Time Machine Replay aktif! Geser slider atau tekan Play ⏱️', 'info');
+  }
+
+  function exitReplayMode() {
+    isReplayActive = false;
+    isReplayPlaying = false;
+    if (replayTimer) clearInterval(replayTimer);
+    replayTimer = null;
+    btnToggleReplay.classList.remove('active');
+    replayControlBar.style.display = 'none';
+    btnReplayPlay.textContent = '▶';
+    showToast('Kembali ke mode Live tracking 🔴', 'success');
+  }
+
+  function applyReplayFrame(timestampMs) {
+    replayClock.textContent = new Date(timestampMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const riderPoints = {};
+    replayHistory.forEach(h => {
+      const ptTime = new Date(h.recorded_at).getTime();
+      if (ptTime <= timestampMs) {
+        if (!riderPoints[h.rider_id] || ptTime > riderPoints[h.rider_id].timeMs) {
+          riderPoints[h.rider_id] = { ...h, timeMs: ptTime };
+        }
+      }
+    });
+
+    Object.values(riderPoints).forEach(pt => {
+      const rider = riders.find(r => r.id === pt.rider_id) || {
+        id: pt.rider_id,
+        bib: pt.rider_bib,
+        name: pt.rider_name,
+        color: pt.rider_color,
+        traccar_device_id: pt.rider_id
+      };
+      const devId = rider.traccar_device_id || pt.rider_id;
+      riderById[devId] = rider;
+
+      updateRiderPosition(devId, {
+        latitude: pt.latitude,
+        longitude: pt.longitude,
+        speed: pt.speed,
+        isKmh: true,
+        fixTime: pt.recorded_at
+      });
+    });
+  }
+
+  function toggleReplayPlay() {
+    if (isReplayPlaying) {
+      isReplayPlaying = false;
+      if (replayTimer) clearInterval(replayTimer);
+      replayTimer = null;
+      btnReplayPlay.textContent = '▶';
+    } else {
+      isReplayPlaying = true;
+      btnReplayPlay.textContent = '⏸';
+      const stepMs = 1000 * replaySpeed * 2.5;
+      replayTimer = setInterval(() => {
+        replayCurrentTime += stepMs;
+        if (replayCurrentTime >= replayMaxTime) {
+          replayCurrentTime = replayMaxTime;
+          toggleReplayPlay();
+        }
+        const pct = ((replayCurrentTime - replayMinTime) / (replayMaxTime - replayMinTime)) * 100;
+        replaySlider.value = Math.min(100, Math.max(0, pct));
+        applyReplayFrame(replayCurrentTime);
+      }, 150);
+    }
+  }
+
+  btnToggleReplay?.addEventListener('click', () => {
+    if (isReplayActive) exitReplayMode();
+    else enterReplayMode();
+  });
+  btnReplayPlay?.addEventListener('click', toggleReplayPlay);
+  btnExitReplay?.addEventListener('click', exitReplayMode);
+
+  replaySlider?.addEventListener('input', e => {
+    const pct = parseFloat(e.target.value) / 100;
+    replayCurrentTime = replayMinTime + (pct * (replayMaxTime - replayMinTime));
+    applyReplayFrame(replayCurrentTime);
+  });
+
+  document.querySelectorAll('.replay-speed-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      document.querySelectorAll('.replay-speed-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      replaySpeed = parseFloat(e.target.dataset.speed) || 1;
+      if (isReplayPlaying) {
+        toggleReplayPlay();
+        toggleReplayPlay();
+      }
+    });
+  });
+
+  // ── Head-to-Head Comparison State & Engine ──
+  let comparingRiderId = null;
+
+  window.triggerCompareRider = function(riderId) {
+    if (!comparingRiderId) {
+      comparingRiderId = riderId;
+      const rA = riders.find(r => r.id === riderId);
+      showToast(`Rider 1 (#${rA ? rA.bib : riderId}) dipilih! Klik tombol 'VS' pada rider lain untuk membandingkan.`, 'info');
+      updateLeaderboard();
+      return;
+    }
+
+    if (comparingRiderId === riderId) {
+      comparingRiderId = null;
+      showToast('Pemilihan pembanding dibatalkan.', 'info');
+      updateLeaderboard();
+      return;
+    }
+
+    const riderA = riders.find(r => r.id === comparingRiderId);
+    const riderB = riders.find(r => r.id === riderId);
+    comparingRiderId = null;
+    updateLeaderboard();
+
+    if (!riderA || !riderB) return;
+    openH2hModal(riderA, riderB);
+  };
+
+  function openH2hModal(riderA, riderB) {
+    const devA = riderA.traccar_device_id || riderA.id;
+    const devB = riderB.traccar_device_id || riderB.id;
+    const progA = progressById[devA] || { distanceKm: 0, speed: 0, movingAvg: 0, progressPct: 0, etaTime: '-', etaDuration: '-' };
+    const progB = progressById[devB] || { distanceKm: 0, speed: 0, movingAvg: 0, progressPct: 0, etaTime: '-', etaDuration: '-' };
+
+    const distGap = Math.round(Math.abs(progA.distanceKm - progB.distanceKm) * 10) / 10;
+    let gapLeader = null;
+    if (progA.distanceKm > progB.distanceKm) gapLeader = `${riderA.name} (#${riderA.bib}) memimpin +${distGap} km`;
+    else if (progB.distanceKm > progA.distanceKm) gapLeader = `${riderB.name} (#${riderB.bib}) memimpin +${distGap} km`;
+    else gapLeader = 'Keduanya seimbang (Grup Sama)';
+
+    const modalBackdrop = document.getElementById('h2hModalBackdrop');
+    const modalContent = document.getElementById('h2hModalContent');
+
+    modalContent.innerHTML = `
+      <div class="h2h-header">
+        <div class="h2h-title">⚔️ Head-to-Head Perbandingan Rider</div>
+        <button class="h2h-close-btn" id="btnCloseH2h">✕</button>
+      </div>
+
+      <div class="h2h-battle-strip">
+        <div class="h2h-rider-card rider-a">
+          <div class="h2h-rider-avatar" style="background:${riderA.color || '#FFE600'}">#${riderA.bib}</div>
+          <div>
+            <div class="h2h-rider-name">${riderA.name}</div>
+            <div class="h2h-rider-sub">BIB #${riderA.bib}</div>
+          </div>
+        </div>
+
+        <div class="h2h-vs-badge">VS</div>
+
+        <div class="h2h-rider-card rider-b">
+          <div class="h2h-rider-avatar" style="background:${riderB.color || '#00E5FF'}">#${riderB.bib}</div>
+          <div>
+            <div class="h2h-rider-name">${riderB.name}</div>
+            <div class="h2h-rider-sub">BIB #${riderB.bib}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="h2h-gap-highlight">
+        🏆 ${gapLeader}
+      </div>
+
+      <div class="h2h-stats-list">
+        <div class="h2h-stat-row">
+          <div class="h2h-val">${progA.distanceKm} km (${progA.progressPct}%)</div>
+          <div class="h2h-lbl">Jarak Ditempuh</div>
+          <div class="h2h-val val-b">${progB.distanceKm} km (${progB.progressPct}%)</div>
+        </div>
+
+        <div class="h2h-stat-row">
+          <div class="h2h-val">${progA.speed} km/h</div>
+          <div class="h2h-lbl">Kecepatan Saat Ini</div>
+          <div class="h2h-val val-b">${progB.speed} km/h</div>
+        </div>
+
+        <div class="h2h-stat-row">
+          <div class="h2h-val">${progA.movingAvg || progA.speed} km/h</div>
+          <div class="h2h-lbl">Rata-rata Bergerak</div>
+          <div class="h2h-val val-b">${progB.movingAvg || progB.speed} km/h</div>
+        </div>
+
+        <div class="h2h-stat-row">
+          <div class="h2h-val">${progA.etaTime} (${progA.etaDuration})</div>
+          <div class="h2h-lbl">Estimasi Finish (ETA)</div>
+          <div class="h2h-val val-b">${progB.etaTime} (${progB.etaDuration})</div>
+        </div>
+      </div>
+
+      <div class="h2h-actions">
+        <button class="btn btn-primary" style="flex:1" id="btnFocusBothRiders">🎯 Lihat Kedua Rider di Peta</button>
+        <button class="btn btn-outline" style="flex:1" id="btnCloseH2hFooter">Tutup</button>
+      </div>
+    `;
+
+    modalBackdrop.style.display = 'flex';
+
+    document.getElementById('btnCloseH2h').onclick = () => { modalBackdrop.style.display = 'none'; };
+    document.getElementById('btnCloseH2hFooter').onclick = () => { modalBackdrop.style.display = 'none'; };
+    modalBackdrop.onclick = e => { if (e.target === modalBackdrop) modalBackdrop.style.display = 'none'; };
+
+    document.getElementById('btnFocusBothRiders').onclick = () => {
+      modalBackdrop.style.display = 'none';
+      const mA = markerById[devA];
+      const mB = markerById[devB];
+      if (mA && mB) {
+        const bounds = L.latLngBounds([mA.getLatLng(), mB.getLatLng()]);
+        map.fitBounds(bounds, { padding: [80, 80], maxZoom: 16 });
+      } else if (mA) {
+        map.setView(mA.getLatLng(), 15);
+      } else if (mB) {
+        map.setView(mB.getLatLng(), 15);
+      }
+    };
+  }
 
   // ── WebSocket Connection to Traccar Proxy ──
   function connectWs() {

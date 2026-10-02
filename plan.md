@@ -217,15 +217,15 @@ Tujuan: Memberikan penonton kemampuan memutar ulang perlombaan (time-lapse repla
 - Modify: `c:/Users/Mallik/Documents/cyclopon/server.js`
 - Create: `c:/Users/Mallik/Documents/cyclopon/tests/history.test.js`
 
-- [ ] **Step 1: Write failing test for history snapshots API**
+- [x] **Step 1: Write failing test for history snapshots API**
   File: `tests/history.test.js`
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
   Run: `node --test tests/history.test.js`
-- [ ] **Step 3: Implement `position_history` table and batch snapshot endpoint**
+- [x] **Step 3: Implement `position_history` table and batch snapshot endpoint**
   Record position updates with timestamp, `speed`, `distance_km`, `lat`, `lng`.
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
   Run: `node --test tests/history.test.js`
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
   Run: `git commit -m "feat(replay): add telemetry history recorder and query API"`
 
 ---
@@ -235,11 +235,11 @@ Tujuan: Memberikan penonton kemampuan memutar ulang perlombaan (time-lapse repla
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/js/pages/live-map.js`
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/css/map.css`
 
-- [ ] **Step 1: Add Time Machine toggle button in Header and bottom drawer**
+- [x] **Step 1: Add Time Machine toggle button in Header and bottom drawer**
   Includes: Timeline scrubber slider, Play/Pause button, speed selector (1x, 5x, 15x, 60x), current simulated time clock.
-- [ ] **Step 2: Animate rider markers based on historical timestamps**
+- [x] **Step 2: Animate rider markers based on historical timestamps**
   Smoothly interpolate positions along timeline.
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
   Run: `git commit -m "feat(replay): implement interactive time machine replay drawer and playback animation"`
 
 ---
@@ -249,11 +249,11 @@ Tujuan: Memberikan penonton kemampuan memutar ulang perlombaan (time-lapse repla
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/js/pages/live-map.js`
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/css/map.css`
 
-- [ ] **Step 1: Add "Bandingkan" action button on leaderboard items**
+- [x] **Step 1: Add "Bandingkan" action button on leaderboard items**
   Allows selecting Rider A and Rider B.
-- [ ] **Step 2: Render floating comparison card**
+- [x] **Step 2: Render floating comparison card**
   Compares: Distance gap (km), time gap (minutes/hours), current speed, moving average, and remaining distance.
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
   Run: `git commit -m "feat(spectator): add head-to-head rider comparison tool"`
 
 > 🏁 **CHECKPOINT 3:** Uji coba Poin 3 bersama user: Uji slider replay time machine dan bandingkan 2 rider di layar.
