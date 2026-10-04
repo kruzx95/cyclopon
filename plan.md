@@ -271,12 +271,12 @@ Tujuan: Memberikan layar HUD (Heads-Up Display) yang dioptimalkan untuk rider sa
 - Create: `c:/Users/Mallik/Documents/cyclopon/public/css/cockpit.css`
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/index.html`
 
-- [ ] **Step 1: Register route `/rider/cockpit` in router**
-- [ ] **Step 2: Create mobile-first HUD layout**
+- [x] **Step 1: Register route `/rider/cockpit` in router**
+- [x] **Step 2: Create mobile-first HUD layout**
   High contrast dark UI, big digital speedometer, remaining distance, next checkpoint countdown.
-- [ ] **Step 3: Screen Wake Lock API integration**
+- [x] **Step 3: Screen Wake Lock API integration**
   Prevent phone screen from turning off while rider is in cockpit mode (`navigator.wakeLock.request('screen')`).
-- [ ] **Step 4: Commit changes**
+- [x] **Step 4: Commit changes**
   Run: `git commit -m "feat(rider): create mobile cockpit HUD page with screen wake lock"`
 
 ---
@@ -286,12 +286,12 @@ Tujuan: Memberikan layar HUD (Heads-Up Display) yang dioptimalkan untuk rider sa
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/js/pages/rider-cockpit.js`
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/css/cockpit.css`
 
-- [ ] **Step 1: Connect Cockpit to Live GPS / WebSocket / Simulator**
+- [x] **Step 1: Connect Cockpit to Live GPS / WebSocket / Simulator**
   Display current speed in large font (e.g. `28.4 km/h`), average pace, cadence/heart rate if available.
-- [ ] **Step 2: Target Checkpoint Widget**
+- [x] **Step 2: Target Checkpoint Widget**
   Display: "CP 2 (KM 100) — 14.5 km lagi — Target COT: 15:30 (Sisa 45 menit)".
-- [ ] **Step 3: Emergency 1-Tap SOS Button at bottom**
-- [ ] **Step 4: Commit changes**
+- [x] **Step 3: Emergency 1-Tap SOS Button at bottom**
+- [x] **Step 4: Commit changes**
   Run: `git commit -m "feat(rider): integrate real-time telemetry, next CP countdown, and emergency trigger in cockpit"`
 
 > 🏁 **CHECKPOINT 4:** Uji coba Poin 4 bersama user: Buka `/rider/cockpit` di mobile / inspect mode, uji tampilan speedometer, penghitung mundur CP, dan wake-lock.
@@ -313,15 +313,15 @@ Tujuan: Merekap hasil lomba secara otomatis, memverifikasi status Finisher / Ove
 - Consumes: `event_id`
 - Produces: `GET /api/events/:id/results` (JSON), `GET /api/events/:id/export/csv` (Downloadable CSV)
 
-- [ ] **Step 1: Write failing test for Results and CSV Export API**
+- [x] **Step 1: Write failing test for Results and CSV Export API**
   File: `tests/results.test.js`
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
   Run: `node --test tests/results.test.js`
-- [ ] **Step 3: Implement results aggregator and CSV serializer**
+- [x] **Step 3: Implement results aggregator and CSV serializer**
   Calculate total time (Start to Finish), split times for each CP, average speed, and final status (FINISHER / OVER_COT / DNF).
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
   Run: `node --test tests/results.test.js`
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
   Run: `git commit -m "feat(results): add official results computation and CSV export endpoint"`
 
 ---
@@ -332,12 +332,12 @@ Tujuan: Merekap hasil lomba secara otomatis, memverifikasi status Finisher / Ove
 - Modify: `c:/Users/Mallik/Documents/cyclopon/public/js/router.js`
 - Create: `c:/Users/Mallik/Documents/cyclopon/public/css/results.css`
 
-- [ ] **Step 1: Register route `/events/:id/results`**
+- [x] **Step 1: Register route `/events/:id/results`**
   Renders interactive results leaderboard with search, status filters (All, Finisher, DNF), and "Download CSV" button.
-- [ ] **Step 2: Digital Brevet / Finisher Certificate modal**
+- [x] **Step 2: Digital Brevet / Finisher Certificate modal**
   Clicking a finisher rider opens a printable, high-res certificate featuring:
   Event Name, Rider Name, BIB, Official Elapsed Time, Average Speed, Checkpoint Verification Badges, and Verification Stamp.
-- [ ] **Step 3: Commit changes**
+- [x] **Step 3: Commit changes**
   Run: `git commit -m "feat(results): build official event results page and digital brevet certificate"`
 
 > 🏁 **CHECKPOINT 5:** Uji coba Poin 5 bersama user: Buka `/events/:id/results`, unduh CSV, dan cetak sertifikat finisher digital.
