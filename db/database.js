@@ -94,9 +94,10 @@ module.exports = {
   updateEventGpx: db.prepare('UPDATE events SET gpx_path=? WHERE id=?'),
 
   // Riders
-  getRidersByEvent:  db.prepare('SELECT * FROM riders WHERE event_id = ? ORDER BY CAST(bib AS INTEGER) ASC'),
-  getRiderByBibPin:  db.prepare('SELECT * FROM riders WHERE bib = ? AND pin = ?'),
-  createRider:       db.prepare('INSERT INTO riders (event_id, bib, name, pin, traccar_device_id, color) VALUES (@event_id, @bib, @name, @pin, @traccar_device_id, @color)'),
+  getRidersByEvent:      db.prepare('SELECT * FROM riders WHERE event_id = ? ORDER BY CAST(bib AS INTEGER) ASC'),
+  getRiderByBibPin:      db.prepare('SELECT * FROM riders WHERE bib = ? AND pin = ?'),
+  getRiderByEventBibPin: db.prepare('SELECT * FROM riders WHERE event_id = ? AND bib = ? AND pin = ?'),
+  createRider:           db.prepare('INSERT INTO riders (event_id, bib, name, pin, traccar_device_id, color) VALUES (@event_id, @bib, @name, @pin, @traccar_device_id, @color)'),
   updateRiderDevice: db.prepare('UPDATE riders SET traccar_device_id = ? WHERE id = ?'),
   deleteRider:       db.prepare('DELETE FROM riders WHERE id = ?'),
 

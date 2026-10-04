@@ -3,16 +3,25 @@ const router = express.Router();
 const db = require('../db/database');
 const fetch = require('node-fetch');
 
-// POST /api/auth/rider — validate BIB + PIN, return Traccar config
+// POST /api/auth/rider — validate BIB + PIN (+ optional event_id), return Traccar config
 router.post('/rider', (req, res) => {
-  const { bib, pin } = req.body;
+  const { bib, pin, event_id } = req.body;
   if (!bib || !pin) {
     return res.status(400).json({ error: 'BIB dan PIN wajib diisi' });
   }
 
-  const rider = db.getRiderByBibPin.get(String(bib).trim(), String(pin).trim());
+  const cleanBib = String(bib).trim();
+  const cleanPin = String(pin).trim();
+
+  let rider = null;
+  if (event_id) {
+    rider = db.getRiderByEventBibPin.get(Number(event_id), cleanBib, cleanPin);
+  } else {
+    rider = db.getRiderByBibPin.get(cleanBib, cleanPin);
+  }
+
   if (!rider) {
-    return res.status(401).json({ error: 'BIB atau PIN tidak valid' });
+    return res.status(401).json({ error: 'BIB atau PIN tidak valid untuk event yang dipilih' });
   }
 
   const event = db.getEventById.get(rider.event_id);
@@ -24,12 +33,12 @@ router.post('/rider', (req, res) => {
 
   res.json({
     success: true,
-    rider:  { id: rider.id, bib: rider.bib, name: rider.name, color: rider.color },
+    rider:  { id: rider.id, bib: rider.bib, name: rider.name, color: rider.color, traccar_device_id: rider.traccar_device_id },
     event:  { id: event.id, name: event.name, date: event.date },
     traccar: {
       serverUrl:        traccarHost,
       osmandPort:       5055,
-      deviceIdentifier: `BIB-${rider.bib}`,
+      deviceIdentifier: rider.traccar_device_id ? String(rider.traccar_device_id) : `BIB-${rider.bib}`,
       interval:         30,
     }
   });

@@ -1,144 +1,213 @@
 function renderRiderSetup() {
   loadCss('/css/rider.css');
 
-  const configStr = sessionStorage.getItem('riderConfig');
-  if (!configStr) { Router.navigate('/rider'); return; }
+  const configStr = sessionStorage.getItem('riderConfig') || localStorage.getItem('riderConfig');
+  if (!configStr) {
+    Router.navigate('/rider');
+    return;
+  }
 
-  const { rider, event, traccar } = JSON.parse(configStr);
+  let config;
+  try {
+    config = JSON.parse(configStr);
+  } catch {
+    sessionStorage.removeItem('riderConfig');
+    localStorage.removeItem('riderConfig');
+    Router.navigate('/rider');
+    return;
+  }
+
+  const { rider, event, traccar } = config;
   const hostClean = traccar.serverUrl.replace(/^https?:\/\//, '').split(':')[0];
   const osmandUrl = `http://${hostClean}:${traccar.osmandPort}`;
 
-  document.getElementById('app').innerHTML = `
-    <div style="max-width:600px;margin:0 auto;padding:24px;min-height:100vh">
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div style="max-width:760px;margin:0 auto;padding:24px 16px;min-height:100vh">
 
-      <!-- Header -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <a href="/" data-link style="color:var(--text-secondary);font-size:22px;text-decoration:none;line-height:1">←</a>
-        <h1 style="font-size:20px;font-weight:800">Setup Traccar Client</h1>
-      </div>
-
-      <!-- Success banner -->
-      <div class="fade-in" style="background:rgba(16,185,129,0.1);border:1px solid var(--color-green);border-radius:var(--radius-md);padding:14px 18px;margin-bottom:20px">
-        <p style="color:var(--color-green);font-weight:800;font-size:14px">✅ Login Berhasil!</p>
-        <p style="font-size:13px;margin-top:4px;color:var(--text-secondary)">
-          Halo <strong style="color:var(--text-primary)">${rider.name}</strong>
-          &nbsp;(BIB <strong style="color:var(--color-yellow)">#${rider.bib}</strong>)
-          &nbsp;— Event: <strong style="color:var(--text-primary)">${event.name}</strong>
-        </p>
-      </div>
-
-      <p style="color:var(--text-secondary);font-size:14px;line-height:1.6;margin-bottom:20px">
-        Ikuti 4 langkah cepat di bawah. Gunakan tombol <strong>📋 Salin</strong> agar tidak salah ketik di aplikasi Traccar.
-        Setelah aktif, <strong>layar HP bisa dimatikan</strong> — pelacakan tetap berjalan otomatis.
-      </p>
-
-      <!-- Config box with Quick Copy -->
-      <div class="setup-config-box fade-in" style="margin-bottom:24px">
-        <div class="setup-config-header" style="display:flex;align-items:center;justify-content:space-between">
-          <span>Konfigurasi Traccar Client</span>
-          <button id="btnCopyAll" class="btn btn-outline" style="font-size:11px;padding:4px 10px;border-radius:6px;border-color:rgba(255,230,0,0.35);color:var(--color-yellow)">
-            📋 Salin Semua
+      <!-- Top Hub Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <a href="/" data-link style="color:var(--text-secondary);font-size:20px;text-decoration:none" title="Beranda">🏠</a>
+          <h1 style="font-size:18px;font-weight:800;color:var(--text-primary)">
+            🚴 CycloPon <span style="color:var(--color-yellow)">Rider Hub</span>
+          </h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.3);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;color:var(--color-yellow)">
+            BIB #${rider.bib}
+          </span>
+          <button id="btnRiderLogout" class="btn btn-outline" style="font-size:12px;padding:6px 12px;color:var(--color-red);border-color:rgba(239,68,68,0.35)">
+            🚪 Keluar
           </button>
         </div>
+      </div>
 
-        <div class="config-row">
-          <span class="config-label">Server URL</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="config-value">${osmandUrl}</span>
-            <button class="copy-field-btn" data-copy="${osmandUrl}" title="Salin Server URL">📋</button>
+      <!-- Welcome Banner -->
+      <div class="card fade-in" style="margin-bottom:24px;border-color:rgba(0,229,255,0.25);background:linear-gradient(135deg,rgba(0,229,255,0.06) 0%,rgba(13,17,23,0.9) 100%)">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span style="width:20px;height:20px;border-radius:50%;background:${rider.color || '#00E5FF'};box-shadow:0 0 10px ${rider.color || '#00E5FF'};display:inline-block"></span>
+          <div style="flex:1;min-width:200px">
+            <h2 style="font-size:17px;font-weight:800;color:#FFF;margin-bottom:4px">
+              Halo, ${rider.name}
+            </h2>
+            <p style="font-size:13px;color:var(--text-secondary)">
+              Event: <strong style="color:var(--color-yellow)">${event.name}</strong> &nbsp;·&nbsp; Tanggal: ${event.date}
+            </p>
           </div>
-        </div>
-
-        <div class="config-row">
-          <span class="config-label">Device Identifier</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="config-value">${traccar.deviceIdentifier}</span>
-            <button class="copy-field-btn" data-copy="${traccar.deviceIdentifier}" title="Salin Device Identifier">📋</button>
+          <div>
+            <span class="badge badge-cyan" style="font-size:11px">Device: ${traccar.deviceIdentifier}</span>
           </div>
-        </div>
-
-        <div class="config-row">
-          <span class="config-label">Interval (detik)</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="config-value">${traccar.interval}</span>
-            <button class="copy-field-btn" data-copy="${traccar.interval}" title="Salin Interval">📋</button>
-          </div>
-        </div>
-
-        <div class="config-row">
-          <span class="config-label">Accuracy</span>
-          <span class="config-value">High</span>
         </div>
       </div>
 
-      <!-- Steps -->
-      <h2 style="font-size:15px;font-weight:800;margin-bottom:14px">Langkah-langkah di HP:</h2>
+      <!-- 3 Main Action Hub Cards -->
+      <div style="margin-bottom:28px">
+        <h2 style="font-size:14px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">
+          Pilihan Menu Rider
+        </h2>
 
-      <div class="setup-step fade-in">
-        <div class="step-number">1</div>
-        <div>
-          <p style="font-weight:700;margin-bottom:6px">Install Aplikasi Traccar Client</p>
-          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">
-            Download gratis dari toko aplikasi resmi:
-          </p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener"
-               class="btn btn-outline" style="font-size:12px;padding:8px 14px">
-              🤖 Google Play Store (Android)
-            </a>
-            <a href="https://apps.apple.com/app/traccar-client/id898772423" target="_blank" rel="noopener"
-               class="btn btn-outline" style="font-size:12px;padding:8px 14px">
-              🍎 Apple App Store (iPhone/iOS)
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px">
+
+          <!-- Action 1: Cockpit HUD -->
+          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;border-color:rgba(255,230,0,0.3);background:rgba(255,230,0,0.03);padding:20px">
+            <div>
+              <div style="font-size:32px;margin-bottom:8px">🚴</div>
+              <h3 style="font-size:16px;font-weight:800;color:var(--color-yellow);margin-bottom:6px">Cockpit HUD</h3>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
+                Layar speedometer besar di handlebar, timer batas Cut-Off Time (COT), peringatan off-route, dan anti-layar mati.
+              </p>
+            </div>
+            <a href="/rider/cockpit" data-link class="btn btn-primary" style="font-size:13px;padding:12px;text-align:center;text-decoration:none">
+              Buka Layar Kemudi →
             </a>
           </div>
+
+          <!-- Action 2: Traccar Setup Instructions -->
+          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
+            <div>
+              <div style="font-size:32px;margin-bottom:8px">📱</div>
+              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">Setup Traccar</h3>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
+                Panduan konfigurasi aplikasi pelacak GPS agar HP dapat dikantongi dengan layar mati & baterai hemat.
+              </p>
+            </div>
+            <button id="btnScrollSetup" class="btn btn-outline" style="font-size:13px;padding:12px">
+              Lihat Parameter Setup ▾
+            </button>
+          </div>
+
+          <!-- Action 3: Live Map -->
+          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
+            <div>
+              <div style="font-size:32px;margin-bottom:8px">🗺️</div>
+              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">Live Map Event</h3>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
+                Peta pelacakan langsung spectator untuk memantau rute dan posisi semua rider di lintasan.
+              </p>
+            </div>
+            <a href="/watch/${event.id}" data-link class="btn btn-outline" style="font-size:13px;padding:12px;text-align:center;text-decoration:none">
+              Buka Live Map →
+            </a>
+          </div>
+
         </div>
       </div>
 
-      <div class="setup-step fade-in">
-        <div class="step-number">2</div>
-        <div>
-          <p style="font-weight:700;margin-bottom:6px">Buka Traccar Client → Masuk ke Pengaturan (⚙️)</p>
-          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:8px">Isi field berikut sesuai data konfigurasi di atas:</p>
-          <ul style="font-size:13px;color:var(--text-secondary);padding-left:16px;line-height:2.2">
-            <li><strong style="color:var(--text-primary)">Device Identifier:</strong>
-              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">${traccar.deviceIdentifier}</code>
-            </li>
-            <li><strong style="color:var(--text-primary)">Server URL:</strong>
-              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">${osmandUrl}</code>
-            </li>
-            <li><strong style="color:var(--text-primary)">Location accuracy:</strong>
-              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">High</code>
-            </li>
-            <li><strong style="color:var(--text-primary)">Frequency:</strong>
-              <code style="color:var(--color-yellow);background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.25);padding:1px 8px;border-radius:4px">${traccar.interval} detik</code>
-            </li>
-          </ul>
-        </div>
-      </div>
+      <!-- Traccar Configuration Box Section -->
+      <div id="traccarConfigSection" style="margin-bottom:32px">
+        <h2 style="font-size:14px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">
+          ⚙️ Parameter Konfigurasi Traccar Client
+        </h2>
 
-      <div class="setup-step fade-in">
-        <div class="step-number">3</div>
-        <div>
-          <p style="font-weight:700;margin-bottom:4px">Aktifkan Saklar <span style="color:var(--color-green)">Service status (▶ Start)</span></p>
-          <p style="font-size:13px;color:var(--text-secondary)">
-            Aktifkan tombol switch di layar utama Traccar. Status akan mulai mengirimkan lokasi GPS Anda ke server.
-          </p>
-        </div>
-      </div>
+        <div class="setup-config-box fade-in" style="margin-bottom:20px">
+          <div class="setup-config-header" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Konfigurasi HP Rider</span>
+            <button id="btnCopyAll" class="btn btn-outline" style="font-size:11px;padding:4px 10px;border-radius:6px;border-color:rgba(255,230,0,0.35);color:var(--color-yellow)">
+              📋 Salin Semua
+            </button>
+          </div>
 
-      <div class="setup-step fade-in" style="border-color:rgba(255,230,0,0.35);background:rgba(255,230,0,0.03)">
-        <div class="step-number" style="background:var(--color-green);color:#080A0F">4</div>
-        <div>
-          <p style="font-weight:800;color:#FFFFFF;margin-bottom:4px">Kunci / Matikan Layar HP Anda! 🎉</p>
-          <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
-            Traccar Client berjalan sebagai <em>background service resmi OS</em>.
-            GPS tetap terkirim setiap <strong>${traccar.interval} detik</strong> dan sangat hemat baterai meskipun HP dikantongi.
-          </p>
+          <div class="config-row">
+            <span class="config-label">Server URL</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="config-value">${osmandUrl}</span>
+              <button class="copy-field-btn" data-copy="${osmandUrl}" title="Salin Server URL">📋</button>
+            </div>
+          </div>
+
+          <div class="config-row">
+            <span class="config-label">Device Identifier</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="config-value">${traccar.deviceIdentifier}</span>
+              <button class="copy-field-btn" data-copy="${traccar.deviceIdentifier}" title="Salin Device Identifier">📋</button>
+            </div>
+          </div>
+
+          <div class="config-row">
+            <span class="config-label">Interval (detik)</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="config-value">${traccar.interval}</span>
+              <button class="copy-field-btn" data-copy="${traccar.interval}" title="Salin Interval">📋</button>
+            </div>
+          </div>
+
+          <div class="config-row">
+            <span class="config-label">Accuracy</span>
+            <span class="config-value">High</span>
+          </div>
+        </div>
+
+        <!-- 4 Step Guide -->
+        <div class="setup-step fade-in">
+          <div class="step-number">1</div>
+          <div>
+            <p style="font-weight:700;margin-bottom:4px">Install Aplikasi Traccar Client</p>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">Download gratis di HP Anda:</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener" class="btn btn-outline" style="font-size:12px;padding:6px 12px">
+                🤖 Google Play Store
+              </a>
+              <a href="https://apps.apple.com/app/traccar-client/id898772423" target="_blank" rel="noopener" class="btn btn-outline" style="font-size:12px;padding:6px 12px">
+                🍎 Apple App Store
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="setup-step fade-in">
+          <div class="step-number">2</div>
+          <div>
+            <p style="font-weight:700;margin-bottom:4px">Buka Traccar Client → Masuk ke Pengaturan (⚙️)</p>
+            <p style="font-size:13px;color:var(--text-secondary)">
+              Paste <strong>Server URL</strong> dan <strong>Device Identifier</strong> di atas.
+            </p>
+          </div>
+        </div>
+
+        <div class="setup-step fade-in">
+          <div class="step-number">3</div>
+          <div>
+            <p style="font-weight:700;margin-bottom:4px">Aktifkan Saklar <span style="color:var(--color-green)">Service status (▶ Start)</span></p>
+            <p style="font-size:13px;color:var(--text-secondary)">
+              Status akan mulai mengirimkan lokasi GPS Anda secara otomatis ke server CycloPon.
+            </p>
+          </div>
+        </div>
+
+        <div class="setup-step fade-in" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.03)">
+          <div class="step-number" style="background:var(--color-green);color:#080A0F">4</div>
+          <div>
+            <p style="font-weight:800;color:#FFF;margin-bottom:4px">Siap Gowes! Layar HP Bisa Dimatikan 🎉</p>
+            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
+              Pelacakan tetap aktif di background walau HP dikantongi. Atau pasang di handlebar dan buka <strong>Cockpit HUD</strong>!
+            </p>
+          </div>
         </div>
       </div>
 
       <!-- Emergency SOS Card -->
-      <div class="rider-sos-card fade-in">
+      <div class="rider-sos-card fade-in" style="margin-bottom:32px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span style="font-size:18px">🚨</span>
           <strong style="color:#EF4444;font-size:14px;letter-spacing:0.02em">Pusat Bantuan & Keselamatan Rider</strong>
@@ -152,17 +221,6 @@ function renderRiderSetup() {
         </button>
       </div>
 
-      <!-- CTA -->
-      <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding-bottom:32px">
-        <a class="btn btn-primary fade-in" style="font-size:14px;padding:14px 24px"
-           href="/rider/cockpit" data-link>
-          🚴 &nbsp;Buka Rider Cockpit HUD
-        </a>
-        <a class="btn btn-outline fade-in" style="font-size:14px;padding:14px 24px"
-           href="/watch/${event.id}" data-link>
-          🗺️ &nbsp;Lihat di Live Map
-        </a>
-      </div>
     </div>
 
     <!-- SOS Modal Container -->
@@ -215,6 +273,22 @@ function renderRiderSetup() {
     </div>
   `;
 
+  // ── Logout rider ──
+  document.getElementById('btnRiderLogout').addEventListener('click', () => {
+    if (confirm('Keluar dari sesi rider?')) {
+      sessionStorage.removeItem('riderConfig');
+      localStorage.removeItem('riderConfig');
+      showToast('Berhasil logout rider.', 'info');
+      Router.navigate('/rider');
+    }
+  });
+
+  // Scroll to setup
+  document.getElementById('btnScrollSetup').addEventListener('click', () => {
+    const el = document.getElementById('traccarConfigSection');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  });
+
   // Copy individual fields
   document.querySelectorAll('.copy-field-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -223,7 +297,7 @@ function renderRiderSetup() {
         await navigator.clipboard.writeText(text);
         showToast(`Tersalin: ${text} ✓`, 'success');
       } catch {
-        showToast('Gagal menyalin otomatis. Silakan salin manual.', 'error');
+        showToast('Gagal menyalin.', 'error');
       }
     });
   });
@@ -272,7 +346,6 @@ function renderRiderSetup() {
 
     const message = document.getElementById('sosMessageInput').value.trim();
 
-    // Try to get instant coordinate via browser geolocation
     let lat = null;
     let lng = null;
 
@@ -310,7 +383,6 @@ function renderRiderSetup() {
       closeSosModal();
       showToast('🚨 Sinyal SOS Darurat berhasil dikirim ke panitia!', 'success');
 
-      // Update SOS button state
       btnOpenSos.innerHTML = '<span>✅</span><span>SINYAL SOS AKTIF (PANITIA TERNOTIFIKASI)</span>';
       btnOpenSos.style.background = '#10B981';
       btnOpenSos.style.animation = 'none';
@@ -321,4 +393,3 @@ function renderRiderSetup() {
     }
   });
 }
-

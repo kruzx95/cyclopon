@@ -1,6 +1,12 @@
 async function renderAdminEvent(params) {
   loadCss('/css/admin.css');
 
+  // Route guard: check if admin is logged in
+  if (!sessionStorage.getItem('adminUser')) {
+    Router.navigate('/admin');
+    return;
+  }
+
   const eventId = params.id;
   const isNew   = eventId === 'new';
   const app     = document.getElementById('app');

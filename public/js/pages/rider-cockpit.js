@@ -47,7 +47,7 @@ async function renderRiderCockpit() {
       <!-- Top Bar -->
       <div class="cockpit-topbar">
         <div class="cockpit-rider-info">
-          <a href="/rider/setup" data-link style="color:var(--cockpit-muted);text-decoration:none;font-size:16px;margin-right:2px" title="Kembali ke Setup">←</a>
+          <a href="/rider/setup" data-link style="color:var(--cockpit-muted);text-decoration:none;font-size:13px;background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;margin-right:6px" title="Kembali ke Rider Hub">🏠 Hub</a>
           <span class="cockpit-bib-badge">BIB #${rider.bib}</span>
           <span class="cockpit-rider-name" title="${rider.name}">${rider.name}</span>
         </div>
@@ -61,8 +61,18 @@ async function renderRiderCockpit() {
           <button id="btnToggleFullscreen" class="cockpit-pill-btn" title="Fullscreen HUD">
             ⛶
           </button>
+          <button id="btnCockpitLogout" class="cockpit-pill-btn" title="Keluar / Logout" style="color:var(--color-red);border-color:rgba(239,68,68,0.4)">
+            🚪
+          </button>
         </div>
       </div>
+
+      ${isDemo ? `
+        <div style="background:rgba(255,230,0,0.12);border-bottom:1px solid rgba(255,230,0,0.3);padding:6px 14px;font-size:12px;color:var(--color-yellow);display:flex;align-items:center;justify-content:space-between">
+          <span>⚠️ <strong>Mode Demo Simulator</strong> — Anda belum login.</span>
+          <a href="/rider" data-link style="color:#FFF;font-weight:700;text-decoration:underline">Login Rider →</a>
+        </div>
+      ` : ''}
 
       <!-- Off-Route Warning Alert Banner -->
       <div id="cockpitOffRouteAlert" class="cockpit-offroute-banner">
@@ -619,6 +629,18 @@ async function renderRiderCockpit() {
   document.getElementById('btnDismissOffRoute').addEventListener('click', () => {
     document.getElementById('cockpitOffRouteAlert').classList.remove('active');
   });
+
+  // ── Logout Rider from Cockpit ──
+  const btnCockpitLogout = document.getElementById('btnCockpitLogout');
+  if (btnCockpitLogout) {
+    btnCockpitLogout.addEventListener('click', () => {
+      if (confirm('Keluar dari sesi rider dan kembali ke login?')) {
+        sessionStorage.removeItem('riderConfig');
+        localStorage.removeItem('riderConfig');
+        Router.navigate('/rider');
+      }
+    });
+  }
 
   // ── 10. Emergency SOS Modal Handlers ──
   const sosModal = document.getElementById('cockpitSosModalOverlay');

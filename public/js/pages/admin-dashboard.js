@@ -1,10 +1,23 @@
 /* Admin sidebar helper — shared by dashboard and event pages */
 function adminSidebar(activeKey) {
+  let adminName = 'Admin';
+  try {
+    const userStr = sessionStorage.getItem('adminUser');
+    if (userStr) {
+      const u = JSON.parse(userStr);
+      adminName = u.name || u.email || 'Admin';
+    }
+  } catch {}
+
   return `
     <aside class="sidebar">
       <div class="sidebar-logo">
         <h2>🚴 CycloPon</h2>
         <small>Admin Panel</small>
+      </div>
+      <div style="padding:10px 24px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px">
+        <span>👤</span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);font-weight:600">${adminName}</span>
       </div>
       <nav class="sidebar-nav">
         <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
@@ -12,13 +25,34 @@ function adminSidebar(activeKey) {
         </a>
         <a href="/" data-link>🏠 &nbsp;Beranda</a>
       </nav>
+      <div style="padding:16px 20px;border-top:1px solid var(--border);margin-top:auto">
+        <button onclick="logoutAdmin()" class="btn btn-outline" style="width:100%;font-size:12px;padding:8px 12px;color:var(--color-red);border-color:rgba(239,68,68,0.35);cursor:pointer">
+          🚪 Keluar (Logout)
+        </button>
+      </div>
     </aside>
   `;
 }
 
+function logoutAdmin() {
+  if (confirm('Keluar dari Admin Panel?')) {
+    sessionStorage.removeItem('adminUser');
+    showToast('Berhasil logout dari Admin.', 'info');
+    Router.navigate('/admin');
+  }
+}
+window.logoutAdmin = logoutAdmin;
+
 /* ── Admin Login ── */
 function renderAdminLogin() {
   loadCss('/css/admin.css');
+
+  // If already logged in, redirect directly to dashboard
+  if (sessionStorage.getItem('adminUser')) {
+    Router.navigate('/admin/dashboard');
+    return;
+  }
+
   document.getElementById('app').innerHTML = `
     <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at top,rgba(255,230,0,0.08) 0%,transparent 55%)">
       <div class="card fade-in" style="width:100%;max-width:400px;border-color:rgba(255,230,0,0.25)">
@@ -88,6 +122,12 @@ function renderAdminLogin() {
 /* ── Admin Dashboard ── */
 async function renderAdminDashboard() {
   loadCss('/css/admin.css');
+
+  // Route guard: check if admin is logged in
+  if (!sessionStorage.getItem('adminUser')) {
+    Router.navigate('/admin');
+    return;
+  }
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="admin-layout">
