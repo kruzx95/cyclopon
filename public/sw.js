@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v10';
+const CACHE_NAME = 'cyclopon-v11';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -8,6 +8,8 @@ const SHELL_ASSETS = [
   '/css/admin.css',
   '/css/rider.css',
   '/css/map.css',
+  '/css/cockpit.css',
+  '/css/results.css',
   '/js/router.js',
   '/js/lib/utils.js',
   '/js/lib/gpx-utils.js',
@@ -15,7 +17,9 @@ const SHELL_ASSETS = [
   '/js/pages/landing.js',
   '/js/pages/rider-login.js',
   '/js/pages/rider-setup.js',
+  '/js/pages/rider-cockpit.js',
   '/js/pages/live-map.js',
+  '/js/pages/event-results.js',
   '/js/pages/admin-dashboard.js',
   '/js/pages/admin-event.js',
   '/manifest.json',
@@ -59,7 +63,7 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request).catch(() =>
-        new Response(JSON.stringify({ error: 'Offline — tidak ada koneksi internet' }), {
+        new Response(JSON.stringify({ error: 'Server tidak terjangkau (Offline). Pastikan server backend sedang aktif (npm run dev).' }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
         })

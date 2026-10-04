@@ -216,7 +216,11 @@ async function renderLiveMap(params) {
       fetch(`/api/events/${eventId}/checkpoints`),
       fetch(`/api/events/${eventId}/splits`)
     ]);
-    if (!evRes.ok) throw new Error('Event tidak ditemukan');
+    if (!evRes.ok) {
+      if (evRes.status === 404) throw new Error('Event tidak ditemukan.');
+      const errData = await evRes.json().catch(() => ({}));
+      throw new Error(errData.error || `Tidak dapat terhubung ke server (HTTP ${evRes.status}). Pastikan server backend sedang aktif.`);
+    }
     event       = await evRes.json();
     riders      = await rRes.json();
     checkpoints = cpRes.ok ? await cpRes.json() : [];
