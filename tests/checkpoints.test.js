@@ -143,6 +143,8 @@ test('Checkpoints & Split Times API & Database', async (t) => {
   });
 
   await t.test('teardown', async () => {
+    const { eventId } = t.context;
+    db.db.prepare('DELETE FROM events WHERE id = ?').run(eventId);
     if (server) {
       await new Promise((resolve) => server.close(resolve));
     }
