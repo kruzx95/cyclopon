@@ -26,6 +26,7 @@ const riderRoutes = require('./routes/riders');
 const alertRoutes = require('./routes/alerts');
 const checkpointRoutes = require('./routes/checkpoints');
 const historyRoutes = require('./routes/history');
+const resultsRoutes = require('./routes/results');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
@@ -33,6 +34,7 @@ app.use('/api/admin/riders', riderRoutes);
 app.use('/api', alertRoutes);
 app.use('/api', checkpointRoutes);
 app.use('/api', historyRoutes);
+app.use('/api', resultsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
