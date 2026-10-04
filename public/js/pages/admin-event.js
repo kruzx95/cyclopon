@@ -31,8 +31,12 @@ async function renderAdminEvent(params) {
           <div style="display:flex;align-items:center;gap:12px">
             <button onclick="Router.navigate('/admin/dashboard')" class="btn btn-outline" style="padding:8px 14px;font-size:13px">← Back</button>
             <h1>${isNew ? 'Event Baru' : 'Edit Event'}</h1>
-          </div>
-          ${!isNew ? `<a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/watch/${eventId}" target="_blank">🗺️ Live Map</a>` : ''}
+          ${!isNew ? `
+            <div style="display:flex;gap:8px">
+              <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/events/${eventId}/results" target="_blank">🏆 Hasil & Brevet</a>
+              <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/watch/${eventId}" target="_blank">🗺️ Live Map</a>
+            </div>
+          ` : ''}
         </div>
 
         <!-- Event Details Form -->

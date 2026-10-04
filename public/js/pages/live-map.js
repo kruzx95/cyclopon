@@ -62,6 +62,11 @@ async function renderLiveMap(params) {
             📊 <span class="action-btn-label">Leaderboard</span>
             <span class="badge badge-yellow" id="headerRiderCount">0</span>
           </button>
+
+          <!-- Official Results Link -->
+          <a class="header-action-btn" href="/events/${eventId}/results" data-link title="Lihat Rekap Hasil Resmi & Sertifikat Brevet">
+            🏆 <span class="action-btn-label">Hasil & Brevet</span>
+          </a>
         </div>
       </header>
 

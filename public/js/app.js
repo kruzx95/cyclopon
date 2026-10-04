@@ -45,6 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLiveMap(params);
   });
 
+  // ── Official Event Results & Brevet Certificate ──
+  Router.register('/events/:id/results', async (params) => {
+    await loadPageDeps(
+      ['/js/lib/utils.js', '/js/pages/event-results.js'],
+      ['/css/results.css']
+    );
+    renderEventResults(params);
+  });
+
   // ── Admin panel ──
   Router.register('/admin', async () => {
     await loadPageDeps(
