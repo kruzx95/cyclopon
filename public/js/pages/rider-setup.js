@@ -153,10 +153,14 @@ function renderRiderSetup() {
       </div>
 
       <!-- CTA -->
-      <div style="margin-top:20px;text-align:center;padding-bottom:32px">
-        <a class="btn btn-primary fade-in" style="font-size:15px;padding:16px 36px"
+      <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding-bottom:32px">
+        <a class="btn btn-primary fade-in" style="font-size:14px;padding:14px 24px"
+           href="/rider/cockpit" data-link>
+          🚴 &nbsp;Buka Rider Cockpit HUD
+        </a>
+        <a class="btn btn-outline fade-in" style="font-size:14px;padding:14px 24px"
            href="/watch/${event.id}" data-link>
-          🗺️ &nbsp;Lihat Posisi di Live Map
+          🗺️ &nbsp;Lihat di Live Map
         </a>
       </div>
     </div>

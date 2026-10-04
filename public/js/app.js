@@ -28,6 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRiderSetup();
   });
 
+  Router.register('/rider/cockpit', async () => {
+    await loadPageDeps(
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/rider-cockpit.js'],
+      ['/css/cockpit.css']
+    );
+    renderRiderCockpit();
+  });
+
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(
