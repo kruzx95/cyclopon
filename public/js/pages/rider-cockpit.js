@@ -91,10 +91,16 @@ async function renderRiderCockpit() {
 
       <!-- Top Bar -->
       <div class="cockpit-topbar">
-        <div class="cockpit-rider-info">
-          <a href="/rider/setup" data-link style="color:var(--cockpit-muted);text-decoration:none;font-size:13px;background:rgba(255,255,255,0.06);padding:4px 8px;border-radius:6px;margin-right:6px" title="Kembali ke Rider Hub">🏠 Hub</a>
-          <span class="cockpit-bib-badge">BIB #${rider.bib}</span>
-          <span class="cockpit-rider-name" title="${rider.name}">${rider.name}</span>
+        <div class="cockpit-topbar-row">
+          <div class="cockpit-rider-info">
+            <a href="/rider/setup" data-link class="cockpit-hub-link" title="Kembali ke Rider Hub">🏠 Hub</a>
+            <span class="cockpit-bib-badge">BIB #${rider.bib}</span>
+            <span class="cockpit-rider-name" title="${rider.name}">${rider.name}</span>
+          </div>
+          <div class="cockpit-top-quick">
+            <button id="btnToggleFullscreen" class="cockpit-pill-btn icon-only" title="Fullscreen HUD">⛶</button>
+            <button id="btnCockpitLogout" class="cockpit-pill-btn icon-only danger" title="Keluar / Logout">🚪</button>
+          </div>
         </div>
         <div class="cockpit-top-actions">
           <button id="btnShareCockpit" class="cockpit-pill-btn" title="Bagikan Tautan Live Tracking Saya ke WhatsApp / Medsos">
@@ -114,12 +120,6 @@ async function renderRiderCockpit() {
           </button>
           <button id="btnToggleSim" class="cockpit-pill-btn" title="Toggle Ride Simulator">
             🎮 <span id="simStatusText">Sim</span>
-          </button>
-          <button id="btnToggleFullscreen" class="cockpit-pill-btn" title="Fullscreen HUD">
-            ⛶
-          </button>
-          <button id="btnCockpitLogout" class="cockpit-pill-btn" title="Keluar / Logout" style="color:var(--color-red);border-color:rgba(239,68,68,0.4)">
-            🚪
           </button>
         </div>
       </div>
@@ -575,6 +575,9 @@ async function renderRiderCockpit() {
   const climbSumInit = document.getElementById('cockpitClimbSummarySub');
   if (climbSumInit) climbSumInit.textContent = `${routeClimbs.length} Tanjakan Terdeteksi`;
 
+  // Initial Checkpoint state
+  updateCheckpointWidget(0, 0);
+
   // ── 5. Setup Mini Map (Leaflet) ──
   await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
   loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
@@ -588,8 +591,9 @@ async function renderRiderCockpit() {
       attributionControl: false
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
     }).addTo(cockpitMap);
 
     // Draw route polyline
@@ -876,10 +880,34 @@ async function renderRiderCockpit() {
   }
 
   function updateCheckpointWidget(currentCoveredKm, movingAvg) {
+    const cpCard = document.getElementById('cockpitCpCard');
+    const cpDetails = cpCard?.querySelector('.cockpit-cp-details');
+    const cpProgressEl = cpCard?.querySelector('.cockpit-cp-progress-bar');
+    let noCpNotice = document.getElementById('cockpitNoCpNotice');
+
     if (!checkpoints.length) {
-      document.getElementById('cockpitCpName').textContent = 'Tidak ada checkpoint terdaftar';
+      const nameEl = document.getElementById('cockpitCpName');
+      if (nameEl) nameEl.textContent = '🏁 Rute Bebas (Tanpa Transit)';
+      const pill = document.getElementById('cockpitCpPill');
+      if (pill) {
+        pill.textContent = 'NAVIGASI GPX';
+        pill.className = 'cockpit-cp-status-pill safe';
+      }
+      if (cpDetails) cpDetails.style.display = 'none';
+      if (cpProgressEl) cpProgressEl.style.display = 'none';
+      if (!noCpNotice && cpCard) {
+        noCpNotice = document.createElement('div');
+        noCpNotice.id = 'cockpitNoCpNotice';
+        noCpNotice.style.cssText = 'font-size:12px;color:var(--cockpit-muted);display:flex;align-items:center;gap:6px;padding:4px 0';
+        noCpNotice.innerHTML = '<span>ℹ️</span> Ikuti garis rute GPX pada peta hingga garis finish.';
+        cpCard.appendChild(noCpNotice);
+      }
       return;
     }
+
+    if (cpDetails) cpDetails.style.display = 'grid';
+    if (cpProgressEl) cpProgressEl.style.display = 'block';
+    if (noCpNotice) noCpNotice.remove();
 
     // Find next checkpoint
     const nextCp = checkpoints.find(cp => cp.km_distance > currentCoveredKm) || checkpoints[checkpoints.length - 1];

@@ -3,6 +3,7 @@
 :root {
   --cockpit-bg: #F8F8F8;
   --cockpit-card: #FFFFFF;
+  --cockpit-card-sub: #F4F5F4;
   --cockpit-card-border: #D8D2C9;
   --cockpit-yellow: #8F5E2B;
   --cockpit-cyan: #748873;
@@ -35,21 +36,56 @@ body.cockpit-active {
 /* ── Top Bar ── */
 .cockpit-topbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
   padding: 8px 12px;
   background: var(--cockpit-card);
   border: 1px solid var(--cockpit-card-border);
   border-radius: var(--radius-md);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.cockpit-topbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  width: 100%;
 }
 
 .cockpit-rider-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
+  flex: 1;
+}
+
+.cockpit-hub-link {
+  color: var(--cockpit-muted);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(120, 140, 130, 0.12);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.cockpit-hub-link:hover {
+  background: rgba(120, 140, 130, 0.22);
+  color: var(--cockpit-text);
+}
+
+.cockpit-top-quick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .cockpit-bib-badge {
@@ -61,6 +97,7 @@ body.cockpit-active {
   border-radius: 6px;
   letter-spacing: 0.05em;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cockpit-rider-name {
@@ -70,13 +107,23 @@ body.cockpit-active {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .cockpit-top-actions {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.cockpit-top-actions::-webkit-scrollbar {
+  display: none;
 }
 
 .cockpit-pill-btn {
@@ -93,6 +140,19 @@ body.cockpit-active {
   gap: 5px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cockpit-pill-btn.icon-only {
+  padding: 5px 8px;
+  min-width: 32px;
+  justify-content: center;
+}
+
+.cockpit-pill-btn.danger {
+  color: var(--cockpit-red);
+  border-color: rgba(239, 68, 68, 0.35);
 }
 
 .cockpit-pill-btn:hover {
@@ -543,10 +603,11 @@ body.cockpit-active {
 }
 
 .cockpit-cp-detail-box {
-  background: #F8F8F8;
+  background: var(--cockpit-card-sub, #F8F8F8);
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cockpit-card-border, var(--border));
+  transition: all 0.2s;
 }
 
 .cockpit-cp-detail-lbl {
@@ -667,14 +728,22 @@ body.cockpit-active {
 }
 
 /* ── AMOLED Pitch-Black Night Mode (#000000) ── */
-body.cockpit-active.night-mode {
+body.cockpit-active.night-mode,
+body.night-mode {
   background-color: #000000 !important;
+  --cockpit-bg: #000000;
+  --cockpit-card: #080A09;
+  --cockpit-card-sub: #0D1210;
+  --cockpit-card-border: #1C2420;
+  --cockpit-text: #F3F7F5;
+  --cockpit-muted: #8E9E95;
 }
 
 body.cockpit-active.night-mode .cockpit-container,
 .cockpit-container.night-mode {
   --cockpit-bg: #000000;
   --cockpit-card: #080A09;
+  --cockpit-card-sub: #0D1210;
   --cockpit-card-border: #1C2420;
   --cockpit-text: #F3F7F5;
   --cockpit-muted: #8E9E95;
@@ -728,11 +797,35 @@ body.cockpit-active.night-mode .cockpit-container,
 
 .cockpit-container.night-mode .cockpit-stat-box,
 .cockpit-container.night-mode .cockpit-checkpoint-widget,
+.cockpit-container.night-mode .cockpit-cp-card,
+body.night-mode .cockpit-cp-card,
 .cockpit-container.night-mode .cockpit-climb-card,
 .cockpit-container.night-mode .cockpit-map-card {
-  background: #080A09;
-  border-color: #1C2420;
-  box-shadow: none;
+  background: #080A09 !important;
+  border-color: #1C2420 !important;
+  box-shadow: none !important;
+}
+
+/* Checkpoint Card in Night Mode - Pure Dark AMOLED with Crisp Contrast */
+body.night-mode .cockpit-cp-detail-box,
+.cockpit-container.night-mode .cockpit-cp-detail-box {
+  background: #0D1210 !important;
+  border-color: #1C2420 !important;
+}
+
+body.night-mode .cockpit-cp-detail-lbl,
+.cockpit-container.night-mode .cockpit-cp-detail-lbl {
+  color: #8E9E95 !important;
+}
+
+body.night-mode .cockpit-cp-detail-val,
+.cockpit-container.night-mode .cockpit-cp-detail-val {
+  color: #F3F7F5 !important;
+}
+
+body.night-mode .cockpit-cp-progress-bar,
+.cockpit-container.night-mode .cockpit-cp-progress-bar {
+  background: #141A17 !important;
 }
 
 .cockpit-container.night-mode .cockpit-climb-canvas-container {
@@ -745,22 +838,63 @@ body.cockpit-active.night-mode .cockpit-container,
   border-color: #1C2420;
 }
 
+/* Mini Breadcrumb Map Dark Mode Filter (Crystal Clear OpenStreetMap, Zero Watermark) */
+body.night-mode .cockpit-mini-map,
+.cockpit-container.night-mode .cockpit-mini-map {
+  background: #080A09 !important;
+}
+
+body.night-mode .cockpit-mini-map .leaflet-tile,
+.cockpit-container.night-mode .cockpit-mini-map .leaflet-tile {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
+}
+
+/* Sticky Bottom Emergency Action Bar - Seamless Pure AMOLED */
+body.night-mode .cockpit-bottom-bar,
 .cockpit-container.night-mode .cockpit-bottom-bar {
-  background: rgba(0, 0, 0, 0.95);
-  border-top-color: #1C2420;
-  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.85);
+  background: rgba(8, 10, 9, 0.96) !important;
+  border-top-color: #1C2420 !important;
+  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.9) !important;
 }
 
+body.night-mode .cockpit-nav-btn,
 .cockpit-container.night-mode .cockpit-nav-btn {
-  background: #101513;
-  border-color: #222E28;
-  color: #E2E8E4;
+  background: #101513 !important;
+  border-color: #222E28 !important;
+  color: #E2E8E4 !important;
 }
 
-.cockpit-container.night-mode .cockpit-modal {
-  background: #080A09;
-  border-color: #1C2420;
-  color: #F3F7F5;
+body.night-mode .cockpit-nav-btn:hover {
+  background: #18201C !important;
+  color: #FFFFFF !important;
+}
+
+/* SOS Modal in Night Mode */
+body.night-mode .cockpit-modal,
+body.night-mode .sos-modal-content {
+  background: #080A09 !important;
+  border-color: #EF4444 !important;
+  color: #F3F7F5 !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 68, 68, 0.25) !important;
+}
+
+body.night-mode .sos-type-btn {
+  background: #101513 !important;
+  border-color: #222E28 !important;
+  color: #E2E8E4 !important;
+}
+
+body.night-mode .sos-type-btn:hover,
+body.night-mode .sos-type-btn.active {
+  background: #1A221E !important;
+  border-color: var(--color-sand) !important;
+  color: #FFFFFF !important;
+}
+
+body.night-mode #cockpitSosMsgInput {
+  background: #101513 !important;
+  border-color: #222E28 !important;
+  color: #F3F7F5 !important;
 }
 
 .cockpit-container.night-mode .cockpit-pocket-banner {

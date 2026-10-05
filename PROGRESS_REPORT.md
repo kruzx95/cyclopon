@@ -28,7 +28,8 @@
 9. [Phase 10: Checkpoint Audio Chime & AMOLED Night Mode](#9-phase-10-checkpoint-audio-proximity-chime--amoled-pitch-black-night-mode)
 10. [Phase 11: Background GPS Keep-Alive & Mode Kantong Jersey](#10-phase-11-pwa-background-gps-keep-alive--mode-pelacak-saku-jersey-pocket-tracker)
 11. [Phase 12: ClimbPro & Analitik Elevasi Real-Time (Grade %)](#11-phase-12-climbpro--analitik-elevasi-real-time-grade--)
-12. [Rekomendasi Langkah Berikutnya](#12-rekomendasi-langkah-berikutnya)
+12. [Penyempurnaan Tampilan Rider Cockpit HUD](#12-penyempurnaan-tampilan-rider-cockpit-hud-amoled-night-mode--layout)
+13. [Rekomendasi Langkah Berikutnya](#13-rekomendasi-langkah-berikutnya)
 
 ---
 
@@ -308,7 +309,34 @@ Untuk memberikan pengalaman bersepeda dan pemantauan perlombaan ultra-cycling ke
 
 ---
 
-## 12. Rekomendasi Langkah Berikutnya
+## 12. Penyempurnaan Tampilan Rider Cockpit HUD (AMOLED Night Mode & Layout)
+
+Berdasarkan umpan balik dan pengujian visual langsung di kokpit pesepeda (`/rider/cockpit`), telah dilakukan serangkaian perbaikan estetika dan kegunaan pada antarmuka:
+
+1. **Penataan Ulang Top Bar 2-Baris Responsif Bebas Tumpang Tindih:**
+   - Memisahkan bilah atas menjadi 2 baris terstruktur:
+     - **Baris 1 (Identitas Rider):** Tautan `🏠 Hub`, lencana `BIB #...`, dan nama pesepeda di sisi kiri, serta tombol cepat `⛶ Fullscreen` dan `🚪 Keluar` di sisi kanan.
+     - **Baris 2 (Bilah Aksi & Toggle):** Tombol aksi cepat (`Bagikan`, `Kantong`, `Siang/Malam`, `Suara`, `Layar`, `Sim`) diletakkan dalam nampan geser horizontal fleksibel (`overflow-x: auto` tanpa scrollbar).
+   - Menghilangkan sepenuhnya masalah tumpang tindih (*overlap*) tombol "Bagikan" di atas lencana nomor BIB pada layar smartphone pesepeda.
+
+2. **Perbaikan Kontras Kotak Rincian Checkpoint pada Mode Malam (AMOLED):**
+   - Mengganti latar putih keras `#F8F8F8` pada `.cockpit-cp-detail-box` dengan warna gelap pekat `#0D1210` dan garis batas `#1C2420` saat mode malam aktif.
+   - Teks label (`#8E9E95`) dan nilai numerik (`#F3F7F5`) kini terbaca kontras, tajam, dan tidak menyilaukan mata pengendara di malam hari.
+
+3. **Sinkronisasi Bilah Darurat Bawah (*Sticky Bottom Bar*):**
+   - Menyelaraskan selektor CSS `body.night-mode .cockpit-bottom-bar` dan `body.night-mode .cockpit-nav-btn`.
+   - Latar bilah bawah kini menyatu sempurna dalam warna pitch black AMOLED (`rgba(8, 10, 9, 0.96)`) dengan tombol merah SOS bercahaya dan tombol navigasi Live Map gelap elegan.
+
+4. **Pembersihan Watermark Peta Mini (Transisi ke OpenStreetMap Asli + Filter Dark Mode):**
+   - Mengganti sumber peta mini dari CartoDB (yang memunculkan cap air *"API KEY REQUIRED"*) ke **OpenStreetMap resmi** tanpa memerlukan API key eksternal.
+   - Menerapkan filter CSS inversi malam pintar (`filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%)`), menghasilkan peta gelap kontras tinggi yang jernih dan bebas watermark.
+
+5. **Penanganan Elegan Status Tanpa Checkpoint (*Graceful Empty State*):**
+   - Bila rute event tidak memiliki checkpoint transit, widget checkpoint secara cerdas menyembunyikan 3 kotak kosong (`-- km`, `--:--`) dan menampilkan status bersahabat: *"🏁 Rute Bebas (Tanpa Transit)"* dengan lencana *"NAVIGASI GPX"* serta panduan *"ℹ️ Ikuti garis rute GPX pada peta hingga garis finish"*.
+
+---
+
+## 13. Rekomendasi Langkah Berikutnya
 
 Untuk pengembangan selanjutnya atau persiapan rilis produksi, opsi berikut dapat dipertimbangkan:
 
