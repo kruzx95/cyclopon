@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!DOCTYPE properties SYSTEM 'http://java.sun.com/dtd/properties.dtd'>
+
+<properties>
+
+    <!-- Web Interface & API Port -->
+    <entry key='web.port'>8082</entry>
+    <entry key='web.path'>./modern</entry>
+
+    <!-- Database: Lightweight Built-in H2 (Zero-configuration, low-RAM) -->
+    <entry key='database.driver'>org.h2.Driver</entry>
+    <entry key='database.url'>jdbc:h2:./data/database</entry>
+    <entry key='database.user'>sa</entry>
+    <entry key='database.password'></entry>
+
+    <!-- GPS Protocols: OsmAnd HTTP Protocol (Standard for smartphone clients) -->
+    <entry key='osmand.port'>5055</entry>
+
+    <!-- Performance Optimization: Disable reverse geocoding to eliminate external API latency -->
+    <entry key='geocoder.enable'>false</entry>
+
+    <!-- Device Timeout Thresholds -->
+    <entry key='status.timeout'>120</entry>
+    <entry key='status.ignoreOffline'>false</entry>
+
+    <!-- Logging -->
+    <entry key='logger.level'>info</entry>
+    <entry key='logger.file'>./logs/tracker-server.log</entry>
+
+</properties>
