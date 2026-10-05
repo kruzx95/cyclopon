@@ -347,6 +347,125 @@ body.cockpit-active {
   margin-top: 4px;
 }
 
+/* ── Dynamic Grade % & Altitude Color Indicators ── */
+.grade-val {
+  transition: color 0.3s ease;
+}
+.grade-val[data-grade-level="downhill"] { color: #3B82F6 !important; }
+.grade-val[data-grade-level="flat"]     { color: #10B981 !important; }
+.grade-val[data-grade-level="mild"]     { color: #F59E0B !important; }
+.grade-val[data-grade-level="moderate"] { color: #F97316 !important; }
+.grade-val[data-grade-level="steep"]    { color: #EF4444 !important; }
+.grade-val[data-grade-level="extreme"]  { color: #8B5CF6 !important; }
+
+/* ── Dynamic ClimbPro Card ── */
+.cockpit-climb-card {
+  background: var(--cockpit-card);
+  border: 1.5px solid var(--cockpit-card-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.cockpit-climb-card.hidden {
+  display: none !important;
+}
+
+.cockpit-climb-card.upcoming {
+  border-color: #F59E0B;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.cockpit-climb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cockpit-climb-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cockpit-climb-title {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--cockpit-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.climb-cat-pill {
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: #FFFFFF;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.cockpit-climb-avg {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cockpit-muted);
+}
+
+.cockpit-climb-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 75px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #F0EDE6;
+  border: 1px solid var(--border-subtle);
+}
+
+#cockpitClimbCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cockpit-climb-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: var(--bg-primary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.cockpit-climb-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cockpit-climb-stat-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--cockpit-muted);
+}
+
+.cockpit-climb-stat-val {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--cockpit-text);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Checkpoint & COT Widget ── */
 .cockpit-cp-card {
   background: var(--cockpit-card);
@@ -609,10 +728,21 @@ body.cockpit-active.night-mode .cockpit-container,
 
 .cockpit-container.night-mode .cockpit-stat-box,
 .cockpit-container.night-mode .cockpit-checkpoint-widget,
+.cockpit-container.night-mode .cockpit-climb-card,
 .cockpit-container.night-mode .cockpit-map-card {
   background: #080A09;
   border-color: #1C2420;
   box-shadow: none;
+}
+
+.cockpit-container.night-mode .cockpit-climb-canvas-container {
+  background: #030504;
+  border-color: #1C2420;
+}
+
+.cockpit-container.night-mode .cockpit-climb-stats {
+  background: #0D1210;
+  border-color: #1C2420;
 }
 
 .cockpit-container.night-mode .cockpit-bottom-bar {

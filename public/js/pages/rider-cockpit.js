@@ -235,6 +235,56 @@ async function renderRiderCockpit() {
           </div>
           <div class="cockpit-stat-sub" id="cockpitCoordsSub">-7.0000, 110.0000</div>
         </div>
+
+        <div class="cockpit-stat-box">
+          <div class="cockpit-stat-label">
+            <span>📐</span> Kemiringan (Grade)
+          </div>
+          <div class="cockpit-stat-value grade-val" id="cockpitGradeVal" data-grade-level="flat">
+            0%
+          </div>
+          <div class="cockpit-stat-sub" id="cockpitEleSub">Elevasi: -- mdpl</div>
+        </div>
+
+        <div class="cockpit-stat-box">
+          <div class="cockpit-stat-label">
+            <span>⛰️</span> Total Elev Gain
+          </div>
+          <div class="cockpit-stat-value">
+            <span id="cockpitElevGainVal">+0</span><span class="cockpit-stat-unit">m</span>
+          </div>
+          <div class="cockpit-stat-sub" id="cockpitClimbSummarySub">0 Tanjakan Terdeteksi</div>
+        </div>
+      </div>
+
+      <!-- Dynamic ClimbPro Card (Auto-activated when approaching or climbing) -->
+      <div class="cockpit-climb-card hidden" id="cockpitClimbCard">
+        <div class="cockpit-climb-header">
+          <div class="cockpit-climb-title-wrap">
+            <span class="climb-cat-pill" id="cockpitClimbCatPill" style="background:#F59E0B">CAT 3</span>
+            <span class="cockpit-climb-title" id="cockpitClimbTitle">Tanjakan 1</span>
+          </div>
+          <span class="cockpit-climb-avg" id="cockpitClimbAvg">Avg 6.5% • Max 12%</span>
+        </div>
+
+        <div class="cockpit-climb-canvas-container">
+          <canvas id="cockpitClimbCanvas"></canvas>
+        </div>
+
+        <div class="cockpit-climb-stats">
+          <div class="cockpit-climb-stat-item">
+            <div class="cockpit-climb-stat-lbl">Sisa Jarak</div>
+            <div class="cockpit-climb-stat-val" id="cockpitClimbDistRemaining">-- km</div>
+          </div>
+          <div class="cockpit-climb-stat-item">
+            <div class="cockpit-climb-stat-lbl">Sisa Elevasi</div>
+            <div class="cockpit-climb-stat-val" id="cockpitClimbElevRemaining">+-- m</div>
+          </div>
+          <div class="cockpit-climb-stat-item">
+            <div class="cockpit-climb-stat-lbl">Kemiringan</div>
+            <div class="cockpit-climb-stat-val grade-val" id="cockpitClimbGradeLive">0%</div>
+          </div>
+        </div>
       </div>
 
       <!-- Target Checkpoint & COT Widget -->
@@ -344,6 +394,9 @@ async function renderRiderCockpit() {
 
   // ── State Variables ──
   let routeCoords = [];
+  let gpxPoints = [];
+  let routeClimbs = [];
+  let totalElevGain = 0;
   let checkpoints = [];
   let totalKm = 0;
   let currentLat = null;
@@ -478,7 +531,10 @@ async function renderRiderCockpit() {
         const gpxText = await fetch(eventRes.gpx_path).then(r => r.text());
         const parsed = parseGpxData(gpxText);
         routeCoords = parsed.coords || [];
+        gpxPoints = parsed.points || [];
+        routeClimbs = parsed.climbs || (typeof detectClimbs === 'function' ? detectClimbs(gpxPoints) : []);
         totalKm = parsed.stats?.totalKm || totalRouteKm(routeCoords);
+        totalElevGain = parsed.stats?.elevGain || 0;
       } catch (e) {
         console.warn('[Cockpit] Failed to parse GPX:', e);
       }
@@ -494,12 +550,30 @@ async function renderRiderCockpit() {
       [-6.9170, 107.6150],
       [-6.9200, 107.6200],
       [-6.9250, 107.6300],
-      [-6.9300, 107.6400]
+      [-6.9300, 107.6400],
+      [-6.9350, 107.6500],
+      [-6.9400, 107.6600],
+      [-6.9450, 107.6700]
     ];
     totalKm = 25.0;
+    gpxPoints = [];
+    for (let i = 0; i < routeCoords.length; i++) {
+      const dist = Math.round((i / (routeCoords.length - 1)) * totalKm * 100) / 100;
+      let ele = 100;
+      if (dist >= 6 && dist <= 15) {
+        ele = 100 + ((dist - 6) / 9) * 280;
+      } else if (dist > 15) {
+        ele = 380 - ((dist - 15) / 10) * 150;
+      }
+      gpxPoints.push({ lat: routeCoords[i][0], lng: routeCoords[i][1], ele: Math.round(ele * 10) / 10, distKm: dist, gradePct: 0 });
+    }
+    routeClimbs = typeof detectClimbs === 'function' ? detectClimbs(gpxPoints) : [];
+    totalElevGain = 280;
   }
 
   document.getElementById('cockpitTotalDistSub').textContent = `Total Rute: ${totalKm} km`;
+  const climbSumInit = document.getElementById('cockpitClimbSummarySub');
+  if (climbSumInit) climbSumInit.textContent = `${routeClimbs.length} Tanjakan Terdeteksi`;
 
   // ── 5. Setup Mini Map (Leaflet) ──
   await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
@@ -606,8 +680,199 @@ async function renderRiderCockpit() {
       offRouteBanner.classList.remove('active');
     }
 
+    // Grade % and Altitude calculation
+    let liveGrade = { gradePct: 0, ele: 0 };
+    if (typeof getLiveGrade === 'function' && gpxPoints.length) {
+      liveGrade = getLiveGrade(coveredKm, gpxPoints);
+    }
+    const gradeEl = document.getElementById('cockpitGradeVal');
+    const eleEl = document.getElementById('cockpitEleSub');
+    if (gradeEl) {
+      const gPct = liveGrade.gradePct;
+      gradeEl.textContent = `${gPct > 0 ? '+' : ''}${gPct}%`;
+      gradeEl.setAttribute('data-grade-level', getGradeLevel(gPct));
+    }
+    if (eleEl) {
+      eleEl.textContent = `Elevasi: ${Math.round(liveGrade.ele)} mdpl`;
+    }
+
+    // Cumulative elevation gain so far
+    let gainSoFar = 0;
+    for (let p = 1; p < gpxPoints.length; p++) {
+      if (gpxPoints[p].distKm > coveredKm) break;
+      const dE = gpxPoints[p].ele - gpxPoints[p - 1].ele;
+      if (dE > 0.25) gainSoFar += dE;
+    }
+    const gainEl = document.getElementById('cockpitElevGainVal');
+    if (gainEl) gainEl.textContent = `+${Math.round(gainSoFar)}`;
+
     // Checkpoint & COT Calculation
     updateCheckpointWidget(coveredKm, avgSpeed);
+
+    // Dynamic ClimbPro Card update
+    updateCockpitClimbWidget(coveredKm, liveGrade);
+  }
+
+  function getGradeLevel(gradePct) {
+    if (gradePct < -1) return 'downhill';
+    if (gradePct <= 3) return 'flat';
+    if (gradePct <= 6) return 'mild';
+    if (gradePct <= 9) return 'moderate';
+    if (gradePct <= 14) return 'steep';
+    return 'extreme';
+  }
+
+  function updateCockpitClimbWidget(distKm, liveGrade) {
+    const climbCard = document.getElementById('cockpitClimbCard');
+    if (!climbCard) return;
+
+    if (!routeClimbs || !routeClimbs.length || typeof getCurrentClimbStatus !== 'function') {
+      climbCard.classList.add('hidden');
+      return;
+    }
+
+    const climbStatus = getCurrentClimbStatus(distKm, routeClimbs);
+    const { activeClimb, isUpcoming, distRemainingKm, elevRemainingM } = climbStatus;
+
+    if (!activeClimb) {
+      climbCard.classList.add('hidden');
+      return;
+    }
+
+    climbCard.classList.remove('hidden');
+    if (isUpcoming) {
+      climbCard.classList.add('upcoming');
+      const titleEl = document.getElementById('cockpitClimbTitle');
+      if (titleEl) titleEl.textContent = `${activeClimb.name} (Segera)`;
+    } else {
+      climbCard.classList.remove('upcoming');
+      const titleEl = document.getElementById('cockpitClimbTitle');
+      if (titleEl) titleEl.textContent = activeClimb.name;
+    }
+
+    const catPill = document.getElementById('cockpitClimbCatPill');
+    if (catPill) {
+      catPill.textContent = activeClimb.category;
+      catPill.style.backgroundColor = activeClimb.color;
+    }
+
+    const avgEl = document.getElementById('cockpitClimbAvg');
+    if (avgEl) {
+      avgEl.textContent = `Avg ${activeClimb.avgGrade}% • Max ${activeClimb.maxGrade}%`;
+    }
+
+    const remDistEl = document.getElementById('cockpitClimbDistRemaining');
+    if (remDistEl) {
+      remDistEl.textContent = `${distRemainingKm.toFixed(1)} km`;
+    }
+
+    const remElevEl = document.getElementById('cockpitClimbElevRemaining');
+    if (remElevEl) {
+      remElevEl.textContent = `+${elevRemainingM} m`;
+    }
+
+    const liveGradeEl = document.getElementById('cockpitClimbGradeLive');
+    if (liveGradeEl) {
+      const gPct = liveGrade.gradePct;
+      liveGradeEl.textContent = `${gPct > 0 ? '+' : ''}${gPct}%`;
+      liveGradeEl.setAttribute('data-grade-level', getGradeLevel(gPct));
+    }
+
+    // Render mini slope profile
+    drawMiniClimbProfile(activeClimb, distKm);
+  }
+
+  function drawMiniClimbProfile(climb, riderDistKm) {
+    const canvas = document.getElementById('cockpitClimbCanvas');
+    if (!canvas || !gpxPoints.length) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const w = rect.width;
+    const h = rect.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const padL = 12;
+    const padR = 12;
+    const padT = 10;
+    const padB = 10;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+
+    const startIdx = Math.max(0, climb.startIndex);
+    const endIdx = Math.min(gpxPoints.length - 1, climb.endIndex);
+    const pts = gpxPoints.slice(startIdx, endIdx + 1);
+    if (pts.length < 2) return;
+
+    const minEle = climb.startEle;
+    const maxEle = Math.max(minEle + 10, climb.topEle);
+    const startDist = climb.startKm;
+    const endDist = climb.endKm;
+    const distSpan = Math.max(0.1, endDist - startDist);
+
+    const getX = d => padL + (Math.max(0, Math.min(distSpan, d - startDist)) / distSpan) * plotW;
+    const getY = ele => padT + (1 - (Math.max(minEle, Math.min(maxEle, ele)) - minEle) / (maxEle - minEle)) * plotH;
+    const baselineY = padT + plotH;
+
+    // Gradient fill under slope
+    const grad = ctx.createLinearGradient(0, padT, 0, baselineY);
+    grad.addColorStop(0, climb.color);
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0.04)');
+
+    ctx.beginPath();
+    ctx.moveTo(getX(pts[0].distKm), baselineY);
+    for (let i = 0; i < pts.length; i++) {
+      ctx.lineTo(getX(pts[i].distKm), getY(pts[i].ele));
+    }
+    ctx.lineTo(getX(pts[pts.length - 1].distKm), baselineY);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Slope outline
+    ctx.beginPath();
+    ctx.moveTo(getX(pts[0].distKm), getY(pts[0].ele));
+    for (let i = 1; i < pts.length; i++) {
+      ctx.lineTo(getX(pts[i].distKm), getY(pts[i].ele));
+    }
+    ctx.strokeStyle = climb.color;
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Rider position indicator
+    const rDist = Math.max(startDist, Math.min(endDist, riderDistKm));
+    const rx = getX(rDist);
+    const rProgress = Math.max(0, Math.min(1, (rDist - startDist) / distSpan));
+    const rEle = minEle + (maxEle - minEle) * rProgress;
+    const ry = getY(rEle);
+
+    ctx.beginPath();
+    ctx.arc(rx, ry, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = climb.color;
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.arc(rx, ry, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = climb.color;
+    ctx.fill();
+
+    // Summit flag
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('🏁', padL + plotW, padT + 8);
   }
 
   function updateCheckpointWidget(currentCoveredKm, movingAvg) {
