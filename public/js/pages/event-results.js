@@ -164,8 +164,8 @@ async function renderEventResults(params) {
                     </td>
                     <td>
                       <div style="display:flex;align-items:center;gap:8px">
-                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color || '#00E5FF'}"></span>
-                        <strong style="color:#FFF;font-size:14px">${r.name}</strong>
+                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color || '#D1A980'}"></span>
+                        <strong style="color:var(--text-primary);font-size:14px">${r.name}</strong>
                       </div>
                     </td>
                     <td>
@@ -174,15 +174,15 @@ async function renderEventResults(params) {
                       </span>
                     </td>
                     <td>
-                      <span style="font-family:monospace;font-size:13px;font-weight:700;color:#FFF">
+                      <span style="font-family:monospace;font-size:13px;font-weight:700;color:var(--text-primary)">
                         ${r.elapsed_time}
                       </span>
                     </td>
                     <td>
-                      <span style="color:var(--text-secondary)">${r.distance_km} km</span>
+                      <span style="color:var(--text-secondary);font-weight:600">${r.distance_km} km</span>
                     </td>
                     <td>
-                      <span style="color:var(--text-secondary)">${r.avg_speed} km/h</span>
+                      <span style="color:var(--text-secondary);font-weight:600">${r.avg_speed} km/h</span>
                     </td>
                     <td>
                       <span style="font-weight:700;color:${r.checkpoints_cleared >= r.total_checkpoints && r.total_checkpoints > 0 ? 'var(--color-green)' : 'var(--text-secondary)'}">

@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: radial-gradient(ellipse at top center, rgba(255, 230, 0, 0.08) 0%, transparent 60%);
+  background: radial-gradient(ellipse at top center, rgba(116, 136, 115, 0.15) 0%, transparent 60%);
 }
 
 /* PIN display dots */
@@ -20,12 +20,13 @@
   height: 14px;
   border-radius: 50%;
   border: 2px solid var(--border);
+  background: #E8E4DD;
   transition: all 0.15s ease;
 }
 .pin-dot.filled {
-  background: var(--color-yellow);
-  border-color: var(--color-yellow);
-  box-shadow: 0 0 10px rgba(255, 230, 0, 0.55);
+  background: var(--color-sage);
+  border-color: var(--color-sage);
+  box-shadow: 0 0 10px rgba(116, 136, 115, 0.5);
   transform: scale(1.1);
 }
 
@@ -49,24 +50,25 @@
   font-family: inherit;
   transition: var(--transition);
   text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   user-select: none;
   -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 .pin-key:hover {
-  background: rgba(255, 230, 0, 0.1);
-  border-color: var(--color-yellow);
+  background: rgba(116, 136, 115, 0.1);
+  border-color: var(--color-sage);
 }
 .pin-key:active {
   transform: scale(0.94);
-  background: rgba(255, 230, 0, 0.22);
+  background: rgba(116, 136, 115, 0.2);
 }
 .pin-key.key-delete {
   font-size: 16px;
   color: var(--text-secondary);
 }
 .pin-key.key-ok {
-  color: var(--color-yellow);
+  color: var(--color-sage);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.05em;
@@ -85,17 +87,18 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   margin-bottom: 10px;
+  box-shadow: var(--shadow-card);
   transition: var(--transition);
 }
 .setup-step:hover {
-  border-color: rgba(255, 230, 0, 0.35);
+  border-color: var(--color-sage);
 }
 .step-number {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--color-yellow);
-  color: #080A0F;
+  background: var(--color-sage);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,14 +113,15 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   margin: 16px 0;
+  box-shadow: var(--shadow-card);
 }
 .setup-config-header {
   padding: 10px 16px;
-  background: rgba(255, 230, 0, 0.07);
+  background: rgba(116, 136, 115, 0.12);
   border-bottom: 1px solid var(--border);
   font-size: 11px;
   font-weight: 800;
-  color: var(--color-yellow);
+  color: var(--color-sage);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -126,7 +130,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(38, 46, 62, 0.6);
+  border-bottom: 1px solid var(--border-subtle);
   gap: 12px;
 }
 .config-row:last-child {
@@ -140,13 +144,13 @@
 .config-value {
   font-family: 'SFMono-Regular', 'Consolas', monospace;
   font-size: 13px;
-  color: var(--color-yellow);
-  background: rgba(255, 230, 0, 0.1);
+  color: #8F5E2B;
+  background: rgba(209, 169, 128, 0.18);
   padding: 3px 10px;
   border-radius: 4px;
   word-break: break-all;
   text-align: right;
-  border: 1px solid rgba(255, 230, 0, 0.2);
+  border: 1px solid rgba(209, 169, 128, 0.4);
 }
 
 .copy-field-btn {
@@ -163,9 +167,9 @@
   justify-content: center;
 }
 .copy-field-btn:hover {
-  color: var(--color-yellow);
-  border-color: var(--color-yellow);
-  background: rgba(255, 230, 0, 0.08);
+  color: var(--color-sage);
+  border-color: var(--color-sage);
+  background: rgba(116, 136, 115, 0.1);
 }
 .copy-field-btn:active {
   transform: scale(0.92);
@@ -184,13 +188,13 @@
 
 /* ── Rider SOS Emergency Trigger & Modal ── */
 .rider-sos-card {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(8, 10, 15, 0.9) 100%);
-  border: 1.5px solid rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, #FFFFFF 100%);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
   border-radius: var(--radius-md);
   padding: 18px 20px;
   margin-top: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.12);
 }
 .btn-sos-emergency {
   width: 100%;
@@ -206,7 +210,7 @@
   border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
-  box-shadow: 0 0 16px rgba(239, 68, 68, 0.45);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
   animation: sosPulse 2s infinite;
   transition: transform 0.15s ease, background 0.15s ease;
 }
@@ -218,7 +222,7 @@
   transform: scale(0.98);
 }
 @keyframes sosPulse {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
   70% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
@@ -226,7 +230,7 @@
 .sos-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 10, 15, 0.85);
+  background: rgba(28, 40, 38, 0.6);
   backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
@@ -235,13 +239,13 @@
   padding: 20px;
 }
 .sos-modal-content {
-  background: #0D1117;
+  background: var(--bg-card);
   border: 1.5px solid #EF4444;
   border-radius: var(--radius-lg);
   max-width: 480px;
   width: 100%;
   padding: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 68, 68, 0.25);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 0 0 30px rgba(239, 68, 68, 0.15);
 }
 .sos-type-grid {
   display: grid;
@@ -250,7 +254,7 @@
   margin: 16px 0;
 }
 .sos-type-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: #F8F8F8;
   border: 1px solid var(--border);
   color: var(--text-primary);
   border-radius: var(--radius-md);
@@ -261,8 +265,8 @@
 }
 .sos-type-btn:hover, .sos-type-btn.active {
   border-color: #EF4444;
-  background: rgba(239, 68, 68, 0.15);
-  color: #FFFFFF;
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
 }
 .sos-type-btn strong {
   display: block;

@@ -352,8 +352,8 @@ async function renderLiveMap(params) {
   const scrubIcon = L.divIcon({
     html: `<div style="
       width:18px;height:18px;border-radius:50%;
-      background:#FF1A5E;border:3px solid #FFFFFF;
-      box-shadow:0 0 16px #FF1A5E, 0 0 0 4px rgba(255,26,94,0.4);
+      background:#2B4E30;border:3px solid #FFFFFF;
+      box-shadow:0 0 16px rgba(43,78,48,0.7), 0 0 0 4px rgba(43,78,48,0.35);
       animation:pulse 1s infinite alternate;
     "></div>`,
     className: '',
@@ -375,27 +375,28 @@ async function renderLiveMap(params) {
   if (btnCloseElevation) btnCloseElevation.addEventListener('click', () => toggleElevation(false));
 
   function getGradeColor(gradePct) {
+    // ── Earthy Sage Palette Gradient: sage → amber → rust ──
     if (gradePct >= 8) {
       return {
-        stroke: '#EF4444',
-        fill: 'rgba(239, 68, 68, 0.40)',
-        badgeBg: 'rgba(239, 68, 68, 0.25)',
-        badgeColor: '#F87171'
+        stroke: '#B85C2B',          // Deep Rust — steep climb
+        fill: 'rgba(184, 92, 43, 0.38)',
+        badgeBg: 'rgba(184, 92, 43, 0.22)',
+        badgeColor: '#C27438'
       };
     }
     if (gradePct >= 4) {
       return {
-        stroke: '#F59E0B',
-        fill: 'rgba(245, 158, 11, 0.38)',
-        badgeBg: 'rgba(245, 158, 11, 0.25)',
-        badgeColor: '#FBBF24'
+        stroke: '#C27438',          // Amber Sand — moderate
+        fill: 'rgba(194, 116, 56, 0.32)',
+        badgeBg: 'rgba(194, 116, 56, 0.22)',
+        badgeColor: '#D1A980'
       };
     }
     return {
-      stroke: '#10B981',
-      fill: 'rgba(16, 185, 129, 0.30)',
-      badgeBg: 'rgba(16, 185, 129, 0.25)',
-      badgeColor: '#34D399'
+      stroke: '#2B4E30',            // Deep Sage — gentle / flat
+      fill: 'rgba(43, 78, 48, 0.28)',
+      badgeBg: 'rgba(43, 78, 48, 0.18)',
+      badgeColor: '#748873'
     };
   }
 
@@ -546,8 +547,8 @@ async function renderLiveMap(params) {
       ctx.fillText(label, x, y);
     };
 
-    drawBadge('A', '#10B981', padL + 10, padT + 12);
-    drawBadge('B', '#EF4444', padL + plotW - 10, padT + 12);
+    drawBadge('A', '#2B4E30', padL + 10, padT + 12);
+    drawBadge('B', '#966025', padL + plotW - 10, padT + 12);
 
     // ── Live Riders on Elevation Curve ──
     Object.entries(progressById).forEach(([devId, prog]) => {
@@ -593,28 +594,28 @@ async function renderLiveMap(params) {
         if (!cpPt) return;
         const cpy = getY(cpPt.ele);
 
-        // Vertical cyan dashed guide line
+        // Vertical dashed guide line
         ctx.beginPath();
         ctx.setLineDash([2, 4]);
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.7)';
+        ctx.strokeStyle = 'rgba(116, 136, 115, 0.8)';
         ctx.lineWidth = 1.3;
         ctx.moveTo(cpx, padT);
         ctx.lineTo(cpx, baselineY);
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Cyan glow circle on elevation contour
+        // Deep Sage glow circle on elevation contour
         ctx.beginPath();
         ctx.arc(cpx, cpy, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#00E5FF';
-        ctx.shadowColor = '#00E5FF';
+        ctx.fillStyle = '#2B4E30';
+        ctx.shadowColor = '#2B4E30';
         ctx.shadowBlur = 8;
         ctx.fill();
         ctx.shadowBlur = 0;
 
         // Label above
-        ctx.font = '700 9px Inter, system-ui, sans-serif';
-        ctx.fillStyle = '#00E5FF';
+        ctx.font = '800 9px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#334338';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillText(`🚩 CP${idx + 1} (${cp.km_distance}k)`, cpx, padT + 12);
@@ -631,7 +632,7 @@ async function renderLiveMap(params) {
         // Vertical guide line
         ctx.beginPath();
         ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = '#FFE600';
+        ctx.strokeStyle = '#D1A980';
         ctx.lineWidth = 1.5;
         ctx.moveTo(hx, padT);
         ctx.lineTo(hx, baselineY);
@@ -641,15 +642,15 @@ async function renderLiveMap(params) {
         // Highlight circle on curve
         ctx.beginPath();
         ctx.arc(hx, hy, 5.5, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFE600';
-        ctx.shadowColor = '#FFE600';
+        ctx.fillStyle = '#D1A980';
+        ctx.shadowColor = '#D1A980';
         ctx.shadowBlur = 12;
         ctx.fill();
         ctx.shadowBlur = 0;
 
         ctx.beginPath();
         ctx.arc(hx, hy, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = '#080A0F';
+        ctx.fillStyle = '#FFFFFF';
         ctx.fill();
       }
     }
@@ -743,18 +744,18 @@ async function renderLiveMap(params) {
       routeKm       = gpxData.stats.totalKm;
 
       if (routeCoords.length) {
-        // High-contrast dark casing/halo so the route pops against any map layer
+        // Warm halo/casing — soft cream border so route stands out on any tile layer
         L.polyline(routeCoords, {
-          color: '#080A0F',
+          color: '#E5E0D8',
           weight: 6.5,
-          opacity: 0.85,
+          opacity: 0.80,
           lineCap: 'round',
           lineJoin: 'round'
         }).addTo(map);
 
-        // Core route polyline — Neon Crimson / Rose (#FF1A5E) stands out sharply against yellow roads, green terrain & gray streets
+        // Core route polyline — Deep Sage Forest (#2B4E30) matches palette & is clearly readable on standard maps
         const poly = L.polyline(routeCoords, {
-          color: '#FF1A5E',
+          color: '#2B4E30',
           weight: 3.5,
           opacity: 1,
           lineCap: 'round',
@@ -764,13 +765,52 @@ async function renderLiveMap(params) {
         polylineBounds = poly.getBounds();
         map.fitBounds(polylineBounds, { padding: [40, 40] });
 
-        // Start / Finish flags
-        const flagIcon = (label, bg) => L.divIcon({
-          html: `<div style="background:${bg};color:#080A0F;font-weight:900;font-size:10px;padding:4px 10px;border-radius:100px;white-space:nowrap;box-shadow:0 3px 12px rgba(0,0,0,0.6)">${label}</div>`,
-          className: '', iconAnchor: [0, 8]
-        });
-        L.marker(routeCoords[0], { icon: flagIcon('▶ START', '#10B981') }).addTo(map);
-        L.marker(routeCoords[routeCoords.length - 1], { icon: flagIcon('🏁 FINISH', '#EF4444') }).addTo(map);
+        // Start / Finish button markers — unified cohesive button style
+        const startPt = routeCoords[0];
+        const endPt   = routeCoords[routeCoords.length - 1];
+        const isLoop  = Math.abs(startPt[0] - endPt[0]) < 0.0005 && Math.abs(startPt[1] - endPt[1]) < 0.0005;
+
+        if (isLoop) {
+          const loopIcon = L.divIcon({
+            className: 'route-flag-marker',
+            html: `
+              <div class="route-flag-btn btn-loop">
+                <span class="route-flag-chip chip-start">▶</span>
+                <span class="route-flag-label">START / FINISH</span>
+                <span class="route-flag-chip chip-finish">🏁</span>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [15, 14]
+          });
+          L.marker(startPt, { icon: loopIcon, zIndexOffset: 850 }).addTo(map);
+        } else {
+          const startIcon = L.divIcon({
+            className: 'route-flag-marker',
+            html: `
+              <div class="route-flag-btn btn-start">
+                <span class="route-flag-chip">▶</span>
+                <span class="route-flag-label">START</span>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [15, 14]
+          });
+          const finishIcon = L.divIcon({
+            className: 'route-flag-marker',
+            html: `
+              <div class="route-flag-btn btn-finish">
+                <span class="route-flag-chip">🏁</span>
+                <span class="route-flag-label">FINISH</span>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [15, 14]
+          });
+
+          L.marker(startPt, { icon: startIcon, zIndexOffset: 850 }).addTo(map);
+          L.marker(endPt, { icon: finishIcon, zIndexOffset: 850 }).addTo(map);
+        }
         renderCheckpointMarkers();
 
         document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider · ${checkpoints.length} CP`;
@@ -811,11 +851,11 @@ async function renderLiveMap(params) {
       return L.divIcon({
         html: `<div style="
           width:36px;height:36px;border-radius:50%;
-          background:rgba(8,10,15,0.94);
-          border:2px solid #FFE600;
+          background:rgba(255,255,255,0.96);
+          border:2.5px solid var(--color-sage);
           display:flex;align-items:center;justify-content:center;
-          color:#FFE600;font-weight:900;font-size:13px;
-          box-shadow:0 0 16px rgba(255,230,0,0.4)
+          color:var(--color-sage);font-weight:900;font-size:13px;
+          box-shadow:0 3px 12px rgba(28,40,38,0.15)
         ">${n}</div>`,
         className: '', iconSize: [36, 36], iconAnchor: [18, 18]
       });
@@ -846,15 +886,15 @@ async function renderLiveMap(params) {
         const cpIcon = L.divIcon({
           html: `
             <div class="cp-map-marker" style="
-              background: rgba(8, 10, 15, 0.92);
-              border: 2px solid var(--color-cyan);
-              color: var(--color-cyan);
+              background: rgba(255, 255, 255, 0.96);
+              border: 2px solid var(--color-sage);
+              color: var(--color-sage);
               padding: 3px 8px;
               border-radius: 6px;
               font-size: 11px;
               font-weight: 800;
               white-space: nowrap;
-              box-shadow: 0 0 12px rgba(0, 229, 255, 0.4), 0 3px 6px rgba(0,0,0,0.6);
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
               display: flex;
               align-items: center;
               gap: 4px;
@@ -862,7 +902,7 @@ async function renderLiveMap(params) {
             ">
               <span>🚩</span>
               <span>${cp.name}</span>
-              <span style="color:#FFF;background:rgba(0,229,255,0.25);padding:1px 5px;border-radius:4px;font-size:10px">${cp.km_distance}K</span>
+              <span style="color:#FFF;background:var(--color-sage);padding:1px 5px;border-radius:4px;font-size:10px">${cp.km_distance}K</span>
             </div>
           `,
           className: '',
@@ -871,10 +911,10 @@ async function renderLiveMap(params) {
 
         const popupHtml = `
           <div style="font-family:Inter,sans-serif;min-width:180px">
-            <div style="font-size:11px;font-weight:800;color:var(--color-cyan);text-transform:uppercase;letter-spacing:0.5px">CHECKPOINT ${idx + 1}</div>
-            <div style="font-size:14px;font-weight:700;color:#FFF;margin:4px 0">${cp.name}</div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);border-top:1px solid rgba(255,255,255,0.1);padding-top:6px;margin-top:6px">
-              <span>Jarak: <strong style="color:var(--color-yellow)">${cp.km_distance} km</strong></span>
+            <div style="font-size:11px;font-weight:800;color:var(--color-sage);text-transform:uppercase;letter-spacing:0.5px">CHECKPOINT ${idx + 1}</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin:4px 0">${cp.name}</div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);border-top:1px solid var(--border);padding-top:6px;margin-top:6px">
+              <span>Jarak: <strong style="color:var(--color-sage)">${cp.km_distance} km</strong></span>
               <span>COT: <strong style="color:var(--color-red)">${cp.close_time || '—'}</strong></span>
             </div>
           </div>
@@ -957,7 +997,7 @@ async function renderLiveMap(params) {
     if (!timestamp) return { text: 'Offline', color: '#94A3B8', dot: '⚪' };
     const elapsedSec = Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000));
     if (elapsedSec <= 90) return { text: 'Online', color: '#10B981', dot: '🟢' };
-    if (elapsedSec <= 300) return { text: 'Idle', color: '#FFE600', dot: '🟡' };
+    if (elapsedSec <= 300) return { text: 'Idle', color: '#D1A980', dot: '🟠' };
     return { text: 'Blank Spot', color: '#94A3B8', dot: '⚪' };
   }
 
@@ -1191,7 +1231,7 @@ async function renderLiveMap(params) {
         </div>
 
         ${telem.isOffRoute ? `
-          <div style="background:rgba(239,68,68,0.2);color:#F87171;border:1px solid #EF4444;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">
+          <div style="background:rgba(239,68,68,0.2);color:#B91C1C;border:1px solid #EF4444;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">
             ⚠️ PERINGATAN: KELUAR DARI RUTE RESMI (+${telem.deviationMeters} meter)
           </div>
         ` : ''}
@@ -1778,8 +1818,8 @@ async function renderLiveMap(params) {
     // If history is empty, synthesize a replay history trail from GPX route
     if (!replayHistory.length && routeCoords.length) {
       const simRiders = riders.length ? riders : [
-        { id: 1, bib: '001', name: 'Ahmad Rider', color: '#00E5FF' },
-        { id: 2, bib: '002', name: 'Budi Santoso', color: '#FF6B35' }
+        { id: 1, bib: '001', name: 'Ahmad Rider', color: '#D1A980' },
+        { id: 2, bib: '002', name: 'Budi Santoso', color: '#748873' }
       ];
       const baseStart = Date.now() - (7200 * 1000); // 2 hours ago
       simRiders.forEach((r, rIdx) => {
@@ -1978,7 +2018,7 @@ async function renderLiveMap(params) {
         <div class="h2h-vs-badge">VS</div>
 
         <div class="h2h-rider-card rider-b">
-          <div class="h2h-rider-avatar" style="background:${riderB.color || '#00E5FF'}">#${riderB.bib}</div>
+          <div class="h2h-rider-avatar" style="background:${riderB.color || '#D1A980'}">#${riderB.bib}</div>
           <div>
             <div class="h2h-rider-name">${riderB.name}</div>
             <div class="h2h-rider-sub">BIB #${riderB.bib}</div>

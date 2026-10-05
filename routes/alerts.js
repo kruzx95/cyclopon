@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
+const notifications = require('../lib/notifications');
 
 // POST /api/events/:id/alerts — create a new alert (SOS, crash, etc.)
 router.post('/events/:id/alerts', (req, res) => {
@@ -22,6 +23,17 @@ router.post('/events/:id/alerts', (req, res) => {
 
   const created = db.getAlertById.get(result.lastInsertRowid);
   res.status(201).json({ success: true, alert: created });
+
+  // Asynchronously dispatch external notifications (non-blocking)
+  setImmediate(async () => {
+    try {
+      const event = db.getEventById.get(event_id);
+      const rider = rider_id ? db.getRiderById.get(Number(rider_id)) : null;
+      await notifications.dispatchSosNotification({ event, rider, alert: created });
+    } catch (err) {
+      console.warn('[Alerts] Gagal mengirim notifikasi SOS:', err.message);
+    }
+  });
 });
 
 // GET /api/events/:id/alerts — fetch alerts for event (filter with ?active=1)

@@ -23,6 +23,9 @@ function adminSidebar(activeKey) {
         <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
           📊 &nbsp;Dashboard
         </a>
+        <a href="/admin/notifications" data-link class="${activeKey === 'notifications' ? 'active' : ''}">
+          📢 &nbsp;Notifikasi Panitia
+        </a>
         <a href="/" data-link>🏠 &nbsp;Beranda</a>
       </nav>
       <div style="padding:16px 20px;border-top:1px solid var(--border);margin-top:auto">
@@ -54,11 +57,11 @@ function renderAdminLogin() {
   }
 
   document.getElementById('app').innerHTML = `
-    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at top,rgba(255,230,0,0.08) 0%,transparent 55%)">
-      <div class="card fade-in" style="width:100%;max-width:400px;border-color:rgba(255,230,0,0.25)">
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at top,rgba(116,136,115,0.12) 0%,transparent 55%)">
+      <div class="card fade-in" style="width:100%;max-width:400px;border-color:var(--border)">
         <div style="text-align:center;margin-bottom:32px">
-          <div style="font-size:48px;filter:drop-shadow(0 0 16px rgba(255,230,0,0.3))">🚴</div>
-          <h1 style="font-size:24px;font-weight:800;color:var(--color-yellow);margin-top:10px">CycloPon Admin</h1>
+          <div style="font-size:48px;filter:drop-shadow(0 4px 12px rgba(116,136,115,0.25))">🚴</div>
+          <h1 style="font-size:24px;font-weight:800;color:var(--color-sage);margin-top:10px">CycloPon Admin</h1>
           <p style="color:var(--text-secondary);font-size:13px;margin-top:4px">Login dengan akun Traccar Server Anda</p>
         </div>
         <form id="adminLoginForm">
@@ -70,8 +73,8 @@ function renderAdminLogin() {
             <label for="adminPassword">Password</label>
             <input class="input" type="password" id="adminPassword" placeholder="••••••••" value="admin" required autocomplete="current-password">
           </div>
-          <div style="background:rgba(255,230,0,0.08);border:1px dashed rgba(255,230,0,0.35);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);text-align:center">
-            💡 <strong style="color:var(--color-yellow)">Mode Dev:</strong> user <code style="color:#fff">admin</code>, pass <code style="color:#fff">admin</code>
+          <div style="background:rgba(116,136,115,0.1);border:1px dashed rgba(116,136,115,0.35);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);text-align:center">
+            💡 <strong style="color:var(--color-sage)">Mode Dev:</strong> user <code style="color:var(--text-primary);background:#F8F8F8;padding:1px 5px;border-radius:3px">admin</code>, pass <code style="color:var(--text-primary);background:#F8F8F8;padding:1px 5px;border-radius:3px">admin</code>
           </div>
           <p id="loginError" style="color:var(--color-red);font-size:13px;margin-bottom:10px;min-height:18px"></p>
           <button class="btn btn-primary" type="submit" id="loginSubmit" style="width:100%;padding:14px;font-size:15px">

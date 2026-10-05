@@ -82,6 +82,11 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_history_event_time ON position_history(event_id, recorded_at);
   CREATE INDEX IF NOT EXISTS idx_history_rider ON position_history(rider_id, recorded_at);
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+  );
 `);
 
 module.exports = {
@@ -95,6 +100,7 @@ module.exports = {
 
   // Riders
   getRidersByEvent:      db.prepare('SELECT * FROM riders WHERE event_id = ? ORDER BY CAST(bib AS INTEGER) ASC'),
+  getRiderById:          db.prepare('SELECT * FROM riders WHERE id = ?'),
   getRiderByBibPin:      db.prepare('SELECT * FROM riders WHERE bib = ? AND pin = ?'),
   getRiderByEventBibPin: db.prepare('SELECT * FROM riders WHERE event_id = ? AND bib = ? AND pin = ?'),
   createRider:           db.prepare('INSERT INTO riders (event_id, bib, name, pin, traccar_device_id, color) VALUES (@event_id, @bib, @name, @pin, @traccar_device_id, @color)'),
@@ -124,4 +130,10 @@ module.exports = {
   recordPositionHistory: db.prepare('INSERT INTO position_history (event_id, rider_id, latitude, longitude, speed, distance_km, recorded_at) VALUES (@event_id, @rider_id, @latitude, @longitude, @speed, @distance_km, @recorded_at)'),
   getHistoryByEvent: db.prepare('SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM position_history h JOIN riders r ON h.rider_id = r.id WHERE h.event_id = ? ORDER BY h.recorded_at ASC'),
   getHistoryByEventAndRider: db.prepare('SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM position_history h JOIN riders r ON h.rider_id = r.id WHERE h.event_id = ? AND h.rider_id = ? ORDER BY h.recorded_at ASC'),
+
+  // System Settings (Notifications, etc.)
+  getSetting:     db.prepare('SELECT value FROM settings WHERE key = ?'),
+  setSetting:     db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'),
+  getAllSettings: db.prepare('SELECT * FROM settings'),
 };
+

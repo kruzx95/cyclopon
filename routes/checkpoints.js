@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
+const notifications = require('../lib/notifications');
 
 // ── Checkpoints Management ──
 
@@ -66,6 +67,20 @@ router.post('/events/:id/splits', (req, res) => {
 
   const split = db.getSplitById.get(result.lastInsertRowid);
   res.status(201).json({ success: true, split });
+
+  // Asynchronously dispatch external notification if OVER_COT (non-blocking)
+  if (splitStatus === 'OVER_COT') {
+    setImmediate(async () => {
+      try {
+        const event = db.getEventById.get(event_id);
+        const rider = db.getRiderById.get(Number(rider_id));
+        const checkpoint = db.getCheckpointById.get(Number(checkpoint_id));
+        await notifications.dispatchCotNotification({ event, rider, checkpoint, split });
+      } catch (err) {
+        console.warn('[Checkpoints] Gagal mengirim notifikasi COT:', err.message);
+      }
+    });
+  }
 });
 
 // GET /api/events/:id/splits — list all splits for an event

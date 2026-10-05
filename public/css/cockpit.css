@@ -1,16 +1,16 @@
 /* ── CycloPon Rider Live Cockpit HUD CSS ── */
 
 :root {
-  --cockpit-bg: #05070A;
-  --cockpit-card: #0D111A;
-  --cockpit-card-border: #1C2433;
-  --cockpit-yellow: #FFE600;
-  --cockpit-cyan: #00E5FF;
-  --cockpit-green: #10B981;
-  --cockpit-red: #EF4444;
-  --cockpit-orange: #FF6B35;
-  --cockpit-text: #FFFFFF;
-  --cockpit-muted: #8B949E;
+  --cockpit-bg: #F8F8F8;
+  --cockpit-card: #FFFFFF;
+  --cockpit-card-border: #D8D2C9;
+  --cockpit-yellow: #8F5E2B;
+  --cockpit-cyan: #748873;
+  --cockpit-green: #059669;
+  --cockpit-red: #DC2626;
+  --cockpit-orange: #C27438;
+  --cockpit-text: #111815;
+  --cockpit-muted: #334338;
 }
 
 body.cockpit-active {
@@ -41,6 +41,7 @@ body.cockpit-active {
   background: var(--cockpit-card);
   border: 1px solid var(--cockpit-card-border);
   border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   gap: 8px;
 }
 
@@ -52,8 +53,8 @@ body.cockpit-active {
 }
 
 .cockpit-bib-badge {
-  background: var(--cockpit-yellow);
-  color: #05070A;
+  background: var(--color-sand);
+  color: #1C2826;
   font-weight: 900;
   font-size: 13px;
   padding: 3px 8px;
@@ -79,8 +80,8 @@ body.cockpit-active {
 }
 
 .cockpit-pill-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #FFFFFF;
+  border: 1px solid var(--border);
   color: var(--cockpit-muted);
   font-size: 11px;
   font-weight: 700;
@@ -90,30 +91,32 @@ body.cockpit-active {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.2s;
 }
 
 .cockpit-pill-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #FFF;
+  background: #F8F8F8;
+  color: var(--cockpit-text);
+  border-color: var(--color-sage);
 }
 
 .cockpit-pill-btn.active {
-  background: rgba(255, 230, 0, 0.15);
-  border-color: var(--cockpit-yellow);
-  color: var(--cockpit-yellow);
+  background: rgba(209, 169, 128, 0.2);
+  border-color: var(--color-sand);
+  color: #8F5E2B;
 }
 
 .cockpit-pill-btn.wake-active {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(5, 150, 105, 0.12);
   border-color: var(--cockpit-green);
   color: var(--cockpit-green);
 }
 
 .cockpit-pill-btn.sim-active {
-  background: rgba(0, 229, 255, 0.15);
-  border-color: var(--cockpit-cyan);
-  color: var(--cockpit-cyan);
+  background: rgba(116, 136, 115, 0.18);
+  border-color: var(--color-sage);
+  color: var(--color-sage);
 }
 
 /* ── Off-Route Banner Alert ── */
@@ -127,7 +130,7 @@ body.cockpit-active {
   font-size: 13px;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.4);
   animation: cockpitPulseRed 1.2s infinite alternate;
 }
 
@@ -137,19 +140,19 @@ body.cockpit-active {
 
 @keyframes cockpitPulseRed {
   0% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1.01); filter: brightness(1.25); box-shadow: 0 0 30px rgba(239, 68, 68, 0.9); }
+  100% { transform: scale(1.01); filter: brightness(1.25); box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); }
 }
 
 /* ── Speedometer Hero Display ── */
 .cockpit-speedo-card {
-  background: radial-gradient(circle at center, #141A26 0%, #0A0D14 100%);
-  border: 1px solid var(--cockpit-card-border);
+  background: radial-gradient(circle at center, #FFFFFF 0%, #F5F1EA 100%);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   padding: 24px 16px 20px 16px;
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 20px rgba(28, 40, 38, 0.06);
 }
 
 .cockpit-speedo-card::before {
@@ -159,7 +162,7 @@ body.cockpit-active {
   left: 20%;
   right: 20%;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--cockpit-yellow), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-sage), transparent);
 }
 
 .cockpit-speed-number {
@@ -167,9 +170,8 @@ body.cockpit-active {
   font-size: 76px;
   line-height: 1;
   font-weight: 900;
-  color: var(--cockpit-yellow);
+  color: var(--cockpit-text);
   letter-spacing: -2px;
-  text-shadow: 0 0 30px rgba(255, 230, 0, 0.4);
   font-variant-numeric: tabular-nums;
   margin-bottom: 2px;
 }
@@ -213,6 +215,7 @@ body.cockpit-active {
   flex-direction: column;
   justify-content: space-between;
   min-height: 86px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .cockpit-stat-label {
@@ -258,6 +261,7 @@ body.cockpit-active {
   flex-direction: column;
   gap: 12px;
   position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .cockpit-cp-header {
@@ -284,34 +288,34 @@ body.cockpit-active {
 }
 
 .cockpit-cp-status-pill.safe {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(5, 150, 105, 0.14);
   color: var(--cockpit-green);
-  border: 1px solid rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(5, 150, 105, 0.35);
 }
 
 .cockpit-cp-status-pill.warning {
-  background: rgba(255, 107, 53, 0.2);
-  color: var(--cockpit-orange);
-  border: 1px solid rgba(255, 107, 53, 0.4);
+  background: rgba(209, 169, 128, 0.2);
+  color: #8F5E2B;
+  border: 1px solid rgba(209, 169, 128, 0.5);
 }
 
 .cockpit-cp-status-pill.late {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.12);
   color: var(--cockpit-red);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 .cockpit-cp-progress-bar {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #EAE6DF;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .cockpit-cp-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--cockpit-cyan), var(--cockpit-yellow));
+  background: linear-gradient(90deg, var(--color-sage), var(--color-sand));
   width: 0%;
   transition: width 0.3s;
 }
@@ -324,10 +328,10 @@ body.cockpit-active {
 }
 
 .cockpit-cp-detail-box {
-  background: rgba(255, 255, 255, 0.03);
+  background: #F8F8F8;
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border);
 }
 
 .cockpit-cp-detail-lbl {
@@ -351,6 +355,7 @@ body.cockpit-active {
   border-radius: var(--radius-md);
   overflow: hidden;
   position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .cockpit-map-header {
@@ -367,7 +372,7 @@ body.cockpit-active {
 .cockpit-mini-map {
   width: 100%;
   height: 200px;
-  background: #0D1117;
+  background: #F0EDE6;
 }
 
 /* ── Sticky Emergency / Action Bar ── */
@@ -377,10 +382,11 @@ body.cockpit-active {
   left: 0;
   right: 0;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) 16px;
-  background: rgba(5, 7, 10, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--cockpit-card-border);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
   display: flex;
   gap: 10px;
   max-width: 680px;

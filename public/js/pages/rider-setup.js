@@ -34,7 +34,7 @@ function renderRiderSetup() {
           </h1>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:rgba(255,230,0,0.1);border:1px solid rgba(255,230,0,0.3);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;color:var(--color-yellow)">
+          <span style="background:rgba(209,169,128,0.16);border:1px solid rgba(209,169,128,0.4);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;color:var(--color-sand)">
             BIB #${rider.bib}
           </span>
           <button id="btnRiderLogout" class="btn btn-outline" style="font-size:12px;padding:6px 12px;color:var(--color-red);border-color:rgba(239,68,68,0.35)">
@@ -44,11 +44,11 @@ function renderRiderSetup() {
       </div>
 
       <!-- Welcome Banner -->
-      <div class="card fade-in" style="margin-bottom:24px;border-color:rgba(0,229,255,0.25);background:linear-gradient(135deg,rgba(0,229,255,0.06) 0%,rgba(13,17,23,0.9) 100%)">
+      <div class="card fade-in" style="margin-bottom:24px;border-color:var(--border);background:linear-gradient(135deg,rgba(116,136,115,0.1) 0%,#FFFFFF 100%)">
         <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <span style="width:20px;height:20px;border-radius:50%;background:${rider.color || '#00E5FF'};box-shadow:0 0 10px ${rider.color || '#00E5FF'};display:inline-block"></span>
+          <span style="width:20px;height:20px;border-radius:50%;background:${rider.color || '#D1A980'};box-shadow:0 2px 8px rgba(0,0,0,0.15);display:inline-block"></span>
           <div style="flex:1;min-width:200px">
-            <h2 style="font-size:17px;font-weight:800;color:#FFF;margin-bottom:4px">
+            <h2 style="font-size:17px;font-weight:800;color:var(--text-primary);margin-bottom:4px">
               Halo, ${rider.name}
             </h2>
             <p style="font-size:13px;color:var(--text-secondary)">
@@ -70,10 +70,10 @@ function renderRiderSetup() {
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px">
 
           <!-- Action 1: Cockpit HUD -->
-          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;border-color:rgba(255,230,0,0.3);background:rgba(255,230,0,0.03);padding:20px">
+          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;border-color:var(--border);background:rgba(116,136,115,0.06);padding:20px">
             <div>
               <div style="font-size:32px;margin-bottom:8px">🚴</div>
-              <h3 style="font-size:16px;font-weight:800;color:var(--color-yellow);margin-bottom:6px">Cockpit HUD</h3>
+              <h3 style="font-size:16px;font-weight:800;color:var(--color-sage);margin-bottom:6px">Cockpit HUD</h3>
               <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
                 Layar speedometer besar di handlebar, timer batas Cut-Off Time (COT), peringatan off-route, dan anti-layar mati.
               </p>
@@ -123,7 +123,7 @@ function renderRiderSetup() {
         <div class="setup-config-box fade-in" style="margin-bottom:20px">
           <div class="setup-config-header" style="display:flex;align-items:center;justify-content:space-between">
             <span>Konfigurasi HP Rider</span>
-            <button id="btnCopyAll" class="btn btn-outline" style="font-size:11px;padding:4px 10px;border-radius:6px;border-color:rgba(255,230,0,0.35);color:var(--color-yellow)">
+            <button id="btnCopyAll" class="btn btn-outline" style="font-size:11px;padding:4px 10px;border-radius:6px;border-color:rgba(209,169,128,0.45);color:var(--color-sand)">
               📋 Salin Semua
             </button>
           </div>
@@ -196,9 +196,9 @@ function renderRiderSetup() {
         </div>
 
         <div class="setup-step fade-in" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.03)">
-          <div class="step-number" style="background:var(--color-green);color:#080A0F">4</div>
+          <div class="step-number" style="background:var(--color-green);color:#FFFFFF">4</div>
           <div>
-            <p style="font-weight:800;color:#FFF;margin-bottom:4px">Siap Gowes! Layar HP Bisa Dimatikan 🎉</p>
+            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Siap Gowes! Layar HP Bisa Dimatikan 🎉</p>
             <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
               Pelacakan tetap aktif di background walau HP dikantongi. Atau pasang di handlebar dan buka <strong>Cockpit HUD</strong>!
             </p>
@@ -260,7 +260,7 @@ function renderRiderSetup() {
         <div style="margin-top:12px;margin-bottom:16px">
           <label style="font-size:12px;font-weight:700;color:var(--text-primary);display:block;margin-bottom:6px">Catatan Tambahan (Opsional):</label>
           <input type="text" id="sosMessageInput" placeholder="Contoh: Turunan setelah jembatan KM 45"
-                 style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:#FFF;font-size:13px">
+                 style="width:100%;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px">
         </div>
 
         <div style="display:flex;gap:10px">

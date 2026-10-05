@@ -22,7 +22,7 @@
 .sidebar-logo h2 {
   font-size: 18px;
   font-weight: 900;
-  color: var(--color-yellow);
+  color: var(--color-sage);
 }
 .sidebar-logo small {
   color: var(--text-secondary);
@@ -46,12 +46,12 @@
 }
 .sidebar-nav a:hover {
   color: var(--text-primary);
-  background: rgba(255, 230, 0, 0.05);
+  background: rgba(116, 136, 115, 0.08);
 }
 .sidebar-nav a.active {
-  color: var(--color-yellow);
-  background: rgba(255, 230, 0, 0.09);
-  border-right-color: var(--color-yellow);
+  color: var(--color-sage);
+  background: rgba(116, 136, 115, 0.14);
+  border-right-color: var(--color-sage);
 }
 .admin-content {
   padding: 32px;
@@ -82,11 +82,12 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 20px;
+  box-shadow: var(--shadow-card);
   transition: var(--transition);
 }
 .event-card:hover {
-  border-color: rgba(255, 230, 0, 0.45);
-  box-shadow: 0 6px 24px rgba(255, 230, 0, 0.12);
+  border-color: var(--color-sage);
+  box-shadow: 0 6px 24px rgba(28, 40, 38, 0.08);
   transform: translateY(-2px);
 }
 .event-card h3 {
@@ -122,7 +123,7 @@
 }
 .rider-table td {
   padding: 12px;
-  border-bottom: 1px solid rgba(38, 46, 62, 0.6);
+  border-bottom: 1px solid var(--border-subtle);
   font-size: 14px;
   vertical-align: middle;
 }
@@ -130,14 +131,14 @@
   border-bottom: none;
 }
 .rider-table tbody tr:hover td {
-  background: rgba(255, 255, 255, 0.025);
+  background: #F8F8F8;
 }
 .color-swatch {
   width: 16px;
   height: 16px;
   border-radius: 50%;
   display: inline-block;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(0, 0, 0, 0.15);
 }
 
 /* ── Forms ── */
@@ -162,12 +163,13 @@
   padding: 32px;
   text-align: center;
   cursor: pointer;
+  background: #FFFFFF;
   transition: var(--transition);
   position: relative;
 }
 .gpx-drop-zone:hover {
-  border-color: var(--color-yellow);
-  background: rgba(255, 230, 0, 0.04);
+  border-color: var(--color-sage);
+  background: rgba(116, 136, 115, 0.06);
 }
 .gpx-drop-zone input[type=file] {
   position: absolute;
@@ -181,10 +183,11 @@
 /* ── Inline add-rider & add-cp form ── */
 .add-rider-panel, .add-cp-panel {
   background: var(--bg-surface);
-  border: 1px solid var(--color-yellow);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 16px;
+  box-shadow: var(--shadow-card);
   animation: fadeIn 0.2s ease;
 }
 

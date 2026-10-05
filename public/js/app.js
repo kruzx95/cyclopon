@@ -71,6 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAdminDashboard();
   });
 
+  Router.register('/admin/notifications', async () => {
+    await loadPageDeps(
+      ['/js/pages/admin-dashboard.js', '/js/pages/admin-notifications.js'],
+      ['/css/admin.css']
+    );
+    renderAdminNotifications();
+  });
+
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js', '/js/pages/admin-event.js'],

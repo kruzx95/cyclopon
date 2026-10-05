@@ -43,7 +43,7 @@ function renderLanding() {
 
         <!-- Featured Active Event Container -->
         <div id="activeEventContainer" style="width:100%;max-width:580px;display:none">
-          <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;text-align:left">
+          <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;text-align:left">
             Event Sedang Berlangsung:
           </div>
           <div id="activeEventList"></div>
@@ -106,14 +106,14 @@ function renderLanding() {
       list.innerHTML = targetEvents.map(ev => `
         <div class="featured-event-box">
           <div style="min-width:0;flex:1">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <span class="live-status-pill" style="padding:2px 8px;font-size:10px">
                 <span class="live-dot pulse"></span>
                 <span>LIVE</span>
               </span>
-              <span style="font-size:12px;color:var(--text-secondary)">📅 ${ev.date}</span>
+              <span style="font-size:12.5px;font-weight:700;color:var(--text-secondary)">📅 ${ev.date}</span>
             </div>
-            <div style="font-size:15px;font-weight:800;color:#FFFFFF;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <div style="font-size:16px;font-weight:900;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${ev.name}
             </div>
           </div>

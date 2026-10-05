@@ -68,9 +68,9 @@ async function renderRiderCockpit() {
       </div>
 
       ${isDemo ? `
-        <div style="background:rgba(255,230,0,0.12);border-bottom:1px solid rgba(255,230,0,0.3);padding:6px 14px;font-size:12px;color:var(--color-yellow);display:flex;align-items:center;justify-content:space-between">
+        <div style="background:rgba(242,132,47,0.14);border-bottom:1px solid rgba(242,132,47,0.35);padding:6px 14px;font-size:12px;color:var(--color-orange);display:flex;align-items:center;justify-content:space-between">
           <span>⚠️ <strong>Mode Demo Simulator</strong> — Anda belum login.</span>
-          <a href="/rider" data-link style="color:#FFF;font-weight:700;text-decoration:underline">Login Rider →</a>
+          <a href="/rider" data-link style="color:var(--color-orange);font-weight:800;text-decoration:underline">Login Rider →</a>
         </div>
       ` : ''}
 
@@ -236,7 +236,7 @@ async function renderRiderCockpit() {
         <div style="margin-top:12px;margin-bottom:16px">
           <label style="font-size:12px;font-weight:700;color:var(--cockpit-text);display:block;margin-bottom:6px">Catatan Lokasi:</label>
           <input type="text" id="cockpitSosMsgInput" placeholder="Contoh: Pinggir warung KM 82"
-                 style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:#FFF;font-size:13px">
+                 style="width:100%;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px">
         </div>
 
         <div style="display:flex;gap:10px">
@@ -393,9 +393,9 @@ async function renderRiderCockpit() {
 
     // Draw route polyline
     cockpitRoutePolyline = L.polyline(routeCoords, {
-      color: '#FFE600',
+      color: '#D1A980',
       weight: 4,
-      opacity: 0.8
+      opacity: 0.85
     }).addTo(cockpitMap);
 
     // Add Checkpoint markers to mini-map
@@ -403,7 +403,7 @@ async function renderRiderCockpit() {
       if (cp.lat && cp.lng) {
         const cpIcon = L.divIcon({
           className: 'cp-mini-icon',
-          html: `<div style="background:#00E5FF;color:#000;font-size:10px;font-weight:900;padding:2px 5px;border-radius:4px;border:1px solid #FFF;white-space:nowrap">${cp.name}</div>`,
+          html: `<div style="background:var(--color-primary);color:#FFFFFF;font-size:10px;font-weight:900;padding:2px 5px;border-radius:4px;border:1px solid #E5E0D8;white-space:nowrap">${cp.name}</div>`,
           iconSize: [60, 20],
           iconAnchor: [30, 10]
         });
@@ -414,7 +414,7 @@ async function renderRiderCockpit() {
     // Rider marker
     const riderIcon = L.divIcon({
       className: 'rider-mini-icon',
-      html: `<div style="width:18px;height:18px;border-radius:50%;background:#00E5FF;border:3px solid #FFF;box-shadow:0 0 12px #00E5FF"></div>`,
+      html: `<div style="width:18px;height:18px;border-radius:50%;background:#D1A980;border:3px solid #F8F8F8;box-shadow:0 0 12px #D1A980"></div>`,
       iconSize: [18, 18],
       iconAnchor: [9, 9]
     });
