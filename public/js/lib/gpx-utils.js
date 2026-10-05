@@ -47,11 +47,35 @@ function totalRouteKm(coords) {
  * }}
  */
 function parseGpxData(gpxText) {
-  const parser = new DOMParser();
-  const doc    = parser.parseFromString(gpxText, 'application/xml');
-
-  let rawPoints = Array.from(doc.querySelectorAll('trkpt'));
-  if (!rawPoints.length) rawPoints = Array.from(doc.querySelectorAll('rtept'));
+  const rawPoints = [];
+  if (typeof DOMParser !== 'undefined') {
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(gpxText, 'application/xml');
+    let pts = Array.from(doc.querySelectorAll('trkpt'));
+    if (!pts.length) pts = Array.from(doc.querySelectorAll('rtept'));
+    for (let i = 0; i < pts.length; i++) {
+      const pt = pts[i];
+      const lat = parseFloat(pt.getAttribute('lat'));
+      const lng = parseFloat(pt.getAttribute('lon'));
+      if (isNaN(lat) || isNaN(lng)) continue;
+      const eleNode = pt.querySelector('ele');
+      const ele = eleNode ? parseFloat(eleNode.textContent) : 0;
+      rawPoints.push({ lat, lng, ele });
+    }
+  } else {
+    // Node.js regex fallback for trkpt / rtept
+    const ptRegex = /<(?:trkpt|rtept)[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"[^>]*>([\s\S]*?)<\/(?:trkpt|rtept)>/gi;
+    let match;
+    while ((match = ptRegex.exec(gpxText)) !== null) {
+      const lat = parseFloat(match[1]);
+      const lng = parseFloat(match[2]);
+      if (isNaN(lat) || isNaN(lng)) continue;
+      const body = match[3];
+      const eleMatch = /<ele>([^<]+)<\/ele>/i.exec(body);
+      const ele = eleMatch ? parseFloat(eleMatch[1]) : 0;
+      rawPoints.push({ lat, lng, ele });
+    }
+  }
 
   const points = [];
   const coords = [];
@@ -63,12 +87,9 @@ function parseGpxData(gpxText) {
 
   for (let i = 0; i < rawPoints.length; i++) {
     const pt = rawPoints[i];
-    const lat = parseFloat(pt.getAttribute('lat'));
-    const lng = parseFloat(pt.getAttribute('lon'));
-    if (isNaN(lat) || isNaN(lng)) continue;
-
-    const eleNode = pt.querySelector('ele');
-    const ele = eleNode ? parseFloat(eleNode.textContent) : 0;
+    const lat = pt.lat;
+    const lng = pt.lng;
+    const ele = pt.ele;
 
     if (ele < minEle) minEle = ele;
     if (ele > maxEle) maxEle = ele;
