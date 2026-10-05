@@ -87,6 +87,18 @@ db.exec(`
     key   TEXT PRIMARY KEY,
     value TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS page_views (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    path       TEXT NOT NULL,
+    event_id   INTEGER,
+    ip_hash    TEXT NOT NULL,
+    user_agent TEXT,
+    viewed_at  TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_page_views_date ON page_views(viewed_at);
+  CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(path);
+  CREATE INDEX IF NOT EXISTS idx_page_views_event ON page_views(event_id);
 `);
 
 module.exports = {
@@ -135,5 +147,13 @@ module.exports = {
   getSetting:     db.prepare('SELECT value FROM settings WHERE key = ?'),
   setSetting:     db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'),
   getAllSettings: db.prepare('SELECT * FROM settings'),
+
+  // Real Visitor Traffic & Analytics
+  recordPageView:       db.prepare('INSERT INTO page_views (path, event_id, ip_hash, user_agent) VALUES (@path, @event_id, @ip_hash, @user_agent)'),
+  getTodayPageViews:    db.prepare("SELECT COUNT(*) as total_views, COUNT(DISTINCT ip_hash) as unique_visitors FROM page_views WHERE date(viewed_at) = date('now')"),
+  getAllTimePageViews:  db.prepare('SELECT COUNT(*) as total_views, COUNT(DISTINCT ip_hash) as unique_visitors FROM page_views'),
+  getViewsLast7Days:    db.prepare("SELECT date(viewed_at) as date, COUNT(*) as views, COUNT(DISTINCT ip_hash) as unique_visitors FROM page_views WHERE date(viewed_at) >= date('now', '-6 days') GROUP BY date(viewed_at) ORDER BY date ASC"),
+  getTopPagesToday:     db.prepare("SELECT path, COUNT(*) as views, COUNT(DISTINCT ip_hash) as unique_visitors FROM page_views WHERE date(viewed_at) = date('now') GROUP BY path ORDER BY views DESC LIMIT 5"),
+  getEventViewsToday:   db.prepare("SELECT event_id, COUNT(*) as views FROM page_views WHERE event_id IS NOT NULL AND date(viewed_at) = date('now') GROUP BY event_id"),
 };
 
