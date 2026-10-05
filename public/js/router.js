@@ -25,6 +25,14 @@ const Router = {
         const paramNames = [...pattern.matchAll(/:([^/]+)/g)].map(m => m[1]);
         const params = {};
         paramNames.forEach((name, i) => { params[name] = match[i + 1]; });
+
+        // Parse query string (e.g. ?bib=001)
+        const searchStr = path.includes('?') ? path.split('?')[1] : (window.location.search ? window.location.search.slice(1) : '');
+        params.query = {};
+        if (searchStr) {
+          new URLSearchParams(searchStr).forEach((val, key) => { params.query[key] = val; });
+        }
+
         handler(params);
         return;
       }

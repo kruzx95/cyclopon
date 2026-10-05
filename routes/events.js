@@ -41,6 +41,26 @@ router.get('/:id/riders', (req, res) => {
   res.json(riders);
 });
 
+// GET /api/events/:id/gpx/download — download GPX file for bike computers
+router.get('/:id/gpx/download', (req, res) => {
+  const event = db.getEventById.get(req.params.id);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  const targetPath = path.join(gpxDir, `${event.id}.gpx`);
+  if (!fs.existsSync(targetPath)) {
+    return res.status(404).json({ error: 'File GPX untuk event ini belum diunggah' });
+  }
+
+  const safeName = (event.name || `event_${event.id}`)
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, '_')
+    .replace(/__+/g, '_');
+
+  res.setHeader('Content-Type', 'application/gpx+xml');
+  res.setHeader('Content-Disposition', `attachment; filename="${safeName}_Route.gpx"`);
+  res.sendFile(targetPath);
+});
+
 // ── Admin routes ──────────────────────────────────────────────
 
 // POST /api/events/admin — create new event

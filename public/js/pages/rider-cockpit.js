@@ -11,6 +11,51 @@ let cockpitRiderMarker = null;
 let cockpitRoutePolyline = null;
 let cockpitSimTimer = null;
 let cockpitGeoWatchId = null;
+let audioCtx = null;
+let audioAlertEnabled = localStorage.getItem('cyclopon_cockpit_audio') !== 'false';
+const notifiedCpSet = new Set();
+
+function playCheckpointChime() {
+  if (!audioAlertEnabled) return;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    const now = audioCtx.currentTime;
+
+    // Harmonic two-tone chord chime: D5 (587.33Hz) -> A5 (880Hz)
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, now);
+    gain1.gain.setValueAtTime(0.28, now);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880.00, now + 0.18);
+    gain2.gain.setValueAtTime(0.32, now + 0.18);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.start(now + 0.18);
+    osc2.stop(now + 0.7);
+
+    if ('vibrate' in navigator) {
+      navigator.vibrate([150, 100, 250]);
+    }
+  } catch (err) {
+    console.warn('[Audio Alert] Error playing chime:', err);
+  }
+}
 
 async function renderRiderCockpit() {
   document.body.classList.add('cockpit-active');
@@ -52,6 +97,18 @@ async function renderRiderCockpit() {
           <span class="cockpit-rider-name" title="${rider.name}">${rider.name}</span>
         </div>
         <div class="cockpit-top-actions">
+          <button id="btnShareCockpit" class="cockpit-pill-btn" title="Bagikan Tautan Live Tracking Saya ke WhatsApp / Medsos">
+            📲 <span id="shareStatusText">Bagikan</span>
+          </button>
+          <button id="btnTogglePocket" class="cockpit-pill-btn" title="Mode Kantong Jersey (Background GPS Keep-Alive saat layar dikunci)">
+            <span id="pocketIcon">🎒</span> <span id="pocketStatusText">Kantong</span>
+          </button>
+          <button id="btnToggleNight" class="cockpit-pill-btn" title="Mode Malam AMOLED / Siang">
+            <span id="nightIcon">🌙</span> <span id="nightStatusText">Malam</span>
+          </button>
+          <button id="btnToggleAudio" class="cockpit-pill-btn" title="Toggle Suara Notifikasi Checkpoint">
+            <span id="audioIcon">🔔</span> <span id="audioStatusText">Suara</span>
+          </button>
           <button id="btnToggleWakeLock" class="cockpit-pill-btn" title="Toggle Screen Wake Lock">
             <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar</span>
           </button>
@@ -86,6 +143,42 @@ async function renderRiderCockpit() {
         <button id="btnDismissOffRoute" style="background:rgba(0,0,0,0.25);border:none;color:#FFF;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">
           Tutup
         </button>
+      </div>
+
+      <!-- Checkpoint Proximity Alert Banner (<200m) -->
+      <div id="cockpitCpProximityAlert" class="cockpit-proximity-banner">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">📍</span>
+          <div>
+            <div id="cockpitProximityTitle" style="font-size:14px;letter-spacing:0.02em">MENDEKATI CHECKPOINT!</div>
+            <div id="cockpitProximitySub" style="font-size:12px;font-weight:600;opacity:0.95">Jarak tersisa: 150m — Persiapkan kartu brevet / stampel kontrol</div>
+          </div>
+        </div>
+        <button id="btnDismissProximityAlert" style="background:rgba(0,0,0,0.25);border:none;color:#FFF;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">
+          OK
+        </button>
+      </div>
+
+      <!-- Pocket Mode (Background GPS Keep-Alive) Status Banner -->
+      <div id="cockpitPocketBanner" class="cockpit-pocket-banner">
+        <div class="cockpit-pocket-header">
+          <div class="cockpit-pocket-title">
+            <span>🎒</span> <span>MODE KANTONG JERSEY AKTIF</span>
+          </div>
+          <button id="btnStopPocketMode" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#FFF;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">
+            Matikan
+          </button>
+        </div>
+        <div class="cockpit-pocket-desc">
+          Layar HP dapat dimatikan / dikunci sekarang. Silent audio loop menjaga browser tetap aktif mengirim titik GPS di latar belakang.
+        </div>
+        <div class="cockpit-pocket-stats">
+          <span>📡 GPS: <strong id="pocketGpsAcc">Mencari...</strong></span>
+          <span>•</span>
+          <span>🚀 Terkirim: <strong id="pocketPointsSent">0 titik</strong></span>
+          <span>•</span>
+          <span>📦 Antrean Offline: <strong id="pocketQueueCount">0</strong></span>
+        </div>
       </div>
 
       <!-- Speedometer Hero Card -->
@@ -302,6 +395,40 @@ async function renderRiderCockpit() {
     else activateWakeLock();
   });
 
+  // ── Share Live Tracking Link ──
+  const btnShareCockpit = document.getElementById('btnShareCockpit');
+  if (btnShareCockpit) {
+    btnShareCockpit.addEventListener('click', async () => {
+      const shareUrl = `${window.location.origin}/watch/${event.id}?bib=${encodeURIComponent(rider.bib)}`;
+      const shareText = `🚴 Pantau posisi gowes saya (${rider.name} - BIB #${rider.bib}) secara langsung di ${event.name} via CycloPon Live Map:\n${shareUrl}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Live Tracking ${rider.name} - CycloPon`,
+            text: shareText,
+            url: shareUrl
+          });
+          showToast('Tautan pelacakan berhasil dibagikan!', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast('✓ Tautan Live Tracking disalin ke clipboard!', 'success');
+        } catch {
+          prompt('Salin link tracking ini:', shareUrl);
+        }
+      } else {
+        prompt('Salin link tracking ini:', shareUrl);
+      }
+    });
+  }
+
   // Re-acquire lock on tab visibility change
   document.addEventListener('visibilitychange', () => {
     if (cockpitActive && document.visibilityState === 'visible' && !cockpitWakeLock) {
@@ -501,6 +628,7 @@ async function renderRiderCockpit() {
       document.getElementById('cockpitCpCot').textContent = 'FINISH';
       document.getElementById('cockpitCpEta').textContent = 'SEGERA';
       document.getElementById('cockpitCpProgressFill').style.width = '100%';
+      document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
       return;
     }
 
@@ -513,6 +641,29 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitCpDist').textContent = `${distToCp} km`;
     document.getElementById('cockpitCpCot').textContent = nextCp.close_time || '--:--';
     document.getElementById('cockpitCpProgressFill').style.width = `${cpProgress}%`;
+
+    // Checkpoint Proximity Detection (< 200m / 0.2km)
+    const proxBanner = document.getElementById('cockpitCpProximityAlert');
+    const proxTitle = document.getElementById('cockpitProximityTitle');
+    const proxSub = document.getElementById('cockpitProximitySub');
+
+    if (distToCp <= 0.2 && distToCp >= 0) {
+      const cpKey = nextCp.id != null ? `cp_${nextCp.id}` : `cp_${nextCp.name}_${nextCp.km_distance}`;
+      if (!notifiedCpSet.has(cpKey)) {
+        notifiedCpSet.add(cpKey);
+        playCheckpointChime();
+      }
+      if (proxBanner) {
+        proxBanner.classList.add('active');
+        if (proxTitle) proxTitle.textContent = `📍 MENDEKATI ${nextCp.name.toUpperCase()}!`;
+        if (proxSub) {
+          const meters = Math.max(10, Math.round(distToCp * 1000));
+          proxSub.textContent = `Jarak tersisa: ${meters}m (KM ${nextCp.km_distance}) • Siapkan kartu brevet / stampel kontrol`;
+        }
+      }
+    } else if (distToCp > 0.3) {
+      if (proxBanner) proxBanner.classList.remove('active');
+    }
 
     // Compute ETA
     const speedRef = movingAvg > 5 ? movingAvg : 20;
@@ -630,6 +781,143 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitOffRouteAlert').classList.remove('active');
   });
 
+  // Dismiss Checkpoint Proximity banner button
+  document.getElementById('btnDismissProximityAlert')?.addEventListener('click', () => {
+    document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
+  });
+
+  // ── AMOLED Night Mode Toggle & Persistence ──
+  const btnToggleNight = document.getElementById('btnToggleNight');
+  const nightIcon = document.getElementById('nightIcon');
+  const nightStatusText = document.getElementById('nightStatusText');
+  const cockpitContainer = document.querySelector('.cockpit-container');
+
+  const savedNight = localStorage.getItem('cyclopon_cockpit_night');
+  let nightModeActive = false;
+  if (savedNight !== null) {
+    nightModeActive = savedNight === 'true';
+  } else {
+    const curHour = new Date().getHours();
+    nightModeActive = curHour < 6 || curHour >= 18;
+  }
+
+  function applyNightMode(isNight) {
+    if (isNight) {
+      document.body.classList.add('night-mode');
+      cockpitContainer?.classList.add('night-mode');
+      btnToggleNight?.classList.add('night-active');
+      if (nightIcon) nightIcon.textContent = '☀️';
+      if (nightStatusText) nightStatusText.textContent = 'Siang';
+      if (btnToggleNight) btnToggleNight.title = 'Beralih ke Mode Siang (Terang)';
+    } else {
+      document.body.classList.remove('night-mode');
+      cockpitContainer?.classList.remove('night-mode');
+      btnToggleNight?.classList.remove('night-active');
+      if (nightIcon) nightIcon.textContent = '🌙';
+      if (nightStatusText) nightStatusText.textContent = 'Malam';
+      if (btnToggleNight) btnToggleNight.title = 'Beralih ke Mode Malam AMOLED (Hitam Pekat Anti-Silau)';
+    }
+  }
+
+  applyNightMode(nightModeActive);
+
+  btnToggleNight?.addEventListener('click', () => {
+    nightModeActive = !nightModeActive;
+    localStorage.setItem('cyclopon_cockpit_night', nightModeActive);
+    applyNightMode(nightModeActive);
+    showToast(nightModeActive ? '🌙 Mode Malam AMOLED Aktif (Hemat Baterai)' : '☀️ Mode Siang Aktif', 'info');
+  });
+
+  // ── Audio Checkpoint Chime Toggle & Persistence ──
+  const btnToggleAudio = document.getElementById('btnToggleAudio');
+  const audioIcon = document.getElementById('audioIcon');
+  const audioStatusText = document.getElementById('audioStatusText');
+
+  function updateAudioBtnUI() {
+    if (audioAlertEnabled) {
+      btnToggleAudio?.classList.remove('audio-muted');
+      if (audioIcon) audioIcon.textContent = '🔔';
+      if (audioStatusText) audioStatusText.textContent = 'Suara';
+      if (btnToggleAudio) btnToggleAudio.title = 'Audio Chime Checkpoint Aktif (Klik untuk Mute)';
+    } else {
+      btnToggleAudio?.classList.add('audio-muted');
+      if (audioIcon) audioIcon.textContent = '🔕';
+      if (audioStatusText) audioStatusText.textContent = 'Mute';
+      if (btnToggleAudio) btnToggleAudio.title = 'Audio Chime Checkpoint Dimatikan (Klik untuk Aktifkan)';
+    }
+  }
+  updateAudioBtnUI();
+
+  btnToggleAudio?.addEventListener('click', () => {
+    audioAlertEnabled = !audioAlertEnabled;
+    localStorage.setItem('cyclopon_cockpit_audio', audioAlertEnabled);
+    updateAudioBtnUI();
+    if (audioAlertEnabled) {
+      playCheckpointChime();
+      showToast('🔔 Audio Chime Checkpoint Diaktifkan', 'info');
+    } else {
+      showToast('🔕 Audio Chime Checkpoint Dimatikan', 'info');
+    }
+  });
+
+  // ── Pocket Mode (Background GPS Keep-Alive) Handlers ──
+  const btnTogglePocket = document.getElementById('btnTogglePocket');
+  const pocketIcon = document.getElementById('pocketIcon');
+  const pocketStatusText = document.getElementById('pocketStatusText');
+  const pocketBanner = document.getElementById('cockpitPocketBanner');
+  const btnStopPocket = document.getElementById('btnStopPocketMode');
+  const pocketGpsAcc = document.getElementById('pocketGpsAcc');
+  const pocketPointsSent = document.getElementById('pocketPointsSent');
+  const pocketQueueCount = document.getElementById('pocketQueueCount');
+
+  function updatePocketUI(isActive) {
+    if (isActive) {
+      btnTogglePocket?.classList.add('pocket-active');
+      pocketBanner?.classList.add('active');
+      if (pocketStatusText) pocketStatusText.textContent = 'Kantong ON';
+      if (pocketIcon) pocketIcon.textContent = '🟢';
+    } else {
+      btnTogglePocket?.classList.remove('pocket-active');
+      pocketBanner?.classList.remove('active');
+      if (pocketStatusText) pocketStatusText.textContent = 'Kantong';
+      if (pocketIcon) pocketIcon.textContent = '🎒';
+    }
+  }
+
+  btnTogglePocket?.addEventListener('click', async () => {
+    if (window.GpsKeeper && GpsKeeper.isActive()) {
+      GpsKeeper.stop();
+      updatePocketUI(false);
+      showToast('🎒 Mode Kantong Jersey Dinonaktifkan.', 'info');
+    } else if (window.GpsKeeper) {
+      updatePocketUI(true);
+      showToast('🎒 Mode Kantong Jersey Aktif! Layar dapat dimatikan sekarang.', 'success');
+      await GpsKeeper.start({
+        rider,
+        event,
+        traccar: config.traccar,
+        onUpdate: (data) => {
+          updateTelemetry(data.latitude, data.longitude, data.speed);
+        },
+        onStatus: (status) => {
+          if (pocketGpsAcc) pocketGpsAcc.textContent = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Aktif';
+          if (pocketPointsSent) pocketPointsSent.textContent = `${status.pointsSent} titik`;
+          if (pocketQueueCount) pocketQueueCount.textContent = `${status.offlineQueueCount}`;
+        }
+      });
+    } else {
+      showToast('Modul GPS Keeper sedang dimuat...', 'info');
+    }
+  });
+
+  btnStopPocket?.addEventListener('click', () => {
+    if (window.GpsKeeper && GpsKeeper.isActive()) {
+      GpsKeeper.stop();
+      updatePocketUI(false);
+      showToast('🎒 Mode Kantong Jersey Dinonaktifkan.', 'info');
+    }
+  });
+
   // ── Logout Rider from Cockpit ──
   const btnCockpitLogout = document.getElementById('btnCockpitLogout');
   if (btnCockpitLogout) {
@@ -709,6 +997,8 @@ window.addEventListener('popstate', () => {
   if (cockpitActive) {
     cockpitActive = false;
     document.body.classList.remove('cockpit-active');
+    document.body.classList.remove('night-mode');
+    notifiedCpSet.clear();
     if (cockpitWakeLock) {
       cockpitWakeLock.release().catch(() => {});
       cockpitWakeLock = null;
@@ -720,6 +1010,13 @@ window.addEventListener('popstate', () => {
     if (cockpitSimTimer) clearInterval(cockpitSimTimer);
     if (cockpitGeoWatchId != null && 'geolocation' in navigator) {
       navigator.geolocation.clearWatch(cockpitGeoWatchId);
+    }
+    if (window.GpsKeeper && GpsKeeper.isActive()) {
+      GpsKeeper.stop();
+    }
+    if (audioCtx) {
+      audioCtx.close().catch(() => {});
+      audioCtx = null;
     }
   }
 });

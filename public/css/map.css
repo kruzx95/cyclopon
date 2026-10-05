@@ -501,8 +501,8 @@
   transition: var(--transition);
 }
 .sidebar-search-input:focus {
-  border-color: var(--color-yellow);
-  box-shadow: 0 0 0 2px rgba(255, 230, 0, 0.2);
+  border-color: var(--color-sage);
+  box-shadow: 0 0 0 2px rgba(43, 78, 48, 0.15);
 }
 .search-icon-placeholder {
   position: absolute;
@@ -512,6 +512,174 @@
   font-size: 13px;
   color: var(--text-secondary);
   pointer-events: none;
+}
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 1;
+}
+.clear-search-btn:hover {
+  color: var(--text-primary);
+  background: var(--border-subtle);
+}
+
+/* ── Sidebar Filter Status Pills ── */
+.sidebar-filter-pills {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  padding: 6px 0 2px 0;
+  scrollbar-width: none;
+}
+.sidebar-filter-pills::-webkit-scrollbar {
+  display: none;
+}
+.status-filter-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: #FFFFFF;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+.status-filter-pill:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+.status-filter-pill.active {
+  background: var(--color-sage);
+  color: #FFFFFF;
+  border-color: var(--color-sage);
+  font-weight: 800;
+  box-shadow: 0 2px 6px rgba(43, 78, 48, 0.25);
+}
+
+/* ── Target Rider Focus Floating Bar ── */
+.target-rider-focus-bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid var(--color-sage);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  padding: 4px 6px 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  animation: fadeInDown 0.25s ease-out;
+}
+.focus-rider-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.focus-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  animation: pulse 1.5s infinite alternate;
+}
+.focus-label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: var(--color-sage);
+  text-transform: uppercase;
+}
+.focus-name {
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.focus-speed {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: rgba(116, 136, 115, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.focus-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-focus-action {
+  background: #F8F8F8;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-focus-action:hover {
+  background: var(--color-sage);
+  color: #FFFFFF;
+  border-color: var(--color-sage);
+}
+.btn-focus-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  margin-left: 2px;
+}
+.btn-focus-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary);
+}
+
+/* ── Popup Share Button ── */
+.popup-share-link-btn {
+  background: #F8F8F8;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-sage);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.popup-share-link-btn:hover {
+  background: var(--color-sage);
+  color: #FFFFFF;
+  border-color: var(--color-sage);
 }
 
 /* ── Sidebar Sort Mode Toggle ── */
@@ -571,6 +739,11 @@
 .leaderboard-item:hover {
   background: #F8F8F8;
   border-color: var(--border);
+}
+.leaderboard-item.focused-rider {
+  border-color: var(--color-sage) !important;
+  background: rgba(43, 78, 48, 0.08) !important;
+  box-shadow: 0 0 0 2px rgba(43, 78, 48, 0.2);
 }
 
 .leaderboard-rank {

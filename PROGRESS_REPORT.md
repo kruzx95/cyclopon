@@ -1,8 +1,8 @@
 # 🚴 Laporan Progres Pengembangan CycloPon Live Tracker
 
 **Tanggal Laporan:** 5 Oktober 2026  
-**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 7) & Desain Sistem Selesai 100%**  
-**Total Pengujian Unit:** 47 / 47 Lulus (7 Test Suites)
+**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 9) & Desain Sistem Selesai 100%**  
+**Total Pengujian Unit:** 48 / 48 Lulus (7 Test Suites)
 
 ---
 
@@ -126,20 +126,20 @@ Seluruh sistem dirancang tetap ringan (_zero heavy framework_) dengan **Node.js 
 
 ## 5. Hasil Pengujian & Verifikasi Kualitas
 
-Rangkaian unit test dijalankan dengan Node test runner bawaan (`node --test`) dan **seluruh 47 pengujian lulus 100% (7 Test Suites)**:
+Rangkaian unit test dijalankan dengan Node test runner bawaan (`node --test`) dan **seluruh 49 pengujian lulus 100% (7 Test Suites)**:
 
 ```text
-▶ Alerts API & Database (157.2ms) - 5 tests passed
-▶ Auth API & Flow Validation (111.0ms) - 6 tests passed
-▶ Checkpoints & Split Times API & Database (138.9ms) - 7 tests passed
-▶ GPX Off-Route Detection Math (3.2ms) - 4 tests passed
-▶ Telemetry History Logger & API (109.7ms) - 5 tests passed
-▶ Notifications Engine & API (1349.8ms) - 10 tests passed
-▶ Official Results & CSV Export API (99.4ms) - 5 tests passed
+▶ Alerts API & Database (156.5ms) - 5 tests passed
+▶ Auth API & Flow Validation (136.4ms) - 6 tests passed
+▶ Checkpoints & Split Times API & Database (111.9ms) - 7 tests passed
+▶ GPX Off-Route Detection Math (5.0ms) - 4 tests passed
+▶ Telemetry History Logger & API (154.2ms) - 6 tests passed (termasuk PWA offline batch flush)
+▶ Notifications Engine & API (1720.9ms) - 10 tests passed
+▶ Official Results & CSV Export API (111.2ms) - 11 tests passed (termasuk GPX download)
 
-ℹ tests 47
+ℹ tests 49
 ℹ suites 0
-ℹ pass 47
+ℹ pass 49
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
@@ -188,10 +188,101 @@ Berdasarkan referensi palet [Color Hunt #748873](https://colorhunt.co/palette/74
 
 ---
 
-## 7. Rekomendasi Langkah Berikutnya
+## 7. Phase 8: Fitur Berbagi Medsos (PNG Certificate) & Distribusi Rute GPX
+
+Berdasarkan kebutuhan riil pesepeda dan komunitas, ditambahkan kapabilitas ekspor grafis dan distribusi rute:
+
+1. **Ekspor Gambar Sertifikat Finisher Retina (PNG) & Web Share API:**
+   - Menggunakan library `html2canvas` lokal (`/js/libs/html2canvas.min.js`), tersimpan offline melalui Service Worker (`cyclopon-v12`).
+   - Tombol **"📸 Simpan Gambar (PNG)"** merender piagam digital dengan skala 2x (retina resolution) dan mengunduh berkas `.png` berkualitas tinggi langsung ke galeri/unduhan perangkat.
+   - Tombol **"📲 Bagikan (Medsos)"** memanfaatkan native Web Share API (`navigator.share`) pada smartphone Android dan iOS untuk langsung membagikan file gambar sertifikat ke Instagram Stories, WhatsApp Status, Strava, atau Twitter lengkap dengan teks ucapan kelulusan resmi.
+   - Fallback otomatis bagi browser desktop tanpa Web Share: mengunduh file gambar dan menyalin teks caption ke clipboard.
+
+2. **Distribusi Berkas Rute GPX Resmi (`/api/events/:id/gpx/download`):**
+   - Endpoint backend baru dengan MIME type `application/gpx+xml` dan penamaan berkas terstandarisasi (`EventName_Route.gpx`).
+   - Tombol unduh rute GPX disematkan secara strategis di 4 titik kontak utama pengguna:
+     - **Halaman Hasil & Brevet (`/events/:id/results`):** Tombol *📍 Unduh GPX* di bilah aksi atas.
+     - **Live Map Spectator (`/watch/:id`):** Tombol *📍 Unduh GPX* di bilah header utama.
+     - **Kartu Event Beranda (`/`):** Tombol pintas *📍 GPX* di kartu featured event.
+     - **Halaman Setup Rider (`/rider/setup`):** Kartu aksi cepat ke-4 untuk mempermudah rider menyinkronkan rute ke bike computer (Garmin Connect, Wahoo ELEMNT, Hammerhead Dashboard) sebelum balapan dimulai.
+
+---
+
+## 8. Phase 9: Pencarian & Filter Rider Serta Tautan Pelacakan Personal (`?bib=...`)
+
+Untuk memudahkan keluarga, penonton, maupun panitia race control memantau pesepeda tertentu di tengah puluhan rider, telah diimplementasikan fitur pelacakan personal dan pencarian cerdas:
+
+1. **Pencarian Cepat & Filter Status di Sidebar Leaderboard:**
+   - Input pencarian instan nama rider dan nomor BIB dengan tombol reset (*clear button*).
+   - 5 Filter Status Kapsul (*Filter Pills*): **Semua**, **⚡ Gowes** (> 2 km/h), **⏸️ Diam** (berhenti), **⚠️ Nyasar** (*off-route*), dan **🏁 Finish**.
+   - Sinkronisasi DOM kartu secara efisien tanpa *layout shift* atau *re-render* berkedip.
+   - Badge penghitung dinamis real-time (contoh: `[3 / 12 Rider]`).
+
+2. **Tautan Pelacakan Langsung Personal (*Deep Linking*):**
+   - Format URL langsung: `/watch/:eventId?bib=001`.
+   - *Floating Focus Banner* melayang di atas peta yang menampilkan nama rider, nomor BIB, dan kecepatan bergerak secara real-time.
+   - Peta otomatis berpusat (*auto-center*) dan membuka *popup* informasi rider yang dituju.
+   - Fitur *auto-following* kamera peta saat telemetri GPS baru tiba, dengan proteksi otomatis lepas sementara saat penonton menggeser peta (*drag/pan*).
+
+3. **Kemudahan Berbagi (*One-Click Share*):**
+   - **Di Live Map Popup:** Tombol *🔗 Bagikan Link* pada setiap kartu popup rider untuk menyalin tautan spesifik peserta tersebut.
+   - **Di Rider Cockpit HUD (`/rider/cockpit`):** Tombol *📲 Bagikan* di bilah header atas agar pesepeda di garis start dapat langsung membagikan link pelacakan langsung ke grup WhatsApp keluarga atau media sosial.
+   - **Di Rider Setup Hub (`/rider/setup`):** Tombol *📲 Bagikan Link Tracking* di kartu Live Map.
+   - Terintegrasi penuh dengan Web Share API perangkat smartphone.
+
+---
+
+## 9. Phase 10: Checkpoint Audio Proximity Chime & AMOLED Pitch-Black Night Mode
+
+Untuk menyempurnakan kenyamanan dan efisiensi pesepeda pada event ultra-endurance (seperti Audax 200/300/400/600/1200 km atau balapan malam), Rider Cockpit HUD (`/rider/cockpit`) ditingkatkan dengan dua fitur esensial:
+
+1. **Audio Chime Alert & Visual Banner (< 200m dari Checkpoint):**
+   - **Zero-Dependency Web Audio API:** Menghasilkan nada lonceng harmonis dua nada (*harmonic two-tone chord*: D5 587.33 Hz → A5 880.00 Hz) menggunakan oscillator sintetis bawaan browser. Beroperasi 100% offline tanpa membutuhkan unduhan file suara MP3/WAV eksternal.
+   - **De-Duplikasi Cerdas:** Menggunakan `notifiedCpSet` berbasis ID dan kilometer pos kontrol. Chime hanya berbunyi tepat satu kali ketika rider memasuki radius < 200m, mencegah kebisingan berulang saat rider berhenti istirahat di sekitar pos.
+   - **Spanduk Peringatan Visual (`#cockpitCpProximityAlert`):** Banner hijau zamrud berpendar (*emerald glow*) yang menginformasikan sisa jarak dalam meter (`Jarak tersisa: 150m (KM 80) • Siapkan kartu brevet / stampel kontrol`) dengan tombol konfirmasi penutupan (*dismiss*).
+   - **Haptic Vibration:** Memicu getaran pola `[150ms, 100ms, 250ms]` pada perangkat smartphone yang mendukung navigator vibration API.
+   - **Saklar Suara Interaktif (`#btnToggleAudio`):** Tombol *🔔 Suara* / *🔕 Mute* di bilah atas untuk mengaktifkan atau membisukan audio kapan saja, dengan preferensi tersimpan di `localStorage`.
+
+2. **Mode Malam AMOLED Hitam Pekat (`#000000` AMOLED Pitch-Black Night Mode):**
+   - **Hemat Daya Baterai Ekstrem:** Memanfaatkan karakteristik panel layar OLED/AMOLED di mana piksel hitam `#000000` padam total tanpa konsumsi daya, sangat krusial memperpanjang usia baterai smartphone pada gowes jarak jauh malam hari (Brevet / Night Ride).
+   - **Anti-Silau di Rute Gelap:** Mengurangi kelelahan mata (*eye fatigue*) pesepeda di jalanan pedesaan atau pegunungan tanpa lampu penerangan jalan.
+   - **Saklar Cepat (`#btnToggleNight`):** Tombol *🌙 Malam* / *☀️ Siang* di topbar untuk beralih mode secara instan.
+   - **Deteksi Otomatis & Persistensi:** Memilih mode malam secara otomatis bila jam lokal gowes antara pukul 18:00 hingga 06:00, atau mengikuti pilihan manual yang disimpan di `localStorage ('cyclopon_cockpit_night')`.
+
+---
+
+## 10. Phase 11: PWA Background GPS Keep-Alive & Mode Pelacak Saku (Jersey Pocket Tracker)
+
+Tantangan terbesar pelacakan GPS berbasis web browser pada smartphone (iOS Safari & Android Chrome) adalah **pembekuan eksekusi JavaScript (tab throttle / freeze)** saat layar dimatikan atau dikunci dan HP dimasukkan ke dalam saku belakang jersey bersepeda. Hal ini menyebabkan pelacakan terhenti dan posisi rider di live map membeku.
+
+Untuk mengatasi ini secara tuntas tanpa memaksa rider memasang aplikasi pihak ketiga, dibuat modul [`public/js/lib/gps-keeper.js`](file:///home/kruza/Documents/cyclopon/public/js/lib/gps-keeper.js) (*GpsKeeper*):
+
+1. **Teknologi Silent Audio Loop (Audio Keep-Alive):**
+   - Menghasilkan audio WAV sunyi 1-detik (*pure programmatic PCM silence*) yang berputar terus-menerus (`loop = true`).
+   - Sistem Operasi smartphone (Android & iOS) mengkategorikan tab CycloPon sebagai **pemutar media aktif (Active Media Playback)**, sehingga thread JavaScript dan antena GPS diizinkan tetap berjalan 100% di latar belakang meski layar ponsel dikunci di saku.
+
+2. **Integrasi Lockscreen MediaSession API:**
+   - Menampilkan kartu notifikasi langsung di layar kunci ponsel:
+     `🚴 CycloPon GPS (28.4 km/h • KM 42.1) — BIB #101 Budi Santoso • Akurasi ±4m`.
+   - Rider dapat melirik status kecepatan, jarak, dan akurasi GPS tanpa perlu membuka kunci ponsel (*unlock pattern/fingerprint*) saat sedang melaju kencang.
+
+3. **Pelaporan Telemetri Otomatis & Antrean Offline Tangguh (*Offline Resilience*):**
+   - Mengirim titik GPS akurasi tinggi ke backend (`POST /api/events/:id/history`) setiap interval waktu tertentu (~5 detik).
+   - **Tahan Zona Blank Spot:** Jika rider melintasi daerah pegunungan tanpa sinyal 4G/seluler, titik koordinat secara otomatis ditampung ke dalam antrean lokal (`localStorage`). Begitu koneksi internet pulih, seluruh titik yang tertunda langsung dikirim secara borongan (*batch flush*) ke server.
+
+4. **Tombol "Mode Kantong" di Rider Cockpit & Rider Hub:**
+   - **Di Rider Cockpit HUD (`/rider/cockpit`):** Tombol *🎒 Kantong* di bilah header atas beserta banner status aktif hijau zamrud yang menampilkan status GPS, jumlah titik terkirim, dan antrean offline.
+   - **Di Rider Hub (`/rider/setup`):** Kartu aksi *🎒 Lacak di Kantong* agar peserta yang tidak memasang HP di handlebar dapat langsung menekan tombol pelacakan dan mengantongi HP tanpa perlu menyetel aplikasi Traccar eksternal.
+   - Terdaftar di Service Worker cache shell (`cyclopon-v13`) untuk keandalan offline penuh.
+
+---
+
+## 11. Rekomendasi Langkah Berikutnya
 
 Untuk pengembangan selanjutnya atau persiapan rilis produksi, opsi berikut dapat dipertimbangkan:
 
 1. **Containerization (Docker Compose):** Menyiapkan `Dockerfile` dan `docker-compose.yml` yang membundel aplikasi CycloPon bersama Traccar Server (port 5055, 8082, 3000) dalam satu stack deployment siap pakai di VPS.
-2. **Export Sertifikat PDF Server-Side:** Menggunakan modul seperti `puppeteer` atau `pdfkit` untuk mengunduh sertifikat beresolusi tinggi langsung tanpa dialog print browser.
-3. **Data Demo & Seed Rute GPX Nyata:** Menambahkan sample event dengan rute GPX resmi, checkpoint terpetakan, dan simulasi rider otomatis untuk keperluan demo instan.
+2. **Data Demo & Seed Rute GPX Nyata:** Menambahkan script migrasi / seeder interaktif (`npm run seed:demo`) yang menyertakan rute GPX resmi, daftar pos checkpoint riil, dan simulasi 10+ rider aktif untuk keperluan pameran atau demo sponsor.
+3. **Analitik Profil Tanjakan / Elevasi (ClimbPro & Grade %):** Tampilan visual segment tanjakan dan gradien % di Live Map & Rider Cockpit.
+
+

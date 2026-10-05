@@ -131,6 +131,35 @@ test('Telemetry History Logger & API', async (t) => {
     assert.ok(points.every(p => p.rider_id === rider1Id));
   });
 
+  await t.test('POST /api/events/:id/history handles PWA offline queue batch flush', async () => {
+    const { eventId, rider1Id } = t.context;
+
+    // Simulate 5 queued points buffered while rider was in a dead-zone mountain pass
+    const offlineBatch = [
+      { rider_id: rider1Id, latitude: -6.921, longitude: 107.626, speed: 22.0, distance_km: 16.0, recorded_at: '2026-10-20T07:25:00.000Z' },
+      { rider_id: rider1Id, latitude: -6.923, longitude: 107.628, speed: 24.5, distance_km: 16.5, recorded_at: '2026-10-20T07:25:30.000Z' },
+      { rider_id: rider1Id, latitude: -6.925, longitude: 107.630, speed: 27.0, distance_km: 17.0, recorded_at: '2026-10-20T07:26:00.000Z' },
+      { rider_id: rider1Id, latitude: -6.928, longitude: 107.633, speed: 30.2, distance_km: 17.8, recorded_at: '2026-10-20T07:26:30.000Z' },
+      { rider_id: rider1Id, latitude: -6.930, longitude: 107.635, speed: 32.1, distance_km: 18.5, recorded_at: '2026-10-20T07:27:00.000Z' }
+    ];
+
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positions: offlineBatch })
+    });
+
+    assert.equal(res.status, 201);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.inserted, 5);
+
+    // Verify all 5 points are retrievable
+    const checkRes = await fetch(`${baseUrl}/api/events/${eventId}/history?rider_id=${rider1Id}`);
+    const allRiderPoints = await checkRes.json();
+    assert.equal(allRiderPoints.length, 7); // 2 previous + 5 newly flushed
+  });
+
   await t.test('teardown', async () => {
     const { eventId } = t.context;
     try {

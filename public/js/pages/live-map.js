@@ -67,6 +67,11 @@ async function renderLiveMap(params) {
           <a class="header-action-btn" href="/events/${eventId}/results" data-link title="Lihat Rekap Hasil Resmi & Sertifikat Brevet">
             🏆 <span class="action-btn-label">Hasil & Brevet</span>
           </a>
+
+          <!-- Download Official GPX Route -->
+          <a class="header-action-btn" href="/api/events/${eventId}/gpx/download" download title="Unduh Rute GPX Resmi untuk Garmin / Wahoo / Hammerhead">
+            📍 <span class="action-btn-label">Unduh GPX</span>
+          </a>
         </div>
       </header>
 
@@ -117,6 +122,21 @@ async function renderLiveMap(params) {
       <div class="map-viewport" id="mapViewport">
         <div class="map-container elev-open" id="mapContainer">
           <div id="leaflet-map"></div>
+
+          <!-- ── Target Rider Focus Floating Banner ── -->
+          <div id="targetRiderFocusBanner" class="target-rider-focus-bar" style="display:none">
+            <div class="focus-rider-info">
+              <span class="focus-pulse-dot"></span>
+              <span class="focus-label">FOKUS:</span>
+              <span id="focusRiderName" class="focus-name">-</span>
+              <span id="focusRiderSpeed" class="focus-speed">-</span>
+            </div>
+            <div class="focus-bar-actions">
+              <button id="btnFocusPan" class="btn-focus-action" title="Pusatkan Peta ke Rider">🎯 Pusatkan</button>
+              <button id="btnFocusShare" class="btn-focus-action" title="Bagikan Tautan">🔗 Bagikan</button>
+              <button id="btnCancelFocus" class="btn-focus-close" title="Lepaskan Fokus">✕</button>
+            </div>
+          </div>
 
           <!-- ── Komoot Elevation Profile Drawer ── -->
           <div class="elevation-drawer" id="elevationDrawer">
@@ -182,6 +202,15 @@ async function renderLiveMap(params) {
             <div class="sidebar-search-box">
               <span class="search-icon-placeholder">🔍</span>
               <input type="text" class="sidebar-search-input" id="riderSearchInput" placeholder="Cari nama atau nomor BIB...">
+              <button id="btnClearSearch" class="clear-search-btn" style="display:none" title="Hapus pencarian">✕</button>
+            </div>
+            <!-- Status Filter Pills -->
+            <div class="sidebar-filter-pills" id="sidebarFilterPills">
+              <button class="status-filter-pill active" data-filter="all">Semua</button>
+              <button class="status-filter-pill" data-filter="moving">⚡ Gowes</button>
+              <button class="status-filter-pill" data-filter="idle">⏸️ Diam</button>
+              <button class="status-filter-pill" data-filter="offroute">⚠️ Nyasar</button>
+              <button class="status-filter-pill" data-filter="finished">🏁 Finish</button>
             </div>
           </div>
           <div class="leaderboard" id="leaderboard">
@@ -1284,8 +1313,11 @@ async function renderLiveMap(params) {
           </div>
         ` : ''}
 
-        <div class="popup-footer">
-          Update: <strong>${formatTimeAgo(fixTime)}</strong>
+        <div class="popup-footer" style="display:flex;align-items:center;justify-content:space-between">
+          <span>Update: <strong>${formatTimeAgo(fixTime)}</strong></span>
+          <button class="popup-share-link-btn" onclick="window.shareRiderLink('${rider.bib}', '${rider.name}')" title="Salin / Bagikan Link Tracking Rider Ini">
+            🔗 Bagikan Link
+          </button>
         </div>
       </div>
     `);
@@ -1309,11 +1341,51 @@ async function renderLiveMap(params) {
       lastTime: fixTime
     };
 
+    handleTargetRiderFocus(rider, latlng, telem, calc);
     updateLeaderboard();
   }
 
-  // ── Leaderboard Sort Mode Toggle State ──
-  let leaderboardSortMode = 'bib'; // 'bib' (default, cards stay static & fixed) or 'rank' (sorted by distance)
+  // ── Target Rider Focus & Tracking State ──
+  const targetBibParam = (params.query?.bib || new URLSearchParams(window.location.search).get('bib') || '').trim();
+  let targetRider = null;
+  let isAutoFollowing = false;
+
+  function activateTargetRider(r) {
+    if (!r) return;
+    targetRider = r;
+    isAutoFollowing = true;
+    const banner = document.getElementById('targetRiderFocusBanner');
+    if (banner) {
+      document.getElementById('focusRiderName').textContent = `#${r.bib} ${r.name}`;
+      const prog = progressById[r.traccar_device_id];
+      document.getElementById('focusRiderSpeed').textContent = prog ? `${prog.speed} km/h • ${prog.distanceKm || 0} km` : 'Terhubung';
+      banner.style.display = 'flex';
+    }
+    const devId = r.traccar_device_id;
+    const m = markerById[devId];
+    if (m) {
+      map.setView(m.getLatLng(), 16);
+      m.openPopup();
+    }
+    updateLeaderboard();
+  }
+
+  function handleTargetRiderFocus(rider, latlng, telem, calc) {
+    if (!targetRider || String(targetRider.bib).toLowerCase() !== String(rider.bib).toLowerCase()) return;
+
+    const speedEl = document.getElementById('focusRiderSpeed');
+    if (speedEl) {
+      speedEl.textContent = `${telem.currentSpeed} km/h • ${calc.distanceKm || 0} km`;
+    }
+
+    if (isAutoFollowing && latlng) {
+      map.panTo(latlng, { animate: true, duration: 0.5 });
+    }
+  }
+
+  // ── Leaderboard Sort Mode & Status Filter State ──
+  let leaderboardSortMode = 'bib';
+  let currentStatusFilter = 'all';
 
   const btnSortBib = document.getElementById('btnSortBib');
   const btnSortRank = document.getElementById('btnSortRank');
@@ -1361,28 +1433,66 @@ async function renderLiveMap(params) {
       entries.sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
     }
 
-    // 3. Search filter
+    // 3. Status filter
+    if (currentStatusFilter !== 'all') {
+      if (currentStatusFilter === 'moving') {
+        entries = entries.filter(e => e.speed > 2 && !e.isFinished);
+      } else if (currentStatusFilter === 'idle') {
+        entries = entries.filter(e => e.speed <= 2 && !e.isFinished);
+      } else if (currentStatusFilter === 'offroute') {
+        entries = entries.filter(e => e.isOffRoute);
+      } else if (currentStatusFilter === 'finished') {
+        entries = entries.filter(e => e.isFinished);
+      }
+    }
+
+    // 4. Search query filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       entries = entries.filter(e =>
         e.rider.name.toLowerCase().includes(q) ||
-        String(e.rider.bib).includes(q)
+        String(e.rider.bib).toLowerCase().includes(q)
       );
     }
 
     const leaderboardEl = document.getElementById('leaderboard');
-    if (!entries.length) {
-      leaderboardEl.innerHTML = `
-        <div style="padding:28px 16px;text-align:center;color:var(--text-secondary);font-size:13px">
-          ${searchQuery ? 'Tidak ada rider yang cocok dengan pencarian.' : '⏳ Menunggu sinyal GPS rider...<br><small style="opacity:0.7;display:block;margin-top:6px">Klik tombol <strong>🎮 Simulasi</strong> di atas untuk demo.</small>'}
-        </div>
-      `;
-      return;
+    const badgeEl = document.getElementById('sidebarRiderBadge');
+    if (badgeEl && riders) {
+      badgeEl.textContent = `${entries.length} / ${riders.length} Rider`;
     }
 
-    // Clear placeholder message if it was shown
-    const emptyPlaceholder = leaderboardEl.querySelector(':scope > div:not(.leaderboard-item)');
-    if (emptyPlaceholder) emptyPlaceholder.remove();
+    // Synchronize card visibility: hide cards not in current filter
+    const activeDevIds = new Set(entries.map(e => e.rider.traccar_device_id));
+    leaderboardEl.querySelectorAll('.leaderboard-item').forEach(card => {
+      const cardDevId = Number(card.id.replace('rider-card-', ''));
+      if (!activeDevIds.has(cardDevId)) {
+        card.style.display = 'none';
+      } else {
+        card.style.display = 'flex';
+      }
+    });
+
+    if (!entries.length) {
+      let emptyNotice = document.getElementById('leaderboardEmptyNotice');
+      if (!emptyNotice) {
+        emptyNotice = document.createElement('div');
+        emptyNotice.id = 'leaderboardEmptyNotice';
+        emptyNotice.style.cssText = 'padding:28px 16px;text-align:center;color:var(--text-secondary);font-size:13px';
+        leaderboardEl.appendChild(emptyNotice);
+      }
+      emptyNotice.innerHTML = searchQuery || currentStatusFilter !== 'all'
+        ? '🔍 Tidak ada rider yang cocok dengan filter atau pencarian.'
+        : '⏳ Menunggu sinyal GPS rider...<br><small style="opacity:0.7;display:block;margin-top:6px">Klik tombol <strong>🎮 Simulasi</strong> di atas untuk demo.</small>';
+      emptyNotice.style.display = 'block';
+      return;
+    } else {
+      const emptyNotice = document.getElementById('leaderboardEmptyNotice');
+      if (emptyNotice) emptyNotice.style.display = 'none';
+    }
+
+    // Clear initial static placeholder if present
+    const initPlaceholder = leaderboardEl.querySelector(':scope > div:not(.leaderboard-item):not(#leaderboardEmptyNotice)');
+    if (initPlaceholder) initPlaceholder.remove();
 
     entries.forEach((e, i) => {
       const devId = e.rider.traccar_device_id;
@@ -1390,13 +1500,17 @@ async function renderLiveMap(params) {
       const rankDisplay = raceRank <= 3 ? ['🥇','🥈','🥉'][raceRank - 1] : `#${raceRank}`;
       const status = getRiderStatus(e.lastTime);
       const isMoving = e.speed > 2;
+      const isTarget = targetRider && String(targetRider.bib).toLowerCase() === String(e.rider.bib).toLowerCase();
 
       let card = document.getElementById(`rider-card-${devId}`);
       if (!card) {
         card = document.createElement('div');
         card.id = `rider-card-${devId}`;
-        card.className = 'leaderboard-item';
-        card.onclick = () => panToRider(devId);
+        card.className = `leaderboard-item ${isTarget ? 'focused-rider' : ''}`;
+        card.onclick = () => {
+          activateTargetRider(e.rider);
+          panToRider(devId);
+        };
         card.innerHTML = `
           <div class="leaderboard-rank ${raceRank <= 3 ? 'top' : ''}">${rankDisplay}</div>
           <div class="rider-avatar" style="background:${e.rider.color || '#FFE600'}">${e.rider.bib}</div>
@@ -1558,18 +1672,135 @@ async function renderLiveMap(params) {
     });
   }
 
-  document.getElementById('riderSearchInput').addEventListener('input', e => {
-    searchQuery = e.target.value.trim();
-    updateLeaderboard();
+  // ── Filter Pills & Search Input Listeners ──
+  const searchInputEl = document.getElementById('riderSearchInput');
+  const clearSearchBtn = document.getElementById('btnClearSearch');
+
+  if (searchInputEl) {
+    searchInputEl.addEventListener('input', e => {
+      searchQuery = e.target.value.trim();
+      if (clearSearchBtn) {
+        clearSearchBtn.style.display = searchQuery ? 'block' : 'none';
+      }
+      updateLeaderboard();
+    });
+  }
+
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+      if (searchInputEl) {
+        searchInputEl.value = '';
+        searchQuery = '';
+        clearSearchBtn.style.display = 'none';
+        updateLeaderboard();
+        searchInputEl.focus();
+      }
+    });
+  }
+
+  document.querySelectorAll('#sidebarFilterPills .status-filter-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#sidebarFilterPills .status-filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentStatusFilter = btn.dataset.filter;
+      updateLeaderboard();
+    });
+  });
+
+  // ── Focus Floating Bar Button Listeners ──
+  const btnFocusPan = document.getElementById('btnFocusPan');
+  const btnFocusShare = document.getElementById('btnFocusShare');
+  const btnCancelFocus = document.getElementById('btnCancelFocus');
+
+  if (btnFocusPan) {
+    btnFocusPan.addEventListener('click', () => {
+      if (!targetRider) return;
+      isAutoFollowing = true;
+      const m = markerById[targetRider.traccar_device_id];
+      if (m) {
+        map.setView(m.getLatLng(), 16);
+        m.openPopup();
+        showToast(`🎯 Mengikuti #${targetRider.bib} ${targetRider.name}`, 'info');
+      } else {
+        showToast(`Belum ada sinyal GPS untuk #${targetRider.bib}`, 'info');
+      }
+    });
+  }
+
+  if (btnFocusShare) {
+    btnFocusShare.addEventListener('click', () => {
+      if (targetRider) {
+        window.shareRiderLink(targetRider.bib, targetRider.name);
+      }
+    });
+  }
+
+  if (btnCancelFocus) {
+    btnCancelFocus.addEventListener('click', () => {
+      targetRider = null;
+      isAutoFollowing = false;
+      const banner = document.getElementById('targetRiderFocusBanner');
+      if (banner) banner.style.display = 'none';
+      document.querySelectorAll('.leaderboard-item.focused-rider').forEach(el => el.classList.remove('focused-rider'));
+      window.history.replaceState({}, '', `/watch/${eventId}`);
+      showToast('Mode fokus rider dinonaktifkan.', 'info');
+      updateLeaderboard();
+    });
+  }
+
+  // Disengage auto-following when user manually drags the map
+  map.on('dragstart', () => {
+    if (isAutoFollowing) {
+      isAutoFollowing = false;
+    }
   });
 
   window.panToRider = deviceId => {
     const m = markerById[deviceId];
     if (m) {
-      map.setView(m.getLatLng(), 15);
+      map.setView(m.getLatLng(), 16);
       m.openPopup();
     }
   };
+
+  // Global helper to share a rider tracking link
+  window.shareRiderLink = async (bib, name) => {
+    const shareUrl = `${window.location.origin}/watch/${eventId}?bib=${encodeURIComponent(bib)}`;
+    const shareText = `🚴 Pantau posisi gowes ${name} (BIB #${bib}) secara real-time di CycloPon Live Map:\n${shareUrl}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Live Tracking ${name} - CycloPon`,
+          text: shareText,
+          url: shareUrl
+        });
+        showToast('Tautan pelacakan berhasil dibagikan!', 'success');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast(`✓ Tautan pelacakan BIB #${bib} disalin ke clipboard!`, 'success');
+      } catch {
+        prompt('Salin link tracking ini:', shareUrl);
+      }
+    } else {
+      prompt('Salin link tracking ini:', shareUrl);
+    }
+  };
+
+  // Auto-activate target rider from URL if param exists
+  if (targetBibParam && riders && riders.length) {
+    const matched = riders.find(r => String(r.bib).trim().toLowerCase() === targetBibParam.toLowerCase());
+    if (matched) {
+      setTimeout(() => activateTargetRider(matched), 500);
+    }
+  }
 
   // ── Simulator Mode (Demo GPS) ──
   let simIntervalId = null;

@@ -118,9 +118,14 @@ function renderLanding() {
             </div>
           </div>
 
-          <a href="/watch/${ev.id}" data-link class="btn btn-primary" style="padding:10px 18px;font-size:13px;flex-shrink:0">
-            Buka Peta →
-          </a>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <a href="/api/events/${ev.id}/gpx/download" download class="btn btn-outline" style="padding:10px 14px;font-size:13px" title="Unduh Rute GPX Resmi">
+              📍 GPX
+            </a>
+            <a href="/watch/${ev.id}" data-link class="btn btn-primary" style="padding:10px 18px;font-size:13px">
+              Buka Peta →
+            </a>
+          </div>
         </div>
       `).join('');
     })

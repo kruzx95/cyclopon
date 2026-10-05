@@ -161,6 +161,30 @@ test('Official Results & CSV Export API', async (t) => {
     assert.ok(csvText.includes('DNF Rider B'));
   });
 
+  await t.test('GET /api/events/:id/gpx/download handles missing and existing GPX download', async () => {
+    const { eventId } = t.context;
+    const fs = require('fs');
+    const path = require('path');
+
+    // 1. When GPX does not exist
+    const resNoGpx = await fetch(`${baseUrl}/api/events/${eventId}/gpx/download`);
+    assert.equal(resNoGpx.status, 404);
+
+    // 2. When GPX exists
+    const gpxFilePath = path.join(__dirname, '..', 'public', 'gpx', `${eventId}.gpx`);
+    fs.writeFileSync(gpxFilePath, '<?xml version="1.0"?><gpx></gpx>');
+
+    try {
+      const resGpx = await fetch(`${baseUrl}/api/events/${eventId}/gpx/download`);
+      assert.equal(resGpx.status, 200);
+      assert.match(resGpx.headers.get('content-type'), /gpx\+xml/);
+      assert.match(resGpx.headers.get('content-disposition'), /attachment/);
+      assert.match(resGpx.headers.get('content-disposition'), /Audax_Brevet_200_Results_Test_Route\.gpx/);
+    } finally {
+      if (fs.existsSync(gpxFilePath)) fs.unlinkSync(gpxFilePath);
+    }
+  });
+
   await t.test('teardown', async () => {
     const { eventId } = t.context;
     db.db.prepare('DELETE FROM events WHERE id = ?').run(eventId);

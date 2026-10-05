@@ -24,13 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   Router.register('/rider/setup', async () => {
-    await loadPageDeps(['/js/pages/rider-setup.js'], ['/css/rider.css']);
+    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js'], ['/css/rider.css']);
     renderRiderSetup();
   });
 
   Router.register('/rider/cockpit', async () => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/rider-cockpit.js'],
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/lib/gps-keeper.js', '/js/pages/rider-cockpit.js'],
       ['/css/cockpit.css']
     );
     renderRiderCockpit();

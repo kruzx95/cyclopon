@@ -83,7 +83,25 @@ function renderRiderSetup() {
             </a>
           </div>
 
-          <!-- Action 2: Traccar Setup Instructions -->
+          <!-- Action 2: Pocket Tracker (In-Browser Background GPS) -->
+          <div id="cardPocketTracker" class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
+            <div>
+              <div style="font-size:32px;margin-bottom:8px">🎒</div>
+              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">Lacak di Kantong</h3>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">
+                Lacak langsung dari browser tanpa aplikasi Traccar tambahan! Audio sunyi menjaga GPS tetap aktif saat HP dikunci di saku jersey.
+              </p>
+              <div id="setupPocketStatusBox" style="display:none;background:rgba(5,150,105,0.1);border:1px solid #059669;padding:8px 10px;border-radius:6px;font-size:11px;color:#065F46;margin-bottom:12px">
+                <span id="setupPocketDot">🟢</span> <strong>Melacak di Latar Belakang</strong>
+                <div id="setupPocketDetail" style="margin-top:4px;font-size:10px;opacity:0.9">Terkirim: 0 titik • Akurasi: --m</div>
+              </div>
+            </div>
+            <button id="btnTogglePocketSetup" class="btn btn-outline" style="font-size:13px;padding:12px;font-weight:700">
+              Mulai Lacak di Kantong
+            </button>
+          </div>
+
+          <!-- Action 3: Traccar Setup Instructions -->
           <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
             <div>
               <div style="font-size:32px;margin-bottom:8px">📱</div>
@@ -106,8 +124,27 @@ function renderRiderSetup() {
                 Peta pelacakan langsung spectator untuk memantau rute dan posisi semua rider di lintasan.
               </p>
             </div>
-            <a href="/watch/${event.id}" data-link class="btn btn-outline" style="font-size:13px;padding:12px;text-align:center;text-decoration:none">
-              Buka Live Map →
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <a href="/watch/${event.id}" data-link class="btn btn-outline" style="font-size:13px;padding:10px;text-align:center;text-decoration:none">
+                Buka Live Map →
+              </a>
+              <button id="btnShareTrackingSetup" class="btn btn-primary" style="font-size:12px;padding:9px;width:100%">
+                📲 Bagikan Link Tracking
+              </button>
+            </div>
+          </div>
+
+          <!-- Action 4: Download GPX Route -->
+          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
+            <div>
+              <div style="font-size:32px;margin-bottom:8px">📍</div>
+              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">File GPX Rute</h3>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
+                Unduh file GPX rute event untuk disinkronkan ke bike computer (Garmin, Wahoo, Hammerhead).
+              </p>
+            </div>
+            <a href="/api/events/${event.id}/gpx/download" download class="btn btn-outline" style="font-size:13px;padding:12px;text-align:center;text-decoration:none">
+              📥 Unduh GPX Rute
             </a>
           </div>
 
@@ -289,6 +326,40 @@ function renderRiderSetup() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   });
 
+  // ── Share Live Tracking Link ──
+  const btnShareSetup = document.getElementById('btnShareTrackingSetup');
+  if (btnShareSetup) {
+    btnShareSetup.addEventListener('click', async () => {
+      const shareUrl = `${window.location.origin}/watch/${event.id}?bib=${encodeURIComponent(rider.bib)}`;
+      const shareText = `🚴 Pantau posisi gowes saya (${rider.name} - BIB #${rider.bib}) secara langsung di ${event.name} via CycloPon Live Map:\n${shareUrl}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Live Tracking ${rider.name} - CycloPon`,
+            text: shareText,
+            url: shareUrl
+          });
+          showToast('Tautan pelacakan berhasil dibagikan!', 'success');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+        }
+      }
+
+      if (navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          showToast('✓ Tautan Live Tracking disalin ke clipboard!', 'success');
+        } catch {
+          prompt('Salin link tracking ini:', shareUrl);
+        }
+      } else {
+        prompt('Salin link tracking ini:', shareUrl);
+      }
+    });
+  }
+
   // Copy individual fields
   document.querySelectorAll('.copy-field-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -310,6 +381,60 @@ function renderRiderSetup() {
       showToast('Semua konfigurasi berhasil disalin! ✓', 'success');
     } catch {
       showToast('Gagal menyalin.', 'error');
+    }
+  });
+
+  // ── Pocket Tracker (Background GPS Keep-Alive) in Setup Hub ──
+  const btnTogglePocket = document.getElementById('btnTogglePocketSetup');
+  const statusBox = document.getElementById('setupPocketStatusBox');
+  const statusDetail = document.getElementById('setupPocketDetail');
+  const cardPocket = document.getElementById('cardPocketTracker');
+
+  function updateSetupPocketUI(isActive, status = null) {
+    if (isActive) {
+      btnTogglePocket.textContent = '⏹️ Hentikan Lacak di Kantong';
+      btnTogglePocket.className = 'btn btn-primary';
+      btnTogglePocket.style.background = '#059669';
+      btnTogglePocket.style.borderColor = '#059669';
+      statusBox.style.display = 'block';
+      if (cardPocket) cardPocket.style.borderColor = '#059669';
+      if (status) {
+        const acc = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Mencari...';
+        statusDetail.textContent = `Terkirim: ${status.pointsSent} titik • Akurasi: ${acc} • Jarak: ${(status.distanceKm || 0).toFixed(1)} km`;
+      }
+    } else {
+      btnTogglePocket.textContent = 'Mulai Lacak di Kantong';
+      btnTogglePocket.className = 'btn btn-outline';
+      btnTogglePocket.style.background = '';
+      btnTogglePocket.style.borderColor = '';
+      statusBox.style.display = 'none';
+      if (cardPocket) cardPocket.style.borderColor = '';
+    }
+  }
+
+  // Sync state if already active
+  if (window.GpsKeeper && GpsKeeper.isActive()) {
+    updateSetupPocketUI(true, GpsKeeper.getStatus());
+  }
+
+  btnTogglePocket?.addEventListener('click', async () => {
+    if (window.GpsKeeper && GpsKeeper.isActive()) {
+      GpsKeeper.stop();
+      updateSetupPocketUI(false);
+      showToast('🎒 Pelacakan di kantong dihentikan.', 'info');
+    } else if (window.GpsKeeper) {
+      updateSetupPocketUI(true);
+      showToast('🎒 Mode Kantong Aktif! HP dapat dikunci di kantong jersey.', 'success');
+      await GpsKeeper.start({
+        rider,
+        event,
+        traccar: config.traccar,
+        onStatus: (status) => {
+          updateSetupPocketUI(true, status);
+        }
+      });
+    } else {
+      showToast('Modul GPS Keeper sedang dimuat...', 'info');
     }
   });
 

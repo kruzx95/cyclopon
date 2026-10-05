@@ -63,6 +63,9 @@ async function renderEventResults(params) {
             </div>
 
             <div class="results-actions">
+              <a href="/api/events/${event.id}/gpx/download" download class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Unduh File GPX Rute untuk Garmin / Wahoo / Hammerhead">
+                📍 &nbsp;Unduh GPX
+              </a>
               <a href="/api/events/${event.id}/export/csv" download class="btn btn-outline" style="font-size:13px;padding:9px 16px">
                 📥 &nbsp;Unduh CSV
               </a>
@@ -207,12 +210,18 @@ async function renderEventResults(params) {
         <div id="certModalOverlay" class="certificate-modal-overlay" style="display:none">
           <div class="certificate-modal-container">
             <div class="certificate-actions-bar">
-              <span style="font-size:13px;color:var(--text-secondary)">Pratinjau Sertifikat Finisher Resmi CycloPon</span>
-              <div style="display:flex;gap:8px">
-                <button id="btnPrintCert" class="btn btn-primary" style="font-size:12px;padding:8px 16px">
+              <span style="font-size:13px;font-weight:600;color:var(--text-secondary)">Pratinjau Sertifikat Finisher Resmi CycloPon</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button id="btnSaveCertImg" class="btn btn-primary" style="font-size:12px;padding:8px 14px">
+                  📸 &nbsp;Simpan Gambar (PNG)
+                </button>
+                <button id="btnShareCert" class="btn btn-outline" style="font-size:12px;padding:8px 14px">
+                  📲 &nbsp;Bagikan (Medsos)
+                </button>
+                <button id="btnPrintCert" class="btn btn-outline" style="font-size:12px;padding:8px 14px">
                   🖨️ &nbsp;Cetak / PDF
                 </button>
-                <button id="btnCloseCertModal" class="btn btn-outline" style="font-size:12px;padding:8px 16px">
+                <button id="btnCloseCertModal" class="btn btn-outline" style="font-size:12px;padding:8px 14px">
                   ✕ Tutup
                 </button>
               </div>
@@ -255,11 +264,14 @@ async function renderEventResults(params) {
       const btnClose = document.getElementById('btnCloseCertModal');
       const btnPrint = document.getElementById('btnPrintCert');
 
+      let currentRiderForCert = null;
+
       document.querySelectorAll('.btn-open-cert').forEach(btn => {
         btn.addEventListener('click', () => {
           const rId = Number(btn.dataset.riderId);
           const r = results.find(item => item.rider_id === rId);
           if (!r) return;
+          currentRiderForCert = r;
 
           certBody.innerHTML = `
             <div class="cert-seal">
@@ -331,11 +343,144 @@ async function renderEventResults(params) {
         });
       });
 
+      // ── Helper to render certificate to image Blob ──
+      async function generateCertificateBlob() {
+        await loadScript('/js/libs/html2canvas.min.js');
+        if (typeof window.html2canvas !== 'function') {
+          throw new Error('Modul html2canvas belum dimuat.');
+        }
+
+        const canvas = await window.html2canvas(certBody, {
+          scale: 2, // 2x high resolution for retina crispness
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#FAF7F2',
+          logging: false
+        });
+
+        return new Promise((resolve, reject) => {
+          canvas.toBlob(blob => {
+            if (blob) resolve(blob);
+            else reject(new Error('Gagal menghasilkan file gambar'));
+          }, 'image/png', 1.0);
+        });
+      }
+
+      // ── Simpan Gambar (PNG) Button ──
+      const btnSaveImg = document.getElementById('btnSaveCertImg');
+      if (btnSaveImg) {
+        btnSaveImg.addEventListener('click', async () => {
+          if (!currentRiderForCert) return;
+          const origHtml = btnSaveImg.innerHTML;
+          btnSaveImg.disabled = true;
+          btnSaveImg.innerHTML = '⏳ Menyiapkan PNG...';
+
+          try {
+            const blob = await generateCertificateBlob();
+            const safeRiderName = (currentRiderForCert.name || 'Rider').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+            const safeEventName = (event.name || 'Event').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `Sertifikat_${safeEventName}_BIB${currentRiderForCert.bib}_${safeRiderName}.png`;
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+            showToast('✓ Sertifikat berhasil disimpan sebagai gambar PNG!', 'success');
+          } catch (err) {
+            console.error('Save certificate error:', err);
+            showToast('Gagal menyimpan gambar: ' + err.message, 'error');
+          } finally {
+            btnSaveImg.disabled = false;
+            btnSaveImg.innerHTML = origHtml;
+          }
+        });
+      }
+
+      // ── Bagikan (Medsos) Button ──
+      const btnShare = document.getElementById('btnShareCert');
+      if (btnShare) {
+        btnShare.addEventListener('click', async () => {
+          if (!currentRiderForCert) return;
+          const origHtml = btnShare.innerHTML;
+          btnShare.disabled = true;
+          btnShare.innerHTML = '⏳ Menyiapkan...';
+
+          try {
+            const blob = await generateCertificateBlob();
+            const safeRiderName = (currentRiderForCert.name || 'Rider').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+            const safeEventName = (event.name || 'Event').trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `Sertifikat_${safeEventName}_BIB${currentRiderForCert.bib}_${safeRiderName}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            const shareData = {
+              title: `Sertifikat Finisher: ${event.name}`,
+              text: `Alhamdulillah resmi menyelesaikan ${event.name} (${currentRiderForCert.distance_km} km) dengan catatan waktu ${currentRiderForCert.elapsed_time}! 🚴🏅\n#CycloPon #Finisher #BIB${currentRiderForCert.bib}`,
+            };
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                ...shareData,
+                files: [file]
+              });
+              showToast('Berhasil membuka menu berbagi medsos!', 'success');
+            } else if (navigator.share) {
+              await navigator.share({
+                ...shareData,
+                url: window.location.href
+              });
+              showToast('Tautan berhasil dibagikan!', 'success');
+            } else {
+              // Direct download fallback
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+              if (navigator.clipboard) {
+                await navigator.clipboard.writeText(`${shareData.text}\n${window.location.href}`);
+                showToast('Gambar diunduh & teks ucapan disalin ke clipboard!', 'success');
+              } else {
+                showToast('Gambar sertifikat berhasil diunduh!', 'success');
+              }
+            }
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error('Share certificate error:', err);
+              showToast('Gagal membagikan: ' + err.message, 'error');
+            }
+          } finally {
+            btnShare.disabled = false;
+            btnShare.innerHTML = origHtml;
+          }
+        });
+      }
+
       if (btnClose) {
         btnClose.addEventListener('click', () => {
           modal.style.display = 'none';
         });
       }
+
+      // Close modal on click outside
+      modal.addEventListener('click', e => {
+        if (e.target === modal) modal.style.display = 'none';
+      });
+
+      // Close on Escape key
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+          modal.style.display = 'none';
+        }
+      });
 
       if (btnPrint) {
         btnPrint.addEventListener('click', () => {

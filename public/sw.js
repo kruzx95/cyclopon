@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v11';
+const CACHE_NAME = 'cyclopon-v13';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -13,6 +13,8 @@ const SHELL_ASSETS = [
   '/js/router.js',
   '/js/lib/utils.js',
   '/js/lib/gpx-utils.js',
+  '/js/lib/gps-keeper.js',
+  '/js/libs/html2canvas.min.js',
   '/js/app.js',
   '/js/pages/landing.js',
   '/js/pages/rider-login.js',
