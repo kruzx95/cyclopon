@@ -1,0 +1,22 @@
+{
+    email {$ACME_EMAIL:admin@example.com}
+}
+
+{$DOMAIN:localhost} {
+    # Reverse proxy to CycloPon web application & internal WebSocket proxy
+    reverse_proxy cyclopon:3000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # High-efficiency compression
+    encode gzip zstd
+
+    # Access logging
+    log {
+        output stdout
+        format console
+    }
+}

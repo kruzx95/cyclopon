@@ -1,0 +1,86 @@
+services:
+  caddy:
+    image: caddy:alpine
+    container_name: cyclopon-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3 (QUIC)
+    environment:
+      - DOMAIN=${DOMAIN:-cyclopon.yourdomain.com}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@yourdomain.com}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - cyclopon-net
+    depends_on:
+      - cyclopon
+
+  cyclopon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cyclopon-app
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - TRACCAR_HOST=http://traccar:8082
+      - TRACCAR_USER=${TRACCAR_USER:-admin}
+      - TRACCAR_PASS=${TRACCAR_PASS:-admin}
+      - SESSION_SECRET=${SESSION_SECRET:-change_this_to_a_random_32char_secret}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+      - NOTIF_SOS_ENABLED=${NOTIF_SOS_ENABLED:-true}
+      - NOTIF_COT_ENABLED=${NOTIF_COT_ENABLED:-true}
+    volumes:
+      - cyclopon_data:/app/data
+      - cyclopon_gpx:/app/public/gpx
+    depends_on:
+      - traccar
+    networks:
+      - cyclopon-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  traccar:
+    image: traccar/traccar:alpine
+    container_name: cyclopon-traccar
+    restart: unless-stopped
+    ports:
+      - "5055:5055"   # OsmAnd GPS protocol port (rider phones send updates here)
+    volumes:
+      - ./docker/traccar/traccar.xml:/opt/traccar/conf/traccar.xml:ro
+      - traccar_data:/opt/traccar/data
+      - traccar_logs:/opt/traccar/logs
+    networks:
+      - cyclopon-net
+
+volumes:
+  cyclopon_data:
+    name: cyclopon_data
+  cyclopon_gpx:
+    name: cyclopon_gpx
+  traccar_data:
+    name: cyclopon_traccar_data
+  traccar_logs:
+    name: cyclopon_traccar_logs
+  caddy_data:
+    name: cyclopon_caddy_data
+  caddy_config:
+    name: cyclopon_caddy_config
+
+networks:
+  cyclopon-net:
+    name: cyclopon-net
+    driver: bridge
