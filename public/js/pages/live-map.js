@@ -169,6 +169,9 @@ async function renderLiveMap(params) {
               </div>
 
               <div class="elev-header-controls">
+                <button class="elev-tab-btn" id="btnToggleClimbsDrawer" title="Buka / Tutup Daftar Tanjakan Resmi">
+                  ⛰️ Tanjakan (<span id="climbCountBadge">0</span>)
+                </button>
                 <div class="elev-badge-pill">
                   <span>Elevation</span>
                 </div>
@@ -179,6 +182,15 @@ async function renderLiveMap(params) {
             <div class="elev-chart-wrapper" id="elevChartBox">
               <canvas id="elevationCanvas"></canvas>
               <div class="elev-tooltip" id="elevTooltip"></div>
+            </div>
+
+            <!-- ── Climb List Panel (ClimbPro Drawer) ── -->
+            <div class="climb-list-panel collapsed" id="climbListPanel">
+              <div class="climb-list-header">
+                <span>⛰️ DAFTAR TANJAKAN RESMI (CLIMBPRO)</span>
+                <span id="climbListSub" style="font-size:11px;font-weight:600;color:var(--text-secondary)">0 tanjakan terdeteksi</span>
+              </div>
+              <div class="climb-cards-grid" id="climbCardsContainer"></div>
             </div>
           </div>
         </div>
@@ -403,6 +415,76 @@ async function renderLiveMap(params) {
   if (btnToggleElevation) btnToggleElevation.addEventListener('click', () => toggleElevation());
   if (btnCloseElevation) btnCloseElevation.addEventListener('click', () => toggleElevation(false));
 
+  const btnToggleClimbsDrawer = document.getElementById('btnToggleClimbsDrawer');
+  const climbListPanel = document.getElementById('climbListPanel');
+
+  function renderClimbsList() {
+    const container = document.getElementById('climbCardsContainer');
+    const badge = document.getElementById('climbCountBadge');
+    const sub = document.getElementById('climbListSub');
+    if (!container || !gpxData || !gpxData.climbs) return;
+
+    const climbs = gpxData.climbs;
+    if (badge) badge.textContent = climbs.length;
+    if (sub) sub.textContent = `${climbs.length} tanjakan terdeteksi dari rute GPX`;
+
+    if (!climbs.length) {
+      container.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text-secondary);padding:6px 0">Tidak ada tanjakan signifikan (kategori 4 s.d HC) pada rute ini.</div>`;
+      return;
+    }
+
+    container.innerHTML = climbs.map(climb => {
+      const activeRiders = [];
+      Object.entries(progressById).forEach(([devId, prog]) => {
+        const r = riderById[devId];
+        if (r && prog.distanceKm != null && prog.distanceKm >= climb.startKm && prog.distanceKm <= climb.endKm) {
+          activeRiders.push(r.bib ? `#${r.bib}` : r.name);
+        }
+      });
+
+      const ridersText = activeRiders.length
+        ? `<div class="climb-card-riders">🚴 ${activeRiders.join(', ')} sedang menanjak</div>`
+        : `<div class="climb-card-riders empty">Belum ada rider di tanjakan ini</div>`;
+
+      return `
+        <div class="climb-summary-card" data-climb-id="${climb.id}" title="Klik untuk fokus ke awal tanjakan">
+          <div class="climb-card-top">
+            <span class="climb-card-title">${climb.name} (KM ${climb.startKm} - ${climb.endKm})</span>
+            <span class="climb-cat-pill" style="background:${climb.color}">${climb.category}</span>
+          </div>
+          <div class="climb-card-metrics">
+            <span>📏 ${climb.lengthKm} km · ↗ +${climb.elevGain}m</span>
+            <span>Avg: ${climb.avgGrade}% · Max: ${climb.maxGrade}%</span>
+          </div>
+          ${ridersText}
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.climb-summary-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = parseInt(card.getAttribute('data-climb-id'), 10);
+        const climb = climbs.find(c => c.id === id);
+        if (climb && map && gpxData.points) {
+          const pt = gpxData.points[climb.startIndex];
+          if (pt) {
+            map.flyTo([pt.lat, pt.lng], 14, { duration: 1 });
+            showToast(`Fokus ke ${climb.name} (KM ${climb.startKm})`, 'info');
+          }
+        }
+      });
+    });
+  }
+
+  if (btnToggleClimbsDrawer && climbListPanel) {
+    btnToggleClimbsDrawer.addEventListener('click', () => {
+      const isCollapsed = climbListPanel.classList.contains('collapsed');
+      climbListPanel.classList.toggle('collapsed', !isCollapsed);
+      btnToggleClimbsDrawer.classList.toggle('active', isCollapsed);
+      if (isCollapsed) renderClimbsList();
+    });
+  }
+
   function getGradeColor(gradePct) {
     // ── Earthy Sage Palette Gradient: sage → amber → rust ──
     if (gradePct >= 8) {
@@ -578,6 +660,52 @@ async function renderLiveMap(params) {
 
     drawBadge('A', '#2B4E30', padL + 10, padT + 12);
     drawBadge('B', '#966025', padL + plotW - 10, padT + 12);
+
+    // ── Climb Segments & Summit Badges (ClimbPro) ──
+    const climbs = gpxData.climbs || [];
+    if (climbs && climbs.length) {
+      climbs.forEach(climb => {
+        const xStart = getX(climb.startKm);
+        const xEnd = getX(climb.endKm);
+        const topPt = findNearestPointByDist(pts, climb.endKm);
+        const yTop = topPt ? getY(topPt.ele) : padT + 20;
+
+        // Draw tinted band behind curve for climb span
+        ctx.fillStyle = `${climb.color}1E`;
+        ctx.fillRect(xStart, padT, Math.max(2, xEnd - xStart), plotH);
+
+        // Highlight top ridge of climb
+        const startIdx = Math.max(0, climb.startIndex);
+        const endIdx = Math.min(pts.length - 1, climb.endIndex);
+        if (endIdx > startIdx) {
+          ctx.beginPath();
+          ctx.moveTo(getX(pts[startIdx].distKm), getY(pts[startIdx].ele));
+          for (let k = startIdx + 1; k <= endIdx; k++) {
+            ctx.lineTo(getX(pts[k].distKm), getY(pts[k].ele));
+          }
+          ctx.strokeStyle = climb.color;
+          ctx.lineWidth = 3.6;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+
+        // Summit circular marker
+        ctx.beginPath();
+        ctx.arc(xEnd, yTop, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = climb.color;
+        ctx.shadowColor = climb.color;
+        ctx.shadowBlur = 6;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Summit label tag
+        ctx.font = '900 8.5px Inter, system-ui, sans-serif';
+        ctx.fillStyle = climb.color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(`⛰️ C${climb.id}`, xEnd, yTop - 4);
+      });
+    }
 
     // ── Live Riders on Elevation Curve ──
     Object.entries(progressById).forEach(([devId, prog]) => {
@@ -857,6 +985,7 @@ async function renderLiveMap(params) {
         document.getElementById('elevStatSpeed').textContent = `${gpxData.stats.difficulty}: ${gpxData.stats.avgSpeed}`;
 
         setTimeout(redrawElevationChart, 60);
+        renderClimbsList();
       } else {
         document.getElementById('eventStats').textContent = `${riders.length} Rider`;
         toggleElevation(false);
