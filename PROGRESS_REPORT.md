@@ -1,7 +1,7 @@
 # 🚴 Laporan Progres Pengembangan CycloPon Live Tracker
 
-**Tanggal Laporan:** 5 Oktober 2026  
-**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 12) & Desain Sistem Selesai 100%**  
+**Tanggal Laporan:** 6 Oktober 2026  
+**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 13) & Desain Sistem Selesai 100%**  
 **Total Pengujian Unit:** 54 / 54 Lulus (8 Test Suites)
 
 ---
@@ -29,7 +29,8 @@
 10. [Phase 11: Background GPS Keep-Alive & Mode Kantong Jersey](#10-phase-11-pwa-background-gps-keep-alive--mode-pelacak-saku-jersey-pocket-tracker)
 11. [Phase 12: ClimbPro & Analitik Elevasi Real-Time (Grade %)](#11-phase-12-climbpro--analitik-elevasi-real-time-grade--)
 12. [Penyempurnaan Tampilan Rider Cockpit HUD](#12-penyempurnaan-tampilan-rider-cockpit-hud-amoled-night-mode--layout)
-13. [Rekomendasi Langkah Berikutnya](#13-rekomendasi-langkah-berikutnya)
+13. [Phase 13: Containerization & Stack Deployment VPS (Docker & Caddy SSL)](#13-phase-13-containerization--stack-deployment-vps-docker--caddy-ssl)
+14. [Rekomendasi Langkah Berikutnya](#14-rekomendasi-langkah-berikutnya)
 
 ---
 
@@ -336,12 +337,41 @@ Berdasarkan umpan balik dan pengujian visual langsung di kokpit pesepeda (`/ride
 
 ---
 
-## 13. Rekomendasi Langkah Berikutnya
+## 13. Phase 13: Containerization & Stack Deployment VPS (Docker & Caddy SSL)
+
+Telah disiapkan bundel deployment lengkap berbasis container Docker untuk mempermudah pemasangan di server VPS mandiri (DigitalOcean, Hetzner, AWS, Contabo, IDCloudHost) tanpa perlu konfigurasi manual yang rumit:
+
+1. **Multi-Stage `Dockerfile` (< 150 MB):**
+   - Menggunakan image dasar `node:22-alpine` yang ultra-ramping dan hemat memori.
+   - Stage builder mengompilasi dependensi native SQLite (`better-sqlite3`) secara bersih, sementara stage runner hanya menyalin runtime produksi dan utilitas pemeriksaan kesehatan (`wget`).
+   - Dilengkapi perintah bawaan `HEALTHCHECK` yang memantau endpoint `/api/health`.
+
+2. **Konfigurasi Traccar Teroptimasi (`docker/traccar/traccar.xml`):**
+   - Pra-konfigurasi ringan yang mengaktifkan port 5055 (OsmAnd GPS protocol) dan port 8082 (Web dashboard).
+   - Menonaktifkan geocoding eksternal untuk menghemat bandwidth, CPU, dan kuota API publik.
+   - Menggunakan basis data bawaan H2 yang efisien dan tanpa konfigurasi tambahan.
+
+3. **Orkestrasi 1-Perintah (`docker-compose.yml`):**
+   - Menghubungkan CycloPon dan Traccar Server dalam bridge network terisolasi (`cyclopon-net`).
+   - Menyimpan database SQLite (`cyclopon_data`) dan berkas rute GPX yang diunggah (`cyclopon_gpx`) dalam Docker Named Volumes yang aman dari restart atau pembaruan image.
+   - Dapat dijalankan hanya dengan: `docker compose up -d`.
+
+4. **Stack Produksi dengan SSL Otomatis (`docker-compose.prod.yml` & Caddy):**
+   - Menyertakan **Caddy Server 2** sebagai reverse proxy otomatis di port 80 dan 443 (HTTP/3 QUIC).
+   - Menerbitkan dan memperbarui sertifikat HTTPS Let's Encrypt secara otomatis tanpa perlu cron job certbot manual.
+
+5. **Skrip Otomasi Operasional & Panduan Deployment:**
+   - `scripts/backup.sh`: Skrip pencadangan database SQLite yang konsisten (WAL safe) dan pengarsipan rute GPX ke berkas berstempel waktu `.tar.gz`, dilengkapi rotasi otomatis 14 backup terakhir.
+   - `scripts/restore.sh`: Skrip pemulihan database dari berkas arsip dengan prompt konfirmasi keselamatan.
+   - `DEPLOYMENT.md`: Panduan deployment produksi komprehensif dari pemilihan spek VPS, firewall UFW, domain DNS, konfigurasi smartphone peserta, hingga strategi troubleshooting.
+
+---
+
+## 14. Rekomendasi Langkah Berikutnya
 
 Untuk pengembangan selanjutnya atau persiapan rilis produksi, opsi berikut dapat dipertimbangkan:
 
-1. **Containerization (Docker Compose):** Menyiapkan `Dockerfile` dan `docker-compose.yml` yang membundel aplikasi CycloPon bersama Traccar Server (port 5055, 8082, 3000) dalam satu stack deployment siap pakai di VPS.
-2. **Data Demo & Seed Rute GPX Nyata:** Menambahkan script migrasi / seeder interaktif (`npm run seed:demo`) yang menyertakan rute GPX resmi, daftar pos checkpoint riil, dan simulasi 10+ rider aktif untuk keperluan pameran atau demo sponsor.
-3. **PWA Push Notifications:** Web push notification untuk pembaruan status event dan kedatangan pos secara real-time ke smartphone penonton.
+1. **Data Demo & Seed Rute GPX Nyata:** Menambahkan script migrasi / seeder interaktif (`npm run seed:demo`) yang menyertakan rute GPX resmi, daftar pos checkpoint riil, dan simulasi 10+ rider aktif untuk keperluan pameran atau demo sponsor.
+2. **PWA Push Notifications:** Web push notification untuk pembaruan status event dan kedatangan pos secara real-time ke smartphone penonton.
 
 

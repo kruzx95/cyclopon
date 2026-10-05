@@ -175,49 +175,33 @@ Buka browser di: **`http://localhost:3000`**
 
 ## 🌐 Panduan Deployment di VPS (Produksi)
 
-Untuk produksi, disarankan memasang **Traccar Server** dan **CycloPon** di satu server VPS Ubuntu Linux (misal DigitalOcean, Contabo, atau Linode):
+CycloPon menyediakan dukungan penuh containerization menggunakan **Docker & Docker Compose** untuk kemudahan instalasi di server VPS tanpa repot menginstal Java, Node, atau web server manual.
 
-### 1. Install Traccar Server di VPS
+### 🐳 Menjalankan Cepat dengan Docker Compose (Rekomendasi)
+
 ```bash
-# Download Traccar installer versi terbaru
-wget https://github.com/traccar/traccar/releases/download/v6.5/traccar-linux-64-6.5.zip
-unzip traccar-linux-64-6.5.zip
-sudo ./traccar.run
-sudo systemctl enable --now traccar
-```
-Pastikan firewall membuka port:
-- **Port 5055 (TCP/UDP)**: Wajib dibuka ke publik untuk protokol OsmAnd (Traccar Client HP).
-- **Port 8082**: Web UI Traccar (dapat dibatasi ke localhost jika menggunakan reverse proxy).
+# 1. Kloning repositori
+git clone https://github.com/kruzx95/cyclopon.git
+cd cyclopon
 
-### 2. Jalankan CycloPon dengan PM2
+# 2. Siapkan environment
+cp .env.example .env
+
+# 3. Jalankan CycloPon + Traccar GPS Server sekaligus
+docker compose up -d
+```
+Aplikasi langsung berjalan di:
+- **Web App**: `http://IP-VPS:3000`
+- **OsmAnd GPS (Rider Phones)**: `http://IP-VPS:5055`
+- **Traccar Dashboard**: `http://IP-VPS:8082`
+
+### 🔒 Opsi Domain Resmi & Otomatis SSL (Caddy HTTPS)
 ```bash
-sudo npm install -g pm2
-cd /var/www/cyclopon
-npm install --production
-pm2 start server.js --name "cyclopon"
-pm2 save
-pm2 startup
+# Jalankan dengan stack produksi (Caddy auto-SSL untuk port 80 & 443)
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-### 3. Konfigurasi Nginx Reverse Proxy (SSL HTTPS & WebSocket)
-```nginx
-server {
-    server_name tracker.domainanda.com;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-Lalu pasang SSL gratis menggunakan Certbot:
-```bash
-sudo certbot --nginx -d tracker.domainanda.com
-```
+> 📖 **Panduan Lengkap:** Silakan baca panduan komprehensif di [DEPLOYMENT.md](file:///c:/Users/Mallik/Documents/cyclopon/DEPLOYMENT.md) untuk konfigurasi firewall, domain DNS, skrip backup otomatis, dan setup aplikasi rider.
 
 ---
 
