@@ -141,14 +141,14 @@ graph TD
 - Consumes: Server lokal CycloPon di port uji
 - Produces: Ringkasan metrik terminal (Total requests, WebSocket clients connected, latensi rata-rata P50/P99, memory RSS usage, 0 error rate)
 
-- [ ] **Step 1: Buat script benchmark `scripts/benchmark.js`**
+- [x] **Step 1: Buat script benchmark `scripts/benchmark.js`**
   - Mensimulasikan 100-500 klien WebSocket simultan yang menerima live fan-out telemetri.
   - Mensimulasikan burst 200 HTTP telemetry batch POST `/api/events/:id/history`.
   - Mengukur durasi eksekusi, respon per detik (RPS), dan latency percentiles.
-- [ ] **Step 2: Tambahkan perintah `"benchmark": "node scripts/benchmark.js"` di `package.json`**
-- [ ] **Step 3: Jalankan benchmark dan catat hasil performa**
+- [x] **Step 2: Tambahkan perintah `"benchmark": "node scripts/benchmark.js"` di `package.json`**
+- [x] **Step 3: Jalankan benchmark dan catat hasil performa**
   Jalankan: `npm run benchmark`
-- [ ] **Step 4: Commit script benchmark**
+- [x] **Step 4: Commit script benchmark**
   Jalankan: `git commit -am "feat(benchmark): add automated stress & concurrency benchmark test suite"`
 
 ---
