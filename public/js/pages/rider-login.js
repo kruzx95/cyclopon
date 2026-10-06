@@ -63,27 +63,27 @@ function renderExistingSession(config) {
         <h1 class="login-title">Sesi Aktif Ditemukan</h1>
         <p class="login-subtitle" style="margin-bottom:20px">Anda sudah login pada perangkat ini</p>
 
-        <div style="background:#FAF9F6;border:1.5px solid var(--border);border-radius:18px;padding:16px 18px;text-align:left;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.02)">
+        <div style="background:#FFFFFF;border:1.5px solid #0D1117;border-radius:10px;padding:16px 18px;text-align:left;margin-bottom:20px;box-shadow:0 8px 20px rgba(13,17,23,0.06)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span style="font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em">Event</span>
-            <span class="badge badge-cyan" style="font-weight:700">${event.name}</span>
+            <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">// EVENT RESMI</span>
+            <span class="badge" style="background:#EEF4EE;border:1px solid #C8DEC9;color:#1C3E24;font-weight:800;font-family:ui-monospace,monospace">${event.name}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <span style="font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em">Nama Peserta</span>
-            <strong style="font-size:14px;color:var(--text-primary)">${rider.name} ${roleBadge}</strong>
+            <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">// NAMA PESERTA</span>
+            <strong style="font-size:14px;color:#0D1117;font-weight:800">${rider.name} ${roleBadge}</strong>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <span style="font-size:12px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em">Nomor BIB / Plat</span>
-            <strong style="font-size:17px;color:var(--color-primary);font-weight:900">#${rider.bib}</strong>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px dashed #E5E7EB">
+            <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">// NOMOR BIB / PLAT</span>
+            <strong style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;color:#0D1117;font-weight:900">#${rider.bib}</strong>
           </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:10px">
-          <button id="btnContinueHub" class="btn btn-primary" style="padding:14px;font-size:14px;border-radius:16px;box-shadow:0 6px 20px rgba(43,78,48,0.3)">
-            🚴 Lanjutkan ke Rider Hub
+          <button id="btnContinueHub" class="btn" style="padding:12px;font-size:13px;border-radius:8px;background:#0D1117;color:#FFF;font-weight:800;letter-spacing:0.04em">
+            🚴 LANJUTKAN KE RIDER HUB →
           </button>
-          <button id="btnSwitchAccount" class="btn btn-outline" style="padding:12px;font-size:13px;border-radius:16px;color:var(--color-red);border-color:rgba(239,68,68,0.3)">
-            🚪 Ganti Akun / Logout
+          <button id="btnSwitchAccount" class="btn" style="padding:10px;font-size:12px;border-radius:8px;background:#FFF;border:1.5px solid #E5E7EB;color:#B91C1C;font-weight:800">
+            🚪 GANTI AKUN / LOGOUT
           </button>
         </div>
       </div>
