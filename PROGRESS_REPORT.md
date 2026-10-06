@@ -744,14 +744,36 @@ Menjawab laporan kendala di mana halaman Rider Hub (`/rider/setup`) tetap berwar
    - **Penanganan Tombol Logout Kokpit:** Mengaitkan tombol `🚪` di topbar kokpit dengan konfirmasi dialog dan teardown bersih sebelum navigasi ke `/rider`.
    - **Isolasi Selektor CSS Ketat (`public/css/cockpit.css`):** Menghapus seluruh selektor global `body.night-mode` dan mewajibkan spesifisitas `body.cockpit-active.night-mode` atau `.cockpit-container.night-mode`. Gaya latar hitam `#000000` dipastikan tidak dapat lagi bocor ke halaman manapun di luar Cockpit HUD.
    - **Pencegahan Konflik Variabel & Alias Rute:** Menghapus duplikasi deklarasi variabel `btnCockpitLogout` di `rider-cockpit.js` dan mendaftarkan alias `/cockpit` -> `/rider/cockpit` di `app.js`.
-   - **Pembaruan Service Worker:** Cache dinaikkan ke `cyclopon-v36` di `public/sw.js`.
+   - **Pembaruan Service Worker:** Cache dinaikkan secara bertahap hingga `cyclopon-v40` di `public/sw.js`.
 
 ---
 
-## 25. Rekomendasi Langkah Berikutnya
+## 25. Penyempurnaan Mobile Safe-Area & Bilah Aksi Bawah Kokpit (Compact & Centered)
 
-1. **Modul 4: Official Results & Brevet Digital (`/events/:id/results`):** Melakukan standarisasi estetika Athletic Minimalist Pro ke halaman rekapitulasi hasil lomba, sertifikat finisher digital, dan ekspor CSV.
-2. **Data Demo & Seed Rute GPX Nyata:** Script seeder otomatis (`npm run seed:demo`) yang menyertakan rute GPX resmi, pos kontrol riil, dan simulasi pergerakan rider aktif untuk demonstrasi kepada sponsor atau panitia event.
+Menjawab umpan balik visual saat mengakses Cockpit HUD di smartphone (khususnya perangkat berponi / navigasi gestur seperti iPhone & Android modern):
+
+1. **Dukungan Safe-Area Penuh (`public/index.html`):**
+   - Menambahkan atribut `viewport-fit=cover` pada meta tag viewport sehingga browser (terutama iOS Safari / WebViews) mengenali batas layar dan area home indicator bar (`env(safe-area-inset-bottom)`).
+2. **Bantalan Ruang Bebas Dinamis (`public/css/cockpit.css`):**
+   - Menerapkan padding bawah dinamis `padding-bottom: max(16px, calc(8px + env(safe-area-inset-bottom, 0px)))` pada `.cockpit-bottom-bar` dan `max(95px, ...)` pada kontainer scroll kokpit, menjamin tombol tidak menempel atau terpotong oleh sudut layar melengkung maupun bilah home indicator.
+3. **Format Tombol Ramping & Terpusat (*Centered & Compact Profile*):**
+   - Mengganti layout `flex: 2` & `flex: 1` yang sebelumnya memaksa tombol melebar 100% selebar layar menjadi `flex: 0 0 auto; justify-content: center;`.
+   - Mengubah teks tombol SOS menjadi `🚨 SOS Darurat` (lebar proporsional ~135px) dan `🗺️ Live Map` (~105px) dengan tinggi ramping `36px` (font `12px`), menghasilkan tampilan kendali yang kompak, elegan, dan proporsional di tengah layar tanpa memenuhi bidang horizontal.
+   - Menyelaraskan mode malam AMOLED `.cockpit-bottom-bar.night-mode` dengan latar pitch-black `#0A0D0B` dan garis batas `#1E293B`.
+4. **Pembaruan Service Worker:**
+   - Cache dinaikkan ke **`cyclopon-v40`** di [`public/sw.js`](file:///c:/Users/Mallik/Documents/cyclopon/public/sw.js).
+   - Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)**.
+
+---
+
+## 26. Rencana Kerja Selanjutnya (Lanjutan di Kantor)
+
+1. **Modul 4: Official Results & Brevet Digital (`/events/:id/results`):**
+   - Menerapkan standarisasi estetika Athletic Minimalist Pro pada tabel hasil resmi, klasifikasi finisher, pencarian BIB/nama, rincian split checkpoint, dan ekspor CSV.
+   - Menyeragamkan palet warna, tipografi Inter + JetBrains Mono, lencana status brevet, dan sertifikat finisher digital.
+2. **Data Demo & Seed Rute GPX Nyata:**
+   - Script seeder otomatis (`npm run seed:demo`) yang menyertakan rute GPX resmi, pos kontrol riil, dan simulasi pergerakan rider aktif untuk demonstrasi kepada panitia atau sponsor.
+
 
 
 
