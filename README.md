@@ -130,10 +130,16 @@ TRACCAR_PASS=admin
 SESSION_SECRET=cyclopon_super_secret_key_2026
 ```
 
-### 4. Menjalankan Server
+### 4. Menjalankan Server & Pengujian Performa
 ```bash
 # Mode development (auto-reload dengan nodemon)
 npm run dev
+
+# Menjalankan unit test suite otomatis (88 tests)
+npm test
+
+# Menjalankan stress & load benchmark (100 concurrent WS viewers & 200 HTTP burst)
+npm run benchmark
 
 # Atau mode production
 npm start
