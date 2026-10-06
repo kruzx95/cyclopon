@@ -1020,11 +1020,30 @@ async function renderRiderCockpit() {
   connectCockpitWs();
 
   // ── 8. Real Browser Geolocation Watcher ──
+  let lastCockpitReportTime = 0;
   if ('geolocation' in navigator) {
     cockpitGeoWatchId = navigator.geolocation.watchPosition(
       pos => {
         const speedKmh = pos.coords.speed != null ? pos.coords.speed * 3.6 : 0;
         updateTelemetry(pos.coords.latitude, pos.coords.longitude, speedKmh);
+
+        // Auto-report telemetry to server every 5 seconds for live tracking
+        const now = Date.now();
+        if (now - lastCockpitReportTime >= 5000) {
+          lastCockpitReportTime = now;
+          fetch(`/api/events/${event.id}/history`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              rider_id: rider.id,
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+              speed: speedKmh,
+              distance_km: coveredKm,
+              recorded_at: new Date().toISOString()
+            })
+          }).catch(() => {});
+        }
       },
       err => console.log('[Cockpit Geolocation] Info:', err.message),
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }

@@ -3,6 +3,18 @@ const router = express.Router();
 const db = require('../db/database');
 const fetch = require('node-fetch');
 
+function getPublicTraccarConfig(req, rider) {
+  const hostHeader = (req.headers['x-forwarded-host'] || req.headers.host || 'localhost').split(':')[0];
+  const publicHost = process.env.TRACCAR_PUBLIC_HOST || process.env.DOMAIN || hostHeader;
+
+  return {
+    serverUrl:        `http://${publicHost}`,
+    osmandPort:       Number(process.env.TRACCAR_OSMAND_PORT || 5055),
+    deviceIdentifier: rider.traccar_device_id ? String(rider.traccar_device_id) : `BIB-${rider.bib}`,
+    interval:         30,
+  };
+}
+
 // POST /api/auth/rider — validate BIB + PIN (+ optional event_id), return Traccar config
 router.post('/rider', (req, res) => {
   const { bib, pin, event_id } = req.body;
@@ -29,19 +41,116 @@ router.post('/rider', (req, res) => {
     return res.status(404).json({ error: 'Event tidak ditemukan' });
   }
 
+  res.json({
+    success: true,
+    rider:  { id: rider.id, bib: rider.bib, name: rider.name, role: rider.role || 'rider', phone: rider.phone, color: rider.color, traccar_device_id: rider.traccar_device_id },
+    event:  { id: event.id, name: event.name, date: event.date },
+    traccar: getPublicTraccarConfig(req, rider)
+  });
+});
+
+// GET /api/auth/token/:token — Magic Link instant login without typing BIB or PIN
+router.get('/token/:token', (req, res) => {
+  const { token } = req.params;
+  if (!token) {
+    return res.status(400).json({ error: 'Token akses wajib disertakan' });
+  }
+
+  const cleanToken = String(token).trim();
+  const rider = db.getRiderByToken.get(cleanToken);
+  if (!rider) {
+    return res.status(404).json({ error: 'Tautan Magic Link tidak valid atau sudah kedaluwarsa' });
+  }
+
+  const event = db.getEventById.get(rider.event_id);
+  if (!event) {
+    return res.status(404).json({ error: 'Event untuk rider ini tidak ditemukan' });
+  }
+
   const traccarHost = process.env.TRACCAR_HOST || 'http://localhost:8082';
 
   res.json({
     success: true,
-    rider:  { id: rider.id, bib: rider.bib, name: rider.name, color: rider.color, traccar_device_id: rider.traccar_device_id },
-    event:  { id: event.id, name: event.name, date: event.date },
-    traccar: {
-      serverUrl:        traccarHost,
-      osmandPort:       5055,
-      deviceIdentifier: rider.traccar_device_id ? String(rider.traccar_device_id) : `BIB-${rider.bib}`,
-      interval:         30,
-    }
+    rider: {
+      id: rider.id,
+      bib: rider.bib,
+      name: rider.name,
+      role: rider.role || 'rider',
+      phone: rider.phone,
+      color: rider.color,
+      traccar_device_id: rider.traccar_device_id
+    },
+    event: { id: event.id, name: event.name, date: event.date },
+    traccar: getPublicTraccarConfig(req, rider)
   });
+});
+
+// POST /api/auth/rider/register — On-the-spot self-registration (for walk-in riders, sweepers, marshalls)
+router.post('/rider/register', (req, res) => {
+  const { event_id, bib, name, phone, pin, role } = req.body;
+  if (!event_id || !bib || !name) {
+    return res.status(400).json({ error: 'Event, nomor BIB, dan nama wajib diisi' });
+  }
+
+  const cleanBib = String(bib).trim().toUpperCase();
+  const cleanRole = role && ['rider', 'sweeper', 'marshall', 'medic'].includes(String(role).toLowerCase())
+    ? String(role).toLowerCase()
+    : 'rider';
+
+  let finalPin = pin ? String(pin).trim() : '';
+  if (!finalPin || finalPin.length < 4) {
+    if (phone) {
+      const digits = String(phone).replace(/\D/g, '');
+      finalPin = digits.slice(-4) || '1234';
+    } else {
+      finalPin = '1234';
+    }
+  }
+
+  try {
+    const existing = db.getRidersByEvent.all(Number(event_id));
+    let color = '#00E5FF';
+    if (cleanRole === 'sweeper') color = '#F97316';
+    else if (cleanRole === 'marshall') color = '#3B82F6';
+    else if (cleanRole === 'medic') color = '#EF4444';
+    else {
+      const RIDER_COLORS = ['#00E5FF', '#FF6B35', '#3FB950', '#F78166', '#D2A8FF', '#FFA657', '#79C0FF', '#56D364', '#FF7B72', '#E3B341'];
+      color = RIDER_COLORS[existing.length % RIDER_COLORS.length];
+    }
+
+    const result = db.createRider.run({
+      event_id: Number(event_id),
+      bib: cleanBib,
+      name: name.trim(),
+      phone: phone ? String(phone).trim() : null,
+      pin: finalPin,
+      role: cleanRole,
+      color
+    });
+
+    const newRider = db.getRiderById.get(result.lastInsertRowid);
+    const event = db.getEventById.get(Number(event_id));
+
+    res.status(201).json({
+      success: true,
+      rider: {
+        id: newRider.id,
+        bib: newRider.bib,
+        name: newRider.name,
+        role: newRider.role || 'rider',
+        phone: newRider.phone,
+        color: newRider.color,
+        traccar_device_id: newRider.traccar_device_id
+      },
+      event: { id: event.id, name: event.name, date: event.date },
+      traccar: getPublicTraccarConfig(req, newRider)
+    });
+  } catch (err) {
+    if (err.message.includes('UNIQUE')) {
+      return res.status(409).json({ error: `Nomor BIB ${cleanBib} sudah terdaftar di event ini` });
+    }
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // POST /api/auth/admin/login — authenticate admin (local fallback + Traccar proxy)

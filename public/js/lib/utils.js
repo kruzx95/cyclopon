@@ -21,6 +21,20 @@ function showToast(message, type = 'success') {
 }
 
 /**
+ * Escape HTML characters to prevent XSS
+ * @param {string} str
+ */
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Load a CSS file once (idempotent)
  * @param {string} href
  */

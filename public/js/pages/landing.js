@@ -6,15 +6,25 @@ function renderLanding() {
       <!-- ── Clean Solid Top Nav ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
-          <span style="font-size:20px">🚴</span>
+          <div class="brand-logo-emblem">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="5.5" cy="17.5" r="3.5"/>
+              <circle cx="18.5" cy="17.5" r="3.5"/>
+              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
+            </svg>
+          </div>
           <span>Cyclo<span class="brand-accent">Pon</span></span>
         </a>
-        <a href="/admin" data-link class="btn btn-outline" style="font-size:13px;padding:8px 16px">
-          ⚙️ &nbsp;Admin Panel
+        <a href="/admin" data-link class="btn-admin-nav">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>Admin Panel</span>
         </a>
       </nav>
 
-      <!-- ── Hero Section (Solid Dark Background, No Blurry Gradients) ── -->
+      <!-- ── Hero Section ── -->
       <main class="landing-hero fade-in">
         <div class="hero-tag">
           <span>🏆</span>
@@ -33,38 +43,65 @@ function renderLanding() {
 
         <!-- CTA Buttons -->
         <div class="hero-cta-row">
-          <button id="btnRider" class="btn btn-primary" style="font-size:15px;padding:16px 28px">
-            🚴‍♂️ &nbsp;Masuk Sebagai Rider
+          <button id="btnRider" class="btn-hero-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="5.5" cy="17.5" r="3.5"/>
+              <circle cx="18.5" cy="17.5" r="3.5"/>
+              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
+            </svg>
+            <span>Masuk Sebagai Rider</span>
           </button>
-          <button id="btnWatchMap" class="btn btn-outline" style="font-size:15px;padding:16px 28px">
-            🗺️ &nbsp;Pantau Live Map
+          <button id="btnWatchMap" class="btn-hero-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+              <line x1="8" y1="2" x2="8" y2="18"/>
+              <line x1="16" y1="6" x2="16" y2="22"/>
+            </svg>
+            <span>Pantau Live Map</span>
           </button>
         </div>
 
         <!-- Featured Active Event Container -->
-        <div id="activeEventContainer" style="width:100%;max-width:580px;display:none">
-          <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;text-align:left">
-            Event Sedang Berlangsung:
+        <div id="activeEventContainer" class="featured-event-container" style="display:none">
+          <div class="featured-event-label">
+            <span>🏁</span>
+            <span>Event Sedang Berlangsung</span>
           </div>
           <div id="activeEventList"></div>
         </div>
 
-        <!-- 3 Feature Highlight Cards -->
+        <!-- 3 Feature Highlight Cards with Squircles & SVGs -->
         <div class="landing-features-grid">
           <div class="feature-item-card">
-            <div class="feature-item-icon">🔋</div>
+            <div class="feature-item-badge emerald">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="16" height="10" rx="2" ry="2"/>
+                <line x1="22" y1="11" x2="22" y2="13"/>
+                <polygon points="10 9 7 13 11 13 9 16" fill="currentColor"/>
+              </svg>
+            </div>
             <div class="feature-item-title">Interval 30 Detik</div>
             <div class="feature-item-desc">Hemat daya baterai smartphone secara maksimal untuk kegiatan rute ratusan kilometer.</div>
           </div>
 
           <div class="feature-item-card">
-            <div class="feature-item-icon">📱</div>
+            <div class="feature-item-badge sand">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
+                <line x1="12" y1="18" x2="12.01" y2="18"/>
+                <path d="M9 6h6"/>
+              </svg>
+            </div>
             <div class="feature-item-title">Layar Mati Tetap Jalan</div>
             <div class="feature-item-desc">Memanfaatkan background service resmi Traccar Client di Android dan iOS tanpa henti.</div>
           </div>
 
           <div class="feature-item-card">
-            <div class="feature-item-icon">📊</div>
+            <div class="feature-item-badge sage">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
             <div class="feature-item-title">Rute GPX & Leaderboard</div>
             <div class="feature-item-desc">Visualisasi rute GPX interaktif dengan kalkulasi jarak tempuh (km) dan ranking real-time.</div>
           </div>
@@ -104,26 +141,31 @@ function renderLanding() {
       container.style.display = 'block';
 
       list.innerHTML = targetEvents.map(ev => `
-        <div class="featured-event-box">
+        <div class="featured-event-card">
           <div style="min-width:0;flex:1">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span class="live-status-pill" style="padding:2px 8px;font-size:10px">
-                <span class="live-dot pulse"></span>
+            <div class="featured-event-meta">
+              <span class="event-live-pill">
+                <span class="pulse-dot" style="width:6px;height:6px;border-radius:50%;background:#047857"></span>
                 <span>LIVE</span>
               </span>
-              <span style="font-size:12.5px;font-weight:700;color:var(--text-secondary)">📅 ${ev.date}</span>
+              <span class="event-date-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                ${ev.date}
+              </span>
             </div>
-            <div style="font-size:16px;font-weight:900;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <div class="featured-event-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${ev.name}
             </div>
           </div>
 
-          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-            <a href="/api/events/${ev.id}/gpx/download" download class="btn btn-outline" style="padding:10px 14px;font-size:13px" title="Unduh Rute GPX Resmi">
-              📍 GPX
+          <div class="featured-event-actions">
+            <a href="/api/events/${ev.id}/gpx/download" download class="btn-gpx-chip" title="Unduh Rute GPX Resmi">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>GPX</span>
             </a>
-            <a href="/watch/${ev.id}" data-link class="btn btn-primary" style="padding:10px 18px;font-size:13px">
-              Buka Peta →
+            <a href="/watch/${ev.id}" data-link class="btn-watch-action">
+              <span>Buka Peta</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             </a>
           </div>
         </div>

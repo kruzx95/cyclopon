@@ -23,127 +23,200 @@ function renderRiderSetup() {
 
   const app = document.getElementById('app');
   app.innerHTML = `
-    <div style="max-width:760px;margin:0 auto;padding:24px 16px;min-height:100vh">
+    <div style="max-width:780px;margin:0 auto;padding:28px 16px;min-height:100vh">
 
-      <!-- Top Hub Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <a href="/" data-link style="color:var(--text-secondary);font-size:20px;text-decoration:none" title="Beranda">🏠</a>
-          <h1 style="font-size:18px;font-weight:800;color:var(--text-primary)">
-            🚴 CycloPon <span style="color:var(--color-yellow)">Rider Hub</span>
-          </h1>
+      <!-- ── Top Hub Header ── -->
+      <div class="rider-hub-header">
+        <div class="hub-header-left">
+          <a href="/" data-link class="hub-back-btn" title="Kembali ke Beranda">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Beranda</span>
+          </a>
+          <div class="hub-brand-group">
+            <div class="brand-logo-emblem">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="5.5" cy="17.5" r="3.5"/>
+                <circle cx="18.5" cy="17.5" r="3.5"/>
+                <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
+              </svg>
+            </div>
+            <h1 class="hub-title">Rider <span class="hub-title-accent">Hub</span></h1>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="background:rgba(209,169,128,0.16);border:1px solid rgba(209,169,128,0.4);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;color:var(--color-sand)">
+        <div class="hub-header-right">
+          ${rider.role && rider.role !== 'rider' ? `
+            <span class="hub-role-badge ${rider.role}">
+              ${rider.role === 'sweeper' ? '🧹 SWEEPER' : (rider.role === 'marshall' ? '🏍️ MARSHALL' : rider.role.toUpperCase())}
+            </span>
+          ` : ''}
+          <span class="hub-bib-badge">
             BIB #${rider.bib}
           </span>
-          <button id="btnRiderLogout" class="btn btn-outline" style="font-size:12px;padding:6px 12px;color:var(--color-red);border-color:rgba(239,68,68,0.35)">
-            🚪 Keluar
+          <button id="btnRiderLogout" class="hub-logout-btn" title="Keluar dari sesi rider">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Keluar</span>
           </button>
         </div>
       </div>
 
-      <!-- Welcome Banner -->
-      <div class="card fade-in" style="margin-bottom:24px;border-color:var(--border);background:linear-gradient(135deg,rgba(116,136,115,0.1) 0%,#FFFFFF 100%)">
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <span style="width:20px;height:20px;border-radius:50%;background:${rider.color || '#D1A980'};box-shadow:0 2px 8px rgba(0,0,0,0.15);display:inline-block"></span>
-          <div style="flex:1;min-width:200px">
-            <h2 style="font-size:17px;font-weight:800;color:var(--text-primary);margin-bottom:4px">
-              Halo, ${rider.name}
-            </h2>
-            <p style="font-size:13px;color:var(--text-secondary)">
-              Event: <strong style="color:var(--color-yellow)">${event.name}</strong> &nbsp;·&nbsp; Tanggal: ${event.date}
-            </p>
+      <!-- ── Welcome Banner ── -->
+      <div class="rider-welcome-card fade-in">
+        <div class="rider-avatar-halo" style="--rider-color: ${rider.color || '#2B4E30'}">
+          <div class="rider-avatar-inner" style="background: ${rider.color || '#2B4E30'}">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="5.5" cy="17.5" r="3.5"/>
+              <circle cx="18.5" cy="17.5" r="3.5"/>
+              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
+            </svg>
           </div>
-          <div>
-            <span class="badge badge-cyan" style="font-size:11px">Device: ${traccar.deviceIdentifier}</span>
+        </div>
+        <div class="rider-welcome-info">
+          <div class="rider-greeting-row">
+            <h2 class="rider-welcome-name">Halo, ${rider.name}</h2>
+            <span class="rider-event-tag">🏁 ${event.name}</span>
           </div>
+          <p class="rider-welcome-meta">
+            Tanggal: <strong>${event.date}</strong> &nbsp;·&nbsp; Status: <span style="color:#047857;font-weight:700">Terdaftar Aktif</span>
+          </p>
+        </div>
+        <div class="rider-device-pill" title="ID Perangkat Traccar Client">
+          <span class="device-label">DEVICE ID</span>
+          <span class="device-val">${traccar.deviceIdentifier}</span>
         </div>
       </div>
 
-      <!-- 3 Main Action Hub Cards -->
-      <div style="margin-bottom:28px">
-        <h2 style="font-size:14px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">
+      <!-- ── 5 Main Action Hub Cards ── -->
+      <div style="margin-bottom:30px">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px">
           Pilihan Menu Rider
-        </h2>
+        </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px">
+        <div class="hub-actions-grid">
 
           <!-- Action 1: Cockpit HUD -->
-          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;border-color:var(--border);background:rgba(116,136,115,0.06);padding:20px">
-            <div>
-              <div style="font-size:32px;margin-bottom:8px">🚴</div>
-              <h3 style="font-size:16px;font-weight:800;color:var(--color-sage);margin-bottom:6px">Cockpit HUD</h3>
-              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
-                Layar speedometer besar di handlebar, timer batas Cut-Off Time (COT), peringatan off-route, dan anti-layar mati.
+          <div class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge emerald">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag emerald">REKOMENDASI</span>
+              </div>
+              <div class="hub-action-title">Cockpit HUD</div>
+              <p class="hub-action-desc">
+                Layar speedometer handlebar, timer batas Cut-Off Time (COT), peringatan off-route, dan anti-layar mati.
               </p>
             </div>
-            <a href="/rider/cockpit" data-link class="btn btn-primary" style="font-size:13px;padding:12px;text-align:center;text-decoration:none">
-              Buka Layar Kemudi →
+            <a href="/rider/cockpit" data-link class="btn-hub-primary">
+              <span>Buka Layar Kemudi →</span>
             </a>
           </div>
 
           <!-- Action 2: Pocket Tracker (In-Browser Background GPS) -->
-          <div id="cardPocketTracker" class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
-            <div>
-              <div style="font-size:32px;margin-bottom:8px">🎒</div>
-              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">Lacak di Kantong</h3>
-              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px">
+          <div id="cardPocketTracker" class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge sand">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag sand">LATAR BELAKANG</span>
+              </div>
+              <div class="hub-action-title">Lacak di Kantong</div>
+              <p class="hub-action-desc">
                 Lacak langsung dari browser tanpa aplikasi Traccar tambahan! Audio sunyi menjaga GPS tetap aktif saat HP dikunci di saku jersey.
               </p>
-              <div id="setupPocketStatusBox" style="display:none;background:rgba(5,150,105,0.1);border:1px solid #059669;padding:8px 10px;border-radius:6px;font-size:11px;color:#065F46;margin-bottom:12px">
+              <div id="setupPocketStatusBox" style="display:none;background:rgba(4,120,87,0.08);border:1px solid rgba(4,120,87,0.25);padding:8px 12px;border-radius:10px;font-size:11px;color:#047857;margin-top:10px">
                 <span id="setupPocketDot">🟢</span> <strong>Melacak di Latar Belakang</strong>
-                <div id="setupPocketDetail" style="margin-top:4px;font-size:10px;opacity:0.9">Terkirim: 0 titik • Akurasi: --m</div>
+                <div id="setupPocketDetail" style="margin-top:3px;font-size:10px;opacity:0.9">Terkirim: 0 titik • Akurasi: --m</div>
               </div>
             </div>
-            <button id="btnTogglePocketSetup" class="btn btn-outline" style="font-size:13px;padding:12px;font-weight:700">
+            <button id="btnTogglePocketSetup" class="btn-hub-secondary">
               Mulai Lacak di Kantong
             </button>
           </div>
 
-          <!-- Action 3: Traccar Setup Instructions -->
-          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
-            <div>
-              <div style="font-size:32px;margin-bottom:8px">📱</div>
-              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">Setup Traccar</h3>
-              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
-                Panduan konfigurasi aplikasi pelacak GPS agar HP dapat dikantongi dengan layar mati & baterai hemat.
+          <!-- Action 3: Setup Traccar Instructions -->
+          <div class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge sage">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag sage">HEMAT BATERAI</span>
+              </div>
+              <div class="hub-action-title">Setup Traccar</div>
+              <p class="hub-action-desc">
+                Panduan konfigurasi aplikasi resmi Traccar Client agar HP dapat dikantongi dengan layar mati & baterai hemat.
               </p>
             </div>
-            <button id="btnScrollSetup" class="btn btn-outline" style="font-size:13px;padding:12px">
+            <button id="btnScrollSetup" class="btn-hub-secondary">
               Lihat Parameter Setup ▾
             </button>
           </div>
 
-          <!-- Action 3: Live Map -->
-          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
-            <div>
-              <div style="font-size:32px;margin-bottom:8px">🗺️</div>
-              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">Live Map Event</h3>
-              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
+          <!-- Action 4: Live Map -->
+          <div class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge sky">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                    <line x1="8" y1="2" x2="8" y2="18"/>
+                    <line x1="16" y1="6" x2="16" y2="22"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag sky">PENONTON</span>
+              </div>
+              <div class="hub-action-title">Live Map Event</div>
+              <p class="hub-action-desc">
                 Peta pelacakan langsung spectator untuk memantau rute dan posisi semua rider di lintasan.
               </p>
             </div>
             <div style="display:flex;flex-direction:column;gap:8px">
-              <a href="/watch/${event.id}" data-link class="btn btn-outline" style="font-size:13px;padding:10px;text-align:center;text-decoration:none">
+              <a href="/watch/${event.id}" data-link class="btn-hub-secondary">
                 Buka Live Map →
               </a>
-              <button id="btnShareTrackingSetup" class="btn btn-primary" style="font-size:12px;padding:9px;width:100%">
+              <button id="btnShareTrackingSetup" class="btn-hub-primary" style="font-size:12px;padding:10px">
                 📲 Bagikan Link Tracking
               </button>
             </div>
           </div>
 
-          <!-- Action 4: Download GPX Route -->
-          <div class="card fade-in" style="display:flex;flex-direction:column;justify-content:space-between;padding:20px">
-            <div>
-              <div style="font-size:32px;margin-bottom:8px">📍</div>
-              <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:6px">File GPX Rute</h3>
-              <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px">
+          <!-- Action 5: Download GPX Route -->
+          <div class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge earth">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag earth">BIKE COMPUTER</span>
+              </div>
+              <div class="hub-action-title">File GPX Rute</div>
+              <p class="hub-action-desc">
                 Unduh file GPX rute event untuk disinkronkan ke bike computer (Garmin, Wahoo, Hammerhead).
               </p>
             </div>
-            <a href="/api/events/${event.id}/gpx/download" download class="btn btn-outline" style="font-size:13px;padding:12px;text-align:center;text-decoration:none">
+            <a href="/api/events/${event.id}/gpx/download" download class="btn-hub-secondary">
               📥 Unduh GPX Rute
             </a>
           </div>
@@ -151,16 +224,16 @@ function renderRiderSetup() {
         </div>
       </div>
 
-      <!-- Traccar Configuration Box Section -->
-      <div id="traccarConfigSection" style="margin-bottom:32px">
-        <h2 style="font-size:14px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">
+      <!-- ── Traccar Configuration Box Section ── -->
+      <div id="traccarConfigSection" style="margin-bottom:34px">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px">
           ⚙️ Parameter Konfigurasi Traccar Client
-        </h2>
+        </div>
 
-        <div class="setup-config-box fade-in" style="margin-bottom:20px">
-          <div class="setup-config-header" style="display:flex;align-items:center;justify-content:space-between">
-            <span>Konfigurasi HP Rider</span>
-            <button id="btnCopyAll" class="btn btn-outline" style="font-size:11px;padding:4px 10px;border-radius:6px;border-color:rgba(209,169,128,0.45);color:var(--color-sand)">
+        <div class="setup-config-card fade-in">
+          <div class="setup-config-header">
+            <span class="setup-config-title">Konfigurasi HP Rider</span>
+            <button id="btnCopyAll" class="btn-hub-secondary" style="width:auto;padding:5px 12px;font-size:11px;border-radius:10px">
               📋 Salin Semua
             </button>
           </div>
@@ -195,46 +268,46 @@ function renderRiderSetup() {
           </div>
         </div>
 
-        <!-- 4 Step Guide -->
-        <div class="setup-step fade-in">
-          <div class="step-number">1</div>
-          <div>
-            <p style="font-weight:700;margin-bottom:4px">Install Aplikasi Traccar Client</p>
-            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px">Download gratis di HP Anda:</p>
+        <!-- 4 Step Guide with Squircle Numbers -->
+        <div class="setup-step-card fade-in">
+          <div class="step-number-squircle">1</div>
+          <div style="flex:1">
+            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Install Aplikasi Traccar Client</p>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Download gratis di HP Anda melalui store resmi:</p>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener" class="btn btn-outline" style="font-size:12px;padding:6px 12px">
+              <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener" class="btn-hub-secondary" style="width:auto;padding:8px 14px;font-size:12px">
                 🤖 Google Play Store
               </a>
-              <a href="https://apps.apple.com/app/traccar-client/id898772423" target="_blank" rel="noopener" class="btn btn-outline" style="font-size:12px;padding:6px 12px">
+              <a href="https://apps.apple.com/app/traccar-client/id898772423" target="_blank" rel="noopener" class="btn-hub-secondary" style="width:auto;padding:8px 14px;font-size:12px">
                 🍎 Apple App Store
               </a>
             </div>
           </div>
         </div>
 
-        <div class="setup-step fade-in">
-          <div class="step-number">2</div>
-          <div>
-            <p style="font-weight:700;margin-bottom:4px">Buka Traccar Client → Masuk ke Pengaturan (⚙️)</p>
-            <p style="font-size:13px;color:var(--text-secondary)">
-              Paste <strong>Server URL</strong> dan <strong>Device Identifier</strong> di atas.
+        <div class="setup-step-card fade-in">
+          <div class="step-number-squircle">2</div>
+          <div style="flex:1">
+            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Buka Traccar Client → Masuk ke Pengaturan (⚙️)</p>
+            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
+              Salin dan tempelkan <strong>Server URL</strong> dan <strong>Device Identifier</strong> di atas ke dalam kolom aplikasi.
             </p>
           </div>
         </div>
 
-        <div class="setup-step fade-in">
-          <div class="step-number">3</div>
-          <div>
-            <p style="font-weight:700;margin-bottom:4px">Aktifkan Saklar <span style="color:var(--color-green)">Service status (▶ Start)</span></p>
-            <p style="font-size:13px;color:var(--text-secondary)">
-              Status akan mulai mengirimkan lokasi GPS Anda secara otomatis ke server CycloPon.
+        <div class="setup-step-card fade-in">
+          <div class="step-number-squircle">3</div>
+          <div style="flex:1">
+            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Aktifkan Saklar <span style="color:#047857">Service status (▶ Start)</span></p>
+            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
+              Status akan mulai mengirimkan lokasi GPS Anda secara otomatis ke server CycloPon dalam interval 30 detik.
             </p>
           </div>
         </div>
 
-        <div class="setup-step fade-in" style="border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.03)">
-          <div class="step-number" style="background:var(--color-green);color:#FFFFFF">4</div>
-          <div>
+        <div class="setup-step-card done fade-in" style="border-color:rgba(4,120,87,0.3);background:linear-gradient(135deg,rgba(4,120,87,0.04) 0%,#FFFFFF 100%)">
+          <div class="step-number-squircle">4</div>
+          <div style="flex:1">
             <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Siap Gowes! Layar HP Bisa Dimatikan 🎉</p>
             <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
               Pelacakan tetap aktif di background walau HP dikantongi. Atau pasang di handlebar dan buka <strong>Cockpit HUD</strong>!
@@ -243,14 +316,14 @@ function renderRiderSetup() {
         </div>
       </div>
 
-      <!-- Emergency SOS Card -->
-      <div class="rider-sos-card fade-in" style="margin-bottom:32px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="font-size:18px">🚨</span>
-          <strong style="color:#EF4444;font-size:14px;letter-spacing:0.02em">Pusat Bantuan & Keselamatan Rider</strong>
+      <!-- ── Emergency SOS Card ── -->
+      <div class="rider-sos-card fade-in">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:20px">🚨</span>
+          <strong style="color:#EF4444;font-size:15px;letter-spacing:0.02em">Pusat Bantuan & Keselamatan Rider</strong>
         </div>
-        <p style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:14px">
-          Jika Anda mengalami kecelakaan, cedera fisik, atau masalah mekanikal berat di tengah rute dan butuh bantuan evakuasi segera:
+        <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:16px">
+          Jika Anda mengalami kecelakaan, cedera fisik, atau masalah mekanikal berat di tengah rute dan butuh bantuan evakuasi panitia segera:
         </p>
         <button id="btnOpenSosModal" class="btn-sos-emergency">
           <span>🚨</span>

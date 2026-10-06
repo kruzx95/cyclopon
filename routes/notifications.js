@@ -57,7 +57,7 @@ router.post('/admin/notifications/settings', (req, res) => {
 
 // POST /api/admin/notifications/test — test sending notification
 router.post('/admin/notifications/test', async (req, res) => {
-  const { telegramToken, telegramChatId, webhookUrl } = req.body || {};
+  const { channel, telegramToken, telegramChatId, webhookUrl } = req.body || {};
 
   const currentCfg = notifications.getConfig();
   const tokenToUse = (telegramToken && !telegramToken.includes('••••'))
@@ -65,13 +65,19 @@ router.post('/admin/notifications/test', async (req, res) => {
     : currentCfg.telegramToken;
 
   const results = await notifications.sendTestNotification({
+    channel,
     telegramToken:  tokenToUse,
     telegramChatId: telegramChatId !== undefined ? telegramChatId : currentCfg.telegramChatId,
     webhookUrl:     webhookUrl !== undefined ? webhookUrl : currentCfg.webhookUrl
   });
 
+  const success = Boolean(
+    (results.telegram && results.telegram.success) ||
+    (results.webhook && results.webhook.success)
+  );
+
   res.json({
-    success: (results.telegram?.success || results.webhook?.success) ? true : false,
+    success,
     results
   });
 });

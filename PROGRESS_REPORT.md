@@ -1,8 +1,8 @@
 # 🚴 Laporan Progres Pengembangan CycloPon Live Tracker
 
 **Tanggal Laporan:** 6 Oktober 2026  
-**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 14) & Desain Sistem Selesai 100%**  
-**Total Pengujian Unit:** 61 / 61 Lulus (9 Test Suites)
+**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 16) & Penyeragaman Desain Selesai 100%**  
+**Total Pengujian Unit:** 73 / 73 Lulus (10 Test Suites)
 
 ---
 
@@ -31,7 +31,9 @@
 12. [Penyempurnaan Tampilan Rider Cockpit HUD](#12-penyempurnaan-tampilan-rider-cockpit-hud-amoled-night-mode--layout)
 13. [Phase 13: Containerization & Stack Deployment VPS (Docker & Caddy SSL)](#13-phase-13-containerization--stack-deployment-vps-docker--caddy-ssl)
 14. [Phase 14: Real-Time Visitor Traffic & Live Spectator Analytics](#14-phase-14-real-time-visitor-traffic--live-spectator-analytics-di-admin-panel)
-15. [Rekomendasi Langkah Berikutnya](#15-rekomendasi-langkah-berikutnya)
+15. [Phase 15: Onboarding Peserta & Registrasi Manual Panitia/Sweeper (Zero-Confusion)](#15-phase-15-onboarding-peserta--registrasi-manual-panitiasweeper-zero-confusion)
+16. [Phase 16: Penyeragaman & Modernisasi UI Menyeluruh (2026 Athletic / Sports-Grade Design)](#16-phase-16-penyeragaman--modernisasi-ui-menyeluruh-2026-athletic--sports-grade-design)
+17. [Rekomendasi Langkah Berikutnya](#17-rekomendasi-langkah-berikutnya)
 
 ---
 
@@ -397,11 +399,134 @@ Untuk mengantisipasi lonjakan penonton saat event balapan berlangsung, CycloPon 
 
 ---
 
-## 15. Rekomendasi Langkah Berikutnya
+## 15. Phase 15: Onboarding Peserta & Registrasi Manual Panitia/Sweeper (Zero-Confusion)
 
-Untuk pengembangan selanjutnya atau persiapan rilis produksi, opsi berikut dapat dipertimbangkan:
+Untuk memfasilitasi kebutuhan operasional lapangan di mana peserta, panitia sweeper (penyapu belakang), marshall rute, dan tim medis evakuasi dapat bergabung dengan mudah tanpa kebingungan teknis mengenai nomor BIB dan PIN:
+
+1. **Registrasi Manual Fleksibel oleh Admin ([`/admin/events/:id`](file:///home/kruza/Documents/cyclopon/public/js/pages/admin-event.js)):**
+   - Panel formulir manual yang mendukung input kustom untuk nomor BIB alfanumerik (`001`, `SWEEP-01`, `RC-1`, `MED-01`).
+   - Pilihan Peran (*Role Selector*):
+     - 🚴 **Peserta (Rider)**
+     - 🧹 **Sweeper (Penyapu Belakang)** — otomatis mendapatkan palet oranye dinamis (`#F97316`)
+     - 🏍️ **Marshall / Road Captain** — otomatis mendapatkan palet biru navigasi (`#3B82F6`)
+     - 🚑 **Tim Medis / Evakuasi** — otomatis mendapatkan palet merah darurat (`#EF4444`)
+   - Input nomor WhatsApp opsional dengan resolusi PIN cerdas: jika PIN tidak diisi manual, sistem otomatis menetapkan **4 digit terakhir nomor WhatsApp** (atau fallback `1234`).
+   - Token Magic Link 12-karakter unik auto-generated untuk setiap peserta.
+
+2. **Akses Cepat Kredensial & WhatsApp Dispatch:**
+   - **Tombol "📋 Salin Link":** Menyalin tautan Magic Link (`/r/:token`) langsung ke clipboard admin untuk dibagikan ke grup WhatsApp atau Telegram.
+   - **Tombol "💬 WA":** Tombol 1-klik yang langsung membuka WhatsApp Web / Aplikasi dengan template pesan resmi terisi otomatis:
+     ```text
+     Halo Kak [Nama]! 👋
+     Berikut akses pelacak Cyclopon Anda untuk event [Nama Event]:
+     • Nomor BIB: #[BIB]
+     • PIN Akses: [PIN]
+
+     Atau langsung login 1-klik tanpa ketik BIB & PIN:
+     👉 https://.../r/[token]
+     ```
+
+3. **Impor Massal Spreadsheet CSV ([`POST /api/admin/riders/events/:id/import`](file:///home/kruza/Documents/cyclopon/routes/riders.js)):**
+   - Mendukung unggah berkas `.csv` atau tempel teks langsung di dashboard admin.
+   - Format kolom: `bib,nama,no_hp,peran,pin`.
+   - Mengabaikan duplikasi nomor BIB dan menghasilkan ringkasan jumlah peserta yang berhasil diimpor.
+   - Tombol **"📥 Template CSV"** (`GET /api/admin/riders/events/:id/template`) untuk mengunduh contoh struktur CSV resmi dalam format Excel/Spreadsheet.
+
+4. **Pendaftaran Mandiri di Lapangan / On-The-Spot ([`/rider`](file:///home/kruza/Documents/cyclopon/public/js/pages/rider-login.js)):**
+   - Modal self-service *"➕ Daftar Mandiri di Lapangan (Rider / Sweeper)"* khusus untuk peserta susulan atau panitia lapangan.
+   - Peserta langsung memilih peran, menginput nomor BIB, nama, nomor WhatsApp, dan PIN.
+   - Akun langsung terverifikasi seketika dan langsung dialihkan ke layar panduan pelacak (*Rider Setup*).
+
+5. **Magic Link Tanpa Ketik ([`/r/:token`](file:///home/kruza/Documents/cyclopon/routes/auth.js)):**
+   - Tautan unik yang langsung memverifikasi kredensial peserta melalui `GET /api/auth/token/:token`, menyimpan sesi di `sessionStorage` & `localStorage`, dan mengarahkan rider langsung ke kokpit tanpa perlu memasukkan BIB maupun PIN.
+
+6. **Identitas Peran Visual di Live Map ([`/watch/:id`](file:///home/kruza/Documents/cyclopon/public/js/pages/live-map.js)):**
+   - Lencana visual `🧹 SWEEPER`, `🏍️ MARSHALL`, dan `🚑 MEDIS` tampil langsung di baris Leaderboard dan popup marker Leaflet.
+   - Memudahkan penonton dan panitia mengidentifikasi posisi sweeper yang mengawal rombongan paling belakang secara real-time.
+
+---
+
+## 16. Phase 16: Penyeragaman & Modernisasi UI Menyeluruh (2026 Athletic / Sports-Grade Design)
+
+Menjawab kebutuhan estetika modern kelas industri olahraga internasional (seperti Strava, Wahoo, Zwift), seluruh antarmuka utama telah diseragamkan dengan bahasa desain yang konsisten:
+
+1. **Desain Sistem & Nuansa Visual Terpadu:**
+   - **Kanvas Latar Belakang:** Ambient radial glow yang halus (`radial-gradient(circle at 50% 12%, rgba(43, 78, 48, 0.08) 0%, rgba(209, 169, 128, 0.06) 40%, #F8F8F8 85%)`).
+   - **Kartu & Wadah:** Border radius modern `20px - 28px`, bingkai berpresisi `1px solid rgba(208, 201, 191, 0.7)`, dan elevasi bayangan halus `0 20px 50px -12px rgba(28, 40, 38, 0.08)`.
+   - **Squircle Badges:** Ikon wadah squircle `border-radius: 14px - 18px` dengan aksen palet lembut terkurasi (Emerald, Sand/Terracotta, Sage Forest, Sky Blue, Earth Amber) menggantikan emoji mentah biasa.
+   - **Tombol Aksi Utama (CTA):** Gradien tajam `linear-gradient(135deg, #2B4E30 0%, #3D6F46 100%)` berbayangan `0 6px 20px rgba(43, 78, 48, 0.32)`.
+
+2. **Halaman Beranda / Landing ([`/`](file:///home/kruza/Documents/cyclopon/public/js/pages/landing.js) & [`public/css/global.css`](file:///home/kruza/Documents/cyclopon/public/css/global.css)):**
+   - **Top Nav Sticky:** Navigasi berlatar blur kaca (`backdrop-filter: blur(12px)`), logo lambang pesepeda SVG dalam badge squircle, dan tombol akses *"Admin Panel"* berikon perisai.
+   - **Hero Section:** Pill badge *"🏆 LIVE GPS CYCLING TRACKER"* berbayangan halus, tipografi berbobot atletik, serta tombol CTA berikon SVG pesepeda & peta.
+   - **Kartu Event Aktif:** Kartu dengan aksen bar gradien vertikal, indikator status *"• LIVE"* hijau berdenyut, chip tanggal event, tombol unduh rute GPX, dan tombol akses peta *"Buka Peta →"*.
+   - **3 Kartu Keunggulan (Feature Grid):** Wadah squircle SVG untuk Interval Baterai (Emerald), Lacak di Kantong / Screen Off (Sand), dan Rute GPX / Leaderboard (Sage).
+
+3. **Login Peserta / Rider Login ([`/rider`](file:///home/kruza/Documents/cyclopon/public/js/pages/rider-login.js) & [`public/css/rider.css`](file:///home/kruza/Documents/cyclopon/public/css/rider.css)):**
+   - Top nav pill dengan tombol `← Beranda` dan `• CYCLOPON LIVE` pulse indicator.
+   - Lambang pesepeda SVG modern dalam cincin avatar berlatar sage halus.
+   - Dropdown event dengan bendera balap `🏁` dan panah chevron kustom.
+   - Kolom BIB berawalan lencana hashtag `#`.
+   - 6 slot PIN squircle interaktif dengan kursor berkedip dan titik hijau gradien bercahaya saat terisi.
+   - Keypad angka taktil bergaya dialer telepon dengan sub-huruf (`ABC`, `DEF`, dsb.), tombol hapus SVG, dan tombol `OK ✓` yang menyala otomatis saat PIN valid.
+
+4. **Login Admin / Race Control ([`/admin`](file:///home/kruza/Documents/cyclopon/public/js/pages/admin-dashboard.js) & [`public/css/admin.css`](file:///home/kruza/Documents/cyclopon/public/css/admin.css)):**
+   - Diselaraskan 100% dengan tata letak kartu Rider Login: top nav pill dengan `← Beranda` dan badge `🛡️ RACE CONTROL`.
+   - Cincin lambang kunci/perisai bergradien sage lembut.
+   - Kolom input berawalan ikon lencana (👤 username/email, 🔒 password).
+   - Kotak informasi kredensial Dev Mode yang rapi.
+   - Tombol utama gradien berbayangan tegap *"Masuk ke Admin Panel →"*.
+
+5. **Rider Hub & Panduan Pelacak ([`/rider/setup`](file:///home/kruza/Documents/cyclopon/public/js/pages/rider-setup.js) & [`public/css/rider.css`](file:///home/kruza/Documents/cyclopon/public/css/rider.css)):**
+   - **Header Hub:** Navigasi `← Beranda`, lencana lambang Rider Hub, lencana peran (`🧹 SWEEPER` / `🏍️ MARSHALL`), lencana nomor BIB, dan tombol merah `Keluar`.
+   - **Kartu Sambutan:** Aksen warna personal rider dalam cincin halo avatar, nama rider, tag event `🏁`, dan pill `DEVICE ID`.
+   - **5 Kartu Menu Rider (Hub Actions):**
+     1. *Cockpit HUD* (Layar Handlebar, COT timer, speedo) berbadge Emerald.
+     2. *Lacak di Kantong* (Web Background GPS keep-alive) berbadge Sand.
+     3. *Setup Traccar* (Panduan Traccar Client resmi) berbadge Sage.
+     4. *Live Map Event* (Peta penonton & tombol bagikan tautan) berbadge Sky Blue.
+     5. *File GPX Rute* (Unduh file GPX rute untuk bike computer Garmin/Wahoo) berbadge Earth Amber.
+   - **Parameter Traccar Client:** Chip nilai parameter bergaya monospace rapi dengan tombol salin instan per baris dan tombol *"📋 Salin Semua"*.
+   - **Panduan 4 Langkah:** Nomor langkah squircle bernuansa hijau dengan penanda selesai (*Done*) pada langkah ke-4.
+   - **Kartu Bantuan SOS Darurat:** Desain hazard peringatan merah dengan denyut animasi untuk kesiapan respon darurat di jalan.
+
+---
+
+## 17. Phase 17: Race Control In-App SOS Monitor, Audio Sirene & Perbaikan Pengujian Notifikasi
+
+### Akar Masalah & Temuan:
+1. **Ketiadaan Notifikasi SOS di Admin Panel:**
+   - Endpoint SOS sebelumnya hanya mengirimkan event ke saluran eksternal (Telegram/Webhook). Jika admin belum mengonfigurasi Telegram bot atau Webhook, tidak ada notifikasi yang terkirim sama sekali.
+   - Pada web app CycloPon, hanya halaman `live-map.js` yang memiliki polling alert aktif; seluruh halaman Admin (`/admin/dashboard`, `/admin/notifications`, `/admin/events/:id`) tidak memiliki sistem pemantau alert, audio alarm, maupun banner peringatan darurat.
+   - Payload SOS dari `rider-cockpit.js` mengirimkan properti `lat` dan `lng`, sedangkan backend mencari `latitude` dan `longitude`, sehingga koordinat GPS rider di database tersimpan `null`.
+2. **Error Pesan Uji Coba di Halaman Notifikasi Panitia:**
+   - Fitur uji coba sebelumnya mengeksekusi kedua saluran (Telegram dan Webhook) secara sekaligus tanpa opsi pengujian terpisah. Jika admin hanya mengisi Telegram dan membiarkan Webhook kosong, respon sistem menganggap pengujian gagal total karena Webhook URL kosong.
+   - Terjadi `ReferenceError: escapeHtml is not defined` di browser saat menampilkan pesan kegagalan dari server karena fungsi `escapeHtml` hanya didefinisikan di sisi server.
+
+### Solusi & Implementasi:
+1. **Race Control Global SOS Monitor (`AdminSosMonitor` di [`public/js/pages/admin-dashboard.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/admin-dashboard.js)):**
+   - **Polling Real-Time:** Endpoint baru `GET /api/admin/alerts/active` dipantau setiap 3,5 detik di semua halaman admin.
+   - **Sirene Audio Darurat (Web Audio API):** Osilator dual-tone bergaya sirene ambulans darurat (960 Hz / 770 Hz) yang berbunyi otomatis saat ada panggilan darurat baru.
+   - **Banner Bahaya Melayang (`#adminGlobalSosBar`):** Banner merah berkedip di bagian paling atas layar Admin yang memuat info rider, nama event, tombol kontak instan WhatsApp (`wa.me/62...`), tautan Live Map terfokus (`/watch/:id?bib=...`), tombol heningkan sirene, dan tombol penyelesaian alert instan.
+   - **Kartu Insiden Aktif di Dashboard:** Kartu merah darurat di atas analitik trafik dashboard yang merinci seluruh insiden SOS yang belum terselesaikan beserta waktu dan koordinat.
+   - **Badge Sidebar Berkedip:** Lencana merah berdenyut (`🚨 X SOS`) di menu navigasi sidebar admin.
+   - **Web Desktop Notifications:** Menampilkan popup notifikasi desktop native OS jika izin notifikasi diberikan.
+2. **Dukungan Alias Koordinat GPS ([`routes/alerts.js`](file:///home/kruza/Documents/cyclopon/routes/alerts.js)):**
+   - Menerima baik `latitude`/`longitude` maupun `lat`/`lng` sehingga sinyal darurat dari Cockpit maupun Setup tersimpan dengan koordinat presisi.
+3. **Penyempurnaan Pengujian Notifikasi Panitia ([`public/js/pages/admin-notifications.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/admin-notifications.js)):**
+   - Tombol uji coba dipisahkan secara independen: **⚡ Tes Telegram**, **⚡ Tes Webhook**, dan **🔊 Tes Sirene SOS Panitia**.
+   - Sanitasi otomatis token Telegram (menghapus duplikasi prefix `bot`, memotong spasi liar) dan sanitasi Chat ID.
+   - Pesan panduan & error dalam bahasa Indonesia yang ramah (misalnya menjelaskan syarat wajib Telegram: pengguna harus menekan `/start` pada bot sebelum bot dapat mengirim pesan).
+   - Menambahkan `escapeHtml` di [`public/js/lib/utils.js`](file:///home/kruza/Documents/cyclopon/public/js/lib/utils.js) untuk pencegahan error client-side dan XSS.
+
+---
+
+## 18. Rekomendasi Langkah Berikutnya
 
 1. **Data Demo & Seed Rute GPX Nyata:** Menambahkan script migrasi / seeder interaktif (`npm run seed:demo`) yang menyertakan rute GPX resmi, daftar pos checkpoint riil, dan simulasi 10+ rider aktif untuk keperluan pameran atau demo sponsor.
 2. **PWA Push Notifications:** Web push notification untuk pembaruan status event dan kedatangan pos secara real-time ke smartphone penonton.
+
+
+
 
 

@@ -101,6 +101,30 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_page_views_event ON page_views(event_id);
 `);
 
+// ── Migrations for riders table (phone, token, role) ──
+try { db.exec("ALTER TABLE riders ADD COLUMN phone TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE riders ADD COLUMN token TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE riders ADD COLUMN role TEXT DEFAULT 'rider';"); } catch (e) {}
+try { db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_riders_token ON riders(token);"); } catch (e) {}
+
+// Populate tokens for any existing riders that lack tokens
+try {
+  const crypto = require('crypto');
+  const missingTokens = db.prepare("SELECT id FROM riders WHERE token IS NULL").all();
+  if (missingTokens.length > 0) {
+    const setToken = db.prepare("UPDATE riders SET token = ? WHERE id = ?");
+    const updateTx = db.transaction((rows) => {
+      for (const r of rows) setToken.run(crypto.randomBytes(6).toString('hex'), r.id);
+    });
+    updateTx(missingTokens);
+  }
+} catch (e) {}
+
+const _createRiderStmt = db.prepare(`
+  INSERT INTO riders (event_id, bib, name, pin, phone, token, role, traccar_device_id, color)
+  VALUES (@event_id, @bib, @name, @pin, @phone, @token, @role, @traccar_device_id, @color)
+`);
+
 module.exports = {
   db,
   // Events
@@ -111,11 +135,28 @@ module.exports = {
   updateEventGpx: db.prepare('UPDATE events SET gpx_path=? WHERE id=?'),
 
   // Riders
-  getRidersByEvent:      db.prepare('SELECT * FROM riders WHERE event_id = ? ORDER BY CAST(bib AS INTEGER) ASC'),
+  getRidersByEvent:      db.prepare("SELECT * FROM riders WHERE event_id = ? ORDER BY CASE WHEN role != 'rider' THEN 0 ELSE 1 END, CAST(bib AS INTEGER) ASC, bib ASC"),
   getRiderById:          db.prepare('SELECT * FROM riders WHERE id = ?'),
+  getRiderByToken:       db.prepare('SELECT * FROM riders WHERE token = ?'),
   getRiderByBibPin:      db.prepare('SELECT * FROM riders WHERE bib = ? AND pin = ?'),
   getRiderByEventBibPin: db.prepare('SELECT * FROM riders WHERE event_id = ? AND bib = ? AND pin = ?'),
-  createRider:           db.prepare('INSERT INTO riders (event_id, bib, name, pin, traccar_device_id, color) VALUES (@event_id, @bib, @name, @pin, @traccar_device_id, @color)'),
+  createRider: {
+    run(data) {
+      const crypto = require('crypto');
+      const payload = {
+        event_id:          Number(data.event_id),
+        bib:               String(data.bib).trim(),
+        name:              String(data.name).trim(),
+        pin:               String(data.pin || '1234').trim(),
+        phone:             data.phone ? String(data.phone).trim() : null,
+        token:             data.token ? String(data.token).trim() : crypto.randomBytes(6).toString('hex'),
+        role:              data.role ? String(data.role).trim().toLowerCase() : 'rider',
+        traccar_device_id: data.traccar_device_id ? Number(data.traccar_device_id) : null,
+        color:             data.color || '#00E5FF'
+      };
+      return _createRiderStmt.run(payload);
+    }
+  },
   updateRiderDevice: db.prepare('UPDATE riders SET traccar_device_id = ? WHERE id = ?'),
   deleteRider:       db.prepare('DELETE FROM riders WHERE id = ?'),
 
@@ -124,7 +165,8 @@ module.exports = {
   getAlertById:      db.prepare('SELECT * FROM alerts WHERE id = ?'),
   getAlertsByEvent:  db.prepare('SELECT a.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM alerts a LEFT JOIN riders r ON a.rider_id = r.id WHERE a.event_id = ? ORDER BY a.created_at DESC'),
   getActiveAlertsByEvent: db.prepare('SELECT a.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM alerts a LEFT JOIN riders r ON a.rider_id = r.id WHERE a.event_id = ? AND a.resolved = 0 ORDER BY a.created_at DESC'),
-  resolveAlert:      db.prepare('UPDATE alerts SET resolved = 1 WHERE id = ?'),
+  getAllActiveAlerts:     db.prepare('SELECT a.*, e.name as event_name, r.bib as rider_bib, r.name as rider_name, r.phone as rider_phone, r.color as rider_color FROM alerts a LEFT JOIN events e ON a.event_id = e.id LEFT JOIN riders r ON a.rider_id = r.id WHERE a.resolved = 0 ORDER BY a.created_at DESC'),
+  resolveAlert:           db.prepare('UPDATE alerts SET resolved = 1 WHERE id = ?'),
 
   // Checkpoints
   createCheckpoint:      db.prepare('INSERT INTO checkpoints (event_id, name, km_distance, open_time, close_time, latitude, longitude, order_index) VALUES (@event_id, @name, @km_distance, @open_time, @close_time, @latitude, @longitude, @order_index)'),

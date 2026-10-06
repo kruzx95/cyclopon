@@ -6,7 +6,9 @@ const notifications = require('../lib/notifications');
 // POST /api/events/:id/alerts — create a new alert (SOS, crash, etc.)
 router.post('/events/:id/alerts', (req, res) => {
   const event_id = Number(req.params.id);
-  const { rider_id, type, latitude, longitude, message } = req.body;
+  const { rider_id, type, message } = req.body;
+  const latitude = (req.body.latitude != null ? req.body.latitude : req.body.lat);
+  const longitude = (req.body.longitude != null ? req.body.longitude : req.body.lng);
 
   if (!type) {
     return res.status(400).json({ error: 'type alert wajib diisi' });
@@ -46,6 +48,16 @@ router.get('/events/:id/alerts', (req, res) => {
     : db.getAlertsByEvent.all(event_id);
 
   res.json(alerts);
+});
+
+// GET /api/admin/alerts/active — fetch all unresolved alerts across all events for admin
+router.get('/admin/alerts/active', (req, res) => {
+  try {
+    const alerts = db.getAllActiveAlerts.all();
+    res.json(alerts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // PUT /api/alerts/:id/resolve — resolve an alert

@@ -35,6 +35,7 @@ router.get('/:id', (req, res) => {
 router.get('/:id/riders', (req, res) => {
   const riders = db.getRidersByEvent.all(req.params.id).map(r => ({
     id: r.id, bib: r.bib, name: r.name,
+    role: r.role || 'rider',
     traccar_device_id: r.traccar_device_id,
     color: r.color
   }));

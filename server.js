@@ -10,6 +10,9 @@ const db = require('./db/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxy (Caddy / Nginx) for accurate IPs and HTTPS detection
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 app.use(cookieParser());

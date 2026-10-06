@@ -349,6 +349,10 @@ async function renderLiveMap(params) {
     bibToRider[cleanBib] = r;
     bibToRider[`BIB-${cleanBib}`] = r;
     bibToRider[`BIB${cleanBib}`] = r;
+    riderById[r.id] = r;
+    riderById[`rider_${r.id}`] = r;
+    riderById[`BIB-${cleanBib}`] = r;
+    riderById[cleanBib] = r;
     if (r.traccar_device_id) {
       riderById[r.traccar_device_id] = r;
     }
@@ -892,114 +896,6 @@ async function renderLiveMap(params) {
     }, 120);
   });
 
-  // ── Load GPX route & Komoot Stats ──
-  if (event.gpx_path) {
-    try {
-      const gpxText = await fetch(event.gpx_path).then(r => r.text());
-      gpxData       = parseGpxData(gpxText);
-      routeCoords   = gpxData.coords;
-      routeKm       = gpxData.stats.totalKm;
-
-      if (routeCoords.length) {
-        // Warm halo/casing — soft cream border so route stands out on any tile layer
-        L.polyline(routeCoords, {
-          color: '#E5E0D8',
-          weight: 6.5,
-          opacity: 0.80,
-          lineCap: 'round',
-          lineJoin: 'round'
-        }).addTo(map);
-
-        // Core route polyline — Deep Sage Forest (#2B4E30) matches palette & is clearly readable on standard maps
-        const poly = L.polyline(routeCoords, {
-          color: '#2B4E30',
-          weight: 3.5,
-          opacity: 1,
-          lineCap: 'round',
-          lineJoin: 'round'
-        }).addTo(map);
-
-        polylineBounds = poly.getBounds();
-        map.fitBounds(polylineBounds, { padding: [40, 40] });
-
-        // Start / Finish button markers — unified cohesive button style
-        const startPt = routeCoords[0];
-        const endPt   = routeCoords[routeCoords.length - 1];
-        const isLoop  = Math.abs(startPt[0] - endPt[0]) < 0.0005 && Math.abs(startPt[1] - endPt[1]) < 0.0005;
-
-        if (isLoop) {
-          const loopIcon = L.divIcon({
-            className: 'route-flag-marker',
-            html: `
-              <div class="route-flag-btn btn-loop">
-                <span class="route-flag-chip chip-start">▶</span>
-                <span class="route-flag-label">START / FINISH</span>
-                <span class="route-flag-chip chip-finish">🏁</span>
-              </div>
-            `,
-            iconSize: [0, 0],
-            iconAnchor: [15, 14]
-          });
-          L.marker(startPt, { icon: loopIcon, zIndexOffset: 850 }).addTo(map);
-        } else {
-          const startIcon = L.divIcon({
-            className: 'route-flag-marker',
-            html: `
-              <div class="route-flag-btn btn-start">
-                <span class="route-flag-chip">▶</span>
-                <span class="route-flag-label">START</span>
-              </div>
-            `,
-            iconSize: [0, 0],
-            iconAnchor: [15, 14]
-          });
-          const finishIcon = L.divIcon({
-            className: 'route-flag-marker',
-            html: `
-              <div class="route-flag-btn btn-finish">
-                <span class="route-flag-chip">🏁</span>
-                <span class="route-flag-label">FINISH</span>
-              </div>
-            `,
-            iconSize: [0, 0],
-            iconAnchor: [15, 14]
-          });
-
-          L.marker(startPt, { icon: startIcon, zIndexOffset: 850 }).addTo(map);
-          L.marker(endPt, { icon: finishIcon, zIndexOffset: 850 }).addTo(map);
-        }
-        renderCheckpointMarkers();
-
-        document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider · ${checkpoints.length} CP`;
-
-        // ── Populate Komoot Elevation Metrics ──
-        document.getElementById('elevStatDist').textContent = gpxData.stats.totalKm;
-        document.getElementById('elevStatTime').textContent = gpxData.stats.estTime;
-        document.getElementById('elevStatGain').textContent = `+${gpxData.stats.elevGain.toLocaleString()}`;
-        document.getElementById('elevStatLoss').textContent = `-${gpxData.stats.elevLoss.toLocaleString()}`;
-
-        const diffEl = document.getElementById('elevStatDiff');
-        diffEl.textContent = gpxData.stats.difficulty;
-        diffEl.className = `elev-pill-badge diff-${gpxData.stats.difficulty.toLowerCase()}`;
-
-        document.getElementById('elevStatSpeed').textContent = `${gpxData.stats.difficulty}: ${gpxData.stats.avgSpeed}`;
-
-        setTimeout(redrawElevationChart, 60);
-        renderClimbsList();
-      } else {
-        document.getElementById('eventStats').textContent = `${riders.length} Rider`;
-        toggleElevation(false);
-      }
-    } catch (err) {
-      console.warn('GPX parse error:', err);
-      document.getElementById('eventStats').textContent = `${riders.length} Rider`;
-      toggleElevation(false);
-    }
-  } else {
-    document.getElementById('eventStats').textContent = `Belum ada rute GPX · ${riders.length} Rider`;
-    toggleElevation(false);
-  }
-
   // ── Marker cluster group ──
   const clusterGroup = L.markerClusterGroup({
     maxClusterRadius: 50,
@@ -1159,9 +1055,119 @@ async function renderLiveMap(params) {
     return { text: 'Blank Spot', color: '#94A3B8', dot: '⚪' };
   }
 
+  // ── Load GPX route & Komoot Stats ──
+  if (event.gpx_path) {
+    try {
+      const gpxText = await fetch(event.gpx_path).then(r => r.text());
+      gpxData       = parseGpxData(gpxText);
+      routeCoords   = gpxData.coords;
+      routeKm       = gpxData.stats.totalKm;
+
+      if (routeCoords.length) {
+        // Warm halo/casing — soft cream border so route stands out on any tile layer
+        L.polyline(routeCoords, {
+          color: '#E5E0D8',
+          weight: 6.5,
+          opacity: 0.80,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
+
+        // Core route polyline — Deep Sage Forest (#2B4E30) matches palette & is clearly readable on standard maps
+        const poly = L.polyline(routeCoords, {
+          color: '#2B4E30',
+          weight: 3.5,
+          opacity: 1,
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).addTo(map);
+
+        polylineBounds = poly.getBounds();
+        map.fitBounds(polylineBounds, { padding: [40, 40] });
+
+        // Start / Finish button markers — unified cohesive button style
+        const startPt = routeCoords[0];
+        const endPt   = routeCoords[routeCoords.length - 1];
+        const isLoop  = Math.abs(startPt[0] - endPt[0]) < 0.0005 && Math.abs(startPt[1] - endPt[1]) < 0.0005;
+
+        if (isLoop) {
+          const loopIcon = L.divIcon({
+            className: 'route-flag-marker',
+            html: `
+              <div class="route-flag-btn btn-loop">
+                <span class="route-flag-chip chip-start">▶</span>
+                <span class="route-flag-label">START / FINISH</span>
+                <span class="route-flag-chip chip-finish">🏁</span>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [15, 14]
+          });
+          L.marker(startPt, { icon: loopIcon, zIndexOffset: 850 }).addTo(map);
+        } else {
+          const startIcon = L.divIcon({
+            className: 'route-flag-marker',
+            html: `
+              <div class="route-flag-btn btn-start">
+                <span class="route-flag-chip">▶</span>
+                <span class="route-flag-label">START</span>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [15, 14]
+          });
+          const finishIcon = L.divIcon({
+            className: 'route-flag-marker',
+            html: `
+              <div class="route-flag-btn btn-finish">
+                <span class="route-flag-chip">🏁</span>
+                <span class="route-flag-label">FINISH</span>
+              </div>
+            `,
+            iconSize: [0, 0],
+            iconAnchor: [15, 14]
+          });
+
+          L.marker(startPt, { icon: startIcon, zIndexOffset: 850 }).addTo(map);
+          L.marker(endPt, { icon: finishIcon, zIndexOffset: 850 }).addTo(map);
+        }
+        renderCheckpointMarkers();
+
+        document.getElementById('eventStats').textContent = `${routeKm} km · ${riders.length} Rider · ${checkpoints.length} CP`;
+
+        // ── Populate Komoot Elevation Metrics ──
+        document.getElementById('elevStatDist').textContent = gpxData.stats.totalKm;
+        document.getElementById('elevStatTime').textContent = gpxData.stats.estTime;
+        document.getElementById('elevStatGain').textContent = `+${gpxData.stats.elevGain.toLocaleString()}`;
+        document.getElementById('elevStatLoss').textContent = `-${gpxData.stats.elevLoss.toLocaleString()}`;
+
+        const diffEl = document.getElementById('elevStatDiff');
+        diffEl.textContent = gpxData.stats.difficulty;
+        diffEl.className = `elev-pill-badge diff-${gpxData.stats.difficulty.toLowerCase()}`;
+
+        document.getElementById('elevStatSpeed').textContent = `${gpxData.stats.difficulty}: ${gpxData.stats.avgSpeed}`;
+
+        setTimeout(redrawElevationChart, 60);
+        renderClimbsList();
+      } else {
+        document.getElementById('eventStats').textContent = `${riders.length} Rider`;
+        toggleElevation(false);
+      }
+    } catch (err) {
+      console.warn('GPX parse error:', err);
+      document.getElementById('eventStats').textContent = `${riders.length} Rider`;
+      toggleElevation(false);
+    }
+  } else {
+    document.getElementById('eventStats').textContent = `Belum ada rute GPX · ${riders.length} Rider`;
+    toggleElevation(false);
+  }
+
   // ── Core Function: Update Single Rider Position ──
   function updateRiderPosition(deviceId, pos) {
-    const rider = riderById[deviceId];
+    let rider = riderById[deviceId];
+    if (!rider && pos.rider_id) rider = riderById[pos.rider_id];
+    if (!rider && bibToRider[String(deviceId)]) rider = bibToRider[String(deviceId)];
     if (!rider) return;
 
     const latlng = [pos.latitude, pos.longitude];
@@ -1359,9 +1365,24 @@ async function renderLiveMap(params) {
       telem.etaBadgeClass = 'eta-idle';
     }
 
-    // Remove old marker from cluster
+    const canonicalId = rider.id;
+
+    // Remove any previous marker for this specific rider (prevent duplicate markers)
+    if (markerById[canonicalId]) {
+      clusterGroup.removeLayer(markerById[canonicalId]);
+      delete markerById[canonicalId];
+    }
+    if (rider.traccar_device_id && markerById[rider.traccar_device_id]) {
+      clusterGroup.removeLayer(markerById[rider.traccar_device_id]);
+      delete markerById[rider.traccar_device_id];
+    }
     if (markerById[deviceId]) {
       clusterGroup.removeLayer(markerById[deviceId]);
+      delete markerById[deviceId];
+    }
+    if (markerById[rider.bib]) {
+      clusterGroup.removeLayer(markerById[rider.bib]);
+      delete markerById[rider.bib];
     }
 
     const status = getRiderStatus(fixTime);
@@ -1378,7 +1399,10 @@ async function renderLiveMap(params) {
         <div class="popup-header">
           <div class="popup-title-group">
             <div class="popup-rider-name">${rider.name}</div>
-            <div class="popup-rider-bib" style="color:${rider.color || 'var(--color-yellow)'}">BIB #${rider.bib}</div>
+            <div class="popup-rider-bib" style="color:${rider.color || 'var(--color-yellow)'}">
+              BIB #${rider.bib}
+              ${rider.role === 'sweeper' ? '<span style="background:#F97316;color:#FFF;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px">🧹 SWEEPER</span>' : (rider.role === 'marshall' ? '<span style="background:#3B82F6;color:#FFF;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px">🏍️ MARSHALL</span>' : (rider.role === 'medic' ? '<span style="background:#EF4444;color:#FFF;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px">🚑 MEDIS</span>' : ''))}
+            </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
             ${batBadge}
@@ -1452,10 +1476,13 @@ async function renderLiveMap(params) {
     `);
 
     clusterGroup.addLayer(marker);
-    markerById[deviceId] = marker;
+    markerById[canonicalId] = marker;
+    if (rider.traccar_device_id) {
+      markerById[rider.traccar_device_id] = marker;
+    }
 
-    // Save state for leaderboard
-    progressById[deviceId] = {
+    // Save state for leaderboard uniquely by canonical rider.id
+    progressById[canonicalId] = {
       ...calc,
       speed: telem.currentSpeed,
       movingAvg: telem.movingAvg,
@@ -1486,12 +1513,11 @@ async function renderLiveMap(params) {
     const banner = document.getElementById('targetRiderFocusBanner');
     if (banner) {
       document.getElementById('focusRiderName').textContent = `#${r.bib} ${r.name}`;
-      const prog = progressById[r.traccar_device_id];
+      const prog = progressById[r.id];
       document.getElementById('focusRiderSpeed').textContent = prog ? `${prog.speed} km/h • ${prog.distanceKm || 0} km` : 'Terhubung';
       banner.style.display = 'flex';
     }
-    const devId = r.traccar_device_id;
-    const m = markerById[devId];
+    const m = markerById[r.id] || (r.traccar_device_id && markerById[r.traccar_device_id]);
     if (m) {
       map.setView(m.getLatLng(), 16);
       m.openPopup();
@@ -1536,29 +1562,27 @@ async function renderLiveMap(params) {
   // ── Leaderboard renderer & search filter ──
   function updateLeaderboard() {
     // 1. Calculate live race ranks based on distance
-    const rankByDevId = {};
+    const rankByRiderId = {};
     const sortedRanks = Object.entries(progressById)
-      .map(([devId, prog]) => ({ devId, ...prog }))
+      .map(([riderId, prog]) => ({ riderId: Number(riderId), ...prog }))
       .sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
 
     sortedRanks.forEach((item, idx) => {
-      rankByDevId[item.devId] = idx + 1;
+      rankByRiderId[item.riderId] = idx + 1;
     });
 
     let entries = Object.entries(progressById)
-      .map(([deviceId, prog]) => ({ rider: riderById[deviceId], ...prog }))
+      .map(([riderId, prog]) => ({ rider: riderById[riderId], ...prog }))
       .filter(e => e.rider);
 
     // 2. Sort according to user preference
     if (leaderboardSortMode === 'bib') {
-      // Sort by BIB number (stays completely fixed & static)
       entries.sort((a, b) => {
         const numA = parseInt(String(a.rider.bib).replace(/\D/g, ''), 10) || 0;
         const numB = parseInt(String(b.rider.bib).replace(/\D/g, ''), 10) || 0;
         return numA - numB;
       });
     } else {
-      // Sort by distance (race rank leader)
       entries.sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
     }
 
@@ -1591,10 +1615,10 @@ async function renderLiveMap(params) {
     }
 
     // Synchronize card visibility: hide cards not in current filter
-    const activeDevIds = new Set(entries.map(e => e.rider.traccar_device_id));
+    const activeRiderIds = new Set(entries.map(e => e.rider.id));
     leaderboardEl.querySelectorAll('.leaderboard-item').forEach(card => {
-      const cardDevId = Number(card.id.replace('rider-card-', ''));
-      if (!activeDevIds.has(cardDevId)) {
+      const cardRiderId = Number(card.id.replace('rider-card-', ''));
+      if (!activeRiderIds.has(cardRiderId)) {
         card.style.display = 'none';
       } else {
         card.style.display = 'flex';
@@ -1624,21 +1648,21 @@ async function renderLiveMap(params) {
     if (initPlaceholder) initPlaceholder.remove();
 
     entries.forEach((e, i) => {
-      const devId = e.rider.traccar_device_id;
-      const raceRank = rankByDevId[devId] || (i + 1);
+      const riderId = e.rider.id;
+      const raceRank = rankByRiderId[riderId] || (i + 1);
       const rankDisplay = raceRank <= 3 ? ['🥇','🥈','🥉'][raceRank - 1] : `#${raceRank}`;
       const status = getRiderStatus(e.lastTime);
       const isMoving = e.speed > 2;
       const isTarget = targetRider && String(targetRider.bib).toLowerCase() === String(e.rider.bib).toLowerCase();
 
-      let card = document.getElementById(`rider-card-${devId}`);
+      let card = document.getElementById(`rider-card-${riderId}`);
       if (!card) {
         card = document.createElement('div');
-        card.id = `rider-card-${devId}`;
+        card.id = `rider-card-${riderId}`;
         card.className = `leaderboard-item ${isTarget ? 'focused-rider' : ''}`;
         card.onclick = () => {
           activateTargetRider(e.rider);
-          panToRider(devId);
+          panToRider(riderId);
         };
         card.innerHTML = `
           <div class="leaderboard-rank ${raceRank <= 3 ? 'top' : ''}">${rankDisplay}</div>
@@ -1647,6 +1671,7 @@ async function renderLiveMap(params) {
             <div class="leaderboard-name-row">
               <span class="leaderboard-name">${e.rider.name}</span>
               <span class="leaderboard-bib-tag">#${e.rider.bib}</span>
+              ${e.rider.role === 'sweeper' ? '<span class="badge" style="background:#F97316;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🧹 SWEEPER</span>' : (e.rider.role === 'marshall' ? '<span class="badge" style="background:#3B82F6;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🏍️ MARSHALL</span>' : (e.rider.role === 'medic' ? '<span class="badge" style="background:#EF4444;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🚑 MEDIS</span>' : ''))}
               <button class="btn-compare-rider ${comparingRiderId === e.rider.id ? 'active' : ''}" onclick="event.stopPropagation(); triggerCompareRider(${e.rider.id})" title="Bandingkan rider">
                 ⚔️ ${comparingRiderId === e.rider.id ? 'Batal' : 'VS'}
               </button>
@@ -2168,6 +2193,13 @@ async function renderLiveMap(params) {
     btnToggleReplay.classList.add('active');
     replayControlBar.style.display = 'block';
 
+    // Clear live markers before starting replay
+    Object.values(markerById).forEach(m => {
+      if (m && clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
+    });
+    for (const k in markerById) delete markerById[k];
+    for (const k in progressById) delete progressById[k];
+
     try {
       const res = await fetch(`/api/events/${eventId}/history`);
       replayHistory = res.ok ? await res.json() : [];
@@ -2232,6 +2264,14 @@ async function renderLiveMap(params) {
     btnToggleReplay.classList.remove('active');
     replayControlBar.style.display = 'none';
     btnReplayPlay.textContent = '▶';
+
+    // Clear replay markers and re-sync live positions
+    Object.values(markerById).forEach(m => {
+      if (m && clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
+    });
+    for (const k in markerById) delete markerById[k];
+    for (const k in progressById) delete progressById[k];
+    syncLatestPositionsFromHistory();
     showToast('Kembali ke mode Live tracking 🔴', 'success');
   }
 
@@ -2503,6 +2543,48 @@ async function renderLiveMap(params) {
 
     ws.onerror = err => console.error('[LiveMap] WS error:', err);
   }
+
+  // ── Initial and Fallback Polling for Web Telemetry ──
+  async function syncLatestPositionsFromHistory() {
+    if (isReplayActive) return;
+    try {
+      const res = await fetch(`/api/events/${eventId}/history`);
+      if (!res.ok) return;
+      const historyPoints = await res.json();
+      if (!Array.isArray(historyPoints) || !historyPoints.length) return;
+
+      const latestPerRider = {};
+      historyPoints.forEach(pt => {
+        if (!latestPerRider[pt.rider_id] || new Date(pt.recorded_at) > new Date(latestPerRider[pt.rider_id].recorded_at)) {
+          latestPerRider[pt.rider_id] = pt;
+        }
+      });
+
+      Object.values(latestPerRider).forEach(pt => {
+        const r = riders.find(item => item.id === pt.rider_id);
+        if (!r) return;
+
+        const devKey = r.traccar_device_id || r.id;
+        updateRiderPosition(devKey, {
+          latitude: pt.latitude,
+          longitude: pt.longitude,
+          speed: pt.speed || 0,
+          isKmh: true,
+          fixTime: pt.recorded_at,
+          attributes: {}
+        });
+      });
+    } catch (e) {}
+  }
+
+  // Fetch immediately on load
+  syncLatestPositionsFromHistory();
+  // Periodic fallback sync every 8 seconds
+  const historyPollInterval = setInterval(syncLatestPositionsFromHistory, 8000);
+
+  window.addEventListener('popstate', () => {
+    clearInterval(historyPollInterval);
+  }, { once: true });
 
   connectWs();
 }

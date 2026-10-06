@@ -92,42 +92,67 @@ async function renderAdminNotifications() {
               </div>
 
               <!-- Action Buttons -->
-              <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
                 <button type="submit" id="btnSaveNotif" class="btn btn-primary" style="padding:12px 24px">
                   💾 Simpan Pengaturan
                 </button>
-                <button type="button" id="btnTestNotif" class="btn btn-outline" style="padding:12px 20px;border-color:var(--color-orange);color:var(--color-orange)">
-                  ⚡ Kirim Pesan Uji Coba
+                <button type="button" id="btnTestTg" class="btn btn-outline" style="padding:12px 18px;border-color:var(--color-orange);color:var(--color-orange)">
+                  ⚡ Tes Telegram
+                </button>
+                <button type="button" id="btnTestWebhook" class="btn btn-outline" style="padding:12px 18px;border-color:var(--color-sage);color:var(--color-sage)">
+                  ⚡ Tes Webhook
+                </button>
+                <button type="button" id="btnTestSiren" class="btn btn-outline" style="padding:12px 18px;border-color:var(--color-red);color:var(--color-red)">
+                  🔊 Tes Sirene SOS Panitia
                 </button>
               </div>
             </form>
 
             <!-- Test Result Banner -->
-            <div id="testResultBox" style="display:none;margin-top:20px;padding:14px;border-radius:var(--radius-sm);font-size:13px"></div>
+            <div id="testResultBox" style="display:none;margin-top:20px;padding:16px;border-radius:var(--radius-sm);font-size:13px;line-height:1.6"></div>
           </div>
 
           <!-- Quick Guide Sidebar -->
           <div class="card" style="border-color:var(--border)">
+            <div style="background:rgba(242,132,47,0.1);border:1px solid rgba(242,132,47,0.3);border-radius:10px;padding:14px;margin-bottom:18px;font-size:12.5px;line-height:1.6">
+              ⚠️ <strong>PENTING (Syarat Wajib Telegram):</strong>
+              <div style="margin-top:6px;color:var(--text-primary)">
+                Sistem Telegram <b>melarang bot</b> mengirim pesan pertama kali ke pengguna jika Anda belum pernah membuka chat bot tersebut.
+              </div>
+              <div style="margin-top:6px">
+                👉 <b>Wajib:</b> Buka bot Anda di Telegram dan klik tombol <b>START</b> atau ketik <code>/start</code> agar bot diizinkan mengirim notifikasi.
+              </div>
+            </div>
+
             <h3 style="font-size:14px;font-weight:700;color:var(--color-orange);margin-bottom:14px;display:flex;align-items:center;gap:6px">
-              <span>📖</span> Panduan Setup Telegram
+              <span>📖</span> Panduan Setup Telegram Panitia
             </h3>
-            <ol style="margin-left:18px;font-size:12px;line-height:1.7;color:var(--text-secondary)">
+            <ol style="margin-left:18px;font-size:12px;line-height:1.75;color:var(--text-secondary)">
               <li>Buka Telegram dan cari akun resmi <b style="color:var(--text-primary)">@BotFather</b>.</li>
-              <li>Kirimkan perintah <code>/newbot</code> dan ikuti instruksi hingga mendapatkan <b>HTTP API Token</b>.</li>
-              <li>Buat grup panitia (atau chat pribadi), lalu masukkan bot yang baru dibuat ke dalam grup tersebut.</li>
-              <li>Jadikan bot sebagai <b>Administrator</b> di grup agar dapat mengirim pesan dengan lancar.</li>
-              <li>Cari tahu Chat ID grup Anda menggunakan bot bantuan seperti <b style="color:var(--text-primary)">@userinfobot</b> atau <b style="color:var(--text-primary)">@getidsbot</b>.</li>
-              <li>Salin Token & Chat ID ke formulir di samping, lalu klik <b>Simpan</b> dan <b>Kirim Pesan Uji Coba</b>!</li>
+              <li>Kirim perintah <code>/newbot</code>, berikan nama bot & username unik (harus berakhiran <i>bot</i>).</li>
+              <li>Salin <b>HTTP API Token</b> yang diberikan @BotFather.</li>
+              <li>Buka chat dengan bot baru Anda, lalu klik <b>START</b>.</li>
+              <li><b>Untuk Grup Panitia:</b> Masukkan bot ke grup, jadikan bot sebagai <b>Administrator</b> di grup.</li>
+              <li>Ketahui Chat ID Anda atau Grup Anda via <b style="color:var(--text-primary)">@userinfobot</b> (Chat ID grup biasanya diawali <code>-100...</code>).</li>
+              <li>Masukkan Token & Chat ID ke formulir, lalu klik <b>Simpan</b> dan <b>Tes Telegram</b>!</li>
             </ol>
 
             <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:12px;color:var(--text-secondary)">
-              💡 <i>Pengaturan ini otomatis tersimpan di database lokal SQLite dan dapat diisi juga melalui file <code>.env</code>.</i>
+              🚨 <b>Notifikasi Race Control Langsung di Browser:</b>
+              <p style="margin-top:4px">
+                Selain Telegram/Webhook, sirene darurat dan banner merah otomatis berbunyi di semua layar Admin saat rider menekan SOS. Anda dapat menguji suara alarm dengan tombol <b>Tes Sirene SOS</b>.
+              </p>
             </div>
           </div>
         </div>
       </main>
     </div>
   `;
+
+  // Initialize Global SOS Monitor
+  if (window.AdminSosMonitor) {
+    window.AdminSosMonitor.init();
+  }
 
   // Fetch current settings
   try {
@@ -192,15 +217,15 @@ async function renderAdminNotifications() {
     }
   });
 
-  // Handle Test Send
-  document.getElementById('btnTestNotif').addEventListener('click', async () => {
-    const btn = document.getElementById('btnTestNotif');
+  // Helper for testing
+  async function runChannelTest(channel, btnEl, btnOriginalText) {
     const resultBox = document.getElementById('testResultBox');
-    btn.disabled = true;
-    btn.textContent = '⚡ Mengirim Tes...';
+    btnEl.disabled = true;
+    btnEl.textContent = 'Menguji...';
     resultBox.style.display = 'none';
 
     const payload = {
+      channel,
       telegramToken:  document.getElementById('tgToken').value.trim(),
       telegramChatId: document.getElementById('tgChatId').value.trim(),
       webhookUrl:     document.getElementById('webhookUrl').value.trim()
@@ -215,36 +240,75 @@ async function renderAdminNotifications() {
       const data = await res.json();
 
       let html = '';
+      let isSuccess = data.success;
+
       if (data.results?.telegram) {
         if (data.results.telegram.success) {
-          html += `<div style="color:var(--color-green);margin-bottom:6px">✅ <b>Telegram:</b> Pesan uji coba berhasil terkirim ke chat ID!</div>`;
+          html += `
+            <div style="color:var(--color-green);margin-bottom:6px">
+              ✅ <b>Telegram Sukses:</b> Pesan uji coba darurat berhasil terkirim ke chat ID <code>${escapeHtml(data.results.telegram.chatId || payload.telegramChatId)}</code>! Silakan cek aplikasi Telegram Anda.
+            </div>
+          `;
         } else {
-          html += `<div style="color:var(--color-red);margin-bottom:6px">❌ <b>Telegram:</b> Gagal (${escapeHtml(data.results.telegram.error)})</div>`;
+          html += `
+            <div style="color:var(--color-red);margin-bottom:6px">
+              ❌ <b>Telegram Gagal:</b> ${escapeHtml(data.results.telegram.error || 'Terjadi kesalahan')}
+            </div>
+          `;
         }
       }
+
       if (data.results?.webhook) {
         if (data.results.webhook.success) {
-          html += `<div style="color:var(--color-green)">✅ <b>Webhook:</b> Payload ping berhasil terkirim ke URL!</div>`;
+          html += `
+            <div style="color:var(--color-green)">
+              ✅ <b>Webhook Sukses:</b> Payload ping darurat berhasil diterima oleh endpoint webhook!
+            </div>
+          `;
         } else {
-          html += `<div style="color:var(--color-red)">❌ <b>Webhook:</b> Gagal (${escapeHtml(data.results.webhook.error)})</div>`;
+          html += `
+            <div style="color:var(--color-red)">
+              ❌ <b>Webhook Gagal:</b> ${escapeHtml(data.results.webhook.error || 'Terjadi kesalahan')}
+            </div>
+          `;
         }
       }
 
       resultBox.innerHTML = html;
       resultBox.style.display = 'block';
-      resultBox.style.background = data.success ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-      resultBox.style.border = data.success ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(239,68,68,0.3)';
+      resultBox.style.background = isSuccess ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+      resultBox.style.border = isSuccess ? '1.5px solid rgba(16,185,129,0.35)' : '1.5px solid rgba(239,68,68,0.35)';
 
-      if (data.success) {
+      if (isSuccess) {
         showToast('Pesan uji coba berhasil terkirim!', 'success');
       } else {
-        showToast('Uji coba selesai dengan catatan.', 'info');
+        showToast('Uji coba gagal: silakan periksa keterangan di bawah.', 'error');
       }
     } catch (err) {
       showToast('Gagal menjalankan tes: ' + err.message, 'error');
     } finally {
-      btn.disabled = false;
-      btn.textContent = '⚡ Kirim Pesan Uji Coba';
+      btnEl.disabled = false;
+      btnEl.textContent = btnOriginalText;
+    }
+  }
+
+  // Handle Telegram Test
+  document.getElementById('btnTestTg').addEventListener('click', () => {
+    runChannelTest('telegram', document.getElementById('btnTestTg'), '⚡ Tes Telegram');
+  });
+
+  // Handle Webhook Test
+  document.getElementById('btnTestWebhook').addEventListener('click', () => {
+    runChannelTest('webhook', document.getElementById('btnTestWebhook'), '⚡ Tes Webhook');
+  });
+
+  // Handle In-App Siren & Web Notification Test
+  document.getElementById('btnTestSiren').addEventListener('click', () => {
+    if (window.AdminSosMonitor) {
+      window.AdminSosMonitor.playTestAlarm();
+    } else {
+      showToast('Sirene darurat aktif!', 'info');
     }
   });
 }
+

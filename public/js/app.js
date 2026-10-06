@@ -18,6 +18,37 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── Rider flow ──
+  Router.register('/r/:token', async (params) => {
+    const token = params.token;
+    if (!token) {
+      Router.navigate('/rider');
+      return;
+    }
+    document.getElementById('app').innerHTML = `
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
+        <div style="font-size:56px;margin-bottom:16px">🚴‍♂️</div>
+        <h2 style="font-size:20px;font-weight:800;color:var(--text-primary)">Menghubungkan Akun Rider...</h2>
+        <p style="color:var(--text-secondary);font-size:14px;margin-top:6px">Memvalidasi akses Magic Link Anda</p>
+      </div>
+    `;
+    try {
+      const res = await fetch(`/api/auth/token/${encodeURIComponent(token)}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        sessionStorage.setItem('riderConfig', JSON.stringify(data));
+        localStorage.setItem('riderConfig', JSON.stringify(data));
+        showToast(`Selamat datang, ${data.rider.name}!`, 'success');
+        Router.navigate('/rider/setup');
+      } else {
+        showToast(data.error || 'Tautan Magic Link tidak valid.', 'error');
+        Router.navigate('/rider');
+      }
+    } catch {
+      showToast('Koneksi bermasalah saat login.', 'error');
+      Router.navigate('/rider');
+    }
+  });
+
   Router.register('/rider', async () => {
     await loadPageDeps(['/js/pages/rider-login.js'], ['/css/rider.css']);
     renderRiderLogin();
