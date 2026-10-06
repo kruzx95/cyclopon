@@ -528,6 +528,154 @@
   transform: rotate(-4deg);
 }
 
+/* ── Mobile Responsive Overhaul ── */
+@media (max-width: 768px) {
+  .results-container {
+    padding: 16px 12px 60px 12px;
+    max-width: 100%;
+  }
+  .results-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .results-title {
+    font-size: 19px;
+    line-height: 1.3;
+  }
+  .results-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .results-actions .btn {
+    padding: 8px 4px;
+    font-size: 11.5px;
+    justify-content: center;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .results-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .results-stat-card {
+    padding: 12px 10px;
+  }
+  .results-stat-lbl {
+    font-size: 10.5px;
+  }
+  .results-stat-num {
+    font-size: 22px;
+  }
+  .results-stat-sub {
+    font-size: 11px;
+  }
+  .results-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .results-search-box {
+    min-width: 0;
+    width: 100%;
+  }
+  .results-filter-pills {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+  .results-pill {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  /* Certificate Modal Mobile */
+  .certificate-modal-overlay {
+    padding: 10px;
+  }
+  .brevet-certificate {
+    padding: 24px 14px;
+    border-width: 3px;
+  }
+  .brevet-certificate::before {
+    inset: 5px;
+  }
+  .cert-seal {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 10px;
+  }
+  .cert-seal-icon {
+    font-size: 20px;
+  }
+  .cert-header-title {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+  }
+  .cert-main-title {
+    font-size: 19px;
+  }
+  .cert-subtitle {
+    font-size: 11.5px;
+    margin-bottom: 16px;
+  }
+  .cert-rider-name {
+    font-size: 22px;
+  }
+  .cert-bib-tag {
+    margin-bottom: 16px;
+  }
+  .cert-metrics-row {
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .cert-metric-box {
+    min-width: 0;
+    flex: 1 1 calc(50% - 8px);
+    padding: 8px 10px;
+  }
+  .cert-metric-val {
+    font-size: 17px;
+  }
+  .cert-stamps-list {
+    gap: 6px;
+  }
+  .cert-stamp-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+  .cert-footer-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 14px;
+    margin-top: 18px;
+    padding-top: 16px;
+  }
+  .cert-signature-box {
+    text-align: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .results-actions {
+    grid-template-columns: 1fr;
+  }
+  .results-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Print Stylesheet ── */
 @media print {
   body * {

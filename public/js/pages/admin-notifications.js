@@ -27,7 +27,7 @@ async function renderAdminNotifications() {
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:minmax(0, 1fr) 340px;gap:24px;align-items:start">
+        <div class="admin-grid-sidebar">
           <!-- Main Form Card -->
           <div class="card">
             <h2 style="font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px">
@@ -42,11 +42,11 @@ async function renderAdminNotifications() {
                 </h3>
 
                 <div class="form-group" style="margin-bottom:14px">
-                  <label for="tgToken" style="display:flex;justify-content:space-between">
+                  <label for="tgToken" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">
                     <span>Bot Token API</span>
                     <span id="tokenStatusBadge" style="font-size:11px;color:var(--text-secondary)"></span>
                   </label>
-                  <input class="input" type="text" id="tgToken" placeholder="Contoh: 7123456789:AAHkL..." autocomplete="off">
+                  <input class="input" type="text" id="tgToken" placeholder="7123456789:AAHkL..." autocomplete="off">
                   <small style="color:var(--text-secondary);font-size:11px;display:block;margin-top:4px">
                     Didapatkan dari <a href="https://t.me/BotFather" target="_blank" rel="noopener" style="color:var(--color-orange)">@BotFather</a> di Telegram.
                   </small>
@@ -54,9 +54,9 @@ async function renderAdminNotifications() {
 
                 <div class="form-group" style="margin-bottom:0">
                   <label for="tgChatId">Telegram Chat ID / Group ID</label>
-                  <input class="input" type="text" id="tgChatId" placeholder="Contoh: -1001234567890 atau @nama_channel">
+                  <input class="input" type="text" id="tgChatId" placeholder="-1001234567890 atau @channel">
                   <small style="color:var(--text-secondary);font-size:11px;display:block;margin-top:4px">
-                    ID pengguna atau grup panitia (grup biasanya diawali tanda minus <code>-</code> atau <code>-100</code>).
+                    ID pengguna atau grup panitia (grup diawali minus <code>-</code> atau <code>-100</code>).
                   </small>
                 </div>
               </div>
@@ -69,7 +69,7 @@ async function renderAdminNotifications() {
 
                 <div class="form-group" style="margin-bottom:0">
                   <label for="webhookUrl">Webhook URL</label>
-                  <input class="input" type="url" id="webhookUrl" placeholder="https://discord.com/api/webhooks/... atau https://hooks.slack.com/...">
+                  <input class="input" type="url" id="webhookUrl" placeholder="https://discord.com/api/webhooks/...">
                   <small style="color:var(--text-secondary);font-size:11px;display:block;margin-top:4px">
                     Menerima payload JSON <code>cyclopon.sos_alert</code> & <code>cyclopon.over_cot</code>.
                   </small>
@@ -79,30 +79,30 @@ async function renderAdminNotifications() {
               <!-- Trigger Toggles -->
               <div style="margin-bottom:24px">
                 <h3 style="font-size:14px;font-weight:700;margin-bottom:12px">Kondisi Pengiriman Otomatis</h3>
-                <div style="display:flex;flex-direction:column;gap:10px">
-                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px">
-                    <input type="checkbox" id="chkSos" checked style="width:18px;height:18px;accent-color:var(--color-red)">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.4">
+                    <input type="checkbox" id="chkSos" checked style="width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:var(--color-red)">
                     <span>🚨 <b>Kirim Peringatan SOS</b> (Kecelakaan, Medis, Kerusakan Sepeda, Evakuasi DNF)</span>
                   </label>
-                  <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px">
-                    <input type="checkbox" id="chkCot" checked style="width:18px;height:18px;accent-color:var(--color-orange)">
+                  <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.4">
+                    <input type="checkbox" id="chkCot" checked style="width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:var(--color-orange)">
                     <span>⏱️ <b>Kirim Peringatan Over Cut-Off Time (COT)</b> saat rider melewati batas waktu pos</span>
                   </label>
                 </div>
               </div>
 
               <!-- Action Buttons -->
-              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-                <button type="submit" id="btnSaveNotif" class="btn btn-primary" style="padding:12px 24px">
+              <div class="admin-action-btn-row">
+                <button type="submit" id="btnSaveNotif" class="btn btn-primary" style="padding:12px 22px">
                   💾 Simpan Pengaturan
                 </button>
-                <button type="button" id="btnTestTg" class="btn btn-outline" style="padding:12px 18px;border-color:var(--color-orange);color:var(--color-orange)">
+                <button type="button" id="btnTestTg" class="btn btn-outline" style="padding:12px 16px;border-color:var(--color-orange);color:var(--color-orange)">
                   ⚡ Tes Telegram
                 </button>
-                <button type="button" id="btnTestWebhook" class="btn btn-outline" style="padding:12px 18px;border-color:var(--color-sage);color:var(--color-sage)">
+                <button type="button" id="btnTestWebhook" class="btn btn-outline" style="padding:12px 16px;border-color:var(--color-sage);color:var(--color-sage)">
                   ⚡ Tes Webhook
                 </button>
-                <button type="button" id="btnTestSiren" class="btn btn-outline" style="padding:12px 18px;border-color:var(--color-red);color:var(--color-red)">
+                <button type="button" id="btnTestSiren" class="btn btn-outline" style="padding:12px 16px;border-color:var(--color-red);color:var(--color-red)">
                   🔊 Tes Sirene SOS Panitia
                 </button>
               </div>
@@ -153,6 +153,21 @@ async function renderAdminNotifications() {
   if (window.AdminSosMonitor) {
     window.AdminSosMonitor.init();
   }
+
+  // ── Mobile Hamburger Drawer ──
+  (function () {
+    const hamburger = document.getElementById('adminHamburger');
+    const drawer    = document.getElementById('adminDrawer');
+    const overlay   = document.getElementById('adminDrawerOverlay');
+    const closeBtn  = document.getElementById('adminDrawerClose');
+    function openDrawer()  { if (drawer) drawer.classList.add('open');    if (overlay) overlay.classList.add('show');    document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { if (drawer) drawer.classList.remove('open'); if (overlay) overlay.classList.remove('show'); document.body.style.overflow = ''; }
+    if (hamburger) hamburger.addEventListener('click', openDrawer);
+    if (closeBtn)  closeBtn.addEventListener('click', closeDrawer);
+    if (overlay)   overlay.addEventListener('click', closeDrawer);
+    const drawerLinks = drawer ? drawer.querySelectorAll('a[data-link]') : [];
+    drawerLinks.forEach(l => l.addEventListener('click', closeDrawer));
+  })();
 
   // Fetch current settings
   try {

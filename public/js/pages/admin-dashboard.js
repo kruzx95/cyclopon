@@ -10,9 +10,49 @@ function adminSidebar(activeKey) {
   } catch {}
 
   return `
+    <!-- ── Mobile Top Bar (visible on mobile only) ── -->
+    <div class="admin-mobile-topbar">
+      <a href="/" data-link class="admin-mobile-brand">CycloPon</a>
+      <button class="admin-hamburger" id="adminHamburger" aria-label="Buka menu navigasi" title="Menu Navigasi">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── Mobile Drawer Overlay ── -->
+    <div class="admin-drawer-overlay" id="adminDrawerOverlay"></div>
+
+    <!-- ── Mobile Slide-Out Drawer ── -->
+    <div class="admin-drawer" id="adminDrawer">
+      <div class="admin-drawer-header">
+        <span class="admin-drawer-brand">CycloPon</span>
+        <button class="admin-drawer-close" id="adminDrawerClose" aria-label="Tutup menu">✕</button>
+      </div>
+      <div class="admin-drawer-user">
+        <span>👤</span>
+        <span>${adminName}</span>
+      </div>
+      <nav class="admin-drawer-nav">
+        <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
+          <span>📊</span> Dashboard
+        </a>
+        <a href="/admin/notifications" data-link class="${activeKey === 'notifications' ? 'active' : ''}">
+          <span>📢</span> Notifikasi Panitia
+        </a>
+        <a href="/" data-link>
+          <span>🏠</span> Beranda
+        </a>
+      </nav>
+      <div class="admin-drawer-footer">
+        <button onclick="logoutAdmin()" class="admin-drawer-logout">🚪 Keluar (Logout)</button>
+      </div>
+    </div>
+
+    <!-- ── Desktop Sidebar ── -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <h2>🚴 CycloPon</h2>
+        <h2>CycloPon</h2>
         <small>Admin Panel</small>
       </div>
       <div style="padding:10px 24px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px">
@@ -266,7 +306,7 @@ const AdminSosMonitor = {
             }
             return `
               <div class="dashboard-sos-item">
-                <div style="flex:1;min-width:240px">
+                <div style="flex:1;min-width:0;width:100%">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
                     <span style="font-weight:900;color:var(--color-red);font-size:14px">${rBib}</span>
                     <strong style="color:var(--text-primary);font-size:14px">${rName}</strong>
@@ -284,7 +324,7 @@ const AdminSosMonitor = {
                     <span>⏰ Waktu: ${a.created_at ? new Date(a.created_at).toLocaleTimeString('id-ID') : '-'}</span>
                   </div>
                 </div>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <div class="dashboard-sos-actions">
                   ${waBtn}
                   <a href="${mapUrl}" target="_blank" rel="noopener" class="btn btn-outline" style="padding:6px 12px;font-size:12px">🗺️ Live Map</a>
                   <button onclick="AdminSosMonitor.resolveAlert(${a.id})" class="btn btn-primary" style="padding:6px 14px;font-size:12px;background:#10B981;border-color:#10B981">✓ Tandai Selesai</button>
@@ -625,6 +665,31 @@ async function renderAdminDashboard() {
 
   document.getElementById('btnNewEvent').addEventListener('click', () => Router.navigate('/admin/events/new'));
 
+  // ── Mobile Hamburger Drawer ──
+  const hamburger = document.getElementById('adminHamburger');
+  const drawer    = document.getElementById('adminDrawer');
+  const overlay   = document.getElementById('adminDrawerOverlay');
+  const closeBtn  = document.getElementById('adminDrawerClose');
+
+  function openDrawer() {
+    drawer.classList.add('open');
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  if (hamburger) hamburger.addEventListener('click', openDrawer);
+  if (closeBtn)  closeBtn.addEventListener('click', closeDrawer);
+  if (overlay)   overlay.addEventListener('click', closeDrawer);
+
+  // Close drawer when a nav link is clicked
+  const drawerLinks = drawer ? drawer.querySelectorAll('a[data-link]') : [];
+  drawerLinks.forEach(link => link.addEventListener('click', closeDrawer));
+
   // Initialize Race Control SOS Monitor
   AdminSosMonitor.init();
 
@@ -707,6 +772,8 @@ async function renderAdminDashboard() {
                   onclick="Router.navigate('/admin/events/${ev.id}')">⚙️ Kelola</button>
           <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
              href="/watch/${ev.id}" target="_blank" rel="noopener">🗺️ Live Map</a>
+          <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
+             href="/events/${ev.id}/results" target="_blank" rel="noopener">🏆 Hasil & Brevet</a>
         </div>
       </div>
     `).join('');

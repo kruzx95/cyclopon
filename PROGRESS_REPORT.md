@@ -1,7 +1,7 @@
 # 🚴 Laporan Progres Pengembangan CycloPon Live Tracker
 
 **Tanggal Laporan:** 6 Oktober 2026  
-**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 16) & Penyeragaman Desain Selesai 100%**  
+**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 18) Selesai 100% (Production-Ready)**  
 **Total Pengujian Unit:** 73 / 73 Lulus (10 Test Suites)
 
 ---
@@ -33,7 +33,10 @@
 14. [Phase 14: Real-Time Visitor Traffic & Live Spectator Analytics](#14-phase-14-real-time-visitor-traffic--live-spectator-analytics-di-admin-panel)
 15. [Phase 15: Onboarding Peserta & Registrasi Manual Panitia/Sweeper (Zero-Confusion)](#15-phase-15-onboarding-peserta--registrasi-manual-panitiasweeper-zero-confusion)
 16. [Phase 16: Penyeragaman & Modernisasi UI Menyeluruh (2026 Athletic / Sports-Grade Design)](#16-phase-16-penyeragaman--modernisasi-ui-menyeluruh-2026-athletic--sports-grade-design)
-17. [Rekomendasi Langkah Berikutnya](#17-rekomendasi-langkah-berikutnya)
+17. [Phase 17: Race Control In-App SOS Monitor & Notifikasi](#17-phase-17-race-control-in-app-sos-monitor-audio-sirene--perbaikan-pengujian-notifikasi)
+18. [Phase 18: Pemisahan Live Map (Spectator vs Admin) & Mobile Responsive](#18-phase-18-pemisahan-tampilan-live-map-mode-penonton-vs-panitia-race-control-penamaan-lapisan-peta-standar--optimalisasi-mobile-responsive)
+19. [Phase 19: Tipografi Murni Brand "CycloPon" (Peniadaan Ikon Emoji Sepeda)](#19-phase-19-tipografi-murni-brand-cyclopon-peniadaan-ikon-emoji-sepeda-di-mode-desktop--mobile)
+20. [Rekomendasi Langkah Berikutnya](#20-rekomendasi-langkah-berikutnya)
 
 ---
 
@@ -521,12 +524,80 @@ Menjawab kebutuhan estetika modern kelas industri olahraga internasional (sepert
 
 ---
 
-## 18. Rekomendasi Langkah Berikutnya
+## 18. Phase 18: Pemisahan Tampilan Live Map, Arsitektur Floating Controls (Google Maps / Strava Style) & Optimalisasi Mobile Responsive
+
+### Latar Belakang & Masukan:
+Pada tampilan Live Map sebelumnya di smartphone/mobile:
+1. Seluruh kontrol teknis (*Layer OSM*, *CyclOSM*, *Esri Satelit*, *Fit Rute*, *Elevasi*, *Leaderboard*, *Hasil*, dan *Simulasi*) ditempatkan di satu baris header atas.
+2. Ketika label teks disembunyikan di layar kecil, header berubah menjadi deretan kotak emoji kerdil yang berhimpitan (`[🚴 🛰️] [🎯] [⛰️] [📊 2] [🏆]`), sebagian terpotong scroll horizontal, dan nama event menjadi sangat sempit (terpotong di 95px).
+
+### Solusi & Implementasi:
+1. **Arsitektur Floating Action Controls (Gaya Google Maps / Strava):**
+   - **Header Bersih & Ultra-Minimalis:** 
+     - Sisi kiri: Logo 🚴 + Nama Event (misal *"Gravel to Gang"*) ditampilkan utuh, tebal, dan proporsional tanpa terpotong kaku.
+     - Sisi kanan: **Hanya 1 tombol utama untuk Penonton**: **📊 Leaderboard [2]**! 
+     - Tombol **🏆 Hasil & Brevet** dialihkan khusus untuk Panitia/Admin (tersedia di kartu event Admin Dashboard `/admin/dashboard`, panel edit event `/admin/events/:id`, dan hanya muncul di Live Map jika masuk sebagai admin).
+     - Seluruh tombol layer, fit rute, dan elevasi **dikeluarkan dari header** menjadi floating controls di peta!
+   - **Floating Action Stack (`.map-floating-stack`) di Sisi Kanan Peta (Ikon Vektor Standar Legal):**
+     - **Layer Picker FAB (Stacked Layers):** Menggantikan emoji pancake dengan ikon vektor SVG *Rhombus Bertingkat* (standar Google Maps / GIS), membuka pop-over kartu elegan untuk memilih *OSM (Jalan)*, *CyclOSM Sepeda*, dan *Esri Satelit* yang masing-masing dilengkapi ikon SVG vektor presisi (*Folded Map*, *Bicycle*, dan *Globe*).
+     - **Fit Route FAB (GPS Crosshairs Target):** Menggantikan emoji dart dengan ikon vektor SVG *Crosshair Reticle GPS* (standar navigasi Google Maps / Strava) untuk re-center rute secara instan.
+     - **Elevation Profile FAB (Terrain Peaks):** Menggantikan emoji dengan ikon vektor SVG *Kontur Gunung / Terrain Silhouette* untuk buka/tutup grafik elevasi Komoot.
+     - **Ikon Navigasi Seragam:** Tombol Leaderboard dan alat kontrol panitia kini menggunakan ikon SVG monokromatik (`currentColor`) yang menyatu harmonis dengan palet tema tanpa ketergantungan emoji sistem operasi.
+     - **Peniadaan Tombol Zoom `+ / -`:** Tombol zoom statis Leaflet dihilangkan sepenuhnya dari layar. Pengguna dapat memperbesar/memperkecil peta secara natural menggunakan gesture *pinch-to-zoom* (layar sentuh/smartphone) atau *scroll wheel / trackpad* (desktop), menjadikan area pandang peta 100% lapang dan bebas tombol yang tidak perlu.
+
+2. **Pemisahan Mode Penonton (Spectator) vs Panitia (Race Control):**
+   - **Mode Penonton:** Tampilan 100% bebas dari kontrol teknis & administratif (tanpa tombol Hasil & Brevet, Simulasi, Replay, atau Unduh GPX). Di header kanan hanya tersisa 1 tombol tunggal `📊 Leaderboard` yang sangat bersih. Popup darurat SOS bersifat informatif tanpa tombol intervensi kasus.
+   - **Mode Panitia:** Aktif otomatis jika login admin atau via parameter `?admin=1`, menyediakan badge `🛡️ PANITIA`, tombol cepat `← Dashboard`, tombol `🏆 Hasil & Brevet`, `🎮 Simulasi GPS`, `⏮️ Replay Time Machine`, dan `📍 Unduh GPX`.
+   - **Admin Dashboard Integration:** Tombol `🏆 Hasil & Brevet` ditambahkan langsung di setiap kartu event pada Dashboard Utama (`/admin/dashboard`) agar panitia dapat langsung melihat & mencetak rekap hasil resmi tanpa harus masuk ke peta live tracking.
+
+3. **Pembaruan Service Worker:**
+   - Cache shell dinaikkan ke `cyclopon-v22` di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js) agar pembaruan styling CSS dan ikon vektor SVG baru instan terpasang di browser tanpa cache usang.
+
+---
+
+## 19. Phase 19: Tipografi Murni Brand "CycloPon" (Peniadaan Ikon Emoji Sepeda di Mode Desktop & Mobile)
+
+### Latar Belakang & Masukan:
+Pada header aplikasi (khususnya tampilan Live Map dan admin), sebelumnya terdapat ikon emoji sepeda (`🚴`) di samping teks nama brand. Pada tampilan mobile smartphone, styling lama bahkan sempat menyembunyikan tulisan nama brand dan hanya menyisakan emoji sepeda, yang mengurangi kesan profesional dan formal aplikasi.
+
+### Solusi & Implementasi:
+1. **Penghapusan Ikon Emoji Sepeda (`🚴`):**
+   - Menghapus elemen `<span class="logo-icon">🚴</span>` dari markup header di [`public/js/pages/live-map.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/live-map.js).
+   - Menghilangkan emoji `🚴` pada brand sidebar di [`public/js/pages/admin-dashboard.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/admin-dashboard.js).
+2. **Penyempurnaan Tampilan Tipografi Murni "CycloPon":**
+   - Menata ulang CSS `.header-logo` dan `.header-logo .logo-text` di [`public/css/map.css`](file:///home/kruza/Documents/cyclopon/public/css/map.css):
+     - **Desktop:** Menampilkan tipografi teks `CycloPon` dengan warna Sage (`var(--color-sage)`), bobot `font-weight: 900`, `letter-spacing: -0.03em`, dan efek transisi hover ke warna kuning aksen.
+     - **Mobile (Smartphones):** Memastikan teks `CycloPon` tampil utuh (`display: inline-block !important; font-size: 14px;`) tanpa emoji dan tanpa terpotong, memberikan identitas brand yang tegas, minimalis, dan bersih.
+3. **Peningkatan Versi Service Worker:**
+   - Menaikkan cache shell ke `cyclopon-v23` di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js) untuk menjamin pembaruan instan bagi pengguna tanpa tersimpan cache lama.
+4. **Verifikasi Pengujian:**
+   - 73/73 pengujian unit Node.js lulus 100% tanpa regresi.
+
+---
+
+## 20. Phase 20: Audit Responsif Mobile Menyeluruh & Pemulihan Header Live Map Ultra-Bersih
+
+### Latar Belakang & Masukan:
+1. **Layout Admin Terhimpit di Layar Mobile:** Halaman Pengaturan Notifikasi sebelumnya memiliki kolom panduan fixed 340px yang menyebabkan overflow horizontal dan menekan formulir utama menjadi kolom vertikal sempit.
+2. **Kekacauan Header Live Map di Mobile:** Header Live Map sempat memaksakan label teks panjang (`.action-btn-label`) dan tombol ekstra panitia (`🏆 Hasil & Brevet`, `⭳ Unduh GPX`) di layar smartphone 390px, sehingga menumpuk lebih dari 550px lebar konten. Akibatnya, logo `CycloPon` terpotong menjadi satu huruf `C` dan tombol-tombol berantakan saling tumpang tindih.
+
+### Solusi & Implementasi:
+1. **Perbaikan Grid Admin & Proteksi Global ([`public/css/admin.css`](file:///home/kruza/Documents/cyclopon/public/css/admin.css), [`public/css/global.css`](file:///home/kruza/Documents/cyclopon/public/css/global.css), [`public/js/pages/admin-notifications.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/admin-notifications.js)):**
+   - Mengubah `.admin-layout` di mobile ($\le$ 768px) menjadi `flex-direction: column` dengan `overflow-x: hidden`.
+   - Mengganti grid inline fixed 340px dengan class responsif `.admin-grid-sidebar` (1 kolom penuh di mobile, 2 kolom di desktop).
+   - Menambahkan tombol aksi responsif `.admin-action-btn-row` dan touch-scrolling `.table-responsive-wrapper`.
+2. **Pemulihan Header Live Map yang Bersih & Rapi ([`public/js/pages/live-map.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/live-map.js), [`public/css/map.css`](file:///home/kruza/Documents/cyclopon/public/css/map.css)):**
+   - Menghapus tombol *Hasil & Brevet* dan *Unduh GPX* dari header Live Map sesuai instruksi user sebelumnya (fitur tersebut sudah tersedia secara khusus di dashboard admin).
+   - Menyembunyikan label teks tombol di layar mobile (`.action-btn-label { display: none !important; }`), mengubah tombol panitia (`▷ Simulasi`, `↺ Replay`) menjadi tombol ikon modern 34x34px yang hemat ruang.
+   - Mengunci `header-logo` dengan `flex-shrink: 0`, sehingga teks brand **CycloPon** tidak akan pernah terpotong atau tertekan.
+   - Memastikan nama event ditampilkan proporsional dengan elipsis rapi (`text-overflow: ellipsis`).
+3. **Peningkatan Versi Service Worker:**
+   - Cache shell dinaikkan ke `cyclopon-v24` di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+
+---
+
+## 21. Rekomendasi Langkah Berikutnya
 
 1. **Data Demo & Seed Rute GPX Nyata:** Menambahkan script migrasi / seeder interaktif (`npm run seed:demo`) yang menyertakan rute GPX resmi, daftar pos checkpoint riil, dan simulasi 10+ rider aktif untuk keperluan pameran atau demo sponsor.
 2. **PWA Push Notifications:** Web push notification untuk pembaruan status event dan kedatangan pos secara real-time ke smartphone penonton.
-
-
-
-
 

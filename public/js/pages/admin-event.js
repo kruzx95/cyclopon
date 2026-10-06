@@ -112,7 +112,7 @@ async function renderAdminEvent(params) {
 
           <div id="addCpContainer"></div>
 
-          <div style="overflow-x:auto">
+          <div class="table-responsive-wrapper">
             <table class="rider-table">
               <thead>
                 <tr>
@@ -153,7 +153,7 @@ async function renderAdminEvent(params) {
           <div id="importRiderContainer"></div>
           <div id="addRiderContainer"></div>
 
-          <div style="overflow-x:auto">
+          <div class="table-responsive-wrapper">
             <table class="rider-table">
               <thead>
                 <tr>
@@ -183,6 +183,21 @@ async function renderAdminEvent(params) {
   if (window.AdminSosMonitor) {
     window.AdminSosMonitor.init();
   }
+
+  // ── Mobile Hamburger Drawer ──
+  (function () {
+    const hamburger = document.getElementById('adminHamburger');
+    const drawer    = document.getElementById('adminDrawer');
+    const overlay   = document.getElementById('adminDrawerOverlay');
+    const closeBtn  = document.getElementById('adminDrawerClose');
+    function openDrawer()  { if (drawer) drawer.classList.add('open');    if (overlay) overlay.classList.add('show');    document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { if (drawer) drawer.classList.remove('open'); if (overlay) overlay.classList.remove('show'); document.body.style.overflow = ''; }
+    if (hamburger) hamburger.addEventListener('click', openDrawer);
+    if (closeBtn)  closeBtn.addEventListener('click', closeDrawer);
+    if (overlay)   overlay.addEventListener('click', closeDrawer);
+    const drawerLinks = drawer ? drawer.querySelectorAll('a[data-link]') : [];
+    drawerLinks.forEach(l => l.addEventListener('click', closeDrawer));
+  })();
 
   // ── Event form handler ──
   document.getElementById('eventForm').addEventListener('submit', async e => {
