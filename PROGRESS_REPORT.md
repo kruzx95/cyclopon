@@ -743,7 +743,8 @@ Menjawab laporan kendala di mana halaman Rider Hub (`/rider/setup`) tetap berwar
    - **Fungsi Teardown Terbuka (`public/js/pages/rider-cockpit.js`):** Mengekspos `window.teardownRiderCockpit` yang menghentikan interval jam bergerak, melepaskan Wake Lock layar, memutuskan koneksi WebSocket, mematikan pemantauan GPS, dan menghapus class mode malam pada body.
    - **Penanganan Tombol Logout Kokpit:** Mengaitkan tombol `🚪` di topbar kokpit dengan konfirmasi dialog dan teardown bersih sebelum navigasi ke `/rider`.
    - **Isolasi Selektor CSS Ketat (`public/css/cockpit.css`):** Menghapus seluruh selektor global `body.night-mode` dan mewajibkan spesifisitas `body.cockpit-active.night-mode` atau `.cockpit-container.night-mode`. Gaya latar hitam `#000000` dipastikan tidak dapat lagi bocor ke halaman manapun di luar Cockpit HUD.
-   - **Pembaruan Service Worker:** Cache dinaikkan ke `cyclopon-v35` di `public/sw.js`.
+   - **Pencegahan Konflik Variabel & Alias Rute:** Menghapus duplikasi deklarasi variabel `btnCockpitLogout` di `rider-cockpit.js` dan mendaftarkan alias `/cockpit` -> `/rider/cockpit` di `app.js`.
+   - **Pembaruan Service Worker:** Cache dinaikkan ke `cyclopon-v36` di `public/sw.js`.
 
 ---
 
