@@ -4,9 +4,27 @@
  */
 const Router = {
   routes: {},
+  _unmountCallbacks: [],
 
   register(path, handler) {
     this.routes[path] = handler;
+  },
+
+  onUnmount(callback) {
+    if (typeof callback === 'function') {
+      this._unmountCallbacks.push(callback);
+    }
+  },
+
+  teardown() {
+    while (this._unmountCallbacks.length > 0) {
+      const cb = this._unmountCallbacks.pop();
+      try {
+        cb();
+      } catch (err) {
+        console.warn('[Router] unmount error:', err);
+      }
+    }
   },
 
   navigate(path) {
@@ -17,6 +35,21 @@ const Router = {
   resolve(path) {
     // Strip query string for matching
     const cleanPath = path.split('?')[0];
+
+    // Run registered unmount hooks from previous page
+    this.teardown();
+
+    // Clean up cockpit state and document classes when navigating away
+    if (cleanPath !== '/rider/cockpit' && cleanPath !== '/cockpit') {
+      if (typeof window.teardownRiderCockpit === 'function') {
+        try {
+          window.teardownRiderCockpit();
+        } catch (e) {
+          console.warn('[Router] Error during cockpit teardown:', e);
+        }
+      }
+      document.body.classList.remove('cockpit-active', 'night-mode');
+    }
 
     for (const [pattern, handler] of Object.entries(this.routes)) {
       const regex = new RegExp('^' + pattern.replace(/:([^/]+)/g, '([^/]+)') + '$');

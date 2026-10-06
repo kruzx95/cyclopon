@@ -724,12 +724,30 @@ Melanjutkan program standarisasi visual menyeluruh ke estetika **Athletic Minima
   - Tombol besar `🚨 KIRIM SOS DARURAT` merah menyala dengan modal pelaporan darurat instan dan tombol akses cepat kembali ke Live Map.
 
 ### 3. Peningkatan Versi Service Worker & Verifikasi Pengujian
-- Versi Service Worker dinaikkan ke `cyclopon-v34` di [`public/sw.js`](file:///c:/Users/Mallik/Documents/cyclopon/public/sw.js) agar berkas `map.css`, `cockpit.css`, `live-map.js`, dan `rider-cockpit.js` langsung diperbarui di cache browser pengguna.
+- Versi Service Worker dinaikkan ke `cyclopon-v35` di [`public/sw.js`](file:///c:/Users/Mallik/Documents/cyclopon/public/sw.js) agar berkas `map.css`, `cockpit.css`, `live-map.js`, `router.js`, dan `rider-cockpit.js` langsung diperbarui di cache browser pengguna.
 - Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)** tanpa error atau regresi.
 
 ---
 
-## 24. Rekomendasi Langkah Berikutnya
+## 24. Perbaikan Navigasi Keluar Cockpit HUD: Teardown Otomatis & Pemulihan Light Mode
+
+Menjawab laporan kendala di mana halaman Rider Hub (`/rider/setup`) tetap berwarna hitam pekat (*dark mode bleed*) setelah keluar dari Cockpit HUD (`/rider/cockpit`):
+
+1. **Penyebab Masalah (Root Cause):**
+   - Mode malam AMOLED pada Cockpit HUD otomatis aktif pada jam malam/dini hari (< 06:00 atau >= 18:00), menyematkan class `night-mode` pada `document.body`.
+   - Pembersihan class sebelumnya hanya dikaitkan pada event `popstate` browser back button, sedangkan navigasi tautan internal SPA (tombol `🏠 Hub`, `Keluar`, dsb.) menggunakan `Router.navigate()` (`history.pushState`) yang tidak memicu event `popstate`.
+   - Selektor CSS di `cockpit.css` memiliki aturan `body.night-mode { background-color: #000000 !important; }` yang terlalu luas tanpa isolasi scope halaman, sehingga jika class tertinggal, seluruh halaman lain tertimpa latar hitam pekat.
+
+2. **Langkah Perbaikan Komprehensif:**
+   - **Siklus Hidup Unmount Router (`public/js/router.js`):** Menambahkan metode `Router.onUnmount()` dan eksekusi `Router.teardown()` pada setiap transisi rute. Ketika berpindah keluar dari kokpit (`cleanPath !== '/rider/cockpit'`), router secara otomatis mengeksekusi `window.teardownRiderCockpit()` dan membersihkan class `cockpit-active` serta `night-mode` dari `document.body`.
+   - **Fungsi Teardown Terbuka (`public/js/pages/rider-cockpit.js`):** Mengekspos `window.teardownRiderCockpit` yang menghentikan interval jam bergerak, melepaskan Wake Lock layar, memutuskan koneksi WebSocket, mematikan pemantauan GPS, dan menghapus class mode malam pada body.
+   - **Penanganan Tombol Logout Kokpit:** Mengaitkan tombol `🚪` di topbar kokpit dengan konfirmasi dialog dan teardown bersih sebelum navigasi ke `/rider`.
+   - **Isolasi Selektor CSS Ketat (`public/css/cockpit.css`):** Menghapus seluruh selektor global `body.night-mode` dan mewajibkan spesifisitas `body.cockpit-active.night-mode` atau `.cockpit-container.night-mode`. Gaya latar hitam `#000000` dipastikan tidak dapat lagi bocor ke halaman manapun di luar Cockpit HUD.
+   - **Pembaruan Service Worker:** Cache dinaikkan ke `cyclopon-v35` di `public/sw.js`.
+
+---
+
+## 25. Rekomendasi Langkah Berikutnya
 
 1. **Modul 4: Official Results & Brevet Digital (`/events/:id/results`):** Melakukan standarisasi estetika Athletic Minimalist Pro ke halaman rekapitulasi hasil lomba, sertifikat finisher digital, dan ekspor CSV.
 2. **Data Demo & Seed Rute GPX Nyata:** Script seeder otomatis (`npm run seed:demo`) yang menyertakan rute GPX resmi, pos kontrol riil, dan simulasi pergerakan rider aktif untuk demonstrasi kepada sponsor atau panitia event.

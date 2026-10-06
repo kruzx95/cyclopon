@@ -749,8 +749,7 @@ body.cockpit-active {
 }
 
 /* ── AMOLED Pitch-Black Night Mode (#000000) ── */
-body.cockpit-active.night-mode,
-body.night-mode {
+body.cockpit-active.night-mode {
   background-color: #000000 !important;
   --cockpit-bg: #000000;
   --cockpit-card: #0A0D0B;
@@ -819,7 +818,7 @@ body.cockpit-active.night-mode .cockpit-container,
 .cockpit-container.night-mode .cockpit-stat-box,
 .cockpit-container.night-mode .cockpit-checkpoint-widget,
 .cockpit-container.night-mode .cockpit-cp-card,
-body.night-mode .cockpit-cp-card,
+body.cockpit-active.night-mode .cockpit-cp-card,
 .cockpit-container.night-mode .cockpit-climb-card,
 .cockpit-container.night-mode .cockpit-map-card {
   background: #0A0D0B !important;
@@ -827,28 +826,23 @@ body.night-mode .cockpit-cp-card,
   box-shadow: none !important;
 }
 
-body.night-mode .cockpit-cp-detail-box,
 .cockpit-container.night-mode .cockpit-cp-detail-box {
   background: #111713 !important;
   border-color: #1E293B !important;
 }
 
-body.night-mode .cockpit-cp-detail-lbl,
 .cockpit-container.night-mode .cockpit-cp-detail-lbl {
   color: #94A3B8 !important;
 }
 
-body.night-mode .cockpit-cp-detail-val,
 .cockpit-container.night-mode .cockpit-cp-detail-val {
   color: #FFFFFF !important;
 }
 
-body.night-mode .cockpit-cp-progress-bar,
 .cockpit-container.night-mode .cockpit-cp-progress-bar {
   background: #1E293B !important;
 }
 
-body.night-mode .cockpit-cp-progress-fill,
 .cockpit-container.night-mode .cockpit-cp-progress-fill {
   background: #10B981 !important;
 }
@@ -863,55 +857,51 @@ body.night-mode .cockpit-cp-progress-fill,
   border-color: #1E293B;
 }
 
-body.night-mode .cockpit-mini-map,
 .cockpit-container.night-mode .cockpit-mini-map {
   background: #0A0D0B !important;
 }
 
-body.night-mode .cockpit-mini-map .leaflet-tile,
 .cockpit-container.night-mode .cockpit-mini-map .leaflet-tile {
   filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
 }
 
-body.night-mode .cockpit-bottom-bar,
 .cockpit-container.night-mode .cockpit-bottom-bar {
   background: rgba(10, 13, 11, 0.98) !important;
   border-top-color: #1E293B !important;
 }
 
-body.night-mode .cockpit-nav-btn,
 .cockpit-container.night-mode .cockpit-nav-btn {
   background: #111713 !important;
   border-color: #1E293B !important;
   color: #FFFFFF !important;
 }
 
-body.night-mode .cockpit-nav-btn:hover {
+.cockpit-container.night-mode .cockpit-nav-btn:hover {
   background: #1E293B !important;
 }
 
-body.night-mode .cockpit-modal,
-body.night-mode .sos-modal-content {
+body.cockpit-active.night-mode .cockpit-modal,
+body.cockpit-active.night-mode .sos-modal-content {
   background: #0A0D0B !important;
   border-color: #DC2626 !important;
   color: #FFFFFF !important;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(220, 38, 38, 0.25) !important;
 }
 
-body.night-mode .sos-type-btn {
+body.cockpit-active.night-mode .sos-type-btn {
   background: #111713 !important;
   border-color: #1E293B !important;
   color: #FFFFFF !important;
 }
 
-body.night-mode .sos-type-btn:hover,
-body.night-mode .sos-type-btn.active {
+body.cockpit-active.night-mode .sos-type-btn:hover,
+body.cockpit-active.night-mode .sos-type-btn.active {
   background: #DC2626 !important;
   border-color: #DC2626 !important;
   color: #FFFFFF !important;
 }
 
-body.night-mode #cockpitSosMsgInput {
+body.cockpit-active.night-mode #cockpitSosMsgInput {
   background: #111713 !important;
   border-color: #1E293B !important;
   color: #FFFFFF !important;

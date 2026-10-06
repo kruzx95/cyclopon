@@ -11,6 +11,7 @@ let cockpitRiderMarker = null;
 let cockpitRoutePolyline = null;
 let cockpitSimTimer = null;
 let cockpitGeoWatchId = null;
+let cockpitTimerInterval = null;
 let audioCtx = null;
 let audioAlertEnabled = localStorage.getItem('cyclopon_cockpit_audio') !== 'false';
 const notifiedCpSet = new Set();
@@ -406,7 +407,6 @@ async function renderRiderCockpit() {
   let speedSamples = [];
   let coveredKm = 0;
   let startTime = Date.now();
-  let timerInterval = null;
 
   // ── 1. Wake Lock API ──
   const btnWakeLock = document.getElementById('btnToggleWakeLock');
@@ -504,9 +504,27 @@ async function renderRiderCockpit() {
     }
   });
 
+  // ── Logout from Cockpit ──
+  const btnCockpitLogout = document.getElementById('btnCockpitLogout');
+  btnCockpitLogout?.addEventListener('click', () => {
+    if (confirm('Keluar dari Cockpit HUD & kembali ke Rider Login?')) {
+      teardownRiderCockpit();
+      sessionStorage.removeItem('riderConfig');
+      localStorage.removeItem('riderConfig');
+      if (window.showToast) showToast('Berhasil keluar dari Cockpit.', 'info');
+      Router.navigate('/rider');
+    }
+  });
+
+  // Register teardown on router unmount
+  if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
+    Router.onUnmount(teardownRiderCockpit);
+  }
+
   // ── 3. Elapsed Time Clock ──
   const movingTimeEl = document.getElementById('cockpitMovingTime');
-  timerInterval = setInterval(() => {
+  if (cockpitTimerInterval) clearInterval(cockpitTimerInterval);
+  cockpitTimerInterval = setInterval(() => {
     if (!cockpitActive) return;
     const diffSec = Math.floor((Date.now() - startTime) / 1000);
     const hrs = String(Math.floor(diffSec / 3600)).padStart(2, '0');
@@ -1304,13 +1322,16 @@ async function renderRiderCockpit() {
   });
 }
 
-// Teardown when navigating away
-window.addEventListener('popstate', () => {
+// Teardown function when navigating away or unmounting Cockpit HUD
+function teardownRiderCockpit() {
+  document.body.classList.remove('cockpit-active', 'night-mode');
   if (cockpitActive) {
     cockpitActive = false;
-    document.body.classList.remove('cockpit-active');
-    document.body.classList.remove('night-mode');
     notifiedCpSet.clear();
+    if (cockpitTimerInterval) {
+      clearInterval(cockpitTimerInterval);
+      cockpitTimerInterval = null;
+    }
     if (cockpitWakeLock) {
       cockpitWakeLock.release().catch(() => {});
       cockpitWakeLock = null;
@@ -1319,9 +1340,13 @@ window.addEventListener('popstate', () => {
       cockpitWs.close();
       cockpitWs = null;
     }
-    if (cockpitSimTimer) clearInterval(cockpitSimTimer);
+    if (cockpitSimTimer) {
+      clearInterval(cockpitSimTimer);
+      cockpitSimTimer = null;
+    }
     if (cockpitGeoWatchId != null && 'geolocation' in navigator) {
       navigator.geolocation.clearWatch(cockpitGeoWatchId);
+      cockpitGeoWatchId = null;
     }
     if (window.GpsKeeper && GpsKeeper.isActive()) {
       GpsKeeper.stop();
@@ -1331,4 +1356,8 @@ window.addEventListener('popstate', () => {
       audioCtx = null;
     }
   }
-});
+}
+
+window.teardownRiderCockpit = teardownRiderCockpit;
+window.addEventListener('popstate', teardownRiderCockpit);
+
