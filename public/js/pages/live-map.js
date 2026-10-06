@@ -80,13 +80,14 @@ async function renderLiveMap(params) {
           <a href="/" data-link class="header-logo" title="Kembali ke Beranda CycloPon">
             <span class="logo-text">CycloPon</span>
           </a>
+          <span class="header-meta-tag">// LIVE MATRIX</span>
           ${isAdmin ? `
-            <span class="badge badge-admin-mode" style="background:#2563EB;color:#FFF;font-size:10px;padding:2px 7px;border-radius:100px;font-weight:800;letter-spacing:0.04em">🛡️ PANITIA</span>
+            <span class="badge badge-admin-mode" style="background:#0D1117;color:#FFF;border:1.5px solid #0D1117;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:900;letter-spacing:0.06em;font-family:monospace">🛡️ PANITIA</span>
             <a href="/admin/events/${eventId}" data-link class="btn-back-admin" style="color:var(--text-secondary);text-decoration:none;font-size:11px;font-weight:700">← Dashboard</a>
           ` : `
             <div class="live-status-pill">
               <span class="live-dot pulse" id="liveDot"></span>
-              <span>LIVE</span>
+              <span>● LIVE STREAM</span>
             </div>
           `}
           <div class="event-info-cluster">
@@ -111,7 +112,7 @@ async function renderLiveMap(params) {
           <!-- Toggle Leaderboard -->
           <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
             ${ICONS.leaderboard}<span class="action-btn-label">Leaderboard</span>
-            <span class="badge badge-yellow" id="headerRiderCount">0</span>
+            <span class="badge" id="headerRiderCount" style="background:#FFFFFF;color:#0D1117;border:1px solid #0D1117;font-family:monospace;font-weight:900;border-radius:4px;padding:1px 6px">0</span>
           </button>
         </div>
       </header>

@@ -321,7 +321,7 @@ async function renderRiderCockpit() {
       <div class="cockpit-map-card">
         <div class="cockpit-map-header">
           <span>🗺️ MINI TRACK BREADCRUMB</span>
-          <button id="btnRecenterMap" style="background:none;border:none;color:var(--cockpit-yellow);font-size:11px;font-weight:700;cursor:pointer">
+          <button id="btnRecenterMap" style="background:#FFF;border:1px solid #0D1117;color:#0D1117;font-size:11px;font-weight:800;font-family:monospace;padding:2px 8px;border-radius:4px;cursor:pointer">
             📍 Pusatkan
           </button>
         </div>
