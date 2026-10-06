@@ -268,66 +268,86 @@ function renderRiderSetup() {
           </div>
         </div>
 
-        <!-- 4 Step Guide with Squircle Numbers -->
-        <div class="setup-step-card fade-in">
-          <div class="step-number-squircle">1</div>
-          <div style="flex:1">
-            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Install Aplikasi Traccar Client</p>
-            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px">Download gratis di HP Anda melalui store resmi:</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener" class="btn-hub-secondary" style="width:auto;padding:8px 14px;font-size:12px">
-                🤖 Google Play Store
-              </a>
-              <a href="https://apps.apple.com/app/traccar-client/id898772423" target="_blank" rel="noopener" class="btn-hub-secondary" style="width:auto;padding:8px 14px;font-size:12px">
-                🍎 Apple App Store
-              </a>
+        <!-- ── 4 Step Activation Guide Card ── -->
+        <div class="setup-steps-container-card fade-in">
+          <div class="steps-card-header">
+            <div class="steps-header-left">
+              <span class="steps-mono-tag">// PANDUAN AKTIVASI SAKU JERSEY</span>
+              <h3 class="steps-card-title">4 Langkah Pengaturan GPS</h3>
             </div>
+            <span class="steps-protocol-badge">OSMAND 5055</span>
           </div>
-        </div>
 
-        <div class="setup-step-card fade-in">
-          <div class="step-number-squircle">2</div>
-          <div style="flex:1">
-            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Buka Traccar Client → Masuk ke Pengaturan (⚙️)</p>
-            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
-              Salin dan tempelkan <strong>Server URL</strong> dan <strong>Device Identifier</strong> di atas ke dalam kolom aplikasi.
-            </p>
-          </div>
-        </div>
+          <div class="steps-list-body">
+            <!-- Step 1 -->
+            <div class="step-row-item">
+              <div class="step-badge-num">01</div>
+              <div class="step-content-col">
+                <div class="step-item-title">Install Aplikasi Traccar Client</div>
+                <div class="step-item-desc">Unduh gratis di smartphone Anda melalui store resmi sebelum memulai rute:</div>
+                <div class="step-store-buttons">
+                  <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener" class="btn-store-chip">
+                    🤖 Google Play Store
+                  </a>
+                  <a href="https://apps.apple.com/app/traccar-client/id898772423" target="_blank" rel="noopener" class="btn-store-chip">
+                    🍎 Apple App Store
+                  </a>
+                </div>
+              </div>
+            </div>
 
-        <div class="setup-step-card fade-in">
-          <div class="step-number-squircle">3</div>
-          <div style="flex:1">
-            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Aktifkan Saklar <span style="color:#047857">Service status (▶ Start)</span></p>
-            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
-              Status akan mulai mengirimkan lokasi GPS Anda secara otomatis ke server CycloPon dalam interval 30 detik.
-            </p>
-          </div>
-        </div>
+            <!-- Step 2 -->
+            <div class="step-row-item">
+              <div class="step-badge-num">02</div>
+              <div class="step-content-col">
+                <div class="step-item-title">Buka Traccar → Masuk ke Pengaturan (⚙️)</div>
+                <div class="step-item-desc">
+                  Salin dan tempelkan <strong>Server URL</strong> dan <strong>Device Identifier</strong> dari kotak konfigurasi di atas ke dalam kolom aplikasi.
+                </div>
+              </div>
+            </div>
 
-        <div class="setup-step-card done fade-in" style="border-color:rgba(4,120,87,0.3);background:linear-gradient(135deg,rgba(4,120,87,0.04) 0%,#FFFFFF 100%)">
-          <div class="step-number-squircle">4</div>
-          <div style="flex:1">
-            <p style="font-weight:800;color:var(--text-primary);margin-bottom:4px">Siap Gowes! Layar HP Bisa Dimatikan 🎉</p>
-            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">
-              Pelacakan tetap aktif di background walau HP dikantongi. Atau pasang di handlebar dan buka <strong>Cockpit HUD</strong>!
-            </p>
+            <!-- Step 3 -->
+            <div class="step-row-item">
+              <div class="step-badge-num">03</div>
+              <div class="step-content-col">
+                <div class="step-item-title">Aktifkan Saklar Service Status (▶ Start)</div>
+                <div class="step-item-desc">
+                  Traccar Client akan mulai mengirimkan koordinat GPS Anda secara otomatis ke server CycloPon secara real-time.
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step-row-item step-completed-row">
+              <div class="step-badge-num step-badge-done">04</div>
+              <div class="step-content-col">
+                <div class="step-item-title">Siap Gowes! Layar HP Bisa Dimatikan 🎉</div>
+                <div class="step-item-desc">
+                  Pelacakan tetap aktif di background walau HP dikantongi di jersey. Atau pasang di handlebar dan gunakan <strong>Cockpit HUD</strong>!
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ── Emergency SOS Card ── -->
-      <div class="rider-sos-card fade-in">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:20px">🚨</span>
-          <strong style="color:#EF4444;font-size:15px;letter-spacing:0.02em">Pusat Bantuan & Keselamatan Rider</strong>
+      <!-- ── Emergency SOS Container Card ── -->
+      <div class="rider-sos-container-card fade-in">
+        <div class="sos-card-header">
+          <div class="sos-header-left">
+            <span class="sos-mono-tag">// SAFETY PROTOCOL · EVACUATION &amp; MEDICAL</span>
+            <h3 class="sos-card-title">Pusat Bantuan &amp; Keselamatan Rider</h3>
+          </div>
+          <span class="sos-priority-badge">PRIORITY LEVEL 1</span>
         </div>
-        <p style="font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:16px">
-          Jika Anda mengalami kecelakaan, cedera fisik, atau masalah mekanikal berat di tengah rute dan butuh bantuan evakuasi panitia segera:
+        <p class="sos-card-desc">
+          Jika Anda mengalami kecelakaan, cedera fisik, atau kendala mekanikal berat di tengah rute dan membutuhkan evakuasi panitia segera:
         </p>
-        <button id="btnOpenSosModal" class="btn-sos-emergency">
-          <span>🚨</span>
-          <span>KIRIM SINYAL DARURAT (SOS)</span>
+        <button id="btnOpenSosModal" class="btn-sos-emergency-trigger">
+          <span class="sos-pulse-dot"></span>
+          <span>🚨 KIRIM SINYAL DARURAT (SOS)</span>
+          <span class="sos-arrow">→</span>
         </button>
       </div>
 

@@ -991,6 +991,243 @@
   background: #F3F4F6;
 }
 
+/* Steps Container Card */
+.setup-steps-container-card {
+  background: #FFFFFF;
+  border: 1.5px solid #0D1117;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+.steps-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #E5E7EB;
+}
+.steps-header-left {
+  display: flex;
+  flex-direction: column;
+}
+.steps-mono-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  color: #6B7280;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.steps-card-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0D1117;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.steps-protocol-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #0D1117;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.steps-list-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.step-row-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed #E5E7EB;
+}
+.step-row-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.step-badge-num {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 8px;
+  background: #F3F4F6;
+  border: 1.5px solid #0D1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #0D1117;
+  margin-top: 2px;
+}
+.step-badge-done {
+  background: #047857;
+  color: #FFFFFF;
+  border-color: #047857;
+}
+.step-completed-row {
+  background: #F0FDF4;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #86EFAC;
+}
+.step-content-col {
+  flex: 1;
+}
+.step-item-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0D1117;
+  margin-bottom: 4px;
+  line-height: 1.35;
+}
+.step-item-desc {
+  font-size: 12.5px;
+  color: #4B5563;
+  line-height: 1.55;
+}
+.step-store-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.btn-store-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1.5px solid #0D1117;
+  background: #FFFFFF;
+  color: #0D1117;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.btn-store-chip:hover {
+  background: #0D1117;
+  color: #FFFFFF;
+}
+
+/* SOS Emergency Container Card */
+.rider-sos-container-card {
+  background: #FFFFFF;
+  border: 1.5px solid #DC2626;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 34px;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.08);
+}
+.sos-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #FEE2E2;
+}
+.sos-header-left {
+  display: flex;
+  flex-direction: column;
+}
+.sos-mono-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  color: #DC2626;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.sos-card-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #991B1B;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.sos-priority-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 900;
+  color: #DC2626;
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.sos-card-desc {
+  font-size: 12.5px;
+  color: #4B5563;
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+.btn-sos-emergency-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #DC2626;
+  background: #DC2626;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+  font-family: inherit;
+}
+.btn-sos-emergency-trigger:hover {
+  background: #B91C1C;
+  border-color: #B91C1C;
+}
+.sos-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: inline-block;
+  animation: sosPulse 1.4s infinite ease-in-out;
+}
+.sos-arrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 900;
+  font-size: 15px;
+  transition: transform 0.15s ease;
+}
+.btn-sos-emergency-trigger:hover .sos-arrow {
+  transform: translateX(3px);
+}
+@keyframes sosPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .rider-login-card {
@@ -1015,5 +1252,19 @@
   }
   .hub-actions-grid {
     grid-template-columns: 1fr;
+  }
+  .setup-steps-container-card,
+  .rider-sos-container-card {
+    padding: 16px 14px;
+  }
+  .steps-card-header,
+  .sos-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .steps-protocol-badge,
+  .sos-priority-badge {
+    align-self: flex-start;
   }
 }
