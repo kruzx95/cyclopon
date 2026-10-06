@@ -502,6 +502,10 @@ label {
   }
 }
 
+.mobile-radar-dot {
+  display: none;
+}
+
 .featured-section-title {
   font-size: 20px;
   font-weight: 900;
@@ -826,30 +830,100 @@ label {
 @media (max-width: 768px) {
   .landing-nav {
     padding: 0 16px;
+    height: 60px;
+  }
+  .landing-hero {
+    padding: 24px 16px 32px;
+  }
+  .hero-tag {
+    margin-bottom: 12px;
+    padding: 5px 12px;
+    font-size: 10.5px;
   }
   .hero-title {
-    font-size: 32px;
+    font-size: 28px;
+    line-height: 1.15;
+    margin-bottom: 10px;
+  }
+  .hero-subtitle {
+    font-size: 13.5px;
+    line-height: 1.48;
+    margin-bottom: 20px;
+    max-width: 100%;
+    padding: 0 4px;
+  }
+  .hero-cta-row {
+    margin-bottom: 24px;
+    gap: 10px;
+    width: 100%;
+  }
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    width: 100%;
+    justify-content: center;
+    padding: 13px 20px;
+    font-size: 14px;
+    border-radius: 14px;
   }
   .featured-event-container {
     max-width: 100%;
-    padding: 0 4px;
-    margin-bottom: 36px;
+    padding: 0;
+    margin-bottom: 28px;
   }
   .featured-section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 2px;
+  }
+  .featured-section-tag {
+    display: none; /* Hide redundant tag on mobile, merged cleanly into title */
+  }
+  .mobile-radar-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: radarPulse 2s infinite ease-out;
+    margin-right: 7px;
+    flex-shrink: 0;
+  }
+  .featured-section-title {
+    font-size: 15.5px;
+    display: flex;
+    align-items: center;
+    letter-spacing: -0.01em;
+  }
+  .count-pill {
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 99px;
   }
   .featured-event-card {
     flex-direction: column;
     align-items: flex-start;
-    padding: 16px 18px;
-    gap: 16px;
+    padding: 14px 16px;
+    gap: 12px;
+    border-radius: 18px;
   }
   .event-card-left {
     width: 100%;
+    gap: 12px;
+  }
+  .event-route-icon-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+  .featured-event-meta {
+    gap: 6px;
+    margin-bottom: 4px;
   }
   .featured-event-title {
+    font-size: 16px;
     white-space: normal;
     word-break: break-word;
   }
@@ -858,15 +932,19 @@ label {
     gap: 8px;
   }
   .featured-event-actions .btn-gpx-chip {
-    padding: 10px 14px;
+    padding: 9px 12px;
+    font-size: 11.5px;
   }
   .featured-event-actions .btn-watch-action {
     flex: 1;
     justify-content: center;
+    padding: 9px 16px;
+    font-size: 13px;
   }
   .landing-features-grid {
     grid-template-columns: 1fr;
     max-width: 100%;
     padding: 0 4px;
+    gap: 14px;
   }
 }

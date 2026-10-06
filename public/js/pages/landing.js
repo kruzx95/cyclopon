@@ -69,7 +69,9 @@ function renderLanding() {
                 <span class="live-radar-dot"></span>
                 <span>LIVE RACE RADAR</span>
               </div>
-              <h2 class="featured-section-title">Event Sedang Berlangsung</h2>
+              <h2 class="featured-section-title">
+                <span class="mobile-radar-dot"></span>Event Sedang Berlangsung
+              </h2>
             </div>
             <div id="activeEventCountBadge"></div>
           </div>
