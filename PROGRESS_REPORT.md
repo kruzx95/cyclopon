@@ -685,11 +685,54 @@ Pada header aplikasi (khususnya tampilan Live Map dan admin), sebelumnya terdapa
 
 ---
 
-## 23. Rekomendasi Langkah Berikutnya
+## 23. Phase 23: Standarisasi Modul 3 — Live Map Spectator & Rider Cockpit HUD (Athletic Minimalist Pro)
 
-1. **Modul 3: Live Map (`/watch/:id`) & Cockpit HUD (`/cockpit`):** Melanjutkan standarisasi estetika Athletic Minimalist Pro ke halaman Live Map penonton (drawer peserta, H2H panel, time machine scrubber) dan antarmuka Cockpit HUD stang sepeda.
-2. **Modul 4: Official Results & Brevet Digital (`/events/:id/results`):** Mempercantik rekapitulasi hasil lomba dan sertifikat finisher digital dengan tipografi editorial atletik seragam.
-3. **Data Demo & Seed Rute GPX Nyata:** Script migrasi / seeder interaktif (`npm run seed:demo`) yang menyertakan rute GPX resmi, daftar pos checkpoint riil, dan simulasi rider aktif untuk keperluan pameran/demo sponsor.
+Melanjutkan program standarisasi visual menyeluruh ke estetika **Athletic Minimalist Pro (Rapha / Pas Normal Studios / Strava PRO)**, Modul 3 yang mencakup **Live Map Penonton (`/watch/:id`)** dan **Cockpit HUD Stang Sepeda (`/cockpit` / `/rider/cockpit`)** telah diperbarui secara menyeluruh:
+
+### 1. Live Map Penonton & Race Director (`public/css/map.css`, `public/js/pages/live-map.js`)
+- **Header Navigasi Presisi:** Latar putih bersih (`#FFFFFF`) dengan border bawah hitam tegas `1.5px solid #0D1117`, micro-tag teknis `// LIVE MATRIX`, status badge monospace `● LIVE STREAM` dengan emerald pulsing indicator, dan tombol aksi terstruktur bergaris hitam.
+- **Kartu Leaderboard Peserta Berbingkai (`.leaderboard-item`):**
+  - Mengubah tampilan baris flat menjadi kartu individual berbingkai `1.5px solid #E2E8F0` dengan border-radius `8px`.
+  - Hover dan focused state reaktif dengan outline `1.5px solid #0D1117` dan aksen bayangan halus.
+  - Badge peringkat podium (`🥇`, `🥈`, `🥉`) dan angka monospace (`#4`), avatar nomor BIB berbingkai hitam, dan tag `#BIB` kontras tinggi.
+  - Telemetri berbalut pill monospace rapi: Kecepatan (`⚡ 28.4 km/h`), Estimasi Tiba (`🏁 ETA`), status penyimpangan rute (`⚠️ NYASAR`), dan indikator baterai perangkat.
+  - Progress bar rute presisi tinggi dengan angka persentase monospace.
+- **Bilah Kontrol Terapung & Pemilih Lapisan Peta (FABs):**
+  - Tombol Floating Action Button (Lapisan Peta, Fit Rute, Toggle Elevasi) bergaya squircle putih bersih dengan border hitam `1.5px solid #0D1117` dan efek hover invert hitam-putih.
+  - Popover pemilihan peta (OSM, CyclOSM, Esri Satelit) yang tajam dan mudah dioperasikan.
+- **Laci Profil Elevasi & ClimbPro (`.elevation-drawer`):**
+  - Kontainer elevasi bergaris pembatas `1.5px solid #0D1117` dengan radius `10px`.
+  - Metrik jarak, elevasi naik/turun, dan kesulitan Komoot dengan font monospace tajam.
+  - Kartu tanjakan resmi ClimbPro (`.climb-summary-card`) berbingkai rapi dengan daftar rider yang sedang mendaki.
+  - Scrubbing tooltip elevasi berlatar hitam pekat (`#0D1117`) dengan koordinat kilometer dan gradien jalan.
+- **Bilah Darurat SOS & Panel Head-to-Head (H2H):**
+  - Bilah peringatan darurat SOS merah terang dengan tombol *Fokus Lokasi* instan.
+  - Modal komparasi Head-to-Head 2 rider dengan layout split battle strip berbingkai hitam `2px solid #0D1117` dan baris perbandingan metrik terstruktur.
+
+### 2. Cockpit HUD Stang Sepeda (`public/css/cockpit.css`, `public/js/pages/rider-cockpit.js`)
+- **Mode Siang Kontras Maksimal (Daylight Legibility):**
+  - Dirancang khusus agar sangat mudah dibaca di bawah terik sinar matahari saat berkendara kencang.
+  - Latar kapur `#F8F9FA` dengan kartu putih `#FFFFFF` bergaris hitam `1.5px solid #0D1117`.
+  - Speedometer digital raksasa dengan tipografi `80px` ultra-bold monospace tabular-nums `#0D1117` dan garis atas hitam.
+  - Grid 4-kotak metrik primer (Jarak tempuh, sisa jarak, waktu gowes, status sinyal GPS, gradien kemiringan %, dan total elevasi).
+- **Mode Malam AMOLED Hitam Pekat (Pitch-Black `#000000`):**
+  - Dirancang khusus untuk efisiensi baterai layar OLED pada perjalanan malam/audax panjang.
+  - Latar hitam pekat murni `#000000`, kartu `#0A0D0B` dengan border halus `#1E293B`, teks putih cerah `#FFFFFF`, dan aksen hijau emerald `#10B981`.
+- **Kartu Pos Checkpoint & Batas COT:**
+  - Menampilkan pos target berikutnya, progress bar terisi, jarak tersisa, batas COT, dan estimasi tiba secara presisi.
+- **Bilah Aksi Darurat Menempel (Sticky SOS Bar):**
+  - Tombol besar `🚨 KIRIM SOS DARURAT` merah menyala dengan modal pelaporan darurat instan dan tombol akses cepat kembali ke Live Map.
+
+### 3. Peningkatan Versi Service Worker & Verifikasi Pengujian
+- Versi Service Worker dinaikkan ke `cyclopon-v34` di [`public/sw.js`](file:///c:/Users/Mallik/Documents/cyclopon/public/sw.js) agar berkas `map.css`, `cockpit.css`, `live-map.js`, dan `rider-cockpit.js` langsung diperbarui di cache browser pengguna.
+- Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)** tanpa error atau regresi.
+
+---
+
+## 24. Rekomendasi Langkah Berikutnya
+
+1. **Modul 4: Official Results & Brevet Digital (`/events/:id/results`):** Melakukan standarisasi estetika Athletic Minimalist Pro ke halaman rekapitulasi hasil lomba, sertifikat finisher digital, dan ekspor CSV.
+2. **Data Demo & Seed Rute GPX Nyata:** Script seeder otomatis (`npm run seed:demo`) yang menyertakan rute GPX resmi, pos kontrol riil, dan simulasi pergerakan rider aktif untuk demonstrasi kepada sponsor atau panitia event.
 
 
 
