@@ -1,8 +1,8 @@
 # 🚴 Laporan Progres Pengembangan CycloPon Live Tracker
 
 **Tanggal Laporan:** 6 Oktober 2026  
-**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 13) & Desain Sistem Selesai 100%**  
-**Total Pengujian Unit:** 54 / 54 Lulus (8 Test Suites)
+**Status Keseluruhan:** ✅ **Fase Utama (Phase 1 – 14) & Desain Sistem Selesai 100%**  
+**Total Pengujian Unit:** 61 / 61 Lulus (9 Test Suites)
 
 ---
 
@@ -30,7 +30,8 @@
 11. [Phase 12: ClimbPro & Analitik Elevasi Real-Time (Grade %)](#11-phase-12-climbpro--analitik-elevasi-real-time-grade--)
 12. [Penyempurnaan Tampilan Rider Cockpit HUD](#12-penyempurnaan-tampilan-rider-cockpit-hud-amoled-night-mode--layout)
 13. [Phase 13: Containerization & Stack Deployment VPS (Docker & Caddy SSL)](#13-phase-13-containerization--stack-deployment-vps-docker--caddy-ssl)
-14. [Rekomendasi Langkah Berikutnya](#14-rekomendasi-langkah-berikutnya)
+14. [Phase 14: Real-Time Visitor Traffic & Live Spectator Analytics](#14-phase-14-real-time-visitor-traffic--live-spectator-analytics-di-admin-panel)
+15. [Rekomendasi Langkah Berikutnya](#15-rekomendasi-langkah-berikutnya)
 
 ---
 
@@ -144,10 +145,11 @@ Rangkaian unit test dijalankan dengan Node test runner bawaan (`node --test`) da
 ▶ Telemetry History Logger & API - 6 tests passed (termasuk PWA offline batch flush)
 ▶ Notifications Engine & API - 10 tests passed
 ▶ Official Results & CSV Export API - 11 tests passed (termasuk GPX download)
+▶ Traffic & Visitor Analytics Engine - 7 tests passed (WebSocket live & peak counters, IP hash privacy, middleware, API)
 
-ℹ tests 54
+ℹ tests 61
 ℹ suites 0
-ℹ pass 54
+ℹ pass 61
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
@@ -367,7 +369,35 @@ Telah disiapkan bundel deployment lengkap berbasis container Docker untuk memper
 
 ---
 
-## 14. Rekomendasi Langkah Berikutnya
+## 14. Phase 14: Real-Time Visitor Traffic & Live Spectator Analytics di Admin Panel
+
+Untuk mengantisipasi lonjakan penonton saat event balapan berlangsung, CycloPon dilengkapi modul analitik mandiri (*zero-bloat*, tanpa Google Analytics atau pelacak eksternal berat):
+
+1. **Pemantauan Penonton Live Real-Time (`/traccar-ws`):**
+   - Mengukur jumlah koneksi WebSocket aktif secara langsung melalui `ws.Server.clients.size` dengan kompleksitas waktu $O(1)$ dan overhead CPU nol.
+   - Melacak **Puncak Serentak (Peak Concurrent Viewers)** yang mencatat rekor tertinggi penonton yang menyaksikan balapan secara bersamaan.
+
+2. **Mesin Pelacak Kunjungan Halaman Mandiri (SQLite WAL):**
+   - Tabel `page_views` di SQLite mencatat setiap navigasi halaman web (`/`, `/events/:id`, `/rider/cockpit`, dll).
+   - Mengabaikan aset statis (`.js`, `.css`, `.png`, dll) dan panggilan API internal sehingga data mencerminkan interaksi pengguna nyata.
+   - **Privasi Terjaga:** Alamat IP pengunjung dienkripsi menjadi hash SHA-256 (16 karakter awal) sehingga identitas pengguna tidak disimpan secara telanjang, sekaligus memungkinkan penghitungan *Pengunjung Unik Hari Ini* (`COUNT(DISTINCT ip_hash)`).
+
+3. **REST API Terproteksi Sesi Admin:**
+   - Endpoint `GET /api/admin/metrics/traffic` hanya dapat diakses oleh sesi admin yang terautentikasi.
+   - Mengembalikan data: `liveViewers`, `peakViewers`, `todayUniqueVisitors`, `todayViews`, `allTimeViews`, `weeklyTrend` (7 hari terakhir), dan `topPages` terpopuler.
+
+4. **Widget Analitik Dinamis di Admin Dashboard (`/admin/dashboard`):**
+   - Menampilkan 4 kartu ringkasan metrik:
+     - **Penonton Live Sekarang** (disertai lencana berkedip hijau *live-pulse-dot*).
+     - **Puncak Serentak (Peak Viewers)**.
+     - **Pengunjung Unik Hari Ini**.
+     - **Total Tayangan Halaman**.
+   - Sub-bar interaktif menampilkan halaman paling populer hari ini beserta jumlah tayangannya.
+   - Auto-refresh setiap 5 detik saat halaman aktif, dan otomatis dibersihkan saat navigasi berpindah (*clean interval teardown*).
+
+---
+
+## 15. Rekomendasi Langkah Berikutnya
 
 Untuk pengembangan selanjutnya atau persiapan rilis produksi, opsi berikut dapat dipertimbangkan:
 

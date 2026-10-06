@@ -140,6 +140,56 @@ async function renderAdminDashboard() {
           <h1>Dashboard Event</h1>
           <button class="btn btn-primary" id="btnNewEvent">+ Event Baru</button>
         </div>
+
+        <!-- Real-Time Visitor & Spectator Traffic Analytics -->
+        <div class="traffic-analytics-card" id="trafficAnalyticsCard">
+          <div class="traffic-card-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:22px">📊</span>
+              <div>
+                <h2 style="font-size:15px;font-weight:800;color:var(--text-primary);margin:0">Analitik Trafik Pengunjung & Penonton Live</h2>
+                <small style="font-size:11px;color:var(--text-secondary)">Data real-time dari koneksi penonton dan log kunjungan web</small>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="live-pulse-dot" id="trafficLivePulse"></span>
+              <span id="trafficLiveBadge" style="font-size:12px;font-weight:700;color:var(--color-sage)">Sinkronisasi Realtime...</span>
+            </div>
+          </div>
+          <div class="traffic-metrics-grid">
+            <div class="traffic-metric-item">
+              <div class="traffic-metric-lbl">Penonton Live Sekarang</div>
+              <div class="traffic-metric-val" id="metricLiveViewers">0</div>
+              <div class="traffic-metric-sub">Koneksi WebSocket Aktif</div>
+            </div>
+            <div class="traffic-metric-item">
+              <div class="traffic-metric-lbl">Puncak Serentak (Peak)</div>
+              <div class="traffic-metric-val" id="metricPeakViewers">0</div>
+              <div class="traffic-metric-sub">Rekor Penonton Bersamaan</div>
+            </div>
+            <div class="traffic-metric-item">
+              <div class="traffic-metric-lbl">Pengunjung Unik Hari Ini</div>
+              <div class="traffic-metric-val" id="metricTodayVisitors">0</div>
+              <div class="traffic-metric-sub">Perangkat Unik Berbeda</div>
+            </div>
+            <div class="traffic-metric-item">
+              <div class="traffic-metric-lbl">Total Tayangan Halaman</div>
+              <div class="traffic-metric-val" id="metricTodayViews">0</div>
+              <div class="traffic-metric-sub">Total Kunjungan Hari Ini</div>
+            </div>
+          </div>
+          <div class="traffic-sub-bar" id="trafficSubBar" style="display:none">
+            <div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span>🔥</span> <strong>Halaman Terpopuler Hari Ini:</strong>
+              <span id="trafficTopPagesList" style="color:var(--text-primary);font-weight:600">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h2 style="font-size:16px;font-weight:800;color:var(--text-primary);margin:0">Daftar Event Balapan</h2>
+        </div>
+
         <div class="events-grid" id="eventsGrid">
           <p style="color:var(--text-secondary)">Memuat data event...</p>
         </div>
@@ -148,6 +198,58 @@ async function renderAdminDashboard() {
   `;
 
   document.getElementById('btnNewEvent').addEventListener('click', () => Router.navigate('/admin/events/new'));
+
+  // ── Real-Time Traffic Metrics Polling ──
+  let trafficInterval = null;
+  async function fetchTrafficMetrics() {
+    try {
+      const res = await fetch('/api/admin/metrics/traffic', { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.success) return;
+
+      const liveEl = document.getElementById('metricLiveViewers');
+      const peakEl = document.getElementById('metricPeakViewers');
+      const visitorsEl = document.getElementById('metricTodayVisitors');
+      const viewsEl = document.getElementById('metricTodayViews');
+      const badgeEl = document.getElementById('trafficLiveBadge');
+      const subBar = document.getElementById('trafficSubBar');
+      const topPagesEl = document.getElementById('trafficTopPagesList');
+
+      if (liveEl) liveEl.textContent = Number(data.liveViewers || 0).toLocaleString();
+      if (peakEl) peakEl.textContent = Number(data.peakViewers || 0).toLocaleString();
+      if (visitorsEl) visitorsEl.textContent = Number(data.todayUniqueVisitors || 0).toLocaleString();
+      if (viewsEl) viewsEl.textContent = Number(data.todayViews || 0).toLocaleString();
+
+      if (badgeEl) {
+        if (data.liveViewers > 0) {
+          badgeEl.textContent = `${data.liveViewers} Penonton Online`;
+          badgeEl.style.color = 'var(--color-sage)';
+        } else {
+          badgeEl.textContent = 'Standby (0 Live)';
+          badgeEl.style.color = 'var(--text-secondary)';
+        }
+      }
+
+      if (data.topPages && data.topPages.length && subBar && topPagesEl) {
+        subBar.style.display = 'block';
+        topPagesEl.innerHTML = data.topPages.map(p => `
+          <span style="background:#FFFFFF;border:1px solid var(--border-subtle);padding:2px 8px;border-radius:4px;margin-right:6px">
+            <code>${p.path}</code> (${p.views}x)
+          </span>
+        `).join('');
+      }
+    } catch (e) {
+      console.warn('[Admin Dashboard] Gagal mengambil metrik trafik:', e);
+    }
+  }
+
+  fetchTrafficMetrics();
+  trafficInterval = setInterval(fetchTrafficMetrics, 5000);
+
+  window.addEventListener('popstate', () => {
+    if (trafficInterval) clearInterval(trafficInterval);
+  }, { once: true });
 
   try {
     const events = await fetch('/api/events', { credentials: 'include' }).then(r => r.json());
