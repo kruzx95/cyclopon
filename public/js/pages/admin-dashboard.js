@@ -55,7 +55,7 @@ function adminSidebar(activeKey) {
         <h2>CycloPon</h2>
         <small>Admin Panel</small>
       </div>
-      <div style="padding:10px 24px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px">
+      <div class="sidebar-user">
         <span>👤</span>
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);font-weight:600">${adminName}</span>
       </div>
@@ -70,8 +70,8 @@ function adminSidebar(activeKey) {
         </a>
         <a href="/" data-link>🏠 &nbsp;Beranda</a>
       </nav>
-      <div style="padding:16px 20px;border-top:1px solid var(--border);margin-top:auto">
-        <button onclick="logoutAdmin()" class="btn btn-outline" style="width:100%;font-size:12px;padding:8px 12px;color:var(--color-red);border-color:rgba(239,68,68,0.35);cursor:pointer">
+      <div class="sidebar-footer">
+        <button onclick="logoutAdmin()" class="btn-logout" aria-label="Keluar dari akun admin">
           🚪 Keluar (Logout)
         </button>
       </div>

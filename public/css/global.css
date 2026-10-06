@@ -40,15 +40,11 @@
 
 html {
   height: 100%;
-  overflow-x: hidden;
-  max-width: 100%;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-height: 100%;
-  overflow-x: hidden;
-  max-width: 100%;
   position: relative;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: var(--bg-primary);
@@ -60,8 +56,14 @@ body {
 
 #app {
   min-height: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  html, body, #app {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
 }
 
 /* ── Responsive Media & Element Guards ── */
