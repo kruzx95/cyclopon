@@ -476,6 +476,7 @@ function logoutAdmin() {
   if (confirm('Keluar dari Admin Panel?')) {
     if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
     sessionStorage.removeItem('adminUser');
+    localStorage.removeItem('adminUser');
     showToast('Berhasil logout dari Admin.', 'info');
     Router.navigate('/admin');
   }
@@ -571,6 +572,7 @@ function renderAdminLogin() {
       const data = await res.json();
       if (res.ok) {
         sessionStorage.setItem('adminUser', JSON.stringify(data.user));
+        localStorage.setItem('adminUser', JSON.stringify(data.user));
         Router.navigate('/admin/dashboard');
       } else {
         errEl.textContent = data.error || 'Login gagal.';
@@ -771,7 +773,7 @@ async function renderAdminDashboard() {
           <button class="btn btn-outline" style="font-size:12px;padding:7px 14px"
                   onclick="Router.navigate('/admin/events/${ev.id}')">⚙️ Kelola</button>
           <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
-             href="/watch/${ev.id}" target="_blank" rel="noopener">🗺️ Live Map</a>
+             href="/watch/${ev.id}?admin=1" target="_blank" rel="noopener">🗺️ Live Map</a>
           <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
              href="/events/${ev.id}/results" target="_blank" rel="noopener">🏆 Hasil & Brevet</a>
         </div>

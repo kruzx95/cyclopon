@@ -5,6 +5,7 @@ async function renderLiveMap(params) {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const isAdmin  = typeof window !== 'undefined' && Boolean(
     sessionStorage.getItem('adminUser') ||
+    localStorage.getItem('adminUser') ||
     params.query?.admin === '1' ||
     new URLSearchParams(window.location.search).get('admin') === '1'
   );

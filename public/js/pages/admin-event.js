@@ -41,7 +41,7 @@ async function renderAdminEvent(params) {
           ${!isNew ? `
             <div style="display:flex;gap:8px">
               <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/events/${eventId}/results" target="_blank">🏆 Hasil & Brevet</a>
-              <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/watch/${eventId}" target="_blank">🗺️ Live Map</a>
+              <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/watch/${eventId}?admin=1" target="_blank">🗺️ Live Map</a>
             </div>
           ` : ''}
         </div>
