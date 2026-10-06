@@ -116,17 +116,17 @@ graph TD
 - Consumes: Express request stream
 - Produces: Gzipped response payload jika client mendukung header `Accept-Encoding: gzip`
 
-- [ ] **Step 1: Tulis unit test untuk verifikasi gzip header**
+- [x] **Step 1: Tulis unit test untuk verifikasi gzip header**
   Test endpoint `/api/health` dan file GPX atau data JSON dengan header `Accept-Encoding: gzip`, lalu verifikasi respon menyertakan header `Content-Encoding: gzip`.
-- [ ] **Step 2: Jalankan test untuk memastikan test mendeteksi ketiadaan kompresi**
+- [x] **Step 2: Jalankan test untuk memastikan test mendeteksi ketiadaan kompresi**
   Jalankan: `node --test tests/compression.test.js`
-- [ ] **Step 3: Pasang dependensi `compression` dan pasang di `server.js`**
+- [x] **Step 3: Pasang dependensi `compression` dan pasang di `server.js`**
   Jalankan `npm install compression` dan tambahkan `app.use(compression({ threshold: 1024 }))` sebelum rute statis dan API.
-- [ ] **Step 4: Jalankan test dan pastikan kompresi berhasil diverifikasi**
+- [x] **Step 4: Jalankan test dan pastikan kompresi berhasil diverifikasi**
   Jalankan: `node --test tests/compression.test.js`
-- [ ] **Step 5: Verifikasi seluruh test suite**
+- [x] **Step 5: Verifikasi seluruh test suite**
   Jalankan: `npm test`
-- [ ] **Step 6: Commit changes**
+- [x] **Step 6: Commit changes**
   Jalankan: `git commit -am "feat(perf): add HTTP response compression for static GPX and JSON payloads"`
 
 ---

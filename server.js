@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
+const compression = require('compression');
 const db = require('./db/database');
 const { enqueuePageView } = require('./lib/traffic-queue');
 
@@ -15,6 +16,9 @@ const PORT = process.env.PORT || 3000;
 app.set('trust proxy', 1);
 
 // Middleware
+app.use(compression({
+  threshold: 1024
+}));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
