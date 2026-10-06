@@ -334,11 +334,11 @@ async function renderRiderCockpit() {
     <!-- Sticky Bottom Emergency Action Bar -->
     <div class="cockpit-bottom-bar">
       <button id="btnCockpitSos" class="cockpit-sos-btn">
-        <span style="font-size:20px">🚨</span>
+        <span style="font-size:14px">🚨</span>
         <span>KIRIM SOS DARURAT</span>
       </button>
       <a href="/watch/${event.id}" data-link class="cockpit-nav-btn" title="Buka Spectator Map">
-        <span>🗺️</span>
+        <span style="font-size:13px">🗺️</span>
         <span>Live Map</span>
       </a>
     </div>
