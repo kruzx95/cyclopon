@@ -1118,11 +1118,13 @@ async function renderRiderCockpit() {
     const curHour = new Date().getHours();
     nightModeActive = curHour < 6 || curHour >= 18;
   }
+  const bottomBar = document.querySelector('.cockpit-bottom-bar');
 
   function applyNightMode(isNight) {
     if (isNight) {
       document.body.classList.add('night-mode');
       cockpitContainer?.classList.add('night-mode');
+      bottomBar?.classList.add('night-mode');
       btnToggleNight?.classList.add('night-active');
       if (nightIcon) nightIcon.textContent = '☀️';
       if (nightStatusText) nightStatusText.textContent = 'Siang';
@@ -1130,6 +1132,7 @@ async function renderRiderCockpit() {
     } else {
       document.body.classList.remove('night-mode');
       cockpitContainer?.classList.remove('night-mode');
+      bottomBar?.classList.remove('night-mode');
       btnToggleNight?.classList.remove('night-active');
       if (nightIcon) nightIcon.textContent = '🌙';
       if (nightStatusText) nightStatusText.textContent = 'Malam';
@@ -1315,6 +1318,7 @@ async function renderRiderCockpit() {
 // Teardown function when navigating away or unmounting Cockpit HUD
 function teardownRiderCockpit() {
   document.body.classList.remove('cockpit-active', 'night-mode');
+  document.querySelector('.cockpit-bottom-bar')?.classList.remove('night-mode');
   if (cockpitActive) {
     cockpitActive = false;
     notifiedCpSet.clear();

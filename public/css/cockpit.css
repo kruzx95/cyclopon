@@ -26,7 +26,7 @@ body.cockpit-active {
   min-height: 100vh;
   background: var(--cockpit-bg);
   color: var(--cockpit-text);
-  padding: 12px 16px 80px 16px;
+  padding: 12px 16px max(115px, calc(95px + env(safe-area-inset-bottom, 0px))) 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -672,27 +672,33 @@ body.cockpit-active {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)) 16px;
+  padding-top: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(22px, calc(10px + env(safe-area-inset-bottom, 0px)));
   background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-top: 1.5px solid #0D1117;
-  box-shadow: 0 -4px 20px rgba(13, 17, 23, 0.08);
+  box-shadow: 0 -4px 24px rgba(13, 17, 23, 0.08);
   display: flex;
+  align-items: stretch;
   gap: 10px;
   max-width: 680px;
   margin: 0 auto;
   z-index: 1000;
+  box-sizing: border-box;
 }
 
 .cockpit-sos-btn {
   flex: 2;
+  min-height: 48px;
   background: #DC2626;
   color: #FFFFFF;
   border: 1.5px solid #DC2626;
-  border-radius: 6px;
-  padding: 14px 16px;
-  font-size: 14px;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
   font-weight: 900;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   cursor: pointer;
@@ -700,9 +706,11 @@ body.cockpit-active {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 0 16px rgba(220, 38, 38, 0.35);
-  letter-spacing: 0.05em;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
   transition: all 0.15s ease;
+  box-sizing: border-box;
 }
 
 .cockpit-sos-btn:active {
@@ -712,11 +720,12 @@ body.cockpit-active {
 
 .cockpit-nav-btn {
   flex: 1;
+  min-height: 48px;
   background: #FFFFFF;
   color: #0D1117;
   border: 1.5px solid #0D1117;
-  border-radius: 6px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 12px 14px;
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
@@ -725,11 +734,32 @@ body.cockpit-active {
   justify-content: center;
   gap: 6px;
   text-decoration: none;
+  white-space: nowrap;
   transition: all 0.15s ease;
+  box-sizing: border-box;
 }
 .cockpit-nav-btn:hover {
   background: #0D1117;
   color: #FFFFFF;
+}
+
+@media (max-width: 420px) {
+  .cockpit-bottom-bar {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    gap: 8px;
+  }
+  .cockpit-sos-btn {
+    font-size: 12px;
+    padding: 10px 10px;
+    letter-spacing: 0.01em;
+    gap: 6px;
+  }
+  .cockpit-nav-btn {
+    font-size: 12px;
+    padding: 10px 8px;
+    gap: 4px;
+  }
 }
 
 /* ── Landscape mode optimizations ── */
@@ -865,18 +895,21 @@ body.cockpit-active.night-mode .cockpit-cp-card,
   filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
 }
 
-.cockpit-container.night-mode .cockpit-bottom-bar {
+body.cockpit-active.night-mode .cockpit-bottom-bar,
+.cockpit-bottom-bar.night-mode {
   background: rgba(10, 13, 11, 0.98) !important;
   border-top-color: #1E293B !important;
 }
 
-.cockpit-container.night-mode .cockpit-nav-btn {
+body.cockpit-active.night-mode .cockpit-nav-btn,
+.cockpit-bottom-bar.night-mode .cockpit-nav-btn {
   background: #111713 !important;
   border-color: #1E293B !important;
   color: #FFFFFF !important;
 }
 
-.cockpit-container.night-mode .cockpit-nav-btn:hover {
+body.cockpit-active.night-mode .cockpit-nav-btn:hover,
+.cockpit-bottom-bar.night-mode .cockpit-nav-btn:hover {
   background: #1E293B !important;
 }
 
