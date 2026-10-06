@@ -88,19 +88,19 @@ graph TD
 - Consumes: HTTP request metadata (`path`, `event_id`, `ip_hash`, `user_agent`)
 - Produces: `enqueuePageView(data)`, `flushQueue()`, `stopQueue()`
 
-- [ ] **Step 1: Tulis unit test untuk in-memory queue & batch flush**
+- [x] **Step 1: Tulis unit test untuk in-memory queue & batch flush**
   Uji bahwa entri yang di-enqueue tertampung di memori dan di-flush secara efisien via transaksi SQLite tanpa pemanggilan disk I/O per-request.
-- [ ] **Step 2: Jalankan test untuk memverifikasi modul baru**
+- [x] **Step 2: Jalankan test untuk memverifikasi modul baru**
   Jalankan: `node --test tests/traffic-metrics.test.js`
-- [ ] **Step 3: Buat implementasi `lib/traffic-queue.js`**
+- [x] **Step 3: Buat implementasi `lib/traffic-queue.js`**
   - Simpan buffer array `queue = []`.
   - Jika queue mencapai batas (misal 50 entri) atau interval waktu (2 detik) tercapai, jalankan transaksi batch `db.transaction(...)`.
   - Sediakan graceful shutdown hook pada `process.on('SIGINT')` / `process.on('SIGTERM')`.
-- [ ] **Step 4: Integrasikan ke middleware di `server.js`**
+- [x] **Step 4: Integrasikan ke middleware di `server.js`**
   Gantikan pemanggilan langsung `db.recordPageView.run(...)` dengan `enqueuePageView(...)`.
-- [ ] **Step 5: Verifikasi dengan test runner**
+- [x] **Step 5: Verifikasi dengan test runner**
   Jalankan: `npm test`
-- [ ] **Step 6: Commit changes**
+- [x] **Step 6: Commit changes**
   Jalankan: `git commit -am "feat(perf): add in-memory batch queue for traffic analytics to eliminate sync disk I/O"`
 
 ---

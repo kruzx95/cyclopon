@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const { getActiveViewersCount, getPeakViewersCount } = require('../lib/traccar-ws-proxy');
+const { flushQueue } = require('../lib/traffic-queue');
 
 // GET /api/admin/metrics/traffic — retrieve live spectators and visitor traffic analytics
 router.get('/traffic', (req, res) => {
   try {
+    flushQueue();
     const liveViewers = getActiveViewersCount();
     const peakViewers = getPeakViewersCount();
     const today = db.getTodayPageViews.get() || { total_views: 0, unique_visitors: 0 };

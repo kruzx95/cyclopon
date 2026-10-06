@@ -6,6 +6,7 @@ const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
 const db = require('./db/database');
+const { enqueuePageView } = require('./lib/traffic-queue');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +19,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Lightweight Page Views & Traffic Tracker Middleware
+// Lightweight Page Views & Traffic Tracker Middleware (Buffered In-Memory)
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
     try {
@@ -32,7 +33,7 @@ app.use((req, res, next) => {
       if (watchMatch) eventId = Number(watchMatch[1]);
       else if (eventMatch) eventId = Number(eventMatch[1]);
 
-      db.recordPageView.run({
+      enqueuePageView({
         path: req.path,
         event_id: eventId,
         ip_hash: ipHash,
