@@ -14,14 +14,15 @@ async function renderAdminNotifications() {
       ${adminSidebar('notifications')}
       <main class="admin-content">
         <div class="page-header">
-          <div>
+          <div class="page-header-title-col">
+            <span class="page-header-tag">// DISPATCH PROTOCOLS &amp; EMERGENCY ESCALATION</span>
             <h1>📢 Pengaturan Notifikasi Panitia</h1>
-            <p style="color:var(--text-secondary);font-size:13px;margin-top:4px">
+            <p style="color:#6B7280;font-size:12.5px;margin-top:4px;margin-bottom:0">
               Kirimkan peringatan darurat SOS dan status Over Cut-Off Time (COT) secara instan ke grup Telegram atau Webhook.
             </p>
           </div>
           <div>
-            <button class="btn btn-outline" onclick="Router.navigate('/admin/dashboard')" style="font-size:13px;padding:8px 14px">
+            <button class="btn btn-outline" onclick="Router.navigate('/admin/dashboard')" style="font-size:12.5px;padding:7px 14px">
               ← Kembali ke Dashboard
             </button>
           </div>

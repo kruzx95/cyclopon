@@ -35,20 +35,29 @@ async function renderAdminEvent(params) {
       <main class="admin-content">
         <div class="page-header">
           <div style="display:flex;align-items:center;gap:12px">
-            <button onclick="Router.navigate('/admin/dashboard')" class="btn btn-outline" style="padding:8px 14px;font-size:13px">← Back</button>
-            <h1>${isNew ? 'Event Baru' : 'Edit Event'}</h1>
+            <button onclick="Router.navigate('/admin/dashboard')" class="btn btn-outline" style="padding:7px 12px;font-size:12.5px">← Back</button>
+            <div class="page-header-title-col">
+              <span class="page-header-tag">// RACE CONTROL · EVENT CONFIGURATION</span>
+              <h1>${isNew ? 'Event Baru' : escapeHtml(event.name || 'Edit Event')}</h1>
+            </div>
           </div>
           ${!isNew ? `
-            <div style="display:flex;gap:8px">
-              <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/events/${eventId}/results" target="_blank">🏆 Hasil & Brevet</a>
-              <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/watch/${eventId}?admin=1" target="_blank">🗺️ Live Map</a>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <a class="btn btn-outline" style="font-size:12.5px;padding:7px 14px" href="/events/${eventId}/results" target="_blank">🏆 Hasil &amp; Brevet</a>
+              <a class="btn btn-primary" style="font-size:12.5px;padding:7px 14px" href="/watch/${eventId}?admin=1" target="_blank">🗺️ Live Map</a>
             </div>
           ` : ''}
         </div>
 
         <!-- Event Details Form -->
         <div class="card" style="margin-bottom:20px">
-          <h2 style="font-size:15px;font-weight:700;margin-bottom:18px">Detail Event</h2>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
+            <div>
+              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EVENT ATTRIBUTES</span>
+              <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">Detail Event</h2>
+            </div>
+            ${!isNew ? `<span class="badge ${event.active ? 'badge-active' : 'badge-finished'}">${event.active ? '● EVENT AKTIF' : 'EVENT SELESAI'}</span>` : ''}
+          </div>
           <form id="eventForm">
             <div class="form-row">
               <div class="form-group">
@@ -64,16 +73,16 @@ async function renderAdminEvent(params) {
             <div class="form-group">
               <label>Status Event</label>
               <div style="display:flex;gap:8px;margin-top:4px">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:14px;font-weight:400;color:var(--text-primary)">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:13.5px;font-weight:700;color:#0D1117">
                   <input type="radio" name="evActive" value="1" ${event.active ? 'checked' : ''}> Aktif
                 </label>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:14px;font-weight:400;color:var(--text-primary)">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:13.5px;font-weight:700;color:#0D1117">
                   <input type="radio" name="evActive" value="0" ${!event.active ? 'checked' : ''}> Selesai
                 </label>
               </div>
             </div>
             ` : ''}
-            <button class="btn btn-primary" type="submit" id="saveEventBtn">
+            <button class="btn btn-primary" type="submit" id="saveEventBtn" style="padding:10px 20px">
               ${isNew ? 'Buat Event' : 'Simpan Perubahan'}
             </button>
           </form>
@@ -82,15 +91,21 @@ async function renderAdminEvent(params) {
         ${!isNew ? `
         <!-- GPX Upload -->
         <div class="card" style="margin-bottom:20px">
-          <h2 style="font-size:15px;font-weight:700;margin-bottom:6px">Rute GPX</h2>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
+            <div>
+              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// ROUTE &amp; ELEVATION TELEMETRY</span>
+              <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">Rute GPX</h2>
+            </div>
+            ${event.gpx_path ? '<span class="badge badge-active">TERPASANG</span>' : '<span class="badge badge-medic">BELUM ADA GPX</span>'}
+          </div>
           ${event.gpx_path
-            ? `<p style="color:var(--color-green);font-size:13px;margin-bottom:14px">✅ GPX sudah di-upload: <code style="background:var(--bg-surface);padding:2px 8px;border-radius:4px">${event.gpx_path}</code></p>`
-            : `<p style="color:var(--text-secondary);font-size:13px;margin-bottom:14px">⚠️ Belum ada file GPX. Upload rute agar tampil di Live Map.</p>`
+            ? `<p style="color:#047857;font-size:13px;font-weight:700;margin-bottom:14px">✅ GPX sudah di-upload: <code style="background:#F3F4F6;padding:2px 8px;border-radius:4px;color:#0D1117;border:1px solid #E5E7EB">${event.gpx_path}</code></p>`
+            : `<p style="color:#D97706;font-size:13px;font-weight:700;margin-bottom:14px">⚠️ Belum ada file GPX. Upload rute agar tampil di Live Map.</p>`
           }
           <label class="gpx-drop-zone" for="gpxFileInput">
-            <div style="font-size:36px;margin-bottom:8px">📁</div>
-            <p style="font-weight:600">Klik atau drag file .gpx ke sini</p>
-            <p style="color:var(--text-secondary);font-size:12px;margin-top:4px">Maksimal 10MB</p>
+            <div style="font-size:32px;margin-bottom:8px">📁</div>
+            <p style="font-weight:800;color:#0D1117;margin-bottom:4px">Klik atau drag file .gpx ke sini</p>
+            <p style="color:#6B7280;font-size:12px;margin:0">Maksimal 10MB</p>
             <input type="file" id="gpxFileInput" accept=".gpx">
           </label>
           <p id="gpxStatus" style="font-size:13px;margin-top:10px;min-height:18px"></p>
@@ -98,14 +113,16 @@ async function renderAdminEvent(params) {
 
         <!-- Checkpoints & Cut-Off Time (Audax / Brevet) -->
         <div class="card" style="margin-bottom:20px">
-          <div class="page-header" style="margin-bottom:16px">
+          <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
             <div>
-              <h2 style="font-size:15px;font-weight:700">Checkpoints & Cut-Off Time (Audax / Brevet)
-                <span class="badge badge-cyan" style="margin-left:8px">${checkpoints.length}</span>
+              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// CHRONO &amp; SPLIT MATRIX</span>
+              <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
+                Checkpoints &amp; Cut-Off Time (Audax / Brevet)
+                <span class="badge badge-cyan" style="margin-left:6px">${checkpoints.length}</span>
               </h2>
-              <p style="color:var(--text-secondary);font-size:12px;margin-top:2px">Pos pemeriksaan, water station, dan batas waktu tempuh resmi</p>
+              <p style="color:#6B7280;font-size:12px;margin-top:2px;margin-bottom:0">Pos pemeriksaan, water station, dan batas waktu tempuh resmi</p>
             </div>
-            <button class="btn btn-primary" style="font-size:13px;padding:8px 16px" id="btnShowAddCp">
+            <button class="btn btn-primary" style="font-size:12.5px;padding:7px 14px" id="btnShowAddCp">
               + Tambah Checkpoint
             </button>
           </div>
@@ -128,23 +145,25 @@ async function renderAdminEvent(params) {
 
         <!-- Rider Management -->
         <div class="card">
-          <div class="page-header" style="margin-bottom:16px">
+          <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
             <div>
-              <h2 style="font-size:15px;font-weight:700">Daftar Rider & Panitia Lapangan
-                <span class="badge badge-cyan" style="margin-left:8px">${riders.length}</span>
+              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// ACCREDITED ROSTER &amp; MARSHALL</span>
+              <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
+                Daftar Rider &amp; Panitia Lapangan
+                <span class="badge badge-cyan" style="margin-left:6px">${riders.length}</span>
               </h2>
-              <p style="color:var(--text-secondary);font-size:12px;margin-top:2px">
+              <p style="color:#6B7280;font-size:12px;margin-top:2px;margin-bottom:0">
                 Kelola peserta, sweeper, marshall rute, tim medis, nomor BIB, PIN akses, dan Magic Link 1-klik
               </p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <a class="btn btn-outline" style="font-size:13px;padding:8px 14px" href="/api/admin/riders/events/${eventId}/template" download="template_riders_cyclopon.csv" title="Unduh contoh template Excel/CSV">
+              <a class="btn btn-outline" style="font-size:12px;padding:7px 12px" href="/api/admin/riders/events/${eventId}/template" download="template_riders_cyclopon.csv" title="Unduh contoh template Excel/CSV">
                 📥 Template CSV
               </a>
-              <button class="btn btn-outline" style="font-size:13px;padding:8px 14px" id="btnShowImportRider" title="Impor data peserta massal dari file atau teks CSV">
+              <button class="btn btn-outline" style="font-size:12px;padding:7px 12px" id="btnShowImportRider" title="Impor data peserta massal dari file atau teks CSV">
                 📁 Import CSV
               </button>
-              <button class="btn btn-primary" style="font-size:13px;padding:8px 16px" id="btnShowAddRider">
+              <button class="btn btn-primary" style="font-size:12px;padding:7px 14px" id="btnShowAddRider">
                 + Tambah Manual
               </button>
             </div>
@@ -500,17 +519,17 @@ async function renderAdminEvent(params) {
 
 function renderCheckpointTableRows(checkpoints) {
   if (!checkpoints.length) {
-    return '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px">Belum ada checkpoint. Tambahkan checkpoint untuk memantau COT!</td></tr>';
+    return '<tr><td colspan="6" style="text-align:center;color:#6B7280;padding:24px;font-weight:600">Belum ada checkpoint. Tambahkan checkpoint untuk memantau COT!</td></tr>';
   }
   return checkpoints.map((cp, idx) => `
     <tr>
-      <td><strong style="color:var(--color-cyan)">CP ${idx + 1}</strong></td>
-      <td><strong>${cp.name}</strong></td>
-      <td><span class="badge badge-yellow">${cp.km_distance} KM</span></td>
-      <td>${cp.open_time || '—'}</td>
-      <td>${cp.close_time ? `<span style="color:var(--color-red);font-weight:600">⏱️ ${cp.close_time}</span>` : '—'}</td>
+      <td><span style="font-family:ui-monospace,monospace;font-weight:900;background:#F3F4F6;border:1px solid #0D1117;padding:3px 8px;border-radius:4px;font-size:11px">CP ${String(idx + 1).padStart(2, '0')}</span></td>
+      <td><strong style="color:#0D1117">${escapeHtml(cp.name)}</strong></td>
+      <td><span class="badge badge-cyan">${cp.km_distance} KM</span></td>
+      <td><span style="font-family:ui-monospace,monospace;font-weight:700">${cp.open_time || '—'}</span></td>
+      <td>${cp.close_time ? `<span style="font-family:ui-monospace,monospace;color:#DC2626;font-weight:800">⏱️ ${cp.close_time}</span>` : '—'}</td>
       <td>
-        <button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="deleteCheckpoint(${cp.id}, '${cp.name.replace(/'/g, "\\'")}')">
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteCheckpoint(${cp.id}, '${cp.name.replace(/'/g, "\\'")}')">
           Hapus
         </button>
       </td>
@@ -531,19 +550,19 @@ async function deleteCheckpoint(cpId, name) {
 
 function renderRiderTableRows(riders, eventName) {
   if (!riders.length) {
-    return '<tr><td colspan="9" style="text-align:center;color:var(--text-secondary);padding:28px">Belum ada peserta atau panitia terdaftar. Tambahkan manual atau impor file CSV!</td></tr>';
+    return '<tr><td colspan="9" style="text-align:center;color:#6B7280;padding:28px;font-weight:600">Belum ada peserta atau panitia terdaftar. Tambahkan manual atau impor file CSV!</td></tr>';
   }
 
   const safeEventName = (eventName || 'Event CycloPon').replace(/'/g, "\\'");
 
   return riders.map(r => {
-    let roleBadge = '<span class="badge badge-cyan">🚴 Rider</span>';
+    let roleBadge = '<span class="badge badge-rider">🚴 RIDER</span>';
     if (r.role === 'sweeper') {
-      roleBadge = '<span class="badge" style="background:#FFF7ED;color:#C2410C;border:1px solid #F97316;font-weight:700">🧹 Sweeper</span>';
+      roleBadge = '<span class="badge badge-sweeper">🧹 SWEEPER</span>';
     } else if (r.role === 'marshall') {
-      roleBadge = '<span class="badge" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #3B82F6;font-weight:700">🏍️ Marshall</span>';
+      roleBadge = '<span class="badge badge-marshall">🏍️ MARSHALL</span>';
     } else if (r.role === 'medic') {
-      roleBadge = '<span class="badge" style="background:#FEF2F2;color:#B91C1C;border:1px solid #EF4444;font-weight:700">🚑 Medis</span>';
+      roleBadge = '<span class="badge badge-medic">🚑 MEDIS</span>';
     }
 
     const safeName = (r.name || '').replace(/'/g, "\\'");
@@ -554,33 +573,33 @@ function renderRiderTableRows(riders, eventName) {
 
     return `
       <tr>
-        <td><strong style="font-size:15px;color:var(--text-primary)">#${r.bib}</strong></td>
+        <td><strong style="font-family:ui-monospace,monospace;font-size:14px;color:#0D1117;background:#F3F4F6;padding:2px 7px;border-radius:4px;border:1px solid #E5E7EB">#${r.bib}</strong></td>
         <td>${roleBadge}</td>
-        <td><strong>${r.name}</strong></td>
-        <td>${r.phone ? `<span style="font-size:13px">${r.phone}</span>` : '<span style="color:var(--text-secondary);font-size:12px">—</span>'}</td>
+        <td><strong style="color:#0D1117">${escapeHtml(r.name)}</strong></td>
+        <td>${r.phone ? `<span style="font-family:ui-monospace,monospace;font-size:12.5px;color:#4B5563">${r.phone}</span>` : '<span style="color:#9CA3AF;font-size:12px">—</span>'}</td>
         <td>
-          <code style="background:var(--bg-surface);padding:3px 8px;border-radius:4px;font-size:13px;font-weight:800;color:var(--text-primary);letter-spacing:0.05em">
+          <code style="background:#F3F4F6;padding:3px 8px;border-radius:4px;font-size:12.5px;font-weight:900;color:#0D1117;font-family:ui-monospace,monospace;letter-spacing:0.06em;border:1px solid #E5E7EB">
             ${safePin}
           </code>
         </td>
         <td>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             ${safeToken ? `
-              <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;font-weight:600" onclick="copyMagicLink('${safeToken}', '${safeBib}')" title="Salin tautan login instan tanpa ketik">
+              <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;font-weight:800" onclick="copyMagicLink('${safeToken}', '${safeBib}')" title="Salin tautan login instan tanpa ketik">
                 📋 Salin Link
               </button>
             ` : ''}
             ${safePhone ? `
-              <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;font-weight:700;color:#16A34A;border-color:rgba(22,163,74,0.3)" onclick="shareWhatsApp('${safePhone}', '${safeName}', '${safeBib}', '${safePin}', '${safeToken}', '${safeEventName}')" title="Kirim detail akun via WhatsApp">
+              <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;font-weight:800;color:#047857;border-color:#047857" onclick="shareWhatsApp('${safePhone}', '${safeName}', '${safeBib}', '${safePin}', '${safeToken}', '${safeEventName}')" title="Kirim detail akun via WhatsApp">
                 💬 WA
               </button>
             ` : ''}
           </div>
         </td>
         <td><span class="color-swatch" style="background:${r.color}" title="${r.color}"></span></td>
-        <td><code style="font-size:11px;color:var(--text-secondary)">${r.traccar_device_id || '—'}</code></td>
+        <td><code style="font-family:ui-monospace,monospace;font-size:11px;color:#6B7280">${r.traccar_device_id || '—'}</code></td>
         <td>
-          <button class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="deleteRider(${r.id}, '${safeBib}')">
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteRider(${r.id}, '${safeBib}')">
             Hapus
           </button>
         </td>

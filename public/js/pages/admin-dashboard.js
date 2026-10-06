@@ -12,9 +12,12 @@ function adminSidebar(activeKey) {
   return `
     <!-- ── Mobile Top Bar (visible on mobile only) ── -->
     <div class="admin-mobile-topbar">
-      <a href="/" data-link class="admin-mobile-brand">CycloPon</a>
+      <div style="display:flex;align-items:center;gap:8px">
+        <a href="/" data-link class="admin-mobile-brand">CycloPon</a>
+        <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:900;background:#0D1117;color:#FFFFFF;padding:2px 6px;border-radius:4px;letter-spacing:0.04em">RC-OPS</span>
+      </div>
       <button class="admin-hamburger" id="adminHamburger" aria-label="Buka menu navigasi" title="Menu Navigasi">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
       </button>
@@ -26,12 +29,15 @@ function adminSidebar(activeKey) {
     <!-- ── Mobile Slide-Out Drawer ── -->
     <div class="admin-drawer" id="adminDrawer">
       <div class="admin-drawer-header">
-        <span class="admin-drawer-brand">CycloPon</span>
+        <div>
+          <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#6B7280;display:block;letter-spacing:0.08em">// RACE CONTROL</span>
+          <span class="admin-drawer-brand">CycloPon</span>
+        </div>
         <button class="admin-drawer-close" id="adminDrawerClose" aria-label="Tutup menu">✕</button>
       </div>
       <div class="admin-drawer-user">
-        <span>👤</span>
-        <span>${adminName}</span>
+        <span style="font-size:14px">🛡️</span>
+        <span style="font-family:ui-monospace,monospace;font-size:12px;font-weight:800;color:#0D1117;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${adminName}</span>
       </div>
       <nav class="admin-drawer-nav">
         <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
@@ -52,12 +58,16 @@ function adminSidebar(activeKey) {
     <!-- ── Desktop Sidebar ── -->
     <aside class="sidebar">
       <div class="sidebar-logo">
+        <span class="sidebar-logo-tag">// CYCLOPON RACE CONTROL</span>
         <h2>CycloPon</h2>
-        <small>Admin Panel</small>
+        <small>COMMISSAIRE PANEL</small>
       </div>
       <div class="sidebar-user">
-        <span>👤</span>
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-primary);font-weight:600">${adminName}</span>
+        <div class="sidebar-user-avatar">🛡️</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:ui-monospace,monospace;font-size:9.5px;color:#6B7280;font-weight:800;letter-spacing:0.04em">ACCREDITATION</div>
+          <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0D1117;font-weight:800;font-size:12.5px">${adminName}</div>
+        </div>
       </div>
       <nav class="sidebar-nav">
         <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}" style="justify-content:space-between">
@@ -498,40 +508,35 @@ function renderAdminLogin() {
       <div class="admin-login-card fade-in">
         <!-- Top Nav -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-          <a href="/" data-link style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;background:#F4F5F4;border:1px solid var(--border-subtle);font-size:12px;font-weight:700;color:var(--text-secondary);text-decoration:none;transition:var(--transition)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <a href="/" data-link style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#FFFFFF;border:1.5px solid #0D1117;font-size:11.5px;font-weight:800;color:#0D1117;text-decoration:none;transition:all 0.15s ease">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
-            <span>Beranda</span>
+            <span>BERANDA</span>
           </a>
-          <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:rgba(43,78,48,0.08);border:1px solid rgba(43,78,48,0.22);font-size:10px;font-weight:800;color:var(--color-primary);letter-spacing:0.06em">
-            🛡️ RACE CONTROL
+          <span class="login-pass-badge">
+            🛡️ RACE CONTROL HQ
           </span>
         </div>
 
         <!-- Header Center -->
-        <div style="text-align:center;margin-bottom:22px">
-          <div style="width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,rgba(43,78,48,0.12) 0%,rgba(116,136,115,0.22) 100%);color:var(--color-primary);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;border:1.5px solid rgba(43,78,48,0.18);box-shadow:0 6px 20px rgba(43,78,48,0.1)">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-          </div>
-          <h1 style="font-size:21px;font-weight:900;color:var(--text-primary);letter-spacing:-0.02em;line-height:1.25">Akses Administrator</h1>
-          <p style="font-size:13px;color:var(--text-secondary);margin-top:4px">Masuk ke panel Race Control & Manajemen Event</p>
+        <div style="margin-bottom:22px">
+          <span class="login-pass-tag">// COMMISSAIRE ACCREDITATION PASS</span>
+          <h1 style="font-size:22px;font-weight:900;color:#0D1117;letter-spacing:-0.03em;line-height:1.2;text-transform:uppercase;margin:4px 0">Akses Administrator</h1>
+          <p style="font-size:13px;color:#4B5563;margin:0">Masuk ke panel Race Control &amp; Manajemen Event</p>
         </div>
 
         <form id="adminLoginForm">
           <div style="margin-bottom:14px">
-            <label for="adminEmail" style="display:block;font-size:11px;font-weight:800;color:var(--text-secondary);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">USERNAME / EMAIL</label>
+            <label for="adminEmail" style="display:block;font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">USERNAME / EMAIL</label>
             <div class="admin-input-group">
               <span class="admin-input-icon">👤</span>
               <input class="admin-input-field" type="text" id="adminEmail" placeholder="admin atau email" value="admin" required autocomplete="username">
             </div>
           </div>
           <div style="margin-bottom:16px">
-            <label for="adminPassword" style="display:block;font-size:11px;font-weight:800;color:var(--text-secondary);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">PASSWORD</label>
+            <label for="adminPassword" style="display:block;font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">PASSWORD</label>
             <div class="admin-input-group">
               <span class="admin-input-icon">🔒</span>
               <input class="admin-input-field" type="password" id="adminPassword" placeholder="••••••••" value="admin" required autocomplete="current-password">
@@ -539,13 +544,13 @@ function renderAdminLogin() {
           </div>
 
           <div class="admin-dev-box">
-            💡 <strong>Mode Dev:</strong> user <code style="color:var(--text-primary);background:#FFFFFF;padding:2px 6px;border-radius:4px;border:1px solid rgba(0,0,0,0.06);font-weight:700">admin</code>, pass <code style="color:var(--text-primary);background:#FFFFFF;padding:2px 6px;border-radius:4px;border:1px solid rgba(0,0,0,0.06);font-weight:700">admin</code>
+            💡 <strong>Mode Dev:</strong> user <code>admin</code>, pass <code>admin</code>
           </div>
 
-          <p id="loginError" style="color:var(--color-red);font-size:13px;margin-bottom:10px;min-height:18px;text-align:center;font-weight:600"></p>
+          <p id="loginError" style="color:#DC2626;font-size:13px;margin-bottom:10px;min-height:18px;text-align:center;font-weight:700"></p>
 
-          <button class="btn btn-primary" type="submit" id="loginSubmit" style="width:100%;padding:14px;font-size:14px;border-radius:16px;box-shadow:0 6px 20px rgba(43,78,48,0.3)">
-            Masuk ke Admin Panel →
+          <button class="btn btn-primary" type="submit" id="loginSubmit" style="width:100%;padding:13px;font-size:13.5px;letter-spacing:0.04em">
+            MASUK KE ADMIN PANEL →
           </button>
         </form>
       </div>
@@ -602,7 +607,10 @@ async function renderAdminDashboard() {
       ${adminSidebar('dashboard')}
       <main class="admin-content">
         <div class="page-header">
-          <h1>Dashboard Event</h1>
+          <div class="page-header-title-col">
+            <span class="page-header-tag">// RACE CONTROL HQ · TELEMETRY OVERVIEW</span>
+            <h1>Dashboard Event</h1>
+          </div>
           <button class="btn btn-primary" id="btnNewEvent">+ Event Baru</button>
         </div>
 
@@ -613,15 +621,15 @@ async function renderAdminDashboard() {
         <div class="traffic-analytics-card" id="trafficAnalyticsCard">
           <div class="traffic-card-header">
             <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:22px">📊</span>
+              <span style="font-size:20px">📊</span>
               <div>
-                <h2 style="font-size:15px;font-weight:800;color:var(--text-primary);margin:0">Analitik Trafik Pengunjung & Penonton Live</h2>
-                <small style="font-size:11px;color:var(--text-secondary)">Data real-time dari koneksi penonton dan log kunjungan web</small>
+                <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;letter-spacing:-0.02em;margin:0">Analitik Trafik Pengunjung &amp; Penonton Live</h2>
+                <small style="font-size:11px;color:#6B7280;font-weight:600">Data real-time dari koneksi penonton dan log kunjungan web</small>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span class="live-pulse-dot" id="trafficLivePulse"></span>
-              <span id="trafficLiveBadge" style="font-size:12px;font-weight:700;color:var(--color-sage)">Sinkronisasi Realtime...</span>
+              <span id="trafficLiveBadge" style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#047857">SINKRONISASI REALTIME...</span>
             </div>
           </div>
           <div class="traffic-metrics-grid">
@@ -647,19 +655,22 @@ async function renderAdminDashboard() {
             </div>
           </div>
           <div class="traffic-sub-bar" id="trafficSubBar" style="display:none">
-            <div style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <div style="font-size:12px;color:#4B5563;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <span>🔥</span> <strong>Halaman Terpopuler Hari Ini:</strong>
-              <span id="trafficTopPagesList" style="color:var(--text-primary);font-weight:600">--</span>
+              <span id="trafficTopPagesList" style="color:#0D1117;font-weight:700">--</span>
             </div>
           </div>
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <h2 style="font-size:16px;font-weight:800;color:var(--text-primary);margin:0">Daftar Event Balapan</h2>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:900;color:#6B7280">// EVENT LIST</span>
+            <h2 style="font-size:16px;font-weight:900;color:#0D1117;margin:0;text-transform:uppercase">Daftar Event Balapan</h2>
+          </div>
         </div>
 
         <div class="events-grid" id="eventsGrid">
-          <p style="color:var(--text-secondary)">Memuat data event...</p>
+          <p style="color:#6B7280;font-weight:600">Memuat data event...</p>
         </div>
       </main>
     </div>
@@ -764,18 +775,29 @@ async function renderAdminDashboard() {
 
     grid.innerHTML = events.map(ev => `
       <div class="event-card">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-          <h3 style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ev.name}</h3>
-          <span class="badge ${ev.active ? 'badge-green' : 'badge-orange'}">${ev.active ? 'Aktif' : 'Selesai'}</span>
+        <div>
+          <div class="event-card-header">
+            <h3 title="${escapeHtml(ev.name)}">${escapeHtml(ev.name)}</h3>
+            <span class="badge ${ev.active ? 'badge-active' : 'badge-finished'}">${ev.active ? '● AKTIF' : 'SELESAI'}</span>
+          </div>
+          <div class="event-meta">
+            <div class="event-meta-row">
+              <span>📅 Tanggal:</span>
+              <strong style="color:#0D1117">${ev.date}</strong>
+            </div>
+            <div class="event-meta-row">
+              <span>📍 Lintasan:</span>
+              <strong style="color:${ev.gpx_path ? '#047857' : '#D97706'}">${ev.gpx_path ? '✅ GPX Terpasang' : '⚠️ Belum Ada GPX'}</strong>
+            </div>
+          </div>
         </div>
-        <p class="event-meta">📅 ${ev.date} &nbsp;·&nbsp; ${ev.gpx_path ? '✅ GPX' : '⚠️ Belum ada GPX'}</p>
         <div class="event-actions">
-          <button class="btn btn-outline" style="font-size:12px;padding:7px 14px"
-                  onclick="Router.navigate('/admin/events/${ev.id}')">⚙️ Kelola</button>
+          <button class="btn btn-primary" style="font-size:12px;padding:7px 14px"
+                  onclick="Router.navigate('/admin/events/${ev.id}')">⚙️ Kelola Event</button>
           <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
              href="/watch/${ev.id}?admin=1" target="_blank" rel="noopener">🗺️ Live Map</a>
           <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
-             href="/events/${ev.id}/results" target="_blank" rel="noopener">🏆 Hasil & Brevet</a>
+             href="/events/${ev.id}/results" target="_blank" rel="noopener">🏆 Hasil &amp; Brevet</a>
         </div>
       </div>
     `).join('');
