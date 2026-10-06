@@ -1159,14 +1159,64 @@ async function renderLiveMap(params) {
     return 'IN_TIME';
   }
 
+  function getRiderShortName(name) {
+    if (!name) return '';
+    const clean = String(name).trim();
+    const parts = clean.split(/[\s-]+/);
+    let chosen = parts[0] || clean;
+    chosen = chosen.replace(/[^a-zA-Z0-9\.]/g, '');
+    if (!chosen) chosen = clean.substring(0, 8);
+    if (chosen.length > 9) {
+      return chosen.substring(0, 9) + '…';
+    }
+    return chosen;
+  }
+
+  function getRiderMarkerMeta(rider) {
+    const role = (rider.role || 'rider').toLowerCase();
+    const shortName = getRiderShortName(rider.name);
+
+    if (role === 'sweeper') {
+      const hasWord = shortName.toLowerCase().includes('sweep');
+      const label = hasWord ? `🧹 ${shortName}` : (shortName ? `🧹 Sweeper ${shortName}` : '🧹 Sweeper');
+      const color = rider.color || '#F97316';
+      return { label, color, isRole: true };
+    }
+    if (role === 'marshall') {
+      const hasWord = shortName.toLowerCase().includes('marshal');
+      const label = hasWord ? `🏍️ ${shortName}` : (shortName ? `🏍️ Marshall ${shortName}` : '🏍️ Marshall');
+      const color = rider.color || '#3B82F6';
+      return { label, color, isRole: true };
+    }
+    if (role === 'medic') {
+      const hasWord = shortName.toLowerCase().includes('med');
+      const label = hasWord ? `🚑 ${shortName}` : (shortName ? `🚑 Medis ${shortName}` : '🚑 Medis');
+      const color = rider.color || '#EF4444';
+      return { label, color, isRole: true };
+    }
+
+    // Default: Participant / Rider
+    const bibStr = rider.bib ? `#${rider.bib}` : '';
+    let label = bibStr;
+    if (shortName) {
+      label = bibStr ? `${bibStr} ${shortName}` : shortName;
+    } else if (!label) {
+      label = 'Rider';
+    }
+    const color = rider.color || '#FFE600';
+    return { label, color, isRole: false };
+  }
+
   function createRiderIcon(rider, isOffRoute) {
-    const color = isOffRoute ? '#EF4444' : (rider.color || '#FFE600');
+    const meta = getRiderMarkerMeta(rider || {});
+    const baseColor = isOffRoute ? '#EF4444' : meta.color;
     const offRouteTag = isOffRoute
       ? `<div style="
-          position:absolute;top:-34px;left:50%;transform:translateX(-50%);
+          position:absolute;top:-36px;left:50%;transform:translateX(-50%);
           background:#EF4444;color:#FFFFFF;font-size:9px;font-weight:900;
           padding:1px 6px;border-radius:100px;white-space:nowrap;
           box-shadow:0 0 12px #EF4444;animation:pulse 1.2s infinite;
+          pointer-events:none;z-index:10;
         ">⚠️ NYASAR</div>`
       : '';
 
@@ -1176,18 +1226,21 @@ async function renderLiveMap(params) {
           ${offRouteTag}
           <div style="
             width:14px;height:14px;border-radius:50%;
-            background:${color};
+            background:${baseColor};
             border:2.5px solid rgba(255,255,255,0.95);
-            box-shadow:0 0 10px ${color}80,0 2px 5px rgba(0,0,0,0.6);
+            box-shadow:0 0 10px ${baseColor}80,0 2px 5px rgba(0,0,0,0.6);
             position:absolute;top:3px;left:3px;
           "></div>
           <div style="
             position:absolute;top:-20px;left:50%;transform:translateX(-50%);
-            background:rgba(8,10,15,0.9);
-            color:${color};font-size:10px;font-weight:800;
+            background:rgba(8,10,15,0.92);
+            color:${baseColor};font-size:10px;font-weight:800;
             padding:1px 7px;border-radius:100px;white-space:nowrap;
-            border:1px solid ${color}60;
-          ">#${rider.bib}</div>
+            border:1px solid ${baseColor}70;
+            box-shadow:0 2px 8px rgba(0,0,0,0.4);
+            letter-spacing:0.02em;
+            pointer-events:none;
+          ">${meta.label}</div>
         </div>
       `,
       className: '', iconSize: [20, 20], iconAnchor: [10, 10]
@@ -2135,9 +2188,9 @@ async function renderLiveMap(params) {
 
     // Use registered event riders or create realistic demo riders
     const demoRiders = riders.length ? riders : [
-      { id: 101, bib: '001', name: 'Ahmad Rider (Simulasi)', color: '#FFE600' },
-      { id: 102, bib: '002', name: 'Budi Santoso (Simulasi)', color: '#10B981' },
-      { id: 103, bib: '003', name: 'Citra Dewi (Simulasi)', color: '#FF6B35' }
+      { id: 101, bib: '001', name: 'Ahmad Pelari', color: '#FFE600', role: 'rider' },
+      { id: 102, bib: '002', name: 'Budi Santoso', color: '#10B981', role: 'rider' },
+      { id: 103, bib: 'SWP-1', name: 'Doni Sweeper', color: '#F97316', role: 'sweeper' }
     ];
 
     const baseBatteries = [94, 78, 17]; // Rider 3 has low battery (17%) to demonstrate low battery alert
