@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRiderCockpit();
   });
 
+  Router.register('/cockpit', () => Router.navigate('/rider/cockpit'));
+
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(

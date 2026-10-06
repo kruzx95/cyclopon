@@ -504,18 +504,6 @@ async function renderRiderCockpit() {
     }
   });
 
-  // ── Logout from Cockpit ──
-  const btnCockpitLogout = document.getElementById('btnCockpitLogout');
-  btnCockpitLogout?.addEventListener('click', () => {
-    if (confirm('Keluar dari Cockpit HUD & kembali ke Rider Login?')) {
-      teardownRiderCockpit();
-      sessionStorage.removeItem('riderConfig');
-      localStorage.removeItem('riderConfig');
-      if (window.showToast) showToast('Berhasil keluar dari Cockpit.', 'info');
-      Router.navigate('/rider');
-    }
-  });
-
   // Register teardown on router unmount
   if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
     Router.onUnmount(teardownRiderCockpit);
@@ -1252,9 +1240,11 @@ async function renderRiderCockpit() {
   const btnCockpitLogout = document.getElementById('btnCockpitLogout');
   if (btnCockpitLogout) {
     btnCockpitLogout.addEventListener('click', () => {
-      if (confirm('Keluar dari sesi rider dan kembali ke login?')) {
+      if (confirm('Keluar dari Cockpit HUD dan kembali ke login?')) {
+        teardownRiderCockpit();
         sessionStorage.removeItem('riderConfig');
         localStorage.removeItem('riderConfig');
+        if (window.showToast) showToast('Berhasil keluar dari Cockpit.', 'info');
         Router.navigate('/rider');
       }
     });
