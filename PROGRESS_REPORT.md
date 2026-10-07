@@ -766,14 +766,218 @@ Menjawab umpan balik visual saat mengakses Cockpit HUD di smartphone (khususnya 
 
 ---
 
-## 26. Rencana Kerja Selanjutnya (Lanjutan di Kantor)
+---
 
-1. **Modul 4: Official Results & Brevet Digital (`/events/:id/results`):**
-   - Menerapkan standarisasi estetika Athletic Minimalist Pro pada tabel hasil resmi, klasifikasi finisher, pencarian BIB/nama, rincian split checkpoint, dan ekspor CSV.
-   - Menyeragamkan palet warna, tipografi Inter + JetBrains Mono, lencana status brevet, dan sertifikat finisher digital.
-2. **Data Demo & Seed Rute GPX Nyata:**
-   - Script seeder otomatis (`npm run seed:demo`) yang menyertakan rute GPX resmi, pos kontrol riil, dan simulasi pergerakan rider aktif untuk demonstrasi kepada panitia atau sponsor.
+## 26. Standarisasi Modul 4: Official Results & Brevet Digital (Athletic Minimalist Pro)
 
+Melanjutkan program standarisasi visual menyeluruh ke estetika **Athletic Minimalist Pro (Rapha / Pas Normal Studios / Strava PRO)**, Modul 4 yang mencakup **Hasil Resmi Event & Sertifikat Brevet Digital Homologasi (`/events/:id/results`)** telah dimodernisasi secara menyeluruh:
 
+### 1. Antarmuka Klasifikasi Hasil Resmi (`public/css/results.css`, `public/js/pages/event-results.js`)
+- **Header & Micro-Tag Presisi:**
+  - Micro-tag teknis monospace: `// OFFICIAL CLASSIFICATION · DIGITAL BREVET HOMOLOGATION MATRIX` dengan indikator denyut hijau.
+  - Tombol kembali `←` bergaya squircle tegas berbingkai `1.5px solid #0D1117`.
+  - Judul event uppercase tebal dipadukan pill meta: Tanggal pelaksanaan, Total Starter, dan Finisher Rate (%).
+  - Tombol aksi atletik: `[ 📍 Unduh GPX ]`, `[ 📥 Unduh CSV ]`, dan `[ 🗺️ Live Map ]`.
+- **Matriks Ringkasan Statistik (5 Kartu Stat):**
+  - Kartu kontainer berbingkai hitam atletik `1.5px solid #0D1117` dengan tipografi angka tabular-nums besar: *Total Starter*, *Official Finisher* (aksen hijau `#047857`), *Over COT* (aksen kuning `#D97706`), *Did Not Finish (DNF)* (aksen merah `#DC2626`), dan *Finisher Rate (%)*.
+- **Bilah Pencarian & Filter Status:**
+  - Kotak pencarian real-time nama rider & BIB dengan tombol clear `✕`.
+  - Filter pills dinamis (`SEMUA`, `FINISHER`, `OVER COT`, `DNF`) dengan chip counter monospace dan efek invert hitam pekat saat aktif.
+- **Tabel Klasifikasi Interaktif & Accordion Split Checkpoint:**
+  - Podium badges atletik kontras tinggi: Juara 1 (`01` emas), Juara 2 (`02` perak), Juara 3 (`03` perunggu), serta squircle monospace untuk peringkat berikutnya.
+  - Chip nomor BIB berbingkai `1.5px solid #0D1117` (`#101`).
+  - Lencana status tegas: `● FINISHER` (emerald), `▲ OVER COT` (amber), dan `✕ DNF` (crimson).
+  - Kolom waktu tempuh, jarak, dan kecepatan rata-rata dengan font tabular-nums bersih.
+  - **Fitur Baru (Interactive Split Accordion):** Baris pos checkpoint dilengkapi tombol panah `[ ▾ Split ]` yang dapat diklik untuk membuka sub-baris rincian split waktu kedatangan di tiap pos kontrol (nama pos, kilometer rute, batas COT, jam tiba, dan status kelulusan pos).
+
+### 2. Sertifikat Brevet Digital Homologasi Otentik (*Audax / BRM Homologated Certificate*)
+- **Desain Editorial Homologasi Internasional:**
+  - Latar kapur kertas resmi (`#FAF9F6`) dengan bingkai ganda: bingkai luar hitam atletik `2px solid #0D1117` dan garis batas dalam `1px solid #CBD5E1`.
+  - Tanda bidik registrasi (*corner registration marks* `+`) di keempat sudut sertifikat.
+  - Penomoran homologasi unik dan deterministik: `HOMOLOGATION N°: BRM-01-#101`.
+  - Header adaptif: `OFFICIAL BREVET CERTIFICATE` untuk finisher dan `CERTIFICATE OF PARTICIPATION` untuk peserta non-finisher.
+  - Tipografi nama pesepeda display ultra-bold dengan lencana BIB.
+  - Matriks 4-sel hasil resmi: Waktu tempuh, jarak rute, kecepatan rata-rata, dan peringkat klasifikasi.
+  - Stempel pos checkpoint (*Checkpoint Verification Stamps*) bergaya cap paspor brevet bertinta dengan status kelulusan.
+  - Area tanda tangan komisioner dan cap verifikasi resmi `✓ CYCLOPON AUDITED · HOMOLOGATION VERIFIED`.
+- **Ekspor & Berbagi Medsos:**
+  - Integrasi rendering gambar PNG resolusi tinggi Retina 2x (`html2canvas`) dengan penamaan file bersih otomatis.
+  - Dukungan Web Share API untuk WhatsApp & medsos, salin tautan, serta cetak langsung (`window.print()`).
+  - Stylesheet cetak `@media print` presisi tanpa elemen luar browser.
+
+### 3. Pembaruan Versi Service Worker & Verifikasi Kualitas
+- Cache PWA dinaikkan ke **`cyclopon-v41`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+- Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)** termasuk pengujian data split checkpoints pada endpoint hasil.
+
+---
+
+---
+
+## 27. Peniadaan Logo Sepeda & Standarisasi Tipografi Murni "CYCLOPON"
+
+Sesuai arahan pengguna untuk meniadakan logo/ikon grafis sepeda di semua aspek antarmuka dan menyeragamkannya ke logo tipografi murni:
+
+1. **Peniadaan Emblem Grafis Sepeda di Navigasi:**
+   - **Landing Page (`public/js/pages/landing.js`):** Menghapus `.brand-logo-emblem` (ikon SVG pesepeda di dalam squircle hitam). Menggantikannya dengan tipografi murni `CYCLOPON` bergaya athletic bold dengan micro-tag `// PRO GPS TELEMETRY`.
+   - **Rider Setup (`public/js/pages/rider-setup.js`):** Menghapus emblem sepeda di header dan menyelaraskan judul menjadi tipografi murni `CYCLOPON // RIDER HUB`.
+   - **Rider Login (`public/js/pages/rider-login.js`):** Menghapus cincin avatar sepeda (`.login-avatar-ring`) pada form akreditasi maupun sesi aktif, digantikan dengan tipografi murni `CYCLOPON` yang tegas.
+   - **Live Map (`public/js/pages/live-map.js`):** Memastikan teks logo header menggunakan huruf kapital murni `CYCLOPON`.
+   - **Race Control Admin Panel (`public/js/pages/admin-dashboard.js`):** Menyeragamkan teks brand di sidebar desktop, mobile header, dan drawer navigasi menjadi `CYCLOPON`.
+   - **Magic Link Connector (`public/js/app.js`):** Menghapus emoji sepeda besar dan menggantinya dengan tipografi `CYCLOPON`.
+
+2. **Pembaruan Ikon Aplikasi PWA & Favicon:**
+   - Seluruh file ikon PWA ([`icon-192.svg`](file:///home/kruza/Documents/cyclopon/public/icons/icon-192.svg), [`icon-512.svg`](file:///home/kruza/Documents/cyclopon/public/icons/icon-512.svg), [`icon-192.png`](file:///home/kruza/Documents/cyclopon/public/icons/icon-192.png), [`icon-512.png`](file:///home/kruza/Documents/cyclopon/public/icons/icon-512.png)) telah dirender ulang dengan latar belakang hitam atletik `#0D1117`, garis tepi hairline presisi `#1E293B`, dan tipografi murni `CYCLOPON` warna putih tajam.
+   - Menambahkan tag `<link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg">` pada [`public/index.html`](file:///home/kruza/Documents/cyclopon/public/index.html).
+
+3. **Pembaruan Service Worker:**
+   - Versi cache dinaikkan ke **`cyclopon-v42`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+   - Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)**.
+
+---
+
+## 28. Redesain Athletic Minimalist Pro: Cockpit Action Bar (SOS & Live Map)
+
+Berdasarkan permintaan pengguna untuk mendesain ulang tampilan tombol bawah Cockpit HUD (`🚨 SOS Darurat` & `🗺️ Live Map`) yang sebelumnya terlihat kaku dan menempel pada indikator navigasi bawah iPhone:
+
+1. **Transformasi Ergonomi & Desain Kapsul Taktis:**
+   - **Bentuk Kapsul Atletik (`border-radius: 9999px`):** Menggantikan kotak persegi bersudut tumpul standar dengan *athletic dual-capsule dock* yang modern, ergonomis, dan mudah ditekan saat bersepeda.
+   - **Pencegahan Tumpang Tindih Home Indicator iPhone:** Memperbaiki *safe area inset* dengan padding bawah `max(24px, calc(14px + env(safe-area-inset-bottom, 0px)))`. Tombol kini mengambang bersih di atas garis indikator bawah iPhone tanpa tabrakan visual.
+   - **Frosted Glass Dock:** Kontainer mengadopsi efek kaca buram presisi `backdrop-filter: blur(20px) saturate(180%)` dengan garis tepi hairline halus dan bayangan ambien lembut.
+
+2. **Peniadaan Emoji & Implementasi Indikator Vektor Profesional:**
+   - **Tombol SOS (`.cockpit-sos-btn`):**
+     - Menggantikan emoji `🚨` dengan **Radar Beacon Pulsing Indicator** (`.sos-beacon`) — titik inti putih terang dengan cincin pulsa radar konsentris animasi (`sosBeaconPulse`) layaknya transponder telemetri darurat aktif.
+     - Gradien merah atletik `linear-gradient(180deg, #EF4444 0%, #DC2626 100%)` dengan efek timbul tactil (*tactile inset highlight*) dan bayangan merah menyala.
+     - Tipografi monospace kapital `SOS DARURAT` dengan tracking huruf `0.08em`.
+   - **Tombol Live Map (`.cockpit-nav-btn`):**
+     - Menggantikan emoji `🗺️` dengan ikon poligon rute vektor SVG presisi dengan aksen warna hijau emerald `#10B981`.
+     - Latar belakang kapsul obsidian pro `linear-gradient(180deg, #1C2128 0%, #0D1117 100%)` dengan efek kedalaman *subtle highlight*.
+     - Tipografi monospace kapital `LIVE MAP` yang senada dan serasi.
+
+3. **Respon Sentuhan & AMOLED Night Mode:**
+   - **Micro-Interactions:** Efek penekanan fisik (*tactile press*) dengan `transform: scale(0.96)` dan penyesuaian bayangan saat ditekan.
+   - **AMOLED Night Mode:** Di malam hari, kontainer berubah menjadi deep obsidian `rgba(10, 13, 11, 0.94)`, tombol SOS memancarkan rim neon merah, dan Live Map mengadopsi gradien karbon bertepi slate `#1E293B`.
+
+4. **Pembaruan Service Worker & Uji Kualitas:**
+   - Versi cache PWA dinaikkan ke **`cyclopon-v44`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+   - Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)**.
+
+---
+
+## 29. Integrasi Logo Resmi CYCLOPON (Aerodynamic CP Monogram & Orbit Telemetry)
+
+Mengintegrasikan aset logo vektor resmi yang digenerate via Google AI Studio ke seluruh ekosistem aplikasi:
+
+1. **Aset Vektor Logo yang Disimpan:**
+   - **Full Brand Lockup (`public/icons/logo.svg`):** Resolusi 1200x1200 berisi monogram CP aerodinamis, lintasan orbit miring -30°, suar telemetri emerald `#00F59B`, dan tipografi *luxury athletic* `CYCLOPON // GPS LIVE TRACKING • ULTRA DISTANCE`.
+   - **Monogram Emblem (`public/icons/logo-emblem.svg`):** Simbol geometris 1000x1000 dengan latar matte jet black `#0D1117`, C-loop aerodinamis, P-spine vertikal, orbit miring, dan titik suar telemetri hijau zamrud.
+   - **Dark Emblem Varian Transparan (`public/icons/logo-emblem-dark.svg`):** Varian garis tepi gelap `#0D1117` tanpa latar belakang, dioptimalkan untuk kanvas terang dan dokumen cetak sertifikat brevet.
+   - **Ikon PWA & Favicon Vektor (`public/icons/icon-192.svg` & `public/icons/icon-512.svg`):** Ikon berbasis vektor presisi geometris untuk bookmark layar utama perangkat.
+
+2. **Generasi Ikon Raster Resolusi Tinggi (Retina PNG):**
+   - Menggunakan Google Chrome Headless Engine untuk merasterisasi aset vektor menjadi PNG murni:
+     - [`public/icons/icon-192.png`](file:///home/kruza/Documents/cyclopon/public/icons/icon-192.png) (192×192 px, 6.6 KB)
+     - [`public/icons/icon-512.png`](file:///home/kruza/Documents/cyclopon/public/icons/icon-512.png) (512×512 px, 18.6 KB)
+   - Memperbarui tautan favicon SVG di [`public/index.html`](file:///home/kruza/Documents/cyclopon/public/index.html) (`/icons/logo-emblem.svg`).
+
+3. **Penerapan Terintegrasi di Seluruh Antarmuka Aplikasi:**
+   - **Landing Page (`public/js/pages/landing.js`):** Menampilkan emblem squircle 32px di top navigation bar (`.brand-title`) dan di footer bawah (`.landing-footer`).
+   - **Rider Hub (`public/js/pages/rider-setup.js`):** Menampilkan emblem logo di sebelah judul `CYCLOPON // RIDER HUB`.
+   - **Rider Login (`public/js/pages/rider-login.js`):** Menampilkan emblem logo 36px di atas judul pada status sesi aktif maupun formulir login.
+   - **Admin Race Control (`public/js/pages/admin-dashboard.js`):** Menampilkan emblem di mobile topbar, drawer navigasi, dan desktop sidebar header.
+   - **Sertifikat Digital Brevet (`public/js/pages/event-results.js`):** Menampilkan emblem monokromatik di header sertifikat dan stempel homologasi resmi (`.cert-verification-stamp`).
+
+4. **Pembaruan Service Worker & Verifikasi Pengujian:**
+   - Versi cache PWA dinaikkan ke **`cyclopon-v45`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js) dan mendaftarkan seluruh file logo baru ke dalam `SHELL_ASSETS`.
+   - Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)**.
+
+---
+
+## 30. Pembenahan & Penyempurnaan Tata Letak Footer Editorial
+
+Berdasarkan permintaan pengguna untuk merapikan footer beranda (*Landing Page Footer*) yang sebelumnya terlihat renggang, tidak sejajar, dan berantakan:
+
+1. **Restrukturisasi Hierarki & Tata Letak Brand (*Brand Lockup*):**
+   - Mengelompokkan logo emblem, nama brand `CYCLOPON`, dan sub-tagline `ULTRA-ENDURANCE CYCLING LIVE TELEMETRY` ke dalam satu kartu vertikal terstruktur (`.footer-brand-lockup` & `.footer-brand-info`).
+   - Meniadakan perataan sebaris (*baseline clash*) yang sebelumnya membuat teks tagline berjejer canggung di samping judul.
+   - Ukuran emblem logo 30×30 px dengan sudut tumpul presisi 7px dan bayangan ambien halus.
+
+2. **Pengorganisasian Metadata & Hak Cipta Kanan:**
+   - Menata informasi teknis di kolom kanan ke dalam 2 tingkat teratur:
+     - Baris atas: Badge protokol `OPEN PROTOCOL 5055` berdampingan dengan atribusi insinyur pengembang.
+     - Baris bawah: Informasi hak cipta resmi `© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE`.
+
+3. **Responsivitas Perangkat Seluler (*Mobile Adaptation*):**
+   - Pada layar smartphone (< 768px), footer secara otomatis bertransformasi menjadi tata letak bertingkat terpusat (*centered column stack*) dengan jarak vertikal yang proporsional.
+
+4. **Pembaruan Service Worker & Pengujian:**
+   - Cache dinaikkan ke **`cyclopon-v46`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+   - Seluruh **88 / 88 Unit Tests Lulus 100% (13 Test Suites)**.
+
+---
+
+---
+
+## 31. Simulator & Seeder Event Balap Nyata (`npm run seed:demo` & `npm run simulate`)
+
+Untuk mempermudah demonstrasi langsung kepada panitia, sponsor, maupun pesepeda tanpa harus menunggu event jalanan riil, telah dibangun generator data dan simulator telemetri pergerakan GPS langsung:
+
+1. **Seeder Data Event Balap Realistis (`scripts/seed-demo.js`):**
+   - **Event Unggulan:** *Gravel to Gang // Pro Telemetry 2026* (ID: 21, rute 31.5 KM dengan profil elevasi nyata).
+   - **5 Pos Kontrol Resmi (*Checkpoints*):**
+     - Start Arch (Tasikmalaya Grand Plaza) - KM 0.0
+     - CP 1: Cineam Pass (Tanjakan Cineam) - KM 7.5 (COT: 08:30)
+     - CP 2: Karangnunggal KOM Summit - KM 15.0 (COT: 10:15)
+     - CP 3: Cibalong Water Station - KM 23.5 (COT: 12:00)
+     - CP 4: Finish Arch (Pangandaran Gate) - KM 31.4 (COT: 14:00)
+   - **10 Rider Aktif Beragam Karakteristik:**
+     - Solo Leader Winata (`#001`, Emerald `#10B981`)
+     - Women Elite Leader Sarah Jenkins (`#007`, Pink `#EC4899`)
+     - Peloton A: Raden Bagus (`#012`) & Hendra Wijaya (`#023`)
+     - Peloton B: Dimas Pratama (`#034`) & Rudi Hartono (`#045`)
+     - Chaser: Arif Rahman (`#067`) & Kevin Santoso (`#078`)
+     - Official Sweeper: Denny Setiawan (`#088`, Crimson `#EF4444`, Role: `sweeper`)
+     - Lantern Rouge: Bambang Pamungkas (`#099`)
+   - **Initial Splits & Breadcrumb History:** Menghasilkan rekam jejak checkpoint dan rekam jejak jejak posisi sehingga grafik hasil, sertifikat digital, dan fitur *Time Machine Replay* (hingga 60x) langsung dapat dicoba seketika.
+
+2. **Daemon Pergerakan Telemetri Live (`scripts/simulate-race.js`):**
+   - Menggerakkan kesepuluh peserta secara berkelanjutan di sepanjang koordinat rute GPX.
+   - Dilengkapi *physics engine* realistis: kecepatan disesuaikan dengan kemiringan elevasi (*climbing penalty* saat tanjakan curam, *descent boost* saat turunan).
+   - Mendeteksi lintasan pos kontrol secara otomatis (*Checkpoint Hit Detection*) dan langsung mencatat waktu *split* kedatangan.
+   - Menyiarkan (*broadcast*) koordinat langsung ke seluruh tab penonton via WebSocket (`/traccar-ws`) dan HTTP history API.
+   - Menampilkan *Live Telemetry Terminal Dashboard* interaktif lengkap dengan bilah kemajuan (*progress bar*), kecepatan, jarak tempuh, dan peringatan pos kontrol.
+   - Opsi fleksibel: `npm run simulate -- --speed 5x` atau `--interval 1000`.
+
+3. **Verifikasi Pengujian Otomatis:**
+   - Dibuat rangkaian pengujian baru [`tests/demo-simulation.test.js`](file:///home/kruza/Documents/cyclopon/tests/demo-simulation.test.js).
+   - **Seluruh 92 / 92 Unit Tests Lulus 100% (14 Test Suites)**.
+
+---
+
+## 32. Integrasi Panduan Visual Tangkapan Layar Aplikasi Traccar Client (Settings, Continuous Tracking & Location Permission)
+
+Berdasarkan tangkapan layar langsung dari aplikasi Traccar Client yang diberikan oleh pengguna, panduan aktivasi pelacakan di Rider Hub diperkaya dengan kartu panduan visual berbasis foto dan alur terstruktur:
+
+1. **Aset Tangkapan Layar Resmi (`public/img/traccar-guide/`):**
+   - [`traccar-continuous-tracking.png`](file:///home/kruza/Documents/cyclopon/public/img/traccar-guide/traccar-continuous-tracking.png): Layar utama aplikasi saat saklar *Continuous tracking* diaktifkan (Hijau/ON).
+   - [`traccar-location-permission.png`](file:///home/kruza/Documents/cyclopon/public/img/traccar-guide/traccar-location-permission.png): Dialog izin lokasi Android dengan instruksi wajib *Allow all the time* dan *Use precise location*.
+   - [`traccar-settings-full.png`](file:///home/kruza/Documents/cyclopon/public/img/traccar-guide/traccar-settings-full.png): Tampilan menu *Settings* lengkap dengan *Location accuracy: Highest*, *Interval: 10–30 detik*, *Distance: 75m*, serta *Offline buffering = ON*.
+
+2. **Hierarki Tata Letak Rider Hub (`public/js/pages/rider-setup.js`):**
+   - **Posisi Pertama (Diatas):** Kartu krusial aktivasi pelacakan (*Continuous Tracking & Izin Lokasi Background*) dengan kotak peringatan merah tebal agar rider Android tidak salah memilih *"Allow only while using the app"*.
+   - **Posisi Kedua (Dibawahnya):** Kartu rincian menu pengaturan (*Settings ⚙️*) dengan bingkai smartphone mockup dan 6 kartu callout bernomor.
+
+3. **Penyempurnaan Dokumentasi & Service Worker:**
+   - Memperbarui Section 6 di [`DEPLOYMENT.md`](file:///home/kruza/Documents/cyclopon/DEPLOYMENT.md).
+   - Cache Service Worker diperbarui ke **`cyclopon-v49`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+   - Seluruh **92 / 92 Unit Tests Lulus 100% (14 Test Suites)**.
+
+---
+
+## 33. Rencana Kerja Selanjutnya
+
+1. **Web Audio Beep Alarm di Cockpit HUD:** Sintesis audio alert native (`AudioContext`) saat keluar rute (>100m) atau mendekati pos kontrol checkpoint (<500m).
+2. **Dukungan Multi-Bahasa (Bilingual ID / EN):** Pengalihan bahasa cepat untuk event berstandar internasional / ekspatriat.
+3. **Persiapan Kontainer Docker & Deployment VPS:** Pembuatan `Dockerfile` dan `docker-compose.yml` untuk instalasi produksi di server cloud.
 
 

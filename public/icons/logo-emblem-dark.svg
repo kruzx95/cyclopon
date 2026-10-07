@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <style>
+      .chalk-geo-dark { fill: none; stroke: #0D1117; stroke-width: 42; stroke-linecap: round; }
+      .chalk-loop-dark { fill: none; stroke: #0D1117; stroke-width: 42; stroke-linecap: round; stroke-linejoin: round; }
+      .orbit-line-dark { fill: none; stroke: #0D1117; stroke-width: 2.5; stroke-dasharray: 8 12; opacity: 0.35; }
+      .radar-guide-dark { fill: none; stroke: #0D1117; stroke-width: 1.5; stroke-dasharray: 4 8; opacity: 0.2; }
+      .telemetry-dot-dark { fill: #059669; }
+      .telemetry-pulse-dark { fill: none; stroke: #059669; stroke-width: 1.5; opacity: 0.45; }
+    </style>
+  </defs>
+
+  <!-- Transparent Background for Light UI Canvas & Paper Certificates -->
+  <g id="cyclopon-monogram" transform="translate(500, 500)">
+    <circle class="radar-guide-dark" cx="0" cy="0" r="330"/>
+    <ellipse class="orbit-line-dark" cx="0" cy="0" rx="350" ry="120" transform="rotate(-30)"/>
+    <circle class="telemetry-pulse-dark" cx="303.11" cy="-175.00" r="18"/>
+    <circle class="telemetry-dot-dark" cx="303.11" cy="-175.00" r="9"/>
+    <path class="chalk-geo-dark" d="M 160, 144 A 215 215 0 1 1 160, -144"/>
+    <line class="chalk-geo-dark" x1="0" y1="-144" x2="0" y2="144"/>
+    <path class="chalk-loop-dark" d="M 0, -144 L 65, -144 A 72 72 0 0 1 65, 0 L 0, 0"/>
+  </g>
+</svg>

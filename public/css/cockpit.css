@@ -667,103 +667,173 @@ body.cockpit-active {
 }
 
 /* ── Sticky Emergency / Action Bar ── */
-/* ── Sticky Emergency / Action Bar (Compact & Sleek) ── */
+/* ── Sticky Emergency / Action Bar (Pro Athletic Minimalist) ── */
 .cockpit-bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding-top: 8px;
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
-  padding-bottom: max(16px, calc(8px + env(safe-area-inset-bottom, 0px)));
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-top: 1.5px solid #0D1117;
-  box-shadow: 0 -3px 18px rgba(13, 17, 23, 0.08);
+  padding-top: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(24px, calc(14px + env(safe-area-inset-bottom, 0px)));
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(13, 17, 23, 0.08);
+  box-shadow: 0 -4px 20px rgba(13, 17, 23, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   max-width: 680px;
   margin: 0 auto;
   z-index: 1000;
   box-sizing: border-box;
 }
 
+/* SOS High-Vis Tactical Capsule */
 .cockpit-sos-btn {
   flex: 0 0 auto;
-  height: 36px;
-  min-height: 36px;
-  background: #DC2626;
+  height: 40px;
+  min-height: 40px;
+  background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
   color: #FFFFFF;
-  border: 1.5px solid #DC2626;
-  border-radius: 8px;
-  padding: 0 16px;
-  font-size: 12px;
+  border: 1px solid #B91C1C;
+  border-radius: 9999px;
+  padding: 0 20px;
+  font-size: 11.5px;
   font-weight: 800;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
-  letter-spacing: 0.02em;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
   box-sizing: border-box;
+}
+
+.cockpit-sos-btn:hover {
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  filter: brightness(1.03);
 }
 
 .cockpit-sos-btn:active {
-  transform: scale(0.98);
-  filter: brightness(0.92);
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  filter: brightness(0.95);
 }
 
+/* Radar Beacon Pulsing Indicator */
+.sos-beacon {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sos-beacon-ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  animation: sosBeaconPulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  pointer-events: none;
+}
+
+.sos-beacon-core {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.95);
+}
+
+@keyframes sosBeaconPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  65%, 100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+}
+
+/* Live Map Stealth Obsidian Capsule */
 .cockpit-nav-btn {
   flex: 0 0 auto;
-  height: 36px;
-  min-height: 36px;
-  background: #FFFFFF;
-  color: #0D1117;
-  border: 1.5px solid #0D1117;
-  border-radius: 8px;
-  padding: 0 14px;
-  font-size: 12px;
+  height: 40px;
+  min-height: 40px;
+  background: linear-gradient(180deg, #1C2128 0%, #0D1117 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  padding: 0 20px;
+  font-size: 11.5px;
   font-weight: 800;
+  font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 8px;
   text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
-  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 4px 14px rgba(13, 17, 23, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   box-sizing: border-box;
 }
+
 .cockpit-nav-btn:hover {
-  background: #0D1117;
-  color: #FFFFFF;
+  background: #000000;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 18px rgba(13, 17, 23, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.cockpit-nav-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(13, 17, 23, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.nav-btn-icon {
+  color: #10B981;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.cockpit-nav-btn:hover .nav-btn-icon {
+  transform: scale(1.12);
 }
 
 @media (max-width: 420px) {
   .cockpit-bottom-bar {
-    gap: 8px;
+    gap: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
-  .cockpit-sos-btn {
-    height: 34px;
-    min-height: 34px;
-    font-size: 11.5px;
-    padding: 0 12px;
-    gap: 5px;
-  }
+  .cockpit-sos-btn,
   .cockpit-nav-btn {
-    height: 34px;
-    min-height: 34px;
-    font-size: 11.5px;
-    padding: 0 10px;
-    gap: 4px;
+    height: 38px;
+    min-height: 38px;
+    font-size: 11px;
+    padding: 0 16px;
+    gap: 7px;
   }
 }
 
@@ -902,20 +972,28 @@ body.cockpit-active.night-mode .cockpit-cp-card,
 
 body.cockpit-active.night-mode .cockpit-bottom-bar,
 .cockpit-bottom-bar.night-mode {
-  background: rgba(10, 13, 11, 0.98) !important;
+  background: rgba(10, 13, 11, 0.94) !important;
   border-top-color: #1E293B !important;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.7) !important;
+}
+
+body.cockpit-active.night-mode .cockpit-sos-btn,
+.cockpit-bottom-bar.night-mode .cockpit-sos-btn {
+  box-shadow: 0 0 18px rgba(220, 38, 38, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
 }
 
 body.cockpit-active.night-mode .cockpit-nav-btn,
 .cockpit-bottom-bar.night-mode .cockpit-nav-btn {
-  background: #111713 !important;
+  background: linear-gradient(180deg, #1C241E 0%, #111713 100%) !important;
   border-color: #1E293B !important;
   color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
 body.cockpit-active.night-mode .cockpit-nav-btn:hover,
 .cockpit-bottom-bar.night-mode .cockpit-nav-btn:hover {
   background: #1E293B !important;
+  border-color: #334155 !important;
 }
 
 body.cockpit-active.night-mode .cockpit-modal,

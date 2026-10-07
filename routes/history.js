@@ -57,6 +57,30 @@ router.post('/events/:id/history', (req, res) => {
     });
 
     const inserted = insertTx(positions);
+
+    try {
+      const { broadcastToClients } = require('../lib/traccar-ws-proxy');
+      if (typeof broadcastToClients === 'function') {
+        const wsPositions = positions.map(pos => {
+          const r = db.getRiderById.get(Number(pos.rider_id));
+          const devId = (r && r.traccar_device_id) ? r.traccar_device_id : (r && r.bib ? (Number(r.bib) || pos.rider_id) : pos.rider_id);
+          return {
+            deviceId: devId,
+            rider_id: Number(pos.rider_id),
+            latitude: Number(pos.latitude),
+            longitude: Number(pos.longitude),
+            speed: Number(pos.speed || 0),
+            isKmh: true,
+            course: Number(pos.course || 0),
+            altitude: Number(pos.altitude || 0),
+            fixTime: pos.recorded_at || new Date().toISOString(),
+            attributes: {}
+          };
+        });
+        broadcastToClients(JSON.stringify({ positions: wsPositions }));
+      }
+    } catch (wsErr) {}
+
     res.status(201).json({ success: true, inserted });
   } catch (err) {
     res.status(500).json({ error: 'Gagal menyimpan history: ' + err.message });

@@ -53,12 +53,9 @@ function renderExistingSession(config) {
           <span class="login-live-pill"><span class="pulse-dot"></span> SESI AKTIF</span>
         </div>
         
-        <div class="login-avatar-ring">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="5.5" cy="17.5" r="3.5"/>
-            <circle cx="18.5" cy="17.5" r="3.5"/>
-            <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
-          </svg>
+        <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px">
+          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="36" height="36" style="border-radius:8px;box-shadow:0 3px 8px rgba(13,17,23,0.15)">
+          <span style="font-family:'Inter',system-ui,sans-serif;font-size:24px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
         </div>
         <h1 class="login-title">Sesi Aktif Ditemukan</h1>
         <p class="login-subtitle" style="margin-bottom:20px">Anda sudah login pada perangkat ini</p>
@@ -80,7 +77,7 @@ function renderExistingSession(config) {
 
         <div style="display:flex;flex-direction:column;gap:10px">
           <button id="btnContinueHub" class="btn" style="padding:12px;font-size:13px;border-radius:8px;background:#0D1117;color:#FFF;font-weight:800;letter-spacing:0.04em">
-            🚴 LANJUTKAN KE RIDER HUB →
+            LANJUTKAN KE RIDER HUB →
           </button>
           <button id="btnSwitchAccount" class="btn" style="padding:10px;font-size:12px;border-radius:8px;background:#FFF;border:1.5px solid #E5E7EB;color:#B91C1C;font-weight:800">
             🚪 GANTI AKUN / LOGOUT
@@ -137,12 +134,9 @@ async function renderLoginForm() {
 
         <!-- Header Center -->
         <div class="login-header-center">
-          <div class="login-avatar-ring">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="5.5" cy="17.5" r="3.5"/>
-              <circle cx="18.5" cy="17.5" r="3.5"/>
-              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
-            </svg>
+          <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px">
+            <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="36" height="36" style="border-radius:8px;box-shadow:0 3px 8px rgba(13,17,23,0.15)">
+            <span style="font-family:'Inter',system-ui,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
           </div>
           <h1 class="login-title">Akses Peserta & Panitia</h1>
           <p class="login-subtitle">Pilih event resmi dan masukkan nomor BIB & PIN Anda</p>

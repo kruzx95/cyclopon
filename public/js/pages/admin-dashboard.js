@@ -13,7 +13,8 @@ function adminSidebar(activeKey) {
     <!-- ── Mobile Top Bar (visible on mobile only) ── -->
     <div class="admin-mobile-topbar">
       <div style="display:flex;align-items:center;gap:8px">
-        <a href="/" data-link class="admin-mobile-brand">CycloPon</a>
+        <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="24" height="24" style="border-radius:6px">
+        <a href="/" data-link class="admin-mobile-brand">CYCLOPON</a>
         <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:900;background:#0D1117;color:#FFFFFF;padding:2px 6px;border-radius:4px;letter-spacing:0.04em">RC-OPS</span>
       </div>
       <button class="admin-hamburger" id="adminHamburger" aria-label="Buka menu navigasi" title="Menu Navigasi">
@@ -29,9 +30,12 @@ function adminSidebar(activeKey) {
     <!-- ── Mobile Slide-Out Drawer ── -->
     <div class="admin-drawer" id="adminDrawer">
       <div class="admin-drawer-header">
-        <div>
-          <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#6B7280;display:block;letter-spacing:0.08em">// RACE CONTROL</span>
-          <span class="admin-drawer-brand">CycloPon</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="24" height="24" style="border-radius:6px">
+          <div>
+            <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#6B7280;display:block;letter-spacing:0.08em">// RACE CONTROL</span>
+            <span class="admin-drawer-brand">CYCLOPON</span>
+          </div>
         </div>
         <button class="admin-drawer-close" id="adminDrawerClose" aria-label="Tutup menu">✕</button>
       </div>
@@ -58,8 +62,13 @@ function adminSidebar(activeKey) {
     <!-- ── Desktop Sidebar ── -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <span class="sidebar-logo-tag">// CYCLOPON RACE CONTROL</span>
-        <h2>CycloPon</h2>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="32" height="32" style="border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+          <div>
+            <span class="sidebar-logo-tag" style="margin-bottom:2px">// RACE CONTROL</span>
+            <h2 style="margin:0;font-size:18px">CYCLOPON</h2>
+          </div>
+        </div>
         <small>COMMISSAIRE PANEL</small>
       </div>
       <div class="sidebar-user">

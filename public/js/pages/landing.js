@@ -6,13 +6,7 @@ function renderLanding() {
       <!-- ── Pro Editorial Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
-          <div class="brand-logo-emblem">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="5.5" cy="17.5" r="3.5"/>
-              <circle cx="18.5" cy="17.5" r="3.5"/>
-              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
-            </svg>
-          </div>
+          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="brand-logo-emblem" width="32" height="32">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
             <span class="brand-spec-label">// PRO GPS TELEMETRY</span>
@@ -252,13 +246,24 @@ function renderLanding() {
       <footer class="landing-footer">
         <div class="footer-inner">
           <div class="footer-left">
-            <span class="footer-brand">CYCLOPON</span>
-            <span class="footer-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+            <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="footer-logo" width="30" height="30">
+              <div class="footer-brand-info">
+                <span class="footer-brand-title">CYCLOPON</span>
+                <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+              </div>
+            </a>
           </div>
+
           <div class="footer-right">
-            <span>ENGINEERED BY RUSHAMIDIWINATA</span>
-            <span class="footer-dot">·</span>
-            <span>OPEN TELEMETRY PROTOCOL 5055</span>
+            <div class="footer-meta-row">
+              <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
+              <span class="footer-dot">·</span>
+              <span class="footer-author">ENGINEERED BY RUSHAMIDIWINATA</span>
+            </div>
+            <div class="footer-copy">
+              <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
+            </div>
           </div>
         </div>
       </footer>

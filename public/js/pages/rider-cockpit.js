@@ -334,12 +334,19 @@ async function renderRiderCockpit() {
     <!-- Sticky Bottom Emergency Action Bar -->
     <div class="cockpit-bottom-bar">
       <button id="btnCockpitSos" class="cockpit-sos-btn" title="Kirim Sinyal SOS Darurat">
-        <span style="font-size:14px">🚨</span>
-        <span>SOS Darurat</span>
+        <span class="sos-beacon">
+          <span class="sos-beacon-ring"></span>
+          <span class="sos-beacon-core"></span>
+        </span>
+        <span>SOS DARURAT</span>
       </button>
       <a href="/watch/${event.id}" data-link class="cockpit-nav-btn" title="Buka Spectator Map">
-        <span style="font-size:13px">🗺️</span>
-        <span>Live Map</span>
+        <svg class="nav-btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </svg>
+        <span>LIVE MAP</span>
       </a>
     </div>
 

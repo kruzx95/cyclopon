@@ -292,18 +292,16 @@ label {
 }
 
 .brand-logo-emblem {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
-  background: #0D1117;
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(13, 17, 23, 0.15);
   transition: transform 0.2s ease;
 }
 .brand-title:hover .brand-logo-emblem {
-  transform: rotate(-6deg) scale(1.05);
+  transform: scale(1.05);
 }
 
 .brand-name-group {
@@ -312,10 +310,14 @@ label {
   gap: 8px;
 }
 .brand-name {
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 900;
   letter-spacing: -0.04em;
   color: #0D1117;
+  transition: opacity 0.2s ease;
+}
+.brand-title:hover .brand-name {
+  opacity: 0.8;
 }
 .brand-spec-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1068,33 +1070,82 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
+  gap: 24px;
 }
-.footer-left {
+
+.footer-brand-lockup {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
 }
-.footer-brand {
-  font-size: 13px;
+.footer-logo {
+  border-radius: 7px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(13, 17, 23, 0.12);
+  transition: transform 0.2s ease;
+}
+.footer-brand-lockup:hover .footer-logo {
+  transform: scale(1.06);
+}
+.footer-brand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+.footer-brand-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
   font-weight: 900;
   color: #0D1117;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
-.footer-tagline {
-  color: #6B7280;
+.footer-brand-tagline {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
   font-weight: 700;
+  color: #64748B;
+  letter-spacing: 0.05em;
 }
+
 .footer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.footer-meta-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #9CA3AF;
-  font-weight: 700;
+  font-size: 11px;
+}
+.footer-spec-badge {
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  color: #334155;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
 }
 .footer-dot {
-  color: #D1D5DB;
+  color: #CBD5E1;
+}
+.footer-author {
+  color: #475569;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.footer-copy {
+  color: #94A3B8;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 /* ── Mobile Responsive Adaptation ── */
@@ -1224,12 +1275,31 @@ label {
     font-size: 12.5px;
   }
 
+  .landing-footer {
+    padding: 28px 20px;
+  }
   .footer-inner {
     flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+  .footer-brand-lockup {
+    flex-direction: column;
     gap: 8px;
+    align-items: center;
+  }
+  .footer-brand-info {
+    align-items: center;
     text-align: center;
   }
-  .footer-left, .footer-right {
+  .footer-right {
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+  .footer-meta-row {
+    flex-wrap: wrap;
     justify-content: center;
   }
 }

@@ -138,6 +138,10 @@ test('Official Results & CSV Export API', async (t) => {
     assert.equal(r1.checkpoints_cleared, 2);
     assert.equal(r1.total_checkpoints, 2);
     assert.ok(r1.elapsed_time);
+    assert.ok(Array.isArray(r1.splits));
+    assert.equal(r1.splits.length, 2);
+    assert.equal(r1.splits[0].checkpoint_name, 'CP 1 Waduk Cirata');
+    assert.equal(r1.splits[0].arrival_time, '08:15:00');
 
     // Rider 2 only cleared 1 CP, so DNF
     const r2 = data.results.find(r => r.bib === '102');

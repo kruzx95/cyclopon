@@ -1,4 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="512" height="512" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <metadata>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <rdf:Description>
+        <dc:title>CYCLOPON Vector Logo - Ultra-Distance Cycling GPS Telemetry</dc:title>
+        <dc:creator>CYCLOPON Design System</dc:creator>
+        <dc:description>Minimalist geometric monogram combining letters C and P into an aerodynamic loop and satellite orbit curve with emerald telemetry beacon.</dc:description>
+      </rdf:Description>
+    </rdf:RDF>
+  </metadata>
+
   <defs>
     <style>
       .bg { fill: #0D1117; }
@@ -16,12 +27,28 @@
 
   <!-- Centered Aerodynamic CP Monogram & Satellite Orbit System -->
   <g id="cyclopon-monogram" transform="translate(500, 500)">
+    
+    <!-- Concentric Velodrome Calibration Ring (Subtle Geodetic Grid) -->
     <circle class="radar-guide" cx="0" cy="0" r="330"/>
+    
+    <!-- Satellite Orbital Trajectory Curve (Inclined at -30 deg) -->
     <ellipse class="orbit-line" cx="0" cy="0" rx="350" ry="120" transform="rotate(-30)"/>
+
+    <!-- Subtle Emerald Green Telemetry Beacon Ping -->
     <circle class="telemetry-pulse" cx="303.11" cy="-175.00" r="18"/>
+    <!-- Emerald Green Telemetry Dot Accent (GPS Satellite Beacon) -->
     <circle class="telemetry-dot" cx="303.11" cy="-175.00" r="9"/>
+
+    <!-- Aerodynamic C-Loop: Outer Sweeping Velocity Orbit Arc -->
+    <!-- Radius = 215px, sweeping from 42° through the western meridian to 318° -->
     <path class="chalk-geo" d="M 160, 144 A 215 215 0 1 1 160, -144"/>
+
+    <!-- Symmetrical Vertical P-Spine: Aligned to Central Meridian (x = 0) -->
     <line class="chalk-geo" x1="0" y1="-144" x2="0" y2="144"/>
+
+    <!-- Aerodynamic P-Loop: Upper Velocity Bowl with G2 Tangency -->
+    <!-- Horizontal lead-in to 180° semicircle return to center -->
     <path class="chalk-loop" d="M 0, -144 L 65, -144 A 72 72 0 0 1 65, 0 L 0, 0"/>
+
   </g>
 </svg>

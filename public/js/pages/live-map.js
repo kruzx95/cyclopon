@@ -78,7 +78,7 @@ async function renderLiveMap(params) {
       <header class="live-map-header ${isAdmin ? 'admin-mode' : 'spectator-mode'}">
         <div class="header-left">
           <a href="/" data-link class="header-logo" title="Kembali ke Beranda CycloPon">
-            <span class="logo-text">CycloPon</span>
+            <span class="logo-text">CYCLOPON</span>
           </a>
           <span class="header-meta-tag">// LIVE MATRIX</span>
           ${isAdmin ? `
@@ -2753,7 +2753,11 @@ async function renderLiveMap(params) {
           data.positions.forEach(pos => {
             let rider = riderById[pos.deviceId];
 
-            // Auto-fallback mapping by device ID string
+            // Auto-fallback mapping by rider_id or bib string
+            if (!rider && pos.rider_id && riderById[pos.rider_id]) {
+              rider = riderById[pos.rider_id];
+              riderById[pos.deviceId] = rider;
+            }
             if (!rider && bibToRider[String(pos.deviceId)]) {
               rider = bibToRider[String(pos.deviceId)];
               riderById[pos.deviceId] = rider;

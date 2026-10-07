@@ -1,5 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="32" fill="#F8F8F8"/>
-  <circle cx="96" cy="96" r="88" fill="none" stroke="#748873" stroke-width="4" opacity="0.6"/>
-  <text x="96" y="130" font-size="108" text-anchor="middle">🚴</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="192" height="192" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <style>
+      .bg { fill: #0D1117; }
+      .chalk-geo { fill: none; stroke: #F8FAFC; stroke-width: 44; stroke-linecap: round; }
+      .chalk-loop { fill: none; stroke: #F8FAFC; stroke-width: 44; stroke-linecap: round; stroke-linejoin: round; }
+      .orbit-line { fill: none; stroke: #F8FAFC; stroke-width: 3; stroke-dasharray: 8 12; opacity: 0.35; }
+      .radar-guide { fill: none; stroke: #F8FAFC; stroke-width: 2; stroke-dasharray: 4 8; opacity: 0.15; }
+      .telemetry-dot { fill: #00F59B; }
+      .telemetry-pulse { fill: none; stroke: #00F59B; stroke-width: 2; opacity: 0.45; }
+    </style>
+  </defs>
+
+  <!-- Solid Matte Jet Black Background -->
+  <rect class="bg" width="1000" height="1000"/>
+
+  <!-- Centered Aerodynamic CP Monogram & Satellite Orbit System -->
+  <g id="cyclopon-monogram" transform="translate(500, 500)">
+    <circle class="radar-guide" cx="0" cy="0" r="330"/>
+    <ellipse class="orbit-line" cx="0" cy="0" rx="350" ry="120" transform="rotate(-30)"/>
+    <circle class="telemetry-pulse" cx="303.11" cy="-175.00" r="20"/>
+    <circle class="telemetry-dot" cx="303.11" cy="-175.00" r="10"/>
+    <path class="chalk-geo" d="M 160, 144 A 215 215 0 1 1 160, -144"/>
+    <line class="chalk-geo" x1="0" y1="-144" x2="0" y2="144"/>
+    <path class="chalk-loop" d="M 0, -144 L 65, -144 A 72 72 0 0 1 65, 0 L 0, 0"/>
+  </g>
 </svg>

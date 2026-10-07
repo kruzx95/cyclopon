@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <style>
+      .bg { fill: #0D1117; }
+      .chalk-geo { fill: none; stroke: #F8FAFC; stroke-width: 40; stroke-linecap: round; }
+      .chalk-loop { fill: none; stroke: #F8FAFC; stroke-width: 40; stroke-linecap: round; stroke-linejoin: round; }
+      .orbit-line { fill: none; stroke: #F8FAFC; stroke-width: 2.5; stroke-dasharray: 8 12; opacity: 0.35; }
+      .radar-guide { fill: none; stroke: #F8FAFC; stroke-width: 1.5; stroke-dasharray: 4 8; opacity: 0.15; }
+      .telemetry-dot { fill: #00F59B; }
+      .telemetry-pulse { fill: none; stroke: #00F59B; stroke-width: 1.5; opacity: 0.45; }
+      .brand-title {
+        fill: #F8FAFC;
+        font-family: system-ui, -apple-system, 'SF Pro Display', 'Helvetica Neue', 'Inter', sans-serif;
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: 0.42em;
+      }
+      .brand-sub {
+        fill: #8B949E;
+        font-family: system-ui, -apple-system, 'SF Pro Display', 'Helvetica Neue', 'Inter', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.52em;
+      }
+      .telemetry-meta {
+        fill: #484F58;
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.3em;
+      }
+    </style>
+  </defs>
+
+  <!-- Matte Jet Black (#0D1117) Background -->
+  <rect class="bg" width="1200" height="1200"/>
+
+  <!-- Centered Aerodynamic CP Monogram -->
+  <g id="cyclopon-monogram" transform="translate(600, 480)">
+    <circle class="radar-guide" cx="0" cy="0" r="325"/>
+    <ellipse class="orbit-line" cx="0" cy="0" rx="345" ry="118" transform="rotate(-30)"/>
+    <circle class="telemetry-pulse" cx="298.78" cy="-172.50" r="17"/>
+    <circle class="telemetry-dot" cx="298.78" cy="-172.50" r="8.5"/>
+
+    <path class="chalk-geo" d="M 158, 142 A 212 212 0 1 1 158, -142"/>
+    <line class="chalk-geo" x1="0" y1="-142" x2="0" y2="142"/>
+    <path class="chalk-loop" d="M 0, -142 L 64, -142 A 71 71 0 0 1 64, 0 L 0, 0"/>
+  </g>
+
+  <!-- Luxury Athletic Typographic Lockup -->
+  <g id="brand-typography" transform="translate(600, 875)">
+    <text class="brand-title" x="0" y="0" dx="0.21em" text-anchor="middle">CYCLOPON</text>
+    <text class="brand-sub" x="0" y="44" dx="0.26em" text-anchor="middle">GPS LIVE TRACKING  •  ULTRA DISTANCE</text>
+    <text class="telemetry-meta" x="0" y="78" dx="0.15em" text-anchor="middle">46°12'09"N  06°08'44"E  //  ELEV 1284M</text>
+  </g>
+</svg>

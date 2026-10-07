@@ -166,19 +166,31 @@ Caddy akan otomatis mendaftarkan sertifikat SSL gratis. Website Anda langsung ak
 
 Pesepeda tidak perlu mengunduh aplikasi aneh. Cukup gunakan **Traccar Client** resmi (tersedia gratis di Google Play Store & Apple App Store) atau langsung dari browser via Rider Cockpit.
 
-Jika menggunakan aplikasi **Traccar Client** di HP rider:
-1. Buka aplikasi **Traccar Client**.
-2. **Device Identifier:** Masukkan `BIB-` diikuti nomor BIB (Contoh: `BIB-101` atau `BIB-002`).
-3. **Server URL:**
-   * Jika Opsi A: `http://IP_VPS:5055`
-   * Jika Opsi B: `http://live.audaxrinjani.com:5055`
-4. **Location Accuracy:** *High*
-5. **Frequency / Interval:** `10` detik (ideal untuk event sepeda jalan raya).
-6. Nyalakan tombol switch **Status: Service Running**.
+### Langkah Pengaturan Aplikasi Traccar Client:
+1. Buka aplikasi **Traccar Client** di smartphone rider.
+2. Masuk ke menu **Settings (⚙️)**:
+   * **Device identifier:** Masukkan `BIB-` diikuti nomor BIB resmi (Contoh: `BIB-001` atau `BIB-012`). Rider juga dapat memindai kode QR dari layar Rider Hub.
+   * **Server URL:** Ganti `http://demo.traccar.org:5055` menjadi URL server CycloPon Anda:
+     * Jika Opsi A (IP): `http://IP_VPS:5055`
+     * Jika Opsi B (Domain): `http://live.domainanda.com:5055` *(Penting: port 5055 menggunakan protokol OsmAnd HTTP)*
+   * **Location accuracy:** Pilih opsi **`Highest`** (Akurasi GPS Satelit Tertinggi) agar rute di tikungan & tanjakan sangat presisi.
+   * **Interval (seconds):** Atur ke **`30` detik** (ideal untuk brevet jarak jauh / ultra-endurance agar baterai HP tahan 15–20 jam), atau **`10` detik** untuk balap cepat / gran fondo.
+   * **Distance (meters):** Atur `25` – `75` meter (default: `75`).
+3. **Pengaturan Lanjutan (Advanced Settings - Sangat Direkomendasikan):**
+   * Aktifkan saklar **Advanced settings** (saklar hijau).
+   * **Offline buffering: ON (Aktif)** — *Fitur krusial!* Koordinat GPS akan disimpan di memori HP saat rider melewati daerah pegunungan/lembah tanpa sinyal (blank spot) dan otomatis disinkronkan ke server begitu sinyal pulih.
+   * **Stop detection: ON (Aktif)** — Menghemat baterai secara signifikan saat rider berhenti istirahat di minimarket/pos kontrol.
+   * **Use system location: ON (Aktif)** — Menggunakan Fused Location Provider untuk akurasi GPS satelit maksimal.
+4. Kembali ke layar utama dan aktifkan saklar **Continuous tracking (Hijau / ON)**.
+5. **PENTING (Izin Lokasi Latar Belakang Android):**
+   * Saat saklar diaktifkan, Android akan otomatis menampilkan dialog **Location permission**.
+   * Rider **WAJIB memilih: `Allow all the time` (Izinkan sepanjang waktu)**. *(Jika memilih 'Allow only while using the app', Android akan langsung mematikan GPS begitu layar HP mati atau masuk saku!).*
+   * Pastikan saklar **`Use precise location` tetap AKTIF (Biru/ON)** agar posisi menggunakan koordinat satelit GPS akurat.
 
-Data posisi GPS rider akan langsung muncul di peta secara real-time!
+Data posisi GPS rider akan langsung terpancar ke Live Map panitia dan penonton secara real-time! Layar smartphone kini dapat dimatikan sepenuhnya dan disimpan aman di saku jersey pesepeda.
 
 ---
+
 
 ## 7. Prosedur Pencadangan (Backup) & Pemulihan (Restore)
 

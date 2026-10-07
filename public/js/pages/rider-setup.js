@@ -21,6 +21,21 @@ function renderRiderSetup() {
   const hostClean = traccar.serverUrl.replace(/^https?:\/\//, '').split(':')[0];
   const osmandUrl = `http://${hostClean}:${traccar.osmandPort}`;
 
+  const nameParts = (rider.name || 'Rider').trim().split(/\s+/);
+  const riderInitials = nameParts.length > 1
+    ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
+    : nameParts[0].slice(0, 2).toUpperCase();
+
+  const riderBgColor = rider.color || '#0D1117';
+  let avatarTextColor = '#FFFFFF';
+  if (riderBgColor.startsWith('#') && riderBgColor.length === 7) {
+    const r = parseInt(riderBgColor.slice(1, 3), 16) || 0;
+    const g = parseInt(riderBgColor.slice(3, 5), 16) || 0;
+    const b = parseInt(riderBgColor.slice(5, 7), 16) || 0;
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    avatarTextColor = yiq >= 160 ? '#0D1117' : '#FFFFFF';
+  }
+
   const app = document.getElementById('app');
   app.innerHTML = `
     <div style="max-width:780px;margin:0 auto;padding:28px 16px;min-height:100vh">
@@ -35,15 +50,9 @@ function renderRiderSetup() {
             </svg>
             <span>Beranda</span>
           </a>
-          <div class="hub-brand-group">
-            <div class="brand-logo-emblem">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="5.5" cy="17.5" r="3.5"/>
-                <circle cx="18.5" cy="17.5" r="3.5"/>
-                <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
-              </svg>
-            </div>
-            <h1 class="hub-title">Rider <span class="hub-title-accent">Hub</span></h1>
+          <div class="hub-brand-group" style="display:flex;align-items:center;gap:10px">
+            <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="28" height="28" style="border-radius:6px;box-shadow:0 2px 6px rgba(13,17,23,0.15)">
+            <h1 class="hub-title"><span style="font-size:18px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span> <span class="hub-title-accent" style="font-size:12px;font-weight:800;color:#64748B">// RIDER HUB</span></h1>
           </div>
         </div>
         <div class="hub-header-right">
@@ -68,13 +77,9 @@ function renderRiderSetup() {
 
       <!-- ── Welcome Banner ── -->
       <div class="rider-welcome-card fade-in">
-        <div class="rider-avatar-halo" style="--rider-color: ${rider.color || '#2B4E30'}">
-          <div class="rider-avatar-inner" style="background: ${rider.color || '#2B4E30'}">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="5.5" cy="17.5" r="3.5"/>
-              <circle cx="18.5" cy="17.5" r="3.5"/>
-              <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h4"/>
-            </svg>
+        <div class="rider-avatar-halo">
+          <div class="rider-avatar-inner" style="background:${riderBgColor};color:${avatarTextColor}">
+            ${riderInitials}
           </div>
         </div>
         <div class="rider-welcome-info">
@@ -325,6 +330,172 @@ function renderRiderSetup() {
                 <div class="step-item-title">Siap Gowes! Layar HP Bisa Dimatikan 🎉</div>
                 <div class="step-item-desc">
                   Pelacakan tetap aktif di background walau HP dikantongi di jersey. Atau pasang di handlebar dan gunakan <strong>Cockpit HUD</strong>!
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Continuous Tracking & Location Permission Card (Posisi Pertama / Diatas) ── -->
+        <div class="setup-steps-container-card fade-in" style="margin-top:20px;border-color:#1E3A8A">
+          <div class="steps-card-header" style="border-bottom-color:#DBEAFE">
+            <div class="steps-header-left">
+              <span class="steps-mono-tag" style="color:#1D4ED8">// LANGKAH UTAMA · AKTIVASI PELACAKAN</span>
+              <h3 class="steps-card-title">Aktifkan Continuous Tracking &amp; Izin Lokasi Background</h3>
+            </div>
+            <span class="steps-protocol-badge" style="background:#EFF6FF;color:#1E40AF;border-color:#BFDBFE">WAJIB: ALLOW ALL THE TIME</span>
+          </div>
+
+          <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;gap:10px;align-items:flex-start">
+            <span style="font-size:18px;line-height:1">⚠️</span>
+            <div style="font-size:12.5px;color:#991B1B;line-height:1.45">
+              <strong>PERHATIAN KHUSUS PENGGUNA ANDROID:</strong><br>
+              Saat saklar <strong>Continuous tracking</strong> dinyalakan, HP akan menampilkan menu <em>Location permission</em>. Anda <strong>WAJIB</strong> memilih <strong>"Allow all the time"</strong> agar pelacakan tidak mati saat layar HP dimatikan atau dikantongi di jersey!
+            </div>
+          </div>
+
+          <div class="permission-dual-grid">
+            <!-- Screenshot 2A: Continuous Tracking Switch -->
+            <div class="permission-screenshot-card">
+              <div class="screenshot-guide-header">
+                <span class="screenshot-guide-badge">LANGKAH 1</span>
+                <span class="screenshot-guide-title">Nyalakan Continuous Tracking</span>
+              </div>
+              <div class="screenshot-img-wrapper" title="Layar Utama Traccar Client">
+                <img src="/img/traccar-guide/traccar-continuous-tracking.png" alt="Nyalakan Continuous Tracking di Traccar Client" class="screenshot-preview-img" loading="lazy">
+              </div>
+              <div class="screenshot-callout-list">
+                <div class="screenshot-callout-item">
+                  <span class="callout-pill green">✓</span>
+                  <div>
+                    Kembali ke layar utama aplikasi Traccar Client.
+                  </div>
+                </div>
+                <div class="screenshot-callout-item">
+                  <span class="callout-pill green">✓</span>
+                  <div>
+                    Geser saklar <strong>Continuous tracking</strong> ke posisi <strong>AKTIF (Hijau/ON)</strong>.
+                  </div>
+                </div>
+                <div class="screenshot-callout-item">
+                  <span class="callout-pill green">✓</span>
+                  <div>
+                    Layanan pelacak GPS background resmi kini mulai aktif.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Screenshot 2B: Location Permission Settings -->
+            <div class="permission-screenshot-card">
+              <div class="screenshot-guide-header">
+                <span class="screenshot-guide-badge" style="background:#DC2626">LANGKAH 2</span>
+                <span class="screenshot-guide-title">Pilih "Allow all the time"</span>
+              </div>
+              <div class="screenshot-img-wrapper" title="Izin Lokasi Android (Location Permission)">
+                <img src="/img/traccar-guide/traccar-location-permission.png" alt="Pengaturan Izin Lokasi Android" class="screenshot-preview-img" loading="lazy">
+              </div>
+              <div class="screenshot-callout-list">
+                <div class="screenshot-callout-item">
+                  <span class="callout-pill red">1</span>
+                  <div>
+                    <strong>Pilih "Allow all the time":</strong> <em>(Wajib!)</em> Opsi ini mengizinkan GPS tetap menyala saat HP terkunci atau berada di saku.
+                    <div style="color:#6B7280;font-size:11px;margin-top:2px">*Jangan pilih "Allow only while using the app" karena GPS akan mati saat layar mati!*</div>
+                  </div>
+                </div>
+                <div class="screenshot-callout-item">
+                  <span class="callout-pill blue">2</span>
+                  <div>
+                    <strong>Use precise location: AKTIF (Biru/ON):</strong> Memastikan aplikasi menggunakan koordinat GPS satelit dengan presisi tinggi.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Visual Screenshot Guide Card (Menu Settings) ── -->
+        <div class="setup-steps-container-card fade-in" style="margin-top:20px">
+          <div class="steps-card-header">
+            <div class="steps-header-left">
+              <span class="steps-mono-tag">// TAMPILAN RESMI APLIKASI TRACCAR CLIENT</span>
+              <h3 class="steps-card-title">Panduan Visual Menu Pengaturan (Settings ⚙️)</h3>
+            </div>
+            <span class="steps-protocol-badge">ANDROID &amp; IOS</span>
+          </div>
+
+          <p style="font-size:12.5px;color:var(--text-secondary);margin:0 0 16px 0;line-height:1.5">
+            Berikut adalah tampilan menu <strong>Settings (⚙️)</strong> pada aplikasi Traccar Client. Cocokkan seluruh kolom pengaturan di HP Anda dengan rincian di bawah:
+          </p>
+
+          <div class="traccar-single-guide-layout">
+            <!-- Screenshot Smartphone Frame -->
+            <div class="traccar-screenshot-frame" title="Screenshot Pengaturan Traccar Client Resmi">
+              <img src="/img/traccar-guide/traccar-settings-full.png" alt="Pengaturan Lengkap Traccar Client" class="screenshot-full-img" loading="lazy">
+            </div>
+
+            <!-- Detailed Parameter Callout Column -->
+            <div class="traccar-guide-details-col">
+              <!-- Item 1: Device Identifier -->
+              <div class="guide-callout-card">
+                <span class="callout-badge-num green">1</span>
+                <div class="guide-callout-content">
+                  <div class="guide-callout-title">Device identifier</div>
+                  Ganti nomor acak bawaan dengan nomor BIB resmi Anda: <code>${traccar.deviceIdentifier}</code> (atau tap ikon pemindai QR di pojok kanan atas aplikasi).
+                </div>
+              </div>
+
+              <!-- Item 2: Server URL -->
+              <div class="guide-callout-card">
+                <span class="callout-badge-num green">2</span>
+                <div class="guide-callout-content">
+                  <div class="guide-callout-title">Server URL</div>
+                  Ganti <code>demo.traccar.org:5055</code> menjadi Server URL CycloPon: <code>${osmandUrl}</code>.
+                  <div style="color:#DC2626;font-size:11.5px;font-weight:700;margin-top:2px">⚠️ Wajib diganti agar koordinat terhubung ke panitia!</div>
+                </div>
+              </div>
+
+              <!-- Item 3: Location Accuracy -->
+              <div class="guide-callout-card">
+                <span class="callout-badge-num green">3</span>
+                <div class="guide-callout-content">
+                  <div class="guide-callout-title">Location accuracy: Highest</div>
+                  Pilih opsi <strong>Highest</strong> (Akurasi GPS Satelit Tertinggi). Menjamin jejak rute di tanjakan dan tikungan tajam tetap presisi di garis GPX.
+                </div>
+              </div>
+
+              <!-- Item 4: Interval Recommendation -->
+              <div class="guide-callout-card">
+                <span class="callout-badge-num amber">4</span>
+                <div class="guide-callout-content">
+                  <div class="guide-callout-title">Interval (seconds): 10 – 30 Detik</div>
+                  <div>Atur interval pengiriman data GPS:</div>
+                  <ul style="margin:4px 0 0 16px;padding:0;font-size:12px">
+                    <li><strong>30 detik (Rekomendasi Brevet / Ultra-Endurance):</strong> Sangat hemat baterai, smartphone tahan 15–20+ jam gowes.</li>
+                    <li><strong>10 – 15 detik (Rekomendasi Balap Cepat / Gran Fondo):</strong> Pergerakan di peta penonton ekstra mulus dan responsif.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Item 5: Distance -->
+              <div class="guide-callout-card">
+                <span class="callout-badge-num green">5</span>
+                <div class="guide-callout-content">
+                  <div class="guide-callout-title">Distance (meters): 75 m</div>
+                  Biarkan nilai default <code>75</code> meter (atau isi <code>25</code> meter untuk rute teknis berliku).
+                </div>
+              </div>
+
+              <!-- Item 6: Advanced Settings & Offline Buffering -->
+              <div class="guide-callout-card">
+                <span class="callout-badge-num blue">6</span>
+                <div class="guide-callout-content">
+                  <div class="guide-callout-title">Advanced Settings &amp; Offline Buffering</div>
+                  Nyalakan saklar <strong>Advanced settings (Hijau)</strong> dan pastikan:
+                  <div style="margin-top:4px;font-size:12px">
+                    • <strong>Offline buffering = ON:</strong> Koordinat tetap direkam di memori HP saat melintasi blank spot (hutan/gunung) dan otomatis dikirim saat sinyal seluler pulih.<br>
+                    • <strong>Stop detection = ON:</strong> Hemat baterai saat berhenti di pos kontrol/minimarket.
+                  </div>
                 </div>
               </div>
             </div>

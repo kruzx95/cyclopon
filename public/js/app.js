@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.getElementById('app').innerHTML = `
       <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
-        <div style="font-size:56px;margin-bottom:16px">🚴‍♂️</div>
+        <div style="font-family:'Inter',system-ui,sans-serif;font-size:28px;font-weight:900;letter-spacing:-0.03em;color:#0D1117;margin-bottom:16px">CYCLOPON</div>
         <h2 style="font-size:20px;font-weight:800;color:var(--text-primary)">Menghubungkan Akun Rider...</h2>
         <p style="color:var(--text-secondary);font-size:14px;margin-top:6px">Memvalidasi akses Magic Link Anda</p>
       </div>
