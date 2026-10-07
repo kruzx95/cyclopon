@@ -974,10 +974,36 @@ Berdasarkan tangkapan layar langsung dari aplikasi Traccar Client yang diberikan
 
 ---
 
-## 33. Rencana Kerja Selanjutnya
+## 33. Verifikasi SOP Pre-Flight Rider & Kesiapan Produksi VPS
 
-1. **Web Audio Beep Alarm di Cockpit HUD:** Sintesis audio alert native (`AudioContext`) saat keluar rute (>100m) atau mendekati pos kontrol checkpoint (<500m).
-2. **Dukungan Multi-Bahasa (Bilingual ID / EN):** Pengalihan bahasa cepat untuk event berstandar internasional / ekspatriat.
-3. **Persiapan Kontainer Docker & Deployment VPS:** Pembuatan `Dockerfile` dan `docker-compose.yml` untuk instalasi produksi di server cloud.
+Menjawab pengujian kesiapan operasional lapangan (*field test readiness*) dan mekanisme verifikasi status koneksi rider sebelum start:
+
+1. **Tiga Jalur Verifikasi Koneksi Rider (*Pre-Flight Checklist*):**
+   - **Jalur 1 (Traccar Client Menu STATUS):** Verifikasi log transmisi `Location update` disusul `Send success` (HTTP 200 OsmAnd port 5055). Indikator notifikasi persisten *Service is running* di status bar Android.
+   - **Jalur 2 (Live Map Spectator `/watch/:id`):** Pin BIB rider aktif di garis start, status badge hijau `ONLINE`, last updated `< 30s`, serta pembacaan level baterai dan akurasi GPS.
+   - **Jalur 3 (Cockpit HUD Handlebar `/rider/cockpit`):** Status sinyal `GPS Active` hijau, koordinat live tampil, dan speedometer merespons uji gerak *roll-out* 3–5 meter.
+   - **Alternatif (Web GpsKeeper "Lacak di Kantong"):** Counter pengiriman titik `Terkirim: X titik` bertambah secara live dengan loop audio sunyi penjaga background thread.
+
+2. **Verifikasi Kualitas & Integritas Sistem:**
+   - **Unit Tests:** 92 / 92 lulus (100% green, 14 test suites).
+   - **HTTP Endpoints:** Seluruh rute utama (`/`, `/rider/setup`, `/rider/cockpit`, `/watch/21`, `/sw.js`, dan semua aset screenshot Traccar) merespons status HTTP 200 OK.
+   - **Database & Seeder:** Event #21 (*Gravel to Gang // Pro Telemetry 2026*, 31.5 KM) aktif terisi 5 Checkpoints dan 10 Riders.
+   - **Git Status:** Bersih (*clean working tree*) dan tersinkronisasi penuh dengan `origin/master`.
+
+---
+
+## 34. Rencana Kerja Selanjutnya (Resume di Rumah)
+
+1. **Deploy ke VPS Cloud:**
+   - Setup DNS domain (A Record) mengarah ke IP VPS.
+   - Konfigurasi environment `.env` (DOMAIN & Secret Keys).
+   - Menjalankan kontainer produksi: `docker compose -f docker-compose.prod.yml up -d --build`.
+2. **Uji Coba Lapangan Langsung (*Real Field Testing*):**
+   - Sambungkan smartphone fisik menggunakan aplikasi Traccar Client ke endpoint VPS `http://domain_anda:5055` atau via HTTPS domain.
+   - Lakukan tes gowes luar ruangan (outdoor) untuk menguji keandalan background tracking saat layar HP dikunci di saku jersey.
+3. **Penyempurnaan Opsional:**
+   - Sintesis Web Audio Beep alarm jika deviasi rute > 100m.
+   - Toggle dwibahasa (ID / EN) untuk event internasional.
+
 
 
