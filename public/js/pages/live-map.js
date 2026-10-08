@@ -1392,7 +1392,10 @@ async function renderLiveMap(params) {
     if (pos.speed != null) {
       const raw = Number(pos.speed);
       if (!isNaN(raw)) {
-        speedKmh = Math.max(0, Math.round(pos.isKmh ? raw : (raw * 1.852)));
+        // Sanity check: If raw > 70 and not explicitly knots, it is already in km/h.
+        // Cap realistic cycling speed at 85 km/h to prevent GPS jitter spikes or double-conversion anomalies.
+        const converted = pos.isKmh ? raw : (raw > 70 ? raw : raw * 1.852);
+        speedKmh = Math.max(0, Math.min(85, Math.round(converted)));
       }
     }
 
@@ -1878,14 +1881,36 @@ async function renderLiveMap(params) {
           activateTargetRider(e.rider);
           panToRider(riderId);
         };
+        const rSplits = checkpoints ? checkpoints.map(cp => splitsCache[`${e.rider.id}_${cp.id}`]).filter(Boolean) : [];
+        const latSp = rSplits.length ? rSplits[rSplits.length - 1] : null;
+        let cpDisplayHtml = '';
+        if (latSp) {
+          const arrD = new Date(latSp.arrival_time);
+          const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
+          const isPass = latSp.status === 'IN_TIME';
+          let cleanCpName = (latSp.cp_name || 'CP').replace(/\s*\([^)]*\)/g, '').trim();
+          cpDisplayHtml = `
+            <div class="leaderboard-cp-row">
+              <span class="cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}" title="${escapeHtml(latSp.cp_name || 'CP')}">
+                🚩 <span class="val-cp-text">${escapeHtml(cleanCpName)} · ${tStr} (${isPass ? '✓ In Time' : '⚠️ Over COT'})</span>
+              </span>
+            </div>
+          `;
+        } else {
+          cpDisplayHtml = `
+            <div class="leaderboard-cp-row" style="display:none">
+              <span class="cp-pill"></span>
+            </div>
+          `;
+        }
+
         card.innerHTML = `
           <div class="leaderboard-rank ${raceRank <= 3 ? 'top' : ''}">${rankDisplay}</div>
           <div class="rider-avatar" style="background:${e.rider.color || '#FFE600'}">${escapeHtml(e.rider.bib)}</div>
           <div class="leaderboard-info">
             <div class="leaderboard-name-row">
-              <span class="leaderboard-name">${escapeHtml(e.rider.name)}</span>
-              <span class="leaderboard-bib-tag">#${escapeHtml(e.rider.bib)}</span>
-              ${e.rider.role === 'sweeper' ? '<span class="badge" style="background:#F97316;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🧹 SWEEPER</span>' : (e.rider.role === 'marshall' ? '<span class="badge" style="background:#3B82F6;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🏍️ MARSHALL</span>' : (e.rider.role === 'medic' ? '<span class="badge" style="background:#EF4444;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🚑 MEDIS</span>' : ''))}
+              <span class="leaderboard-name" title="${escapeHtml(e.rider.name)}">${escapeHtml(e.rider.name)}</span>
+              ${e.rider.role === 'sweeper' ? '<span class="badge" style="background:#F97316;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">SWEEPER</span>' : (e.rider.role === 'marshall' ? '<span class="badge" style="background:#3B82F6;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">MARSHALL</span>' : (e.rider.role === 'medic' ? '<span class="badge" style="background:#EF4444;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">MEDIS</span>' : ''))}
               <button class="btn-compare-rider ${comparingRiderId === e.rider.id ? 'active' : ''}" onclick="event.stopPropagation(); triggerCompareRider(${e.rider.id})" title="Bandingkan rider">
                 ⚔️ ${comparingRiderId === e.rider.id ? 'Batal' : 'VS'}
               </button>
@@ -1895,28 +1920,20 @@ async function renderLiveMap(params) {
                 ⚡ <span class="val-speed">${e.speed}</span> km/h
               </span>
               <span class="telemetry-pill eta-pill ${e.etaBadgeClass || 'eta-idle'}">
-                🏁 <span class="val-eta">${e.isFinished ? 'Finish' : `${e.etaTime} (${e.etaDuration})`}</span>
+                🏁 <span class="val-eta">${e.isFinished ? 'Finish' : (e.etaTime && e.etaTime !== '-' ? e.etaTime : '-')}</span>
               </span>
               <span class="offroute-pill" style="display:${e.isOffRoute ? 'inline-flex' : 'none'}">
                 ⚠️ NYASAR (+<span class="val-deviation">${e.deviationMeters}</span>m)
               </span>
               <span class="battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}" style="display:${e.batteryLevel != null ? 'inline-flex' : 'none'}">
-                <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span> <span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
+                <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span><span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
               </span>
-              ${(() => {
-                const rSplits = checkpoints ? checkpoints.map(cp => splitsCache[`${e.rider.id}_${cp.id}`]).filter(Boolean) : [];
-                const latSp = rSplits.length ? rSplits[rSplits.length - 1] : null;
-                if (!latSp) return '';
-                const arrD = new Date(latSp.arrival_time);
-                const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
-                const isPass = latSp.status === 'IN_TIME';
-                return `<span class="cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}">🚩 ${latSp.cp_name || 'CP'}: ${tStr} (${isPass ? '✓' : '⚠️ COT'})</span>`;
-              })()}
+              <span class="telemetry-status-tag">
+                <span class="val-status-dot" style="color:${status.color}">${status.dot}</span>
+                <span class="val-timeago">${formatTimeAgo(e.lastTime)}</span>
+              </span>
             </div>
-            <div class="leaderboard-status-sub">
-              <span class="val-status" style="font-size:10px;color:${status.color}">${status.dot} ${status.text}</span>
-              <span class="time-ago-sub">• <span class="val-timeago">${formatTimeAgo(e.lastTime)}</span></span>
-            </div>
+            ${cpDisplayHtml}
           </div>
           <div class="leaderboard-stat">
             <div class="leaderboard-km"><span class="val-km">${e.distanceKm}</span> <span class="km-unit">km</span></div>
@@ -1941,6 +1958,12 @@ async function renderLiveMap(params) {
           rankEl.className = `leaderboard-rank ${raceRank <= 3 ? 'top' : ''}`;
         }
 
+        const nameEl = card.querySelector('.leaderboard-name');
+        if (nameEl && nameEl.textContent !== e.rider.name) {
+          nameEl.textContent = e.rider.name;
+          nameEl.title = e.rider.name;
+        }
+
         const speedPill = card.querySelector('.speed-pill');
         if (speedPill) {
           speedPill.className = `telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}`;
@@ -1952,7 +1975,7 @@ async function renderLiveMap(params) {
         if (etaPill) {
           etaPill.className = `telemetry-pill eta-pill ${e.etaBadgeClass || 'eta-idle'}`;
           const valEta = etaPill.querySelector('.val-eta');
-          if (valEta) valEta.textContent = e.isFinished ? 'Finish' : `${e.etaTime} (${e.etaDuration})`;
+          if (valEta) valEta.textContent = e.isFinished ? 'Finish' : (e.etaTime && e.etaTime !== '-' ? e.etaTime : '-');
         }
 
         const offRoutePill = card.querySelector('.offroute-pill');
@@ -1975,31 +1998,36 @@ async function renderLiveMap(params) {
         // Checkpoint in-place update
         const rSplits = checkpoints ? checkpoints.map(cp => splitsCache[`${e.rider.id}_${cp.id}`]).filter(Boolean) : [];
         const latSp = rSplits.length ? rSplits[rSplits.length - 1] : null;
-        let cpPill = card.querySelector('.cp-pill');
-        if (latSp) {
-          const arrD = new Date(latSp.arrival_time);
-          const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
-          const isPass = latSp.status === 'IN_TIME';
-          if (!cpPill) {
-            const telemRow = card.querySelector('.leaderboard-telemetry-row');
-            if (telemRow) {
-              cpPill = document.createElement('span');
-              telemRow.appendChild(cpPill);
-            }
+        let cpRow = card.querySelector('.leaderboard-cp-row');
+        if (!cpRow) {
+          const infoCol = card.querySelector('.leaderboard-info');
+          if (infoCol) {
+            cpRow = document.createElement('div');
+            cpRow.className = 'leaderboard-cp-row';
+            infoCol.appendChild(cpRow);
           }
-          if (cpPill) {
-            cpPill.style.display = 'inline-flex';
-            cpPill.className = `cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}`;
-            cpPill.innerHTML = `🚩 ${latSp.cp_name || 'CP'}: ${tStr} (${isPass ? '✓' : '⚠️ COT'})`;
+        }
+        if (cpRow) {
+          if (latSp) {
+            const arrD = new Date(latSp.arrival_time);
+            const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
+            const isPass = latSp.status === 'IN_TIME';
+            let cleanCpName = (latSp.cp_name || 'CP').replace(/\s*\([^)]*\)/g, '').trim();
+            cpRow.style.display = 'flex';
+            cpRow.innerHTML = `
+              <span class="cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}" title="${escapeHtml(latSp.cp_name || 'CP')}">
+                🚩 <span class="val-cp-text">${escapeHtml(cleanCpName)} · ${tStr} (${isPass ? '✓ In Time' : '⚠️ Over COT'})</span>
+              </span>
+            `;
+          } else {
+            cpRow.style.display = 'none';
           }
-        } else if (cpPill) {
-          cpPill.style.display = 'none';
         }
 
-        const statusEl = card.querySelector('.val-status');
-        if (statusEl) {
-          statusEl.textContent = `${status.dot} ${status.text}`;
-          statusEl.style.color = status.color;
+        const statusDot = card.querySelector('.val-status-dot');
+        if (statusDot) {
+          statusDot.textContent = status.dot;
+          statusDot.style.color = status.color;
         }
 
         const timeAgoEl = card.querySelector('.val-timeago');

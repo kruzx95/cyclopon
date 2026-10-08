@@ -53,7 +53,8 @@
 34. [Phase 34: Pengerasan Keamanan HTTP & Resilient WebSocket Auto-Reconnect](#34-pengerasan-keamanan-http--resilient-websocket-auto-reconnect)
 35. [Phase 35: Penguatan Keamanan Menyeluruh (*Bulletproof Security Hardening*)](#35-penguatan-keamanan-menyeluruh-bulletproof-security-hardening)
 36. [Phase 36: Clean Code & Pemangkasan Aset Usang (*Dead Asset Pruning*)](#36-clean-code--pemangkasan-aset-usang-dead-asset-pruning)
-37. [Rencana Kerja Selanjutnya & Kesiapan Produksi](#37-rencana-kerja-selanjutnya--kesiapan-produksi)
+37. [Phase 37: Perapian & Penyempurnaan Visual Kartu Rider Leaderboard Live Map](#37-perapian--penyempurnaan-visual-kartu-rider-leaderboard-live-map)
+38. [Rencana Kerja Selanjutnya & Kesiapan Produksi](#38-rencana-kerja-selanjutnya--kesiapan-produksi)
 
 ---
 
@@ -1082,7 +1083,30 @@ Menjaga performa repositori, efisiensi bundle PWA, dan kebersihan codebase setel
 
 ---
 
-## 37. Rencana Kerja Selanjutnya & Kesiapan Produksi
+## 37. Perapian & Penyempurnaan Visual Kartu Rider Leaderboard Live Map
+
+Menjawab kebutuhan perapian informasi kartu peserta (*Rider Card*) di panel drawer/sidebar Live Map penonton dan panitia agar tidak terjadi pemotongan teks (*text truncation*), penumpukan vertikal yang sesak, maupun distorsi badge melengkung:
+
+1. **Pelebaran & Kelegaan Tata Letak Desktop (`public/css/map.css`):**
+   - Kolom sidebar desktop disesuaikan dari `340px` menjadi responsif `clamp(360px, 25vw, 420px)`, memberikan ruang horizontal ekstra ~40px sehingga nama peserta dan data telemetri memiliki ruang bernapas yang cukup.
+2. **Penyempurnaan Baris Nama & Peniadaan Tag BIB Redundan:**
+   - Menghapus tag nomor `#BIB` abu-abu duplikat di samping nama rider, karena nomor BIB sudah terpampang jelas dan tegas di dalam kotak avatar berwarna (`.rider-avatar`).
+   - Memberikan properti `flex: 1; min-width: 0;` pada `.leaderboard-name`, sehingga nama peserta panjang (seperti *"Bambang Pamungkas"*) tidak lagi terpotong menjadi *"Bamb..."*.
+3. **Kluster Telemetri Terpadu & Sanitasi Kecepatan Gowes:**
+   - Menyederhanakan penampil ETA menjadi format jam yang bersih (misal: `🏁 10:40` atau `🏁 Finish`) tanpa imbuhan durasi sisa berlebih (`(~0m)`).
+   - Mengintegrasikan status koneksi dan waktu pembaruan terakhir langsung ke bilah instrumen telemetri (`.telemetry-status-tag`: `🟢 6d lalu`).
+   - **Sanitasi Batas Kecepatan GPS:** Memperbaiki algoritma kalkulasi kecepatan di `updateRiderPosition()` dengan deteksi otomatis nilai yang telah dalam satuan km/h serta *realistic cycling speed clamp* (maks 85 km/h) untuk mencegah lonjakan GPS jitter anomali (seperti 164 km/h).
+4. **Desain Ulang Badge Pos Pemeriksaan (*Single-Line Checkpoint Split*):**
+   - Mengeluarkan informasi checkpoint dari baris telemetri dan menempatkannya pada baris tersendiri (`.leaderboard-cp-row`).
+   - Menyederhanakan nama checkpoint dengan membuang keterangan kurung ganda yang terlalu panjang (misal: `"CP 1: Cineam Pass (Tanjakan Cineam)"` $\rightarrow$ `"CP 1: Cineam Pass"`).
+   - Mengubah bentuk badge dari pil oval lonjong 100px menjadi lencana atletik persegi bertepi lembut (`border-radius: 4px`) dengan `white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`. Badge tampil rapi satu baris (`🚩 CP 1: Cineam Pass · 10:40 AM (⚠️ Over COT)`) tanpa pernah melengkung menjadi balon elips 3 baris.
+5. **Pembaruan Service Worker & Verifikasi Pengujian:**
+   - Cache Service Worker PWA dinaikkan ke **`cyclopon-v51`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+   - Seluruh **101 / 101 Unit Tests Lulus 100% (15 Test Suites)** tanpa regresi.
+
+---
+
+## 38. Rencana Kerja Selanjutnya & Kesiapan Produksi
 
 1. **Deploy ke VPS Cloud:**
    - Setup DNS domain (A Record) mengarah ke IP VPS.
@@ -1094,3 +1118,4 @@ Menjaga performa repositori, efisiensi bundle PWA, dan kebersihan codebase setel
 3. **Penyempurnaan Fitur Tambahan (Opsional):**
    - Audio Off-Route alarm beep alert pada Cockpit HUD.
    - Toggle dwibahasa (ID / EN) untuk event internasional.
+
