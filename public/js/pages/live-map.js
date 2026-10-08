@@ -87,7 +87,7 @@ async function renderLiveMap(params) {
           ` : `
             <div class="live-status-pill">
               <span class="live-dot pulse" id="liveDot"></span>
-              <span>● LIVE STREAM</span>
+              <span id="liveStatusText">● LIVE STREAM</span>
             </div>
           `}
           <div class="event-info-cluster">
@@ -2717,17 +2717,50 @@ async function renderLiveMap(params) {
     };
   }
 
-  // ── WebSocket Connection to Traccar Proxy ──
+  // ── Resilient WebSocket Connection to Traccar Proxy ──
+  let liveWs = null;
+  let liveWsReconnectTimer = null;
+  let liveWsBackoffMs = 2000;
+  let isLiveMapMounted = true;
+
+  if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
+    Router.onUnmount(() => {
+      isLiveMapMounted = false;
+      if (liveWsReconnectTimer) {
+        clearTimeout(liveWsReconnectTimer);
+        liveWsReconnectTimer = null;
+      }
+      if (liveWs) {
+        try { liveWs.close(); } catch (e) {}
+        liveWs = null;
+      }
+    });
+  }
+
   function connectWs() {
+    if (!isLiveMapMounted) return;
+    if (liveWsReconnectTimer) {
+      clearTimeout(liveWsReconnectTimer);
+      liveWsReconnectTimer = null;
+    }
+
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const ws    = new WebSocket(`${proto}//${window.location.host}/traccar-ws`);
+    liveWs      = ws;
     const dot   = document.getElementById('liveDot');
+    const statusText = document.getElementById('liveStatusText');
 
     if (dot) { dot.className = 'live-dot connecting'; dot.classList.remove('pulse'); }
+    if (statusText) { statusText.textContent = 'Menghubungkan...'; }
 
     ws.onopen = () => {
+      if (!isLiveMapMounted) return;
+      liveWsBackoffMs = 2000;
       if (dot) { dot.className = 'live-dot pulse'; }
+      if (statusText) { statusText.textContent = '● LIVE STREAM'; }
       console.log('[LiveMap] WebSocket connected');
+      // Backfill any positions missed during disconnect
+      syncLatestPositionsFromHistory().catch(() => {});
     };
 
     ws.onmessage = e => {
@@ -2774,9 +2807,16 @@ async function renderLiveMap(params) {
     };
 
     ws.onclose = () => {
+      if (!isLiveMapMounted) return;
       if (dot) { dot.className = 'live-dot offline'; }
-      console.log('[LiveMap] WebSocket closed, reconnecting in 5s...');
-      setTimeout(connectWs, 5000);
+      if (statusText) { statusText.textContent = 'Menghubungkan kembali...'; }
+      console.log(`[LiveMap] WebSocket disconnected. Reconnecting in ${liveWsBackoffMs / 1000}s...`);
+
+      liveWsReconnectTimer = setTimeout(() => {
+        if (isLiveMapMounted) connectWs();
+      }, liveWsBackoffMs);
+
+      liveWsBackoffMs = Math.min(Math.round(liveWsBackoffMs * 1.5), 15000);
     };
 
     ws.onerror = err => console.error('[LiveMap] WS error:', err);

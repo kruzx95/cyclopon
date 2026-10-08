@@ -992,7 +992,36 @@ Menjawab pengujian kesiapan operasional lapangan (*field test readiness*) dan me
 
 ---
 
-## 34. Rencana Kerja Selanjutnya (Resume di Rumah)
+## 34. Pengerasan Keamanan HTTP & Resilient WebSocket Auto-Reconnect
+
+Menjawab kebutuhan optimasi pra-produksi sebelum implementasi VPS cloud dan keandalan di rute bersinyal lemah:
+
+1. **Pengerasan Keamanan HTTP (*Production Security Hardening*):**
+   - **Pencegahan Signature Leak:** Mematikan header `X-Powered-By` di `server.js` (`app.disable('x-powered-by')`).
+   - **Header Keamanan Standar Industri:**
+     - `X-Content-Type-Options: nosniff` (mencegah eksploitasi sniffing tipe MIME).
+     - `X-Frame-Options: SAMEORIGIN` (mencegah serangan clickjacking/framing).
+     - `X-XSS-Protection: 1; mode=block` (perlindungan browser legacy).
+     - `Referrer-Policy: strict-origin-when-cross-origin`.
+     - `Permissions-Policy: geolocation=(self), camera=(), microphone=()`.
+   - **Rate Limiting In-Memory Pendaftaran Mandiri:** Menambahkan middleware pembatas frekuensi registrasi publik (`/api/auth/rider/register`) maksimal 30 request/menit per IP untuk mencegah serangan registrasi bot spam.
+   - **Automated Tests:** Ditambahkan rangkaian pengujian otomatis [`tests/security.test.js`](file:///home/kruza/Documents/cyclopon/tests/security.test.js) (6 pengujian lulus 100%).
+
+2. **Ketahanan Sinyal Seluler (*Smart WebSocket Auto-Reconnect*):**
+   - **Live Spectator Map (`public/js/pages/live-map.js`):**
+     - Penerapan algoritma *exponential backoff reconnect* (jeda 2s $\rightarrow$ 3s $\rightarrow$ 4.5s $\rightarrow$ maks 15s) saat koneksi WebSocket terputus karena blank spot seluler.
+     - Indikator status visual adaptif: dot berubah kuning bertuliskan *"Menghubungkan kembali..."* saat terputus, dan langsung kembali hijau berkedip *"● LIVE STREAM"* saat pulih.
+     - **Pemberian Titik Tertinggal (*Auto-Backfill*):** Begitu koneksi pulih, fungsi `syncLatestPositionsFromHistory()` otomatis dipanggil untuk menarik titik-titik koordinat yang tertinggal selama offline.
+     - **Pembersihan Bersih SPA:** Registrasi `Router.onUnmount` untuk menghentikan timer reconnect dan menutup socket saat berpindah halaman.
+   - **Handlebar Cockpit HUD (`public/js/pages/rider-cockpit.js`):**
+     - Menambahkan handler `onclose` dengan timer *exponential backoff* serupa selama `cockpitActive === true`.
+     - Pembersihan rapi timer dan koneksi pada `teardownRiderCockpit()`.
+   - **Pembaruan Service Worker:** Versi cache dinaikkan ke **`cyclopon-v50`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+   - **Verifikasi Pengujian Otomatis:** Seluruh **98 / 98 Unit Tests Lulus 100% (15 Test Suites)**.
+
+---
+
+## 35. Rencana Kerja Selanjutnya
 
 1. **Deploy ke VPS Cloud:**
    - Setup DNS domain (A Record) mengarah ke IP VPS.
@@ -1001,8 +1030,8 @@ Menjawab pengujian kesiapan operasional lapangan (*field test readiness*) dan me
 2. **Uji Coba Lapangan Langsung (*Real Field Testing*):**
    - Sambungkan smartphone fisik menggunakan aplikasi Traccar Client ke endpoint VPS `http://domain_anda:5055` atau via HTTPS domain.
    - Lakukan tes gowes luar ruangan (outdoor) untuk menguji keandalan background tracking saat layar HP dikunci di saku jersey.
-3. **Penyempurnaan Opsional:**
-   - Sintesis Web Audio Beep alarm jika deviasi rute > 100m.
+3. **Penyempurnaan Fitur Tambahan (Opsional):**
+   - Audio Off-Route alarm beep alert pada Cockpit HUD.
    - Toggle dwibahasa (ID / EN) untuk event internasional.
 
 

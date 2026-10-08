@@ -85,8 +85,35 @@ router.get('/token/:token', (req, res) => {
   });
 });
 
+// Lightweight In-Memory Rate Limiter for Public Registration (30 req / minute per IP)
+const registrationRateMap = new Map();
+const cleanupInterval = setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of registrationRateMap.entries()) {
+    if (now - record.resetTime > 60000) registrationRateMap.delete(ip);
+  }
+}, 60000);
+if (cleanupInterval.unref) cleanupInterval.unref();
+
+function registerRateLimiter(req, res, next) {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const now = Date.now();
+  let record = registrationRateMap.get(ip);
+  if (!record || now - record.resetTime > 60000) {
+    record = { count: 1, resetTime: now };
+    registrationRateMap.set(ip, record);
+  } else {
+    record.count++;
+  }
+
+  if (record.count > 30) {
+    return res.status(429).json({ error: 'Terlalu banyak permintaan pendaftaran. Silakan coba lagi beberapa saat.' });
+  }
+  next();
+}
+
 // POST /api/auth/rider/register — On-the-spot self-registration (for walk-in riders, sweepers, marshalls)
-router.post('/rider/register', (req, res) => {
+router.post('/rider/register', registerRateLimiter, (req, res) => {
   const { event_id, bib, name, phone, pin, role } = req.body;
   if (!event_id || !bib || !name) {
     return res.status(400).json({ error: 'Event, nomor BIB, dan nama wajib diisi' });

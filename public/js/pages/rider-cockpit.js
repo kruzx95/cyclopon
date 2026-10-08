@@ -6,6 +6,8 @@
 let cockpitActive = false;
 let cockpitWakeLock = null;
 let cockpitWs = null;
+let cockpitWsReconnectTimer = null;
+let cockpitWsBackoffMs = 2000;
 let cockpitMap = null;
 let cockpitRiderMarker = null;
 let cockpitRoutePolyline = null;
@@ -1000,10 +1002,22 @@ async function renderRiderCockpit() {
     }
   }
 
-  // ── 7. WebSocket Live Telemetry Listener ──
+  // ── 7. Resilient WebSocket Live Telemetry Listener ──
   function connectCockpitWs() {
+    if (!cockpitActive) return;
+    if (cockpitWsReconnectTimer) {
+      clearTimeout(cockpitWsReconnectTimer);
+      cockpitWsReconnectTimer = null;
+    }
+
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     cockpitWs = new WebSocket(`${proto}//${window.location.host}/traccar-ws`);
+
+    cockpitWs.onopen = () => {
+      if (!cockpitActive) return;
+      cockpitWsBackoffMs = 2000;
+      console.log('[Cockpit WS] Connected to live telemetri stream');
+    };
 
     cockpitWs.onmessage = e => {
       try {
@@ -1027,6 +1041,19 @@ async function renderRiderCockpit() {
       } catch (err) {
         console.warn('[Cockpit WS] Error processing message:', err);
       }
+    };
+
+    cockpitWs.onclose = () => {
+      if (!cockpitActive) return;
+      console.log(`[Cockpit WS] Connection closed. Reconnecting in ${cockpitWsBackoffMs / 1000}s...`);
+      cockpitWsReconnectTimer = setTimeout(() => {
+        if (cockpitActive) connectCockpitWs();
+      }, cockpitWsBackoffMs);
+      cockpitWsBackoffMs = Math.min(Math.round(cockpitWsBackoffMs * 1.5), 15000);
+    };
+
+    cockpitWs.onerror = err => {
+      console.warn('[Cockpit WS] Error:', err);
     };
   }
 
@@ -1337,8 +1364,12 @@ function teardownRiderCockpit() {
       cockpitWakeLock.release().catch(() => {});
       cockpitWakeLock = null;
     }
+    if (cockpitWsReconnectTimer) {
+      clearTimeout(cockpitWsReconnectTimer);
+      cockpitWsReconnectTimer = null;
+    }
     if (cockpitWs) {
-      cockpitWs.close();
+      try { cockpitWs.close(); } catch (e) {}
       cockpitWs = null;
     }
     if (cockpitSimTimer) {
