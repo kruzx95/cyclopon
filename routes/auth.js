@@ -2,6 +2,17 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const fetch = require('node-fetch');
+const { generateAdminSession, verifyAdminSession } = require('../lib/admin-auth');
+
+// Brute-force protection for 4-digit rider PIN logins
+const riderLoginAttempts = new Map();
+const riderCleanupTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of riderLoginAttempts.entries()) {
+    if (now - record.firstAttempt > 15 * 60 * 1000) riderLoginAttempts.delete(key);
+  }
+}, 5 * 60 * 1000);
+if (riderCleanupTimer.unref) riderCleanupTimer.unref();
 
 function getPublicTraccarConfig(req, rider) {
   const hostHeader = (req.headers['x-forwarded-host'] || req.headers.host || 'localhost').split(':')[0];
@@ -22,8 +33,19 @@ router.post('/rider', (req, res) => {
     return res.status(400).json({ error: 'BIB dan PIN wajib diisi' });
   }
 
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
   const cleanBib = String(bib).trim();
   const cleanPin = String(pin).trim();
+  const attemptKey = `${clientIp}_${cleanBib}`;
+
+  // Check brute force failure count (max 8 failures in 15 minutes)
+  const now = Date.now();
+  const attemptRecord = riderLoginAttempts.get(attemptKey);
+  if (attemptRecord && (now - attemptRecord.firstAttempt <= 15 * 60 * 1000) && attemptRecord.failures >= 8) {
+    return res.status(429).json({
+      error: 'Terlalu banyak percobaan login yang gagal. Akun dibekukan sementara selama 15 menit.'
+    });
+  }
 
   let rider = null;
   if (event_id) {
@@ -33,8 +55,17 @@ router.post('/rider', (req, res) => {
   }
 
   if (!rider) {
+    // Record failed attempt
+    if (!attemptRecord || (now - attemptRecord.firstAttempt > 15 * 60 * 1000)) {
+      riderLoginAttempts.set(attemptKey, { failures: 1, firstAttempt: now });
+    } else {
+      attemptRecord.failures++;
+    }
     return res.status(401).json({ error: 'BIB atau PIN tidak valid untuk event yang dipilih' });
   }
+
+  // Clear any failed attempts on success
+  riderLoginAttempts.delete(attemptKey);
 
   const event = db.getEventById.get(rider.event_id);
   if (!event) {
@@ -192,8 +223,16 @@ router.post('/admin/login', async (req, res) => {
 
   // Support direct login using credentials from .env or default admin account
   if ((email === envUser || email === 'admin' || email === 'admin@example.com' || email === 'admin@cyclopon.local') && password === envPass) {
+    const session = generateAdminSession();
+    res.cookie('cyclopon_admin', session.token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/'
+    });
     return res.json({
       success: true,
+      token: session.token,
       user: { id: 1, name: 'Admin CycloPon', email: envUser, administrator: true }
     });
   }
@@ -214,16 +253,32 @@ router.post('/admin/login', async (req, res) => {
     const cookies = response.headers.raw()['set-cookie'];
     if (cookies) res.setHeader('Set-Cookie', cookies);
 
+    const session = generateAdminSession();
+    res.cookie('cyclopon_admin', session.token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/'
+    });
+
     const data = await response.json();
-    res.json({ success: true, user: data });
+    res.json({ success: true, token: session.token, user: data });
   } catch (err) {
     res.status(503).json({ error: 'Traccar Server tidak dapat dijangkau. Gunakan login dev: admin / admin' });
   }
 });
 
-// GET /api/auth/admin/session — check session validity (used by WS proxy handshake)
+// GET /api/auth/admin/session — check session validity
 router.get('/admin/session', (req, res) => {
-  res.json({ ok: true });
+  const cookieToken = req.cookies?.cyclopon_admin;
+  const isValid = cookieToken ? verifyAdminSession(cookieToken) : false;
+  res.json({ ok: isValid });
+});
+
+// POST /api/auth/admin/logout — clear admin session
+router.post('/admin/logout', (_req, res) => {
+  res.clearCookie('cyclopon_admin', { path: '/' });
+  res.json({ success: true });
 });
 
 module.exports = router;

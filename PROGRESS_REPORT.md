@@ -1021,7 +1021,31 @@ Menjawab kebutuhan optimasi pra-produksi sebelum implementasi VPS cloud dan kean
 
 ---
 
-## 35. Rencana Kerja Selanjutnya
+## 35. Penguatan Keamanan Menyeluruh (*Bulletproof Security Hardening*)
+
+Menjawab audit kerentanan terhadap potensi serangan orang iseng dan bot pada deployment publik:
+
+1. **Proteksi Brute-Force Login PIN Rider (`routes/auth.js`):**
+   - Mencegah serangan kamus tebakan 4-digit PIN dengan *rate limiter failure tracker*.
+   - Jika terjadi 8 kali kegagalan login dalam kurun 15 menit, endpoint mengembalikan HTTP 429 Too Many Requests dan membekukan percobaan login selama 15 menit. Percobaan berhasil otomatis membersihkan riwayat kesalahan.
+2. **Rate Limiting & Proteksi Integritas Panggilan SOS (`routes/alerts.js`):**
+   - Mencegah *notification flooding* ke Telegram / Webhook panitia dengan pembatasan maksimal 5 panggilan darurat per menit per IP.
+   - Pengecekan validitas `rider_id` untuk mencegah kegagalan *foreign key constraint* basis data jika disuntikkan ID fiktif.
+3. **Backend Admin Authentication Guard (`lib/admin-auth.js`):**
+   - Middleware `requireAdminAuth` dipasang pada seluruh rute administratif sensitif di `routes/riders.js` dan `routes/events.js` (`/admin`, `/admin/:id`, `/admin/:id/gpx`).
+   - Menerapkan sesi HMAC berbasis cookie `cyclopon_admin` berstatus `HttpOnly; SameSite=Lax` dan mendukung header `x-admin-key` / `Authorization: Bearer` untuk API/otomasi.
+   - Akses tanpa hak otorisasi sah otomatis ditolak dengan HTTP 401 Unauthorized.
+4. **Sanitasi Menyeluruh Terhadap Serangan XSS (Cross-Site Scripting):**
+   - Seluruh rendering teks dinamis nama rider (`r.name`), nomor BIB, dan judul event pada [`public/js/pages/event-results.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/event-results.js) (tabel hasil, rincian split COT, dan sertifikat brevet) dibungkus menggunakan `escapeHtml()`.
+   - Hal serupa diterapkan pada popup penanda rider dan bilah leaderboard di [`public/js/pages/live-map.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/live-map.js).
+   - Tombol berbagi link menggunakan *data attributes* (`data-bib`, `data-name`) untuk mencegah injeksi script karakter petik pada event handler `onclick`.
+5. **Verifikasi Pengujian Otomatis:**
+   - Diperbarui rangkaian pengujian [`tests/security.test.js`](file:///home/kruza/Documents/cyclopon/tests/security.test.js) (9 pengujian lolos 100%).
+   - Seluruh **101 / 101 Unit Tests Lulus 100% (15 Test Suites)** tanpa regresi.
+
+---
+
+## 36. Rencana Kerja Selanjutnya
 
 1. **Deploy ke VPS Cloud:**
    - Setup DNS domain (A Record) mengarah ke IP VPS.

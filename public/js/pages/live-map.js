@@ -1612,9 +1612,9 @@ async function renderLiveMap(params) {
       <div class="rider-map-popup">
         <div class="popup-header">
           <div class="popup-title-group">
-            <div class="popup-rider-name">${rider.name}</div>
+            <div class="popup-rider-name">${escapeHtml(rider.name)}</div>
             <div class="popup-rider-bib" style="color:${rider.color || 'var(--color-yellow)'}">
-              BIB #${rider.bib}
+              BIB #${escapeHtml(rider.bib)}
               ${rider.role === 'sweeper' ? '<span style="background:#F97316;color:#FFF;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px">🧹 SWEEPER</span>' : (rider.role === 'marshall' ? '<span style="background:#3B82F6;color:#FFF;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px">🏍️ MARSHALL</span>' : (rider.role === 'medic' ? '<span style="background:#EF4444;color:#FFF;font-size:10px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px">🚑 MEDIS</span>' : ''))}
             </div>
           </div>
@@ -1682,7 +1682,7 @@ async function renderLiveMap(params) {
 
         <div class="popup-footer" style="display:flex;align-items:center;justify-content:space-between">
           <span>Update: <strong>${formatTimeAgo(fixTime)}</strong></span>
-          <button class="popup-share-link-btn" onclick="window.shareRiderLink('${rider.bib}', '${rider.name}')" title="Salin / Bagikan Link Tracking Rider Ini">
+          <button class="popup-share-link-btn" data-bib="${escapeHtml(rider.bib)}" data-name="${escapeHtml(rider.name)}" onclick="window.shareRiderLink(this.dataset.bib, this.dataset.name)" title="Salin / Bagikan Link Tracking Rider Ini">
             🔗 Bagikan Link
           </button>
         </div>
@@ -1880,11 +1880,11 @@ async function renderLiveMap(params) {
         };
         card.innerHTML = `
           <div class="leaderboard-rank ${raceRank <= 3 ? 'top' : ''}">${rankDisplay}</div>
-          <div class="rider-avatar" style="background:${e.rider.color || '#FFE600'}">${e.rider.bib}</div>
+          <div class="rider-avatar" style="background:${e.rider.color || '#FFE600'}">${escapeHtml(e.rider.bib)}</div>
           <div class="leaderboard-info">
             <div class="leaderboard-name-row">
-              <span class="leaderboard-name">${e.rider.name}</span>
-              <span class="leaderboard-bib-tag">#${e.rider.bib}</span>
+              <span class="leaderboard-name">${escapeHtml(e.rider.name)}</span>
+              <span class="leaderboard-bib-tag">#${escapeHtml(e.rider.bib)}</span>
               ${e.rider.role === 'sweeper' ? '<span class="badge" style="background:#F97316;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🧹 SWEEPER</span>' : (e.rider.role === 'marshall' ? '<span class="badge" style="background:#3B82F6;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🏍️ MARSHALL</span>' : (e.rider.role === 'medic' ? '<span class="badge" style="background:#EF4444;color:#FFF;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700">🚑 MEDIS</span>' : ''))}
               <button class="btn-compare-rider ${comparingRiderId === e.rider.id ? 'active' : ''}" onclick="event.stopPropagation(); triggerCompareRider(${e.rider.id})" title="Bandingkan rider">
                 ⚔️ ${comparingRiderId === e.rider.id ? 'Batal' : 'VS'}

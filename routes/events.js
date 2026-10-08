@@ -4,6 +4,7 @@ const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
 const db      = require('../db/database');
+const { requireAdminAuth } = require('../lib/admin-auth');
 
 const gpxDir = path.join(__dirname, '..', 'public', 'gpx');
 if (!fs.existsSync(gpxDir)) fs.mkdirSync(gpxDir, { recursive: true });
@@ -65,7 +66,7 @@ router.get('/:id/gpx/download', (req, res) => {
 // ── Admin routes ──────────────────────────────────────────────
 
 // POST /api/events/admin — create new event
-router.post('/admin', (req, res) => {
+router.post('/admin', requireAdminAuth, (req, res) => {
   const { name, date } = req.body;
   if (!name || !date) return res.status(400).json({ error: 'name dan date wajib diisi' });
   const result = db.createEvent.run({ name, date });
@@ -74,7 +75,7 @@ router.post('/admin', (req, res) => {
 });
 
 // PUT /api/events/admin/:id — update event
-router.put('/admin/:id', (req, res) => {
+router.put('/admin/:id', requireAdminAuth, (req, res) => {
   const event = db.getEventById.get(req.params.id);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
   const { name, date, active } = req.body;
@@ -88,7 +89,7 @@ router.put('/admin/:id', (req, res) => {
 });
 
 // POST /api/events/admin/:id/gpx — upload GPX file
-router.post('/admin/:id/gpx', upload.single('gpx'), (req, res) => {
+router.post('/admin/:id/gpx', requireAdminAuth, upload.single('gpx'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'File GPX tidak ditemukan dalam request' });
 
   const targetPath = path.join(gpxDir, `${req.params.id}.gpx`);

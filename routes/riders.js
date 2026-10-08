@@ -2,6 +2,10 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
 const crypto  = require('crypto');
+const { requireAdminAuth } = require('../lib/admin-auth');
+
+// Protect all rider management routes with admin auth
+router.use(requireAdminAuth);
 
 // Color palette — assigned round-robin per event for regular riders
 const RIDER_COLORS = [

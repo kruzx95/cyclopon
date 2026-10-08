@@ -186,12 +186,12 @@ async function renderEventResults(params) {
                         </span>
                       </td>
                       <td>
-                        <span class="bib-chip">#${r.bib}</span>
+                        <span class="bib-chip">#${escapeHtml(r.bib)}</span>
                       </td>
                       <td>
                         <div class="rider-name-cell">
                           <span class="rider-color-dot" style="background:${r.color || '#0D1117'}"></span>
-                          <span class="rider-name-text">${r.name}</span>
+                          <span class="rider-name-text">${escapeHtml(r.name)}</span>
                         </div>
                       </td>
                       <td>
@@ -234,7 +234,7 @@ async function renderEventResults(params) {
                         <td colspan="9">
                           <div class="split-details-card">
                             <div class="split-details-header">
-                              <span class="split-details-title">// RINCIAN SPLIT CHECKPOINT & CUT-OFF TIME (COT) · #${r.bib} ${r.name}</span>
+                              <span class="split-details-title">// RINCIAN SPLIT CHECKPOINT & CUT-OFF TIME (COT) · #${escapeHtml(r.bib)} ${escapeHtml(r.name)}</span>
                               <span class="split-details-meta">${r.checkpoints_cleared} dari ${r.total_checkpoints} Pos Selesai</span>
                             </div>
                             ${!hasSplits ? `
@@ -403,7 +403,7 @@ async function renderEventResults(params) {
                 ${isFinisher ? 'OFFICIAL BREVET CERTIFICATE' : 'CERTIFICATE OF PARTICIPATION'}
               </div>
 
-              <h2 class="cert-main-title">${event.name}</h2>
+              <h2 class="cert-main-title">${escapeHtml(event.name)}</h2>
               <div class="cert-subtitle">
                 ${isFinisher 
                   ? 'Sertifikat resmi tanda kelulusan dan keberhasilan menyelesaikan seluruh rute event bersepeda jarak jauh (Brevet / Audax / Gran Fondo) sesuai regulasi Cut-Off Time resmi.'
@@ -413,10 +413,10 @@ async function renderEventResults(params) {
               <!-- Recipient -->
               <div class="cert-recipient-section">
                 <div class="cert-recipient-label">DIANUGERAHKAN KEPADA PESEPEDA:</div>
-                <div class="cert-rider-name">${r.name}</div>
+                <div class="cert-rider-name">${escapeHtml(r.name)}</div>
                 <div class="cert-bib-tag">
                   <span>NOMOR BIB:</span>
-                  <strong>#${r.bib}</strong>
+                  <strong>#${escapeHtml(r.bib)}</strong>
                 </div>
               </div>
 
