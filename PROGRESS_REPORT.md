@@ -1119,3 +1119,17 @@ Menjawab kebutuhan perapian informasi kartu peserta (*Rider Card*) di panel draw
    - Audio Off-Route alarm beep alert pada Cockpit HUD.
    - Toggle dwibahasa (ID / EN) untuk event internasional.
 
+---
+
+## 39. Phase 39: Spesifikasi Desain Field Test Diagnostic & Logging Subsystem
+
+Menjawab kebutuhan untuk mempelajari kendala nyata saat pengujian jalan raya (*outdoor field testing*), telah dirancang dan disetujui spesifikasi lengkap sistem audit pengujian:
+1. **Dokumen Spesifikasi Resmi:** [`docs/superpowers/specs/2026-10-08-field-test-diagnostic-logging-design.md`](file:///c:/Users/Mallik/Documents/cyclopon/docs/superpowers/specs/2026-10-08-field-test-diagnostic-logging-design.md) (Git Commit: `1bbcfee`).
+2. **Komponen Inti yang Dirancang:**
+   - Client Diagnostic Sentinel (`field-logger.js`) dengan pendeteksi OS background lag/freeze di saku jersey, pelacak akurasi GPS meter demi meter, dan status antrean offline.
+   - Post-Mortem Analyzer dengan Skor Stabilitas (0–100%) dan log kronologi insiden otomatis.
+   - Modal Hasil Uji Coba di smartphone tester dengan tombol unduh JSON dan salin ringkasan (100% offline-ready).
+   - Tab *"🛠️ Uji Lapangan"* di Admin Dashboard untuk meninjau sesi pengujian semua tester.
+   - Endpoint API `POST` & `GET /api/field-tests/reports` terlindungi admin guard.
+3. **Status Saat Ini:** Spesifikasi telah disetujui pengguna dan siap dilanjutkan ke tahap *Implementation Plan* ketika sesi berikutnya dimulai.
+
