@@ -671,6 +671,68 @@ async function renderAdminDashboard() {
           </div>
         </div>
 
+        <!-- Diagnostic Trial & VPS Pre-Deployment Report Widget -->
+        <div class="diagnostic-report-card" id="diagnosticReportCard">
+          <div class="diagnostic-card-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:22px">🔬</span>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:900;color:#6B7280">// PRE-DEPLOYMENT TRIAL</span>
+                  <span id="diagnosticStatusBadge" class="diagnostic-badge status-idle">MEMERIKSA LAPORAN...</span>
+                </div>
+                <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;letter-spacing:-0.02em;margin:2px 0 0 0">
+                  Hasil Uji Coba Lapangan &amp; Diagnostik VPS
+                </h2>
+              </div>
+            </div>
+            <div class="diagnostic-header-actions">
+              <button id="btnRunDiagnostic" class="btn btn-outline" style="font-size:12px;padding:7px 13px;border-color:#0D1117;color:#0D1117;display:inline-flex;align-items:center;gap:6px" title="Jalankan simulasi uji beban telemetri, WebSocket, dan sistem darurat">
+                <span id="btnRunDiagnosticIcon">🚀</span> <span id="btnRunDiagnosticLabel">Jalankan Uji Coba</span>
+              </button>
+              <button id="btnViewFullReport" class="btn btn-primary" style="font-size:12px;padding:7px 14px;display:inline-flex;align-items:center;gap:6px">
+                <span>📄</span> <span>Baca Laporan Lengkap</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="diagnostic-metrics-grid" id="diagnosticMetricsGrid">
+            <div class="diagnostic-metric-item">
+              <div class="diagnostic-metric-lbl">Kecepatan Tulis Telemetri</div>
+              <div class="diagnostic-metric-val" id="diagMetricIngest">--</div>
+              <div class="diagnostic-metric-sub" id="diagMetricIngestSub">Batch Ingestion SQLite WAL</div>
+            </div>
+            <div class="diagnostic-metric-item">
+              <div class="diagnostic-metric-lbl">WebSocket Fan-Out Broadcast</div>
+              <div class="diagnostic-metric-val" id="diagMetricWs">--</div>
+              <div class="diagnostic-metric-sub" id="diagMetricWsSub">30 Penonton Simultan</div>
+            </div>
+            <div class="diagnostic-metric-item">
+              <div class="diagnostic-metric-lbl">Pipa Darurat SOS</div>
+              <div class="diagnostic-metric-val" id="diagMetricSos">--</div>
+              <div class="diagnostic-metric-sub" id="diagMetricSosSub">Respon Asinkron Non-blocking</div>
+            </div>
+            <div class="diagnostic-metric-item">
+              <div class="diagnostic-metric-lbl">Penggunaan Memori RAM</div>
+              <div class="diagnostic-metric-val" id="diagMetricMemory">--</div>
+              <div class="diagnostic-metric-sub" id="diagMetricMemorySub">Jejak Heap &amp; Delta RSS</div>
+            </div>
+          </div>
+
+          <div class="diagnostic-footer-bar" id="diagnosticFooterBar">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11.5px;color:#4B5563">
+              <div>
+                <span>🕒 <strong>Uji Terakhir:</strong> <span id="diagTestedAtText">Memeriksa riwayat...</span></span>
+                <span style="margin:0 6px">·</span>
+                <span>⏱️ <strong>Durasi:</strong> <span id="diagDurationText">-</span></span>
+              </div>
+              <div>
+                <span>🖥️ <strong>Lingkungan:</strong> <span id="diagEnvText">Node.js · SQLite WAL Mode</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:900;color:#6B7280">// EVENT LIST</span>
@@ -762,6 +824,229 @@ async function renderAdminDashboard() {
 
   fetchTrafficMetrics();
   trafficInterval = setInterval(fetchTrafficMetrics, 5000);
+
+  // ── Pre-Deployment Diagnostic Report Controller ──
+  let cachedReportData = null;
+
+  function renderDiagnosticMarkdown(md) {
+    if (!md) return '<p>Tidak ada konten laporan.</p>';
+    let text = escapeHtml(md);
+
+    // Code blocks
+    text = text.replace(/```([a-z0-9_-]*)\n([\s\S]*?)```/g, (_m, _lang, code) => {
+      return `<pre><code>${code.trim()}</code></pre>`;
+    });
+
+    // Inline code
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Headings
+    text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+    // Blockquotes
+    text = text.replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>');
+
+    // Horizontal rules
+    text = text.replace(/^---$/gim, '<hr>');
+
+    // Bold & Italic
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+    // Markdown Tables
+    text = text.replace(/((?:^\|.+?\|\r?\n)+)/gm, (match) => {
+      const lines = match.trim().split('\n').filter(l => l.trim().startsWith('|'));
+      if (lines.length < 2) return match;
+      let tableHtml = '<table>';
+      lines.forEach((line, idx) => {
+        if (line.includes('---')) return;
+        const cells = line.split('|').slice(1, -1).map(c => c.trim());
+        if (idx === 0) {
+          tableHtml += '<thead><tr>' + cells.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+        } else {
+          tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        }
+      });
+      tableHtml += '</tbody></table>';
+      return tableHtml;
+    });
+
+    // Lists
+    text = text.replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>');
+    text = text.replace(/(<li>[\s\S]*?<\/li>)/gm, '<ul>$1</ul>');
+    text = text.replace(/<\/ul>\s*<ul>/g, '');
+
+    // Paragraphs
+    return text.split('\n\n').map(p => {
+      p = p.trim();
+      if (!p) return '';
+      if (p.startsWith('<h') || p.startsWith('<table') || p.startsWith('<pre') || p.startsWith('<blockquote') || p.startsWith('<ul') || p.startsWith('<hr')) {
+        return p;
+      }
+      return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+    }).join('\n');
+  }
+
+  function openDiagnosticReportModal(markdown, parsed) {
+    let modalOverlay = document.getElementById('diagnosticReportModalOverlay');
+    if (modalOverlay) modalOverlay.remove();
+
+    modalOverlay = document.createElement('div');
+    modalOverlay.id = 'diagnosticReportModalOverlay';
+    modalOverlay.className = 'report-modal-overlay';
+    modalOverlay.innerHTML = `
+      <div class="report-modal-card">
+        <div class="report-modal-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">📊</span>
+            <div>
+              <h3 style="font-size:16px;font-weight:900;color:#0D1117;margin:0">Laporan Diagnostik Kesiapan VPS</h3>
+              <small style="font-size:11.5px;color:#6B7280;font-weight:600">${escapeHtml(parsed?.testedAt || 'Hasil Pengujian Terkini')}</small>
+            </div>
+          </div>
+          <button id="btnCloseReportModal" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:#6B7280;padding:4px 8px" title="Tutup">✕</button>
+        </div>
+        <div class="report-modal-body">
+          ${renderDiagnosticMarkdown(markdown)}
+        </div>
+        <div class="report-modal-footer">
+          <div style="font-size:12px;color:#6B7280">
+            <span>Status: <strong>${escapeHtml(parsed?.verdict || 'SIAP')}</strong></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button id="btnDownloadReportMd" class="btn btn-outline" style="font-size:12px;padding:7px 12px">📥 Unduh Berkas .md</button>
+            <button id="btnCloseReportFooter" class="btn btn-primary" style="font-size:12px;padding:7px 14px">Tutup</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modalOverlay);
+    document.body.style.overflow = 'hidden';
+
+    const closeModal = () => {
+      modalOverlay.remove();
+      document.body.style.overflow = '';
+    };
+
+    document.getElementById('btnCloseReportModal').addEventListener('click', closeModal);
+    document.getElementById('btnCloseReportFooter').addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeModal();
+    });
+
+    document.getElementById('btnDownloadReportMd').addEventListener('click', () => {
+      const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cyclopon-diagnostic-report-${new Date().toISOString().substring(0, 10)}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  async function fetchDiagnosticReport() {
+    try {
+      const res = await fetch('/api/admin/reports/latest', { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.success) return;
+
+      const badge = document.getElementById('diagnosticStatusBadge');
+      const ingestVal = document.getElementById('diagMetricIngest');
+      const wsVal = document.getElementById('diagMetricWs');
+      const sosVal = document.getElementById('diagMetricSos');
+      const memVal = document.getElementById('diagMetricMemory');
+      const testedAt = document.getElementById('diagTestedAtText');
+      const duration = document.getElementById('diagDurationText');
+      const envText = document.getElementById('diagEnvText');
+
+      if (!data.hasReport || !data.parsed) {
+        if (badge) {
+          badge.className = 'diagnostic-badge status-idle';
+          badge.textContent = 'BELUM DIUJI';
+        }
+        if (testedAt) testedAt.textContent = 'Belum pernah dijalankan';
+        return;
+      }
+
+      cachedReportData = data;
+      const p = data.parsed;
+
+      if (badge) {
+        badge.className = `diagnostic-badge ${p.isReady ? 'status-ready' : 'status-warn'}`;
+        badge.textContent = p.isReady ? '🟢 100% SIAP VPS' : '🟡 CATATAN PERBAIKAN';
+      }
+
+      if (ingestVal) ingestVal.textContent = p.metricsSummary?.ingest || '--';
+      if (wsVal) wsVal.textContent = p.metricsSummary?.wsFanOut?.split(',')[0] || '--';
+      if (sosVal) sosVal.textContent = p.metricsSummary?.sos || '--';
+      if (memVal) memVal.textContent = p.metricsSummary?.memory?.split('(')[0]?.trim() || '--';
+
+      if (testedAt) testedAt.textContent = p.testedAt || '-';
+      if (duration) duration.textContent = p.duration || '-';
+      if (envText && p.system) {
+        envText.textContent = `${p.system.node} · ${p.system.os} · WAL [${p.system.walMode}]`;
+      }
+    } catch (e) {
+      console.warn('[Admin Dashboard] Gagal mengambil laporan diagnostik:', e);
+    }
+  }
+
+  fetchDiagnosticReport();
+
+  // Run Diagnostic Trial Button
+  const btnRun = document.getElementById('btnRunDiagnostic');
+  const btnRunLabel = document.getElementById('btnRunDiagnosticLabel');
+  const btnRunIcon = document.getElementById('btnRunDiagnosticIcon');
+
+  if (btnRun) {
+    btnRun.addEventListener('click', async () => {
+      if (btnRun.disabled) return;
+      btnRun.disabled = true;
+      if (btnRunIcon) btnRunIcon.textContent = '⏳';
+      if (btnRunLabel) btnRunLabel.textContent = 'Menjalankan Simulasi...';
+      showToast('🚀 Memulai simulasi uji diagnostik sistem... Harap tunggu sebentar.', 'info');
+
+      try {
+        const res = await fetch('/api/admin/reports/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+          showToast('✅ Uji diagnostik selesai! Laporan telah diperbarui.', 'success');
+          await fetchDiagnosticReport();
+        } else {
+          showToast(result.error || 'Gagal menjalankan uji diagnostik.', 'error');
+        }
+      } catch (err) {
+        showToast('Koneksi terputus saat menjalankan uji diagnostik.', 'error');
+      } finally {
+        btnRun.disabled = false;
+        if (btnRunIcon) btnRunIcon.textContent = '🚀';
+        if (btnRunLabel) btnRunLabel.textContent = 'Jalankan Uji Coba';
+      }
+    });
+  }
+
+  // View Full Report Modal Button
+  const btnViewReport = document.getElementById('btnViewFullReport');
+  if (btnViewReport) {
+    btnViewReport.addEventListener('click', () => {
+      if (!cachedReportData || !cachedReportData.markdown) {
+        showToast('Belum ada laporan tersedia. Jalankan pengujian terlebih dahulu.', 'info');
+        return;
+      }
+      openDiagnosticReportModal(cachedReportData.markdown, cachedReportData.parsed);
+    });
+  }
 
   window.addEventListener('popstate', () => {
     if (trafficInterval) clearInterval(trafficInterval);
