@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "test": "node --test",
     "benchmark": "node scripts/benchmark.js",
+    "test:report": "node scripts/generate-test-report.js",
     "seed:demo": "node scripts/seed-demo.js",
     "simulate": "node scripts/simulate-race.js"
   },

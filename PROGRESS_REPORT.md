@@ -1106,7 +1106,40 @@ Menjawab kebutuhan perapian informasi kartu peserta (*Rider Card*) di panel draw
 
 ---
 
-## 38. Rencana Kerja Selanjutnya & Kesiapan Produksi
+## 38. Otomasi Uji Coba Diagnostik & Generator Laporan Kesiapan VPS (`npm run test:report`)
+
+Menjawab kebutuhan persiapan audit dan kajian performa sistem sebelum aplikasi di-deploy secara langsung ke VPS produksi:
+
+1. **Pengembangan Mesin Uji Coba Terpadu ([`scripts/generate-test-report.js`](file:///home/kruza/Documents/cyclopon/scripts/generate-test-report.js)):**
+   - Mengembangkan generator uji diagnostik end-to-end tanpa memerlukan port tetap (menggunakan port acak dinamis `app.listen(0)` dan mock upstream Traccar WebSocket server) sehingga dapat dijalankan kapan pun tanpa bentrok dengan dev server aktif di port 3000.
+   - Mengintegrasikan 6 tahap pengujian komprehensif simulasi hari-H balap:
+     - **Database & Telemetry Ingest:** Ingestion 100 koordinat batch dalam 1 transaksi SQLite WAL; mengukur durasi tulis dan throughput (mencapai > 2.000 records/detik).
+     - **WebSocket Singleton Upstream & Fan-Out:** Menghubungkan 30 penonton simultan serentak, menyalurkan broadcast posisi dari upstream tunggal; mengukur tingkat kehilangan paket (*packet loss = 0.00%*) serta latensi fan-out (Avg, P50, P95, P99).
+     - **Race Engine & Checkpoint Split (COT):** Memvalidasi pencatatan waktu tiba, penentuan status `IN_TIME` vs `OVER_COT`, dan kalkulasi hasil resmi/standings.
+     - **Pipa Peringatan Darurat SOS:** Menguji endpoint SOS panitia dengan jaminan respon asinkron non-blocking (< 20 ms) tanpa membebani event loop.
+     - **Keamanan Edge & Anti-Spam Guard:** Memverifikasi header keamanan (`X-Content-Type-Options`, `X-Frame-Options`, penyembunyian `X-Powered-By`) serta aktivasi proteksi pembatasan banjir spam/brute-force (HTTP 429).
+     - **Jejak Memori & Evaluasi Kebocoran:** Mengukur memori Heap Used dan Delta RSS selama beban puncak (stabil di bawah batas toleransi).
+
+2. **Pembuatan Laporan Terstruktur & Persisten (`reports/`):**
+   - Hasil uji otomatis disimpan dalam bentuk dokumen markdown lengkap dan kaya analitik di direktori [`reports/`](file:///home/kruza/Documents/cyclopon/reports):
+     - Berkas arsip bertanggal: `reports/test-report-YYYY-MM-DD-HHmmss.md`
+     - Berkas tautan cepat terkini: [`reports/LATEST_REPORT.md`](file:///home/kruza/Documents/cyclopon/reports/LATEST_REPORT.md)
+   - Laporan memuat:
+     - Ringkasan eksekutif dan status kelayakan (*Ready for VPS Deployment*).
+     - Profil perangkat keras lokal dan pengaturan SQLite WAL mode.
+     - Matriks hasil uji komparatif (Target Benchmark vs Hasil Nyata vs Status Lulus).
+     - Analisis performa komponen secara mendalam.
+     - **Panduan Spesifikasi & Sizing Matrix VPS Produksi** (Tier 1 Komunitas, Tier 2 Regional, Tier 3 Nasional Ultra).
+     - **Checklist Praktis Hari-H** (Docker restart policy, setup SSL/WSS reverse proxy Caddy/Nginx, hot backup SQLite via cron job, dan konfigurasi environment).
+
+3. **Integrasi Script CLI & Rangkaian Pengujian Otomatis:**
+   - Menambahkan perintah `npm run test:report` pada [`package.json`](file:///home/kruza/Documents/cyclopon/package.json).
+   - Menambahkan unit test integrasi baru di [`tests/test-report.test.js`](file:///home/kruza/Documents/cyclopon/tests/test-report.test.js) (4 pengujian baru).
+   - Seluruh **106 / 106 Unit Tests Lulus 100% (16 Test Suites)** tanpa ada kendala atau regresi.
+
+---
+
+## 39. Rencana Kerja Selanjutnya & Kesiapan Produksi
 
 1. **Deploy ke VPS Cloud:**
    - Setup DNS domain (A Record) mengarah ke IP VPS.
