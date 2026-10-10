@@ -1106,7 +1106,75 @@ Menjawab kebutuhan perapian informasi kartu peserta (*Rider Card*) di panel draw
 
 ---
 
-## 38. Rencana Kerja Selanjutnya & Kesiapan Produksi
+## 38. Otomasi Uji Coba Diagnostik & Generator Laporan Kesiapan VPS (`npm run test:report`)
+
+Menjawab kebutuhan persiapan audit dan kajian performa sistem sebelum aplikasi di-deploy secara langsung ke VPS produksi:
+
+1. **Pengembangan Mesin Uji Coba Terpadu ([`scripts/generate-test-report.js`](file:///home/kruza/Documents/cyclopon/scripts/generate-test-report.js)):**
+   - Mengembangkan generator uji diagnostik end-to-end tanpa memerlukan port tetap (menggunakan port acak dinamis `app.listen(0)` dan mock upstream Traccar WebSocket server) sehingga dapat dijalankan kapan pun tanpa bentrok dengan dev server aktif di port 3000.
+   - Mengintegrasikan 6 tahap pengujian komprehensif simulasi hari-H balap:
+     - **Database & Telemetry Ingest:** Ingestion 100 koordinat batch dalam 1 transaksi SQLite WAL; mengukur durasi tulis dan throughput (mencapai > 2.000 records/detik).
+     - **WebSocket Singleton Upstream & Fan-Out:** Menghubungkan 30 penonton simultan serentak, menyalurkan broadcast posisi dari upstream tunggal; mengukur tingkat kehilangan paket (*packet loss = 0.00%*) serta latensi fan-out (Avg, P50, P95, P99).
+     - **Race Engine & Checkpoint Split (COT):** Memvalidasi pencatatan waktu tiba, penentuan status `IN_TIME` vs `OVER_COT`, dan kalkulasi hasil resmi/standings.
+     - **Pipa Peringatan Darurat SOS:** Menguji endpoint SOS panitia dengan jaminan respon asinkron non-blocking (< 20 ms) tanpa membebani event loop.
+     - **Keamanan Edge & Anti-Spam Guard:** Memverifikasi header keamanan (`X-Content-Type-Options`, `X-Frame-Options`, penyembunyian `X-Powered-By`) serta aktivasi proteksi pembatasan banjir spam/brute-force (HTTP 429).
+     - **Jejak Memori & Evaluasi Kebocoran:** Mengukur memori Heap Used dan Delta RSS selama beban puncak (stabil di bawah batas toleransi).
+
+2. **Pembuatan Laporan Terstruktur & Persisten (`reports/`):**
+   - Hasil uji otomatis disimpan dalam bentuk dokumen markdown lengkap dan kaya analitik di direktori [`reports/`](file:///home/kruza/Documents/cyclopon/reports):
+     - Berkas arsip bertanggal: `reports/test-report-YYYY-MM-DD-HHmmss.md`
+     - Berkas tautan cepat terkini: [`reports/LATEST_REPORT.md`](file:///home/kruza/Documents/cyclopon/reports/LATEST_REPORT.md)
+   - Laporan memuat:
+     - Ringkasan eksekutif dan status kelayakan (*Ready for VPS Deployment*).
+     - Profil perangkat keras lokal dan pengaturan SQLite WAL mode.
+     - Matriks hasil uji komparatif (Target Benchmark vs Hasil Nyata vs Status Lulus).
+     - Analisis performa komponen secara mendalam.
+     - **Panduan Spesifikasi & Sizing Matrix VPS Produksi** (Tier 1 Komunitas, Tier 2 Regional, Tier 3 Nasional Ultra).
+     - **Checklist Praktis Hari-H** (Docker restart policy, setup SSL/WSS reverse proxy Caddy/Nginx, hot backup SQLite via cron job, dan konfigurasi environment).
+
+3. **Integrasi Script CLI & Rangkaian Pengujian Otomatis:**
+   - Menambahkan perintah `npm run test:report` pada [`package.json`](file:///home/kruza/Documents/cyclopon/package.json).
+   - Menambahkan unit test integrasi baru di [`tests/test-report.test.js`](file:///home/kruza/Documents/cyclopon/tests/test-report.test.js) (4 pengujian baru).
+   - Seluruh **106 / 106 Unit Tests Lulus 100% (16 Test Suites)** tanpa ada kendala atau regresi.
+
+---
+
+## 39. Integrasi Widget Laporan Uji Diagnostik di Dashboard Admin (`/admin/dashboard`) & API Admin Reports
+
+Menjawab kebutuhan agar laporan hasil uji coba lapangan (*field test report*) dan uji coba diagnostik pra-deployment dapat langsung dilihat, dipicu, dan dikaji dari antarmuka visual **Dashboard Admin**:
+
+1. **Pembuatan Endpoint Backend Khusus ([`routes/admin-reports.js`](file:///home/kruza/Documents/cyclopon/routes/admin-reports.js)):**
+   - `GET /api/admin/reports/latest`: Membaca dan mem-parsing berkas laporan markdown terbaru (`reports/LATEST_REPORT.md`) ke bentuk JSON terstruktur (status kesiapan, durasi uji, ringkasan throughput/latensi, spesifikasi lingkungan, dan baris matriks uji).
+   - `GET /api/admin/reports`: Mengambil riwayat daftar seluruh arsip berkas laporan pengujian yang tersedia di direktori `reports/`.
+   - `POST /api/admin/reports/run`: Endpoint terautentikasi (`requireAdminAuth`) untuk memicu eksekusi runner uji coba diagnostik sistem secara langsung dari peramban web dan mengembalikan laporan yang baru saja diperbarui.
+   - Terintegrasi di [`server.js`](file:///home/kruza/Documents/cyclopon/server.js) pada rute `/api/admin/reports`.
+
+2. **Pengembangan Widget Dashboard Admin ([`public/js/pages/admin-dashboard.js`](file:///home/kruza/Documents/cyclopon/public/js/pages/admin-dashboard.js)):**
+   - **Kartu Hasil Uji Coba Lapangan & Diagnostik VPS (`.diagnostic-report-card`):**
+     - Ditempatkan di Dashboard Utama admin, menyajikan status kesiapan visual (`🟢 100% SIAP VPS` atau `🟡 CATATAN PERBAIKAN`).
+     - Kisi 4 metrik kinerja utama:
+       1. **Kecepatan Tulis Telemetri:** Durasi tulis batch dan throughput *records/detik*.
+       2. **WebSocket Fan-Out Broadcast:** Status kehilangan paket (*0.00%*) dan latensi P50/P95 ke penonton.
+       3. **Pipa Darurat SOS:** Kecepatan respon pipa peringatan darurat asinkron non-blocking.
+       4. **Penggunaan Memori RAM:** Jejak Heap memory terpakai dan delta memori RSS.
+     - Bilah informasi riwayat waktu uji terakhir, durasi eksekusi, serta identifikasi lingkungan runtime (Node.js, OS, SQLite WAL).
+   - **Tombol Eksekusi Langsung ("🚀 Jalankan Uji Coba"):**
+     - Admin dapat memicu simulasi uji coba langsung dari web kapan saja dengan status animasi loading dan notifikasi toast saat pengujian selesai.
+   - **Modal Viewer Laporan Lengkap ("📄 Baca Laporan Lengkap"):**
+     - Membuka jendela popup responsif (`.report-modal-card`) dengan parser markdown bawaan yang aman (XSS-sanitized) untuk menampilkan seluruh bab laporan, tabel komparatif, dan panduan spesifikasi VPS.
+     - Menyediakan tombol cepat **"📥 Unduh Berkas .md"** untuk mengunduh laporan mentah ke perangkat lokal.
+
+3. **Penyempurnaan Styling & Cache PWA:**
+   - Menambahkan tema *Athletic Minimalist Pro* untuk widget diagnostik dan modal viewer di [`public/css/admin.css`](file:///home/kruza/Documents/cyclopon/public/css/admin.css).
+   - Menaikkan versi cache Service Worker ke **`cyclopon-v52`** di [`public/sw.js`](file:///home/kruza/Documents/cyclopon/public/sw.js).
+
+4. **Verifikasi Pengujian Otomatis:**
+   - Menambahkan test suite baru di [`tests/admin-reports.test.js`](file:///home/kruza/Documents/cyclopon/tests/admin-reports.test.js) (5 unit tests).
+   - Seluruh **113 / 113 Unit Tests Lulus 100% (17 Test Suites)** tanpa ada kendala.
+
+---
+
+## 40. Rencana Kerja Selanjutnya & Kesiapan Produksi
 
 1. **Deploy ke VPS Cloud:**
    - Setup DNS domain (A Record) mengarah ke IP VPS.

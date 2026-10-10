@@ -1058,3 +1058,271 @@
   background: #DC2626;
   color: #FFFFFF;
 }
+
+/* ── Diagnostic Trial & VPS Test Report Card ── */
+.diagnostic-report-card {
+  background: #FFFFFF;
+  border: 1.5px solid #0D1117;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.diagnostic-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #E5E7EB;
+  padding-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.diagnostic-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.diagnostic-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.diagnostic-badge.status-ready {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+.diagnostic-badge.status-warn {
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+.diagnostic-badge.status-idle {
+  background: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid #D1D5DB;
+}
+.diagnostic-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) {
+  .diagnostic-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 520px) {
+  .diagnostic-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.diagnostic-metric-item {
+  background: #F8F9FA;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.diagnostic-metric-item:hover {
+  background: #FFFFFF;
+  border-color: #0D1117;
+  transform: translateY(-2px);
+}
+.diagnostic-metric-lbl {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.diagnostic-metric-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 19px;
+  font-weight: 900;
+  color: #0D1117;
+  line-height: 1.2;
+  margin: 2px 0;
+  word-break: break-word;
+}
+.diagnostic-metric-sub {
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 600;
+}
+.diagnostic-footer-bar {
+  background: #F3F4F6;
+  border-radius: 6px;
+  padding: 10px 14px;
+  border: 1px dashed #D1D5DB;
+}
+
+/* ── Diagnostic Report Modal Viewer ── */
+.report-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.15s ease-out;
+}
+.report-modal-card {
+  background: #FFFFFF;
+  border: 1.5px solid #0D1117;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 920px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.report-modal-header {
+  padding: 16px 20px;
+  background: #FFFFFF;
+  border-bottom: 1.5px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.report-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1F2937;
+}
+.report-modal-footer {
+  padding: 14px 20px;
+  background: #F9FAFB;
+  border-top: 1.5px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Styled Markdown Typography within Modal */
+.report-modal-body h1 {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0D1117;
+  margin-top: 0;
+  margin-bottom: 14px;
+  border-bottom: 2px solid #0D1117;
+  padding-bottom: 8px;
+}
+.report-modal-body h2 {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0D1117;
+  margin-top: 24px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+.report-modal-body h3 {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #111827;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+.report-modal-body p {
+  margin-bottom: 12px;
+}
+.report-modal-body blockquote {
+  background: #F3F4F6;
+  border-left: 4px solid #0D1117;
+  margin: 12px 0 16px 0;
+  padding: 10px 16px;
+  border-radius: 0 6px 6px 0;
+  color: #374151;
+  font-size: 13.5px;
+}
+.report-modal-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 13px;
+  border: 1px solid #E5E7EB;
+}
+.report-modal-body th {
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 800;
+  color: #111827;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.report-modal-body td {
+  border: 1px solid #E5E7EB;
+  padding: 9px 12px;
+  vertical-align: top;
+}
+.report-modal-body tr:nth-child(even) td {
+  background: #F9FAFB;
+}
+.report-modal-body pre {
+  background: #0D1117;
+  color: #F3F4F6;
+  padding: 14px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 14px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.report-modal-body code {
+  background: #EEF2F6;
+  color: #0D1117;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+}
+.report-modal-body pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-weight: normal;
+}
+.report-modal-body hr {
+  border: none;
+  border-top: 1px solid #E5E7EB;
+  margin: 20px 0;
+}
+.report-modal-body ul, .report-modal-body ol {
+  padding-left: 24px;
+  margin-bottom: 14px;
+}
+.report-modal-body li {
+  margin-bottom: 6px;
+}
+
