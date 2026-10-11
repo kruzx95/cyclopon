@@ -26,7 +26,7 @@ body.cockpit-active {
   min-height: 100vh;
   background: var(--cockpit-bg);
   color: var(--cockpit-text);
-  padding: 12px 16px max(95px, calc(75px + env(safe-area-inset-bottom, 0px))) 16px;
+  padding: 12px 16px max(112px, calc(92px + env(safe-area-inset-bottom, 0px))) 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -637,54 +637,25 @@ body.cockpit-active {
   margin-top: 2px;
 }
 
-/* ── Mini Breadcrumb Map ── */
-.cockpit-map-card {
-  background: var(--cockpit-card);
-  border: 1.5px solid #0D1117;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-  box-shadow: 0 2px 6px rgba(13, 17, 23, 0.04);
-}
 
-.cockpit-map-header {
-  padding: 10px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1.5px solid #0D1117;
-  font-size: 11px;
-  font-weight: 800;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  color: #0D1117;
-  background: #FFFFFF;
-}
 
-.cockpit-mini-map {
-  width: 100%;
-  height: 200px;
-  background: #F8F9FA;
-}
-
-/* ── Sticky Emergency / Action Bar ── */
-/* ── Sticky Emergency / Action Bar (Pro Athletic Minimalist) ── */
+/* ── Sticky Emergency / Action Bar (50:50 Full Width Ergonomic Pro) ── */
 .cockpit-bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding-top: 10px;
+  padding-top: 12px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-bottom: max(24px, calc(14px + env(safe-area-inset-bottom, 0px)));
-  background: rgba(255, 255, 255, 0.94);
+  padding-bottom: max(20px, calc(12px + env(safe-area-inset-bottom, 0px)));
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(13, 17, 23, 0.08);
-  box-shadow: 0 -4px 20px rgba(13, 17, 23, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-top: 1.5px solid rgba(13, 17, 23, 0.12);
+  box-shadow: 0 -6px 24px rgba(13, 17, 23, 0.08);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   max-width: 680px;
   margin: 0 auto;
@@ -692,26 +663,26 @@ body.cockpit-active {
   box-sizing: border-box;
 }
 
-/* SOS High-Vis Tactical Capsule */
+/* SOS High-Vis Tactical Full-Width Button */
 .cockpit-sos-btn {
-  flex: 0 0 auto;
-  height: 40px;
-  min-height: 40px;
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
   background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
   color: #FFFFFF;
-  border: 1px solid #B91C1C;
-  border-radius: 9999px;
-  padding: 0 20px;
-  font-size: 11.5px;
+  border: 1.5px solid #B91C1C;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 13px;
   font-weight: 800;
   font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
   user-select: none;
@@ -722,11 +693,11 @@ body.cockpit-active {
 
 .cockpit-sos-btn:hover {
   box-shadow: 0 6px 18px rgba(220, 38, 38, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  filter: brightness(1.03);
+  filter: brightness(1.04);
 }
 
 .cockpit-sos-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
   box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   filter: brightness(0.95);
 }
@@ -734,8 +705,8 @@ body.cockpit-active {
 /* Radar Beacon Pulsing Indicator */
 .sos-beacon {
   position: relative;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -744,7 +715,7 @@ body.cockpit-active {
 
 .sos-beacon-ring {
   position: absolute;
-  inset: -1px;
+  inset: -2px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.85);
   animation: sosBeaconPulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
@@ -753,11 +724,11 @@ body.cockpit-active {
 
 .sos-beacon-core {
   position: relative;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #FFFFFF;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.95);
 }
 
 @keyframes sosBeaconPulse {
@@ -771,26 +742,26 @@ body.cockpit-active {
   }
 }
 
-/* Live Map Stealth Obsidian Capsule */
+/* Live Map Stealth Obsidian Full-Width Button */
 .cockpit-nav-btn {
-  flex: 0 0 auto;
-  height: 40px;
-  min-height: 40px;
+  width: 100%;
+  height: 50px;
+  min-height: 50px;
   background: linear-gradient(180deg, #1C2128 0%, #0D1117 100%);
   color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 9999px;
-  padding: 0 20px;
-  font-size: 11.5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 13px;
   font-weight: 800;
   font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   text-decoration: none;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
   user-select: none;
@@ -802,37 +773,40 @@ body.cockpit-active {
 
 .cockpit-nav-btn:hover {
   background: #000000;
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(16, 185, 129, 0.5);
   box-shadow: 0 6px 18px rgba(13, 17, 23, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .cockpit-nav-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
   box-shadow: 0 2px 6px rgba(13, 17, 23, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn-icon {
+  width: 16px;
+  height: 16px;
   color: #10B981;
   flex-shrink: 0;
   transition: transform 0.15s ease;
 }
 
 .cockpit-nav-btn:hover .nav-btn-icon {
-  transform: scale(1.12);
+  transform: scale(1.15);
 }
 
 @media (max-width: 420px) {
   .cockpit-bottom-bar {
-    gap: 10px;
+    gap: 8px;
     padding-left: 12px;
     padding-right: 12px;
+    padding-bottom: max(16px, calc(10px + env(safe-area-inset-bottom, 0px)));
   }
   .cockpit-sos-btn,
   .cockpit-nav-btn {
-    height: 38px;
-    min-height: 38px;
-    font-size: 11px;
-    padding: 0 16px;
+    height: 48px;
+    min-height: 48px;
+    font-size: 12px;
+    padding: 0 10px;
     gap: 7px;
   }
 }
@@ -848,9 +822,7 @@ body.cockpit-active {
   .cockpit-speed-number {
     font-size: 52px;
   }
-  .cockpit-mini-map {
-    height: 140px;
-  }
+
 }
 
 /* ── AMOLED Pitch-Black Night Mode (#000000) ── */
@@ -924,8 +896,7 @@ body.cockpit-active.night-mode .cockpit-container,
 .cockpit-container.night-mode .cockpit-checkpoint-widget,
 .cockpit-container.night-mode .cockpit-cp-card,
 body.cockpit-active.night-mode .cockpit-cp-card,
-.cockpit-container.night-mode .cockpit-climb-card,
-.cockpit-container.night-mode .cockpit-map-card {
+.cockpit-container.night-mode .cockpit-climb-card {
   background: #0A0D0B !important;
   border-color: #1E293B !important;
   box-shadow: none !important;
@@ -962,13 +933,7 @@ body.cockpit-active.night-mode .cockpit-cp-card,
   border-color: #1E293B;
 }
 
-.cockpit-container.night-mode .cockpit-mini-map {
-  background: #0A0D0B !important;
-}
 
-.cockpit-container.night-mode .cockpit-mini-map .leaflet-tile {
-  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(90%);
-}
 
 body.cockpit-active.night-mode .cockpit-bottom-bar,
 .cockpit-bottom-bar.night-mode {
@@ -993,7 +958,7 @@ body.cockpit-active.night-mode .cockpit-nav-btn,
 body.cockpit-active.night-mode .cockpit-nav-btn:hover,
 .cockpit-bottom-bar.night-mode .cockpit-nav-btn:hover {
   background: #1E293B !important;
-  border-color: #334155 !important;
+  border-color: #10B981 !important;
 }
 
 body.cockpit-active.night-mode .cockpit-modal,

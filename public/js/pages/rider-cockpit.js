@@ -8,9 +8,6 @@ let cockpitWakeLock = null;
 let cockpitWs = null;
 let cockpitWsReconnectTimer = null;
 let cockpitWsBackoffMs = 2000;
-let cockpitMap = null;
-let cockpitRiderMarker = null;
-let cockpitRoutePolyline = null;
 let cockpitSimTimer = null;
 let cockpitGeoWatchId = null;
 let cockpitTimerInterval = null;
@@ -320,17 +317,6 @@ async function renderRiderCockpit() {
         </div>
       </div>
 
-      <!-- Mini Breadcrumb Map -->
-      <div class="cockpit-map-card">
-        <div class="cockpit-map-header">
-          <span>🗺️ MINI TRACK BREADCRUMB</span>
-          <button id="btnRecenterMap" style="background:#FFF;border:1px solid #0D1117;color:#0D1117;font-size:11px;font-weight:800;font-family:monospace;padding:2px 8px;border-radius:4px;cursor:pointer">
-            📍 Pusatkan
-          </button>
-        </div>
-        <div id="cockpitMiniMap" class="cockpit-mini-map"></div>
-      </div>
-
     </div>
 
     <!-- Sticky Bottom Emergency Action Bar -->
@@ -593,62 +579,7 @@ async function renderRiderCockpit() {
   // Initial Checkpoint state
   updateCheckpointWidget(0, 0);
 
-  // ── 5. Setup Mini Map (Leaflet) ──
-  await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
-  loadCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
-
-  if (window.L && document.getElementById('cockpitMiniMap')) {
-    const center = routeCoords[0] || [-6.9147, 107.6098];
-    cockpitMap = L.map('cockpitMiniMap', {
-      center: center,
-      zoom: 14,
-      zoomControl: false,
-      attributionControl: false
-    });
-
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(cockpitMap);
-
-    // Draw route polyline
-    cockpitRoutePolyline = L.polyline(routeCoords, {
-      color: '#D1A980',
-      weight: 4,
-      opacity: 0.85
-    }).addTo(cockpitMap);
-
-    // Add Checkpoint markers to mini-map
-    checkpoints.forEach(cp => {
-      if (cp.lat && cp.lng) {
-        const cpIcon = L.divIcon({
-          className: 'cp-mini-icon',
-          html: `<div style="background:var(--color-primary);color:#FFFFFF;font-size:10px;font-weight:900;padding:2px 5px;border-radius:4px;border:1px solid #E5E0D8;white-space:nowrap">${cp.name}</div>`,
-          iconSize: [60, 20],
-          iconAnchor: [30, 10]
-        });
-        L.marker([cp.lat, cp.lng], { icon: cpIcon }).addTo(cockpitMap);
-      }
-    });
-
-    // Rider marker
-    const riderIcon = L.divIcon({
-      className: 'rider-mini-icon',
-      html: `<div style="width:18px;height:18px;border-radius:50%;background:#D1A980;border:3px solid #F8F8F8;box-shadow:0 0 12px #D1A980"></div>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9]
-    });
-    cockpitRiderMarker = L.marker(center, { icon: riderIcon }).addTo(cockpitMap);
-    cockpitMap.setView(center, 15);
-  }
-
-  document.getElementById('btnRecenterMap').addEventListener('click', () => {
-    if (cockpitMap && currentLat && currentLng) {
-      cockpitMap.setView([currentLat, currentLng], 15);
-    }
-  });
-
-  // ── 6. Telemetry Update Handler ──
+  // ── 5. Telemetry Update Handler ──
   function updateTelemetry(lat, lng, speedKmh, batteryLevel = null) {
     currentLat = lat;
     currentLng = lng;
@@ -682,11 +613,6 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitGpsStatus').textContent = 'GPS Terhubung';
     document.getElementById('cockpitCoordsSub').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
-    // Update Mini Map Marker
-    if (cockpitMap && cockpitRiderMarker) {
-      cockpitRiderMarker.setLatLng([lat, lng]);
-      cockpitMap.panTo([lat, lng], { animate: true, duration: 0.5 });
-    }
 
     // Off-Route Check
     const offRouteInfo = checkOffRoute(lat, lng, routeCoords, 100);
