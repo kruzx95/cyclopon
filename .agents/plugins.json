@@ -1,0 +1,8 @@
+{
+  "inherits": [
+    {
+      "path": "~/.gemini/config",
+      "exclude": ["superpowers"]
+    }
+  ]
+}
