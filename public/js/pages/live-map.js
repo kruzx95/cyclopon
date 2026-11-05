@@ -1244,7 +1244,7 @@ async function renderLiveMap(params) {
           ">${meta.label}</div>
         </div>
       `,
-      className: '', iconSize: [20, 20], iconAnchor: [10, 10]
+      className: 'rider-marker-pin', iconSize: [20, 20], iconAnchor: [10, 10]
     });
   }
 
@@ -1405,7 +1405,7 @@ async function renderLiveMap(params) {
       calc = findNearestRoutePoint(pos.latitude, pos.longitude, routeCoords, routeKm);
     }
 
-    // Auto-detect Checkpoint crossing & record split time
+    // Auto-detect Checkpoint crossing for live UI display (Spectator read-only mode)
     if (checkpoints && checkpoints.length && calc.distanceKm > 0) {
       checkpoints.forEach(cp => {
         const cacheKey = `${rider.id}_${cp.id}`;
@@ -1422,19 +1422,6 @@ async function renderLiveMap(params) {
             arrival_time: arrivalIso,
             status: cotStatus
           };
-
-          fetch(`/api/events/${eventId}/splits`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              rider_id: rider.id,
-              checkpoint_id: cp.id,
-              arrival_time: arrivalIso,
-              status: cotStatus
-            })
-          }).then(res => res.json()).then(saved => {
-            if (saved && saved.id) splitsCache[cacheKey] = saved;
-          }).catch(e => console.warn('Gagal simpan split:', e));
 
           const clockStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           const cotMsg = cotStatus === 'IN_TIME' ? '✅ Lolos COT' : '⏱️ Melebihi COT';
@@ -1475,27 +1462,6 @@ async function renderLiveMap(params) {
     if (batteryLevel != null) telem.batteryLevel = batteryLevel;
     telem.isOffRoute = offRoute.isOffRoute;
     telem.deviationMeters = offRoute.deviationMeters;
-
-    // Periodic telemetry history logging (every ~4s per rider)
-    if (rider && rider.id && !isReplayActive) {
-      const nowMs = Date.now();
-      const lastLogged = lastHistoryLogByRider[rider.id] || 0;
-      if (nowMs - lastLogged >= 4000) {
-        lastHistoryLogByRider[rider.id] = nowMs;
-        fetch(`/api/events/${eventId}/history`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            rider_id: rider.id,
-            latitude: pos.latitude,
-            longitude: pos.longitude,
-            speed: speedKmh,
-            distance_km: calc.distanceKm,
-            recorded_at: fixTime
-          })
-        }).catch(() => {});
-      }
-    }
 
     // 4. Compute ground speed from distance delta if speed is missing or 0 while advancing
     const nowMs = new Date(fixTime).getTime() || Date.now();
@@ -1583,25 +1549,6 @@ async function renderLiveMap(params) {
     }
 
     const canonicalId = rider.id;
-
-    // Remove any previous marker for this specific rider (prevent duplicate markers)
-    if (markerById[canonicalId]) {
-      clusterGroup.removeLayer(markerById[canonicalId]);
-      delete markerById[canonicalId];
-    }
-    if (rider.traccar_device_id && markerById[rider.traccar_device_id]) {
-      clusterGroup.removeLayer(markerById[rider.traccar_device_id]);
-      delete markerById[rider.traccar_device_id];
-    }
-    if (markerById[deviceId]) {
-      clusterGroup.removeLayer(markerById[deviceId]);
-      delete markerById[deviceId];
-    }
-    if (markerById[rider.bib]) {
-      clusterGroup.removeLayer(markerById[rider.bib]);
-      delete markerById[rider.bib];
-    }
-
     const status = getRiderStatus(fixTime);
     const batBadge = telem.batteryLevel != null
       ? `<span class="battery-pill ${telem.batteryLevel < 20 ? 'battery-low' : 'battery-good'}">
@@ -1609,9 +1556,7 @@ async function renderLiveMap(params) {
          </span>`
       : '';
 
-    // Create new marker with comprehensive telemetry popup
-    const marker = L.marker(latlng, { icon: createRiderIcon(rider, telem.isOffRoute) });
-    marker.bindPopup(`
+    const popupHtml = `
       <div class="rider-map-popup">
         <div class="popup-header">
           <div class="popup-title-group">
@@ -1690,13 +1635,33 @@ async function renderLiveMap(params) {
           </button>
         </div>
       </div>
-    `);
+    `;
 
-    clusterGroup.addLayer(marker);
+    // Smoothly update existing marker or create once
+    let marker = markerById[canonicalId] || (rider.traccar_device_id && markerById[rider.traccar_device_id]);
+    const updatedIcon = createRiderIcon(rider, telem.isOffRoute);
+
+    if (marker && (clusterGroup.hasLayer(marker) || map.hasLayer(marker))) {
+      marker.setLatLng(latlng);
+      marker.setIcon(updatedIcon);
+      if (marker.getPopup()) {
+        marker.setPopupContent(popupHtml);
+      }
+    } else {
+      if (marker) {
+        clusterGroup.removeLayer(marker);
+      }
+      marker = L.marker(latlng, { icon: updatedIcon });
+      marker.bindPopup(popupHtml);
+      clusterGroup.addLayer(marker);
+    }
+
     markerById[canonicalId] = marker;
     if (rider.traccar_device_id) {
       markerById[rider.traccar_device_id] = marker;
     }
+    markerById[deviceId] = marker;
+    markerById[rider.bib] = marker;
 
     // Save state for leaderboard uniquely by canonical rider.id
     progressById[canonicalId] = {
@@ -1722,9 +1687,20 @@ async function renderLiveMap(params) {
   const targetBibParam = (params.query?.bib || new URLSearchParams(window.location.search).get('bib') || '').trim();
   let targetRider = null;
   let isAutoFollowing = false;
+  let targetTrailPolyline = null;
+  const targetTrailCoords = [];
+
+  function clearTargetTrail() {
+    if (targetTrailPolyline && map && map.hasLayer(targetTrailPolyline)) {
+      map.removeLayer(targetTrailPolyline);
+    }
+    targetTrailPolyline = null;
+    targetTrailCoords.length = 0;
+  }
 
   function activateTargetRider(r) {
     if (!r) return;
+    clearTargetTrail();
     targetRider = r;
     isAutoFollowing = true;
     const banner = document.getElementById('targetRiderFocusBanner');
@@ -1738,6 +1714,9 @@ async function renderLiveMap(params) {
     if (m) {
       map.setView(m.getLatLng(), 16);
       m.openPopup();
+      if (m.getLatLng()) {
+        targetTrailCoords.push(m.getLatLng());
+      }
     }
     updateLeaderboard();
   }
@@ -1748,6 +1727,27 @@ async function renderLiveMap(params) {
     const speedEl = document.getElementById('focusRiderSpeed');
     if (speedEl) {
       speedEl.textContent = `${telem.currentSpeed} km/h • ${calc.distanceKm || 0} km`;
+    }
+
+    // Dynamic Live Breadcrumb Trail for focused rider
+    if (latlng) {
+      targetTrailCoords.push(latlng);
+      if (targetTrailCoords.length > 30) targetTrailCoords.shift();
+
+      if (!targetTrailPolyline) {
+        targetTrailPolyline = L.polyline(targetTrailCoords, {
+          color: rider.color || '#00E5FF',
+          weight: 4,
+          opacity: 0.75,
+          dashArray: '5, 8',
+          lineCap: 'round',
+          zIndexOffset: 1200
+        }).addTo(map);
+      } else {
+        targetTrailPolyline.setLatLngs(targetTrailCoords);
+        targetTrailPolyline.setStyle({ color: rider.color || '#00E5FF' });
+        if (!map.hasLayer(targetTrailPolyline)) targetTrailPolyline.addTo(map);
+      }
     }
 
     if (isAutoFollowing && latlng) {
@@ -2133,6 +2133,7 @@ async function renderLiveMap(params) {
 
   if (btnCancelFocus) {
     btnCancelFocus.addEventListener('click', () => {
+      clearTargetTrail();
       targetRider = null;
       isAutoFollowing = false;
       const banner = document.getElementById('targetRiderFocusBanner');
@@ -2773,7 +2774,7 @@ async function renderLiveMap(params) {
     }
 
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws    = new WebSocket(`${proto}//${window.location.host}/traccar-ws`);
+    const ws    = new WebSocket(`${proto}//${window.location.host}/traccar-ws?event_id=${eventId}`);
     liveWs      = ws;
     const dot   = document.getElementById('liveDot');
     const statusText = document.getElementById('liveStatusText');

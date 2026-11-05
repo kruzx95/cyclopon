@@ -7,6 +7,9 @@ const { requireAdminAuth } = require('../lib/admin-auth');
 
 const reportsDir = path.join(__dirname, '..', 'reports');
 
+// Protect all admin diagnostic reports routes with admin auth
+router.use(requireAdminAuth);
+
 /**
  * Parse markdown report file to structured JSON for UI display
  */
@@ -136,7 +139,7 @@ router.get('/', (req, res) => {
 });
 
 // POST /api/admin/reports/run — Trigger diagnostic trial from Admin Dashboard
-router.post('/run', requireAdminAuth, (req, res) => {
+router.post('/run', (req, res) => {
   const scriptPath = path.join(__dirname, '..', 'scripts', 'generate-test-report.js');
   if (!fs.existsSync(scriptPath)) {
     return res.status(500).json({ error: 'Script generator pengujian tidak ditemukan' });

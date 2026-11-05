@@ -10,6 +10,9 @@ const db = new Database(path.join(dbDir, 'cyclopon.db'));
 // Enable WAL mode for better concurrent reads
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+db.pragma('synchronous = NORMAL');
+db.pragma('cache_size = -64000');
+db.pragma('temp_store = MEMORY');
 
 // Create tables
 db.exec(`
@@ -135,11 +138,12 @@ module.exports = {
   updateEventGpx: db.prepare('UPDATE events SET gpx_path=? WHERE id=?'),
 
   // Riders
-  getRidersByEvent:      db.prepare("SELECT * FROM riders WHERE event_id = ? ORDER BY CASE WHEN role != 'rider' THEN 0 ELSE 1 END, CAST(bib AS INTEGER) ASC, bib ASC"),
-  getRiderById:          db.prepare('SELECT * FROM riders WHERE id = ?'),
-  getRiderByToken:       db.prepare('SELECT * FROM riders WHERE token = ?'),
-  getRiderByBibPin:      db.prepare('SELECT * FROM riders WHERE bib = ? AND pin = ?'),
-  getRiderByEventBibPin: db.prepare('SELECT * FROM riders WHERE event_id = ? AND bib = ? AND pin = ?'),
+  getRidersByEvent:          db.prepare("SELECT * FROM riders WHERE event_id = ? ORDER BY CASE WHEN role != 'rider' THEN 0 ELSE 1 END, CAST(bib AS INTEGER) ASC, bib ASC"),
+  getRiderById:              db.prepare('SELECT * FROM riders WHERE id = ?'),
+  getRiderByToken:           db.prepare('SELECT * FROM riders WHERE token = ?'),
+  getRiderByBibPin:          db.prepare('SELECT * FROM riders WHERE bib = ? AND pin = ?'),
+  getRiderByEventBibPin:     db.prepare('SELECT * FROM riders WHERE event_id = ? AND bib = ? AND pin = ?'),
+  getRiderByTraccarDeviceId: db.prepare('SELECT * FROM riders WHERE traccar_device_id = ?'),
   createRider: {
     run(data) {
       const crypto = require('crypto');

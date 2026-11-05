@@ -147,6 +147,30 @@ test('Riders Onboarding, Manual Registration, Roles & Magic Link API', async (t)
     assert.equal(data.skipped, 1);
   });
 
+  await t.test('POST /api/admin/riders/events/:id/import handles names with commas enclosed in double quotes', async () => {
+    const csvContent = [
+      'bib,nama,no_hp,peran,pin',
+      '105,"Budi, S.T., M.Sc.",081255556666,rider,5656'
+    ].join('\n');
+
+    const res = await fetch(`${baseUrl}/api/admin/riders/events/${eventId}/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ csv: csvContent })
+    });
+
+    assert.equal(res.status, 201);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.imported, 1);
+
+    const listRes = await fetch(`${baseUrl}/api/admin/riders/events/${eventId}`);
+    const listData = await listRes.json();
+    const rider105 = listData.find(r => r.bib === '105');
+    assert.ok(rider105);
+    assert.equal(rider105.name, 'Budi, S.T., M.Sc.');
+  });
+
   await t.test('GET /api/admin/riders/events/:id/template downloads valid CSV template', async () => {
     const res = await fetch(`${baseUrl}/api/admin/riders/events/${eventId}/template`);
     assert.equal(res.status, 200);

@@ -104,6 +104,25 @@ app.use((req, res, next) => {
   }
 });
 
+// 404 handler for unmatched /api routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Endpoint API tidak ditemukan' });
+});
+
+// Centralized Express error handler
+app.use((err, req, res, _next) => {
+  let status = err.status || err.statusCode || 500;
+  if (err.name === 'MulterError') {
+    status = 400;
+  }
+  if (process.env.NODE_ENV !== 'test') {
+    console.error(`[Server Error] ${req.method} ${req.path}:`, err.message || err);
+  }
+  res.status(status).json({
+    error: err.message || 'Terjadi kesalahan internal pada server'
+  });
+});
+
 // Create HTTP server (needed for WebSocket proxy)
 const httpServer = http.createServer(app);
 
@@ -115,6 +134,41 @@ if (require.main === module) {
   httpServer.listen(PORT, () => {
     console.log(`CycloPon server running on http://localhost:${PORT}`);
   });
+
+  const handleShutdown = (signal) => {
+    console.log(`[Server] Menerima sinyal ${signal}, menjalankan graceful shutdown...`);
+
+    // 1. Flush and stop traffic queue
+    try {
+      const { stopQueue } = require('./lib/traffic-queue');
+      if (typeof stopQueue === 'function') stopQueue();
+    } catch (e) {}
+
+    // 2. Close WS proxy upstream & clients
+    try {
+      const { closeUpstream } = require('./lib/traccar-ws-proxy');
+      if (typeof closeUpstream === 'function') closeUpstream();
+    } catch (e) {}
+
+    // 3. Close HTTP server
+    httpServer.close(() => {
+      console.log('[Server] HTTP server tertutup.');
+      try {
+        db.db.close();
+        console.log('[Server] Database SQLite tertutup dengan aman.');
+      } catch (e) {}
+      process.exit(0);
+    });
+
+    // Force exit if shutdown hangs over 5s
+    setTimeout(() => {
+      console.error('[Server] Graceful shutdown timeout, mematikan paksa.');
+      process.exit(1);
+    }, 5000).unref();
+  };
+
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
 }
 
 module.exports = app;

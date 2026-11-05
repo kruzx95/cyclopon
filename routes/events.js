@@ -12,8 +12,13 @@ if (!fs.existsSync(gpxDir)) fs.mkdirSync(gpxDir, { recursive: true });
 const upload = multer({
   dest: gpxDir,
   fileFilter: (_req, file, cb) => {
-    if (file.originalname.toLowerCase().endsWith('.gpx')) cb(null, true);
-    else cb(new Error('Hanya file .gpx yang diperbolehkan'));
+    if (file.originalname.toLowerCase().endsWith('.gpx')) {
+      cb(null, true);
+    } else {
+      const err = new Error('Hanya file .gpx yang diperbolehkan');
+      err.status = 400;
+      cb(err);
+    }
   },
   limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
 });
@@ -92,13 +97,30 @@ router.put('/admin/:id', requireAdminAuth, (req, res) => {
 router.post('/admin/:id/gpx', requireAdminAuth, upload.single('gpx'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'File GPX tidak ditemukan dalam request' });
 
+  const tempPath = req.file.path;
   const targetPath = path.join(gpxDir, `${req.params.id}.gpx`);
-  fs.renameSync(req.file.path, targetPath);
 
-  const gpxUrl = `/gpx/${req.params.id}.gpx`;
-  db.updateEventGpx.run(gpxUrl, req.params.id);
+  try {
+    // 1. Verify file content contains valid GPX tags
+    const preview = fs.readFileSync(tempPath, { encoding: 'utf8', flag: 'r' }).slice(0, 4000);
+    const isGpxContent = preview.includes('<gpx') || preview.includes('<trk') || preview.includes('<rte') || preview.includes('<wpt');
+    if (!isGpxContent) {
+      try { fs.unlinkSync(tempPath); } catch (e) {}
+      return res.status(400).json({ error: 'Berkas bukan format GPX yang valid' });
+    }
 
-  res.json({ success: true, gpx_path: gpxUrl });
+    // 2. Cross-device safe move (copy + unlink instead of renameSync)
+    fs.copyFileSync(tempPath, targetPath);
+    try { fs.unlinkSync(tempPath); } catch (e) {}
+
+    const gpxUrl = `/gpx/${req.params.id}.gpx`;
+    db.updateEventGpx.run(gpxUrl, req.params.id);
+
+    res.json({ success: true, gpx_path: gpxUrl });
+  } catch (err) {
+    try { if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath); } catch (e) {}
+    res.status(500).json({ error: 'Gagal memproses file GPX: ' + err.message });
+  }
 });
 
 module.exports = router;

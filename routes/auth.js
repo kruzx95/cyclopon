@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db/database');
 const fetch = require('node-fetch');
 const { generateAdminSession, verifyAdminSession } = require('../lib/admin-auth');
+const { determineColorForRole } = require('../lib/constants');
 
 // Brute-force protection for 4-digit rider PIN logins
 const riderLoginAttempts = new Map();
@@ -13,6 +14,16 @@ const riderCleanupTimer = setInterval(() => {
   }
 }, 5 * 60 * 1000);
 if (riderCleanupTimer.unref) riderCleanupTimer.unref();
+
+// Brute-force protection for Admin login (max 5 failures per 15 minutes)
+const adminLoginAttempts = new Map();
+const adminCleanupTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of adminLoginAttempts.entries()) {
+    if (now - record.firstAttempt > 15 * 60 * 1000) adminLoginAttempts.delete(key);
+  }
+}, 5 * 60 * 1000);
+if (adminCleanupTimer.unref) adminCleanupTimer.unref();
 
 function getPublicTraccarConfig(req, rider) {
   const hostHeader = (req.headers['x-forwarded-host'] || req.headers.host || 'localhost').split(':')[0];
@@ -167,14 +178,7 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
 
   try {
     const existing = db.getRidersByEvent.all(Number(event_id));
-    let color = '#00E5FF';
-    if (cleanRole === 'sweeper') color = '#F97316';
-    else if (cleanRole === 'marshall') color = '#3B82F6';
-    else if (cleanRole === 'medic') color = '#EF4444';
-    else {
-      const RIDER_COLORS = ['#00E5FF', '#FF6B35', '#3FB950', '#F78166', '#D2A8FF', '#FFA657', '#79C0FF', '#56D364', '#FF7B72', '#E3B341'];
-      color = RIDER_COLORS[existing.length % RIDER_COLORS.length];
-    }
+    const color = determineColorForRole(cleanRole, existing.length);
 
     const result = db.createRider.run({
       event_id: Number(event_id),
@@ -218,14 +222,34 @@ router.post('/admin/login', async (req, res) => {
     return res.status(400).json({ error: 'Email dan password wajib diisi' });
   }
 
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const now = Date.now();
+  const adminRecord = adminLoginAttempts.get(clientIp);
+  if (adminRecord && (now - adminRecord.firstAttempt <= 15 * 60 * 1000) && adminRecord.failures >= 5) {
+    return res.status(429).json({
+      error: 'Terlalu banyak percobaan login admin yang gagal. Silakan coba lagi setelah 15 menit.'
+    });
+  }
+
+  const recordFailedAdminAttempt = () => {
+    const cur = adminLoginAttempts.get(clientIp);
+    if (!cur || (now - cur.firstAttempt > 15 * 60 * 1000)) {
+      adminLoginAttempts.set(clientIp, { failures: 1, firstAttempt: now });
+    } else {
+      cur.failures++;
+    }
+  };
+
   const envUser = process.env.TRACCAR_USER || 'admin';
   const envPass = process.env.TRACCAR_PASS || 'admin';
 
   // Support direct login using credentials from .env or default admin account
   if ((email === envUser || email === 'admin' || email === 'admin@example.com' || email === 'admin@cyclopon.local') && password === envPass) {
+    adminLoginAttempts.delete(clientIp);
     const session = generateAdminSession();
     res.cookie('cyclopon_admin', session.token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
       path: '/'
@@ -246,6 +270,7 @@ router.post('/admin/login', async (req, res) => {
     });
 
     if (!response.ok) {
+      recordFailedAdminAttempt();
       return res.status(401).json({ error: 'Login gagal. Periksa email/password Traccar Anda.' });
     }
 
@@ -253,9 +278,11 @@ router.post('/admin/login', async (req, res) => {
     const cookies = response.headers.raw()['set-cookie'];
     if (cookies) res.setHeader('Set-Cookie', cookies);
 
+    adminLoginAttempts.delete(clientIp);
     const session = generateAdminSession();
     res.cookie('cyclopon_admin', session.token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
       path: '/'
@@ -264,7 +291,8 @@ router.post('/admin/login', async (req, res) => {
     const data = await response.json();
     res.json({ success: true, token: session.token, user: data });
   } catch (err) {
-    res.status(503).json({ error: 'Traccar Server tidak dapat dijangkau. Gunakan login dev: admin / admin' });
+    recordFailedAdminAttempt();
+    res.status(503).json({ error: 'Layanan server autentikasi tidak dapat dijangkau saat ini.' });
   }
 });
 

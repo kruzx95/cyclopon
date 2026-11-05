@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
 const notifications = require('../lib/notifications');
+const { requireAdminAuth } = require('../lib/admin-auth');
 
 // In-memory rate limiter for emergency SOS alerts (max 5 per minute per IP)
 const sosRateMap = new Map();
@@ -91,7 +92,7 @@ router.get('/events/:id/alerts', (req, res) => {
 });
 
 // GET /api/admin/alerts/active — fetch all unresolved alerts across all events for admin
-router.get('/admin/alerts/active', (req, res) => {
+router.get('/admin/alerts/active', requireAdminAuth, (req, res) => {
   try {
     const alerts = db.getAllActiveAlerts.all();
     res.json(alerts);
@@ -100,8 +101,8 @@ router.get('/admin/alerts/active', (req, res) => {
   }
 });
 
-// PUT /api/alerts/:id/resolve — resolve an alert
-router.put('/alerts/:id/resolve', (req, res) => {
+// PUT /api/alerts/:id/resolve — resolve an alert (admin only)
+router.put('/alerts/:id/resolve', requireAdminAuth, (req, res) => {
   const id = Number(req.params.id);
   db.resolveAlert.run(id);
   const updated = db.getAlertById.get(id);

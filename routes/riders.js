@@ -3,24 +3,10 @@ const router  = express.Router();
 const db      = require('../db/database');
 const crypto  = require('crypto');
 const { requireAdminAuth } = require('../lib/admin-auth');
+const { determineColorForRole } = require('../lib/constants');
 
 // Protect all rider management routes with admin auth
 router.use(requireAdminAuth);
-
-// Color palette — assigned round-robin per event for regular riders
-const RIDER_COLORS = [
-  '#00E5FF', '#FF6B35', '#3FB950', '#F78166', '#D2A8FF',
-  '#FFA657', '#79C0FF', '#56D364', '#FF7B72', '#E3B341',
-  '#58A6FF', '#BC8CFF', '#FFB86C', '#50FA7B', '#FF79C6'
-];
-
-function determineColorForRole(role, existingCount) {
-  const cleanRole = String(role || '').toLowerCase();
-  if (cleanRole === 'sweeper') return '#F97316'; // Vibrant Sweeper Orange
-  if (cleanRole === 'marshall') return '#3B82F6'; // Marshall Blue
-  if (cleanRole === 'medic') return '#EF4444'; // Emergency Medic Red
-  return RIDER_COLORS[existingCount % RIDER_COLORS.length];
-}
 
 function resolvePin(pin, phone) {
   if (pin && String(pin).trim().length >= 4) {
@@ -100,6 +86,33 @@ router.post('/', (req, res) => {
   }
 });
 
+/**
+ * Robust CSV Line Parser that handles quoted fields containing commas (e.g. "Budi, S.T.")
+ */
+function parseCsvLine(text) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (char === '"' || char === "'") {
+      if (inQuotes && text[i + 1] === char) {
+        cur += char;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(cur.trim());
+      cur = '';
+    } else {
+      cur += char;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 // POST /api/admin/riders/events/:id/import — bulk import riders via JSON or CSV
 router.post('/events/:id/import', (req, res) => {
   const eventId = Number(req.params.id);
@@ -110,10 +123,10 @@ router.post('/events/:id/import', (req, res) => {
   if (Array.isArray(req.body.riders)) {
     rawList = req.body.riders;
   } else if (typeof req.body.csv === 'string') {
-    // Parse CSV lines
+    // Parse CSV lines with quote-aware parser
     const lines = req.body.csv.trim().split(/\r?\n/);
     if (lines.length > 1) {
-      const header = lines[0].toLowerCase().split(',').map(h => h.trim());
+      const header = parseCsvLine(lines[0].toLowerCase());
       const bibIdx   = header.findIndex(h => h.includes('bib') || h.includes('nomor'));
       const nameIdx  = header.findIndex(h => h.includes('nam') || h.includes('rider'));
       const phoneIdx = header.findIndex(h => h.includes('hp') || h.includes('phone') || h.includes('wa'));
@@ -121,7 +134,7 @@ router.post('/events/:id/import', (req, res) => {
       const pinIdx   = header.findIndex(h => h.includes('pin'));
 
       for (let i = 1; i < lines.length; i++) {
-        const row = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+        const row = parseCsvLine(lines[i]);
         if (row.length && row[bibIdx >= 0 ? bibIdx : 0]) {
           rawList.push({
             bib:   bibIdx >= 0 ? row[bibIdx] : row[0],

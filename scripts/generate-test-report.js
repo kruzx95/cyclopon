@@ -299,9 +299,10 @@ async function runDiagnosticTrial() {
   const tSplitStart = performance.now();
 
   // 3a. Record IN_TIME split for Rider 1 at CP1
+  const trialAdminKey = process.env.ADMIN_KEY || process.env.SESSION_SECRET || 'cyclopon_secret_dev_2026_x8f9a2';
   const split1Res = await fetch(`${baseUrl}/api/events/${trialEventId}/splits`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': trialAdminKey },
     body: JSON.stringify({
       rider_id: trialRider1Id,
       checkpoint_id: trialCp1Id,
@@ -314,7 +315,7 @@ async function runDiagnosticTrial() {
   // 3b. Record OVER_COT split for Rider 2 at CP2 (exceeded cutoff time 10:30)
   const split2Res = await fetch(`${baseUrl}/api/events/${trialEventId}/splits`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': trialAdminKey },
     body: JSON.stringify({
       rider_id: trialRider2Id,
       checkpoint_id: trialCp2Id,

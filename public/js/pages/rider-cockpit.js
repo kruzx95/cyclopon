@@ -937,7 +937,7 @@ async function renderRiderCockpit() {
     }
 
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    cockpitWs = new WebSocket(`${proto}//${window.location.host}/traccar-ws`);
+    cockpitWs = new WebSocket(`${proto}//${window.location.host}/traccar-ws?event_id=${event.id}`);
 
     cockpitWs.onopen = () => {
       if (!cockpitActive) return;
@@ -985,30 +985,63 @@ async function renderRiderCockpit() {
 
   connectCockpitWs();
 
-  // ── 8. Real Browser Geolocation Watcher ──
+  // ── 8. Real Browser Geolocation Watcher with Offline Resilience ──
   let lastCockpitReportTime = 0;
+  let offlineTelemetryQueue = [];
+  try {
+    const saved = localStorage.getItem('cyclopon_cockpit_offline');
+    if (saved) offlineTelemetryQueue = JSON.parse(saved);
+  } catch (e) {
+    offlineTelemetryQueue = [];
+  }
+
   if ('geolocation' in navigator) {
     cockpitGeoWatchId = navigator.geolocation.watchPosition(
       pos => {
-        const speedKmh = pos.coords.speed != null ? pos.coords.speed * 3.6 : 0;
+        // GPS Accuracy & Jitter Filter: Ignore fixes with > 45m accuracy error
+        if (pos.coords.accuracy && pos.coords.accuracy > 45) {
+          return;
+        }
+
+        const rawSpeed = pos.coords.speed != null ? pos.coords.speed * 3.6 : 0;
+        const speedKmh = Math.max(0, Math.round(rawSpeed * 10) / 10);
         updateTelemetry(pos.coords.latitude, pos.coords.longitude, speedKmh);
 
         // Auto-report telemetry to server every 5 seconds for live tracking
         const now = Date.now();
         if (now - lastCockpitReportTime >= 5000) {
           lastCockpitReportTime = now;
+          const point = {
+            rider_id: rider.id,
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            speed: speedKmh,
+            distance_km: coveredKm,
+            recorded_at: new Date().toISOString()
+          };
+
+          const payload = offlineTelemetryQueue.length > 0
+            ? { positions: [...offlineTelemetryQueue, point] }
+            : point;
+
           fetch(`/api/events/${event.id}/history`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              rider_id: rider.id,
-              latitude: pos.coords.latitude,
-              longitude: pos.coords.longitude,
-              speed: speedKmh,
-              distance_km: coveredKm,
-              recorded_at: new Date().toISOString()
-            })
-          }).catch(() => {});
+            body: JSON.stringify(payload)
+          }).then(res => {
+            if (res.ok) {
+              offlineTelemetryQueue = [];
+              try { localStorage.removeItem('cyclopon_cockpit_offline'); } catch (e) {}
+            } else {
+              offlineTelemetryQueue.push(point);
+              if (offlineTelemetryQueue.length > 100) offlineTelemetryQueue.shift();
+              try { localStorage.setItem('cyclopon_cockpit_offline', JSON.stringify(offlineTelemetryQueue)); } catch (e) {}
+            }
+          }).catch(() => {
+            offlineTelemetryQueue.push(point);
+            if (offlineTelemetryQueue.length > 100) offlineTelemetryQueue.shift();
+            try { localStorage.setItem('cyclopon_cockpit_offline', JSON.stringify(offlineTelemetryQueue)); } catch (e) {}
+          });
         }
       },
       err => console.log('[Cockpit Geolocation] Info:', err.message),

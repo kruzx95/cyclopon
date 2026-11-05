@@ -77,7 +77,7 @@ router.post('/events/:id/history', (req, res) => {
             attributes: {}
           };
         });
-        broadcastToClients(JSON.stringify({ positions: wsPositions }));
+        broadcastToClients(JSON.stringify({ positions: wsPositions }), eventId);
       }
     } catch (wsErr) {}
 

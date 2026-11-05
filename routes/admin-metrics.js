@@ -3,6 +3,10 @@ const router = express.Router();
 const db = require('../db/database');
 const { getActiveViewersCount, getPeakViewersCount } = require('../lib/traccar-ws-proxy');
 const { flushQueue } = require('../lib/traffic-queue');
+const { requireAdminAuth } = require('../lib/admin-auth');
+
+// Protect admin traffic metrics with admin auth
+router.use(requireAdminAuth);
 
 // GET /api/admin/metrics/traffic — retrieve live spectators and visitor traffic analytics
 router.get('/traffic', (req, res) => {

@@ -189,6 +189,49 @@ test('Official Results & CSV Export API', async (t) => {
     }
   });
 
+  await t.test('POST /api/events/admin/:id/gpx validates GPX file content', async () => {
+    const { eventId } = t.context;
+    const fs = require('fs');
+    const path = require('path');
+
+    // 1. Non-.gpx file extension should be rejected with 400
+    const invalidExtForm = new FormData();
+    invalidExtForm.append('gpx', new Blob(['plain text'], { type: 'text/plain' }), 'test.txt');
+    const resInvalidExt = await fetch(`${baseUrl}/api/events/admin/${eventId}/gpx`, {
+      method: 'POST',
+      body: invalidExtForm
+    });
+    assert.equal(resInvalidExt.status, 400);
+
+    // 2. .gpx extension with invalid content should be rejected with 400
+    const invalidContentForm = new FormData();
+    invalidContentForm.append('gpx', new Blob(['plain text not xml'], { type: 'application/gpx+xml' }), 'fake.gpx');
+    const resInvalidContent = await fetch(`${baseUrl}/api/events/admin/${eventId}/gpx`, {
+      method: 'POST',
+      body: invalidContentForm
+    });
+    assert.equal(resInvalidContent.status, 400);
+    const invalidContentData = await resInvalidContent.json();
+    assert.match(invalidContentData.error, /bukan format GPX yang valid/);
+
+    // 3. Valid GPX XML content should succeed
+    const validForm = new FormData();
+    const gpxXml = '<?xml version="1.0"?><gpx version="1.1"><trk><name>Test</name><trkseg><trkpt lat="-6.9" lon="107.6"></trkpt></trkseg></trk></gpx>';
+    validForm.append('gpx', new Blob([gpxXml], { type: 'application/gpx+xml' }), 'route.gpx');
+    const resValid = await fetch(`${baseUrl}/api/events/admin/${eventId}/gpx`, {
+      method: 'POST',
+      body: validForm
+    });
+    assert.equal(resValid.status, 200);
+    const validData = await resValid.json();
+    assert.equal(validData.success, true);
+    assert.equal(validData.gpx_path, `/gpx/${eventId}.gpx`);
+
+    // Clean up uploaded file
+    const uploadedPath = path.join(__dirname, '..', 'public', 'gpx', `${eventId}.gpx`);
+    if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
+  });
+
   await t.test('teardown', async () => {
     const { eventId } = t.context;
     db.db.prepare('DELETE FROM events WHERE id = ?').run(eventId);

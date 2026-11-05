@@ -2,11 +2,12 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
 const notifications = require('../lib/notifications');
+const { requireAdminAuth } = require('../lib/admin-auth');
 
 // ── Checkpoints Management ──
 
 // POST /api/events/:id/checkpoints — create checkpoint
-router.post('/events/:id/checkpoints', (req, res) => {
+router.post('/events/:id/checkpoints', requireAdminAuth, (req, res) => {
   const event_id = Number(req.params.id);
   const { name, km_distance, open_time, close_time, latitude, longitude, order_index } = req.body;
 
@@ -37,7 +38,7 @@ router.get('/events/:id/checkpoints', (req, res) => {
 });
 
 // DELETE /api/checkpoints/:id — remove checkpoint
-router.delete('/checkpoints/:id', (req, res) => {
+router.delete('/checkpoints/:id', requireAdminAuth, (req, res) => {
   const id = Number(req.params.id);
   db.deleteCheckpoint.run(id);
   res.json({ success: true });
@@ -46,7 +47,7 @@ router.delete('/checkpoints/:id', (req, res) => {
 // ── Rider Split Times (Audax COT) ──
 
 // POST /api/events/:id/splits — record rider checkpoint arrival split
-router.post('/events/:id/splits', (req, res) => {
+router.post('/events/:id/splits', requireAdminAuth, (req, res) => {
   const event_id = Number(req.params.id);
   const { rider_id, checkpoint_id, arrival_time, status } = req.body;
 

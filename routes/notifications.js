@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const notifications = require('../lib/notifications');
+const { requireAdminAuth } = require('../lib/admin-auth');
+
+// Protect all admin notification routes with admin auth
+router.use(requireAdminAuth);
 
 /**
  * Mask token string for safe display

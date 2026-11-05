@@ -41,12 +41,24 @@ function calculateEventResults(eventId) {
   const splits = db.getSplitsByEvent.all(eventId);
   const alerts = db.getAlertsByEvent.all(eventId);
 
+  // Eliminate N+1 query: Fetch all event history once and group by rider in-memory
+  const allHistory = db.getHistoryByEvent.all(eventId);
+  const historyByRider = new Map();
+  for (const h of allHistory) {
+    let arr = historyByRider.get(h.rider_id);
+    if (!arr) {
+      arr = [];
+      historyByRider.set(h.rider_id, arr);
+    }
+    arr.push(h);
+  }
+
   const totalCps = checkpoints.length;
 
   const results = riders.map(rider => {
     const riderSplits = splits.filter(s => s.rider_id === rider.id);
     const riderAlerts = alerts.filter(a => a.rider_id === rider.id);
-    const history = db.getHistoryByEventAndRider.all(eventId, rider.id);
+    const history = historyByRider.get(rider.id) || [];
 
     const clearedCpCount = riderSplits.length;
     const hasOverCot = riderSplits.some(s => s.status === 'OVER_COT');
