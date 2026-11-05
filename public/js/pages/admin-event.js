@@ -203,6 +203,28 @@ async function renderAdminEvent(params) {
     window.AdminSosMonitor.init();
   }
 
+  // Delegated table action handlers for rider operations
+  const riderTableBody = document.getElementById('riderTableBody');
+  if (riderTableBody) {
+    riderTableBody.addEventListener('click', (e) => {
+      const btnCopy = e.target.closest('.btn-copy-magic');
+      if (btnCopy) {
+        copyMagicLink(btnCopy.dataset.token, btnCopy.dataset.bib);
+        return;
+      }
+      const btnWa = e.target.closest('.btn-wa-share');
+      if (btnWa) {
+        shareWhatsApp(btnWa.dataset.phone, btnWa.dataset.name, btnWa.dataset.bib, btnWa.dataset.pin, btnWa.dataset.token, btnWa.dataset.event);
+        return;
+      }
+      const btnDel = e.target.closest('.btn-delete-rider');
+      if (btnDel) {
+        deleteRider(btnDel.dataset.id, btnDel.dataset.bib);
+        return;
+      }
+    });
+  }
+
   // ── Mobile Hamburger Drawer ──
   (function () {
     const hamburger = document.getElementById('adminHamburger');
@@ -553,7 +575,7 @@ function renderRiderTableRows(riders, eventName) {
     return '<tr><td colspan="9" style="text-align:center;color:#6B7280;padding:28px;font-weight:600">Belum ada peserta atau panitia terdaftar. Tambahkan manual atau impor file CSV!</td></tr>';
   }
 
-  const safeEventName = (eventName || 'Event CycloPon').replace(/'/g, "\\'");
+  const safeEventName = eventName || 'Event CycloPon';
 
   return riders.map(r => {
     let roleBadge = '<span class="badge badge-rider">🚴 RIDER</span>';
@@ -565,41 +587,41 @@ function renderRiderTableRows(riders, eventName) {
       roleBadge = '<span class="badge badge-medic">🚑 MEDIS</span>';
     }
 
-    const safeName = (r.name || '').replace(/'/g, "\\'");
-    const safeBib = (r.bib || '').replace(/'/g, "\\'");
+    const safeName = r.name || '';
+    const safeBib = r.bib || '';
     const safePin = r.pin || '1234';
     const safeToken = r.token || '';
     const safePhone = r.phone || '';
 
     return `
       <tr>
-        <td><strong style="font-family:ui-monospace,monospace;font-size:14px;color:#0D1117;background:#F3F4F6;padding:2px 7px;border-radius:4px;border:1px solid #E5E7EB">#${r.bib}</strong></td>
+        <td><strong style="font-family:ui-monospace,monospace;font-size:14px;color:#0D1117;background:#F3F4F6;padding:2px 7px;border-radius:4px;border:1px solid #E5E7EB">#${escapeHtml(safeBib)}</strong></td>
         <td>${roleBadge}</td>
-        <td><strong style="color:#0D1117">${escapeHtml(r.name)}</strong></td>
-        <td>${r.phone ? `<span style="font-family:ui-monospace,monospace;font-size:12.5px;color:#4B5563">${r.phone}</span>` : '<span style="color:#9CA3AF;font-size:12px">—</span>'}</td>
+        <td><strong style="color:#0D1117">${escapeHtml(safeName)}</strong></td>
+        <td>${safePhone ? `<span style="font-family:ui-monospace,monospace;font-size:12.5px;color:#4B5563">${escapeHtml(safePhone)}</span>` : '<span style="color:#9CA3AF;font-size:12px">—</span>'}</td>
         <td>
           <code style="background:#F3F4F6;padding:3px 8px;border-radius:4px;font-size:12.5px;font-weight:900;color:#0D1117;font-family:ui-monospace,monospace;letter-spacing:0.06em;border:1px solid #E5E7EB">
-            ${safePin}
+            ${escapeHtml(safePin)}
           </code>
         </td>
         <td>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             ${safeToken ? `
-              <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;font-weight:800" onclick="copyMagicLink('${safeToken}', '${safeBib}')" title="Salin tautan login instan tanpa ketik">
+              <button class="btn btn-outline btn-copy-magic" style="padding:4px 8px;font-size:11px;font-weight:800" data-token="${escapeHtml(safeToken)}" data-bib="${escapeHtml(safeBib)}" title="Salin tautan login instan tanpa ketik">
                 📋 Salin Link
               </button>
             ` : ''}
             ${safePhone ? `
-              <button class="btn btn-outline" style="padding:4px 8px;font-size:11px;font-weight:800;color:#047857;border-color:#047857" onclick="shareWhatsApp('${safePhone}', '${safeName}', '${safeBib}', '${safePin}', '${safeToken}', '${safeEventName}')" title="Kirim detail akun via WhatsApp">
+              <button class="btn btn-outline btn-wa-share" style="padding:4px 8px;font-size:11px;font-weight:800;color:#047857;border-color:#047857" data-phone="${escapeHtml(safePhone)}" data-name="${escapeHtml(safeName)}" data-bib="${escapeHtml(safeBib)}" data-pin="${escapeHtml(safePin)}" data-token="${escapeHtml(safeToken)}" data-event="${escapeHtml(safeEventName)}" title="Kirim detail akun via WhatsApp">
                 💬 WA
               </button>
             ` : ''}
           </div>
         </td>
-        <td><span class="color-swatch" style="background:${r.color}" title="${r.color}"></span></td>
-        <td><code style="font-family:ui-monospace,monospace;font-size:11px;color:#6B7280">${r.traccar_device_id || '—'}</code></td>
+        <td><span class="color-swatch" style="background:${escapeHtml(r.color || '#00E5FF')}" title="${escapeHtml(r.color || '')}"></span></td>
+        <td><code style="font-family:ui-monospace,monospace;font-size:11px;color:#6B7280">${escapeHtml(r.traccar_device_id || '—')}</code></td>
         <td>
-          <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteRider(${r.id}, '${safeBib}')">
+          <button class="btn btn-danger btn-delete-rider" style="padding:4px 10px;font-size:11px" data-id="${r.id}" data-bib="${escapeHtml(safeBib)}">
             Hapus
           </button>
         </td>

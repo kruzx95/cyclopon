@@ -63,15 +63,15 @@ function renderExistingSession(config) {
         <div style="background:#FFFFFF;border:1.5px solid #0D1117;border-radius:10px;padding:16px 18px;text-align:left;margin-bottom:20px;box-shadow:0 8px 20px rgba(13,17,23,0.06)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">// EVENT RESMI</span>
-            <span class="badge" style="background:#EEF4EE;border:1px solid #C8DEC9;color:#1C3E24;font-weight:800;font-family:ui-monospace,monospace">${event.name}</span>
+            <span class="badge" style="background:#EEF4EE;border:1px solid #C8DEC9;color:#1C3E24;font-weight:800;font-family:ui-monospace,monospace">${escapeHtml(event.name)}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">// NAMA PESERTA</span>
-            <strong style="font-size:14px;color:#0D1117;font-weight:800">${rider.name} ${roleBadge}</strong>
+            <strong style="font-size:14px;color:#0D1117;font-weight:800">${escapeHtml(rider.name)} ${roleBadge}</strong>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px dashed #E5E7EB">
             <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;font-weight:800;color:#6B7280;text-transform:uppercase;letter-spacing:0.06em">// NOMOR BIB / PLAT</span>
-            <strong style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;color:#0D1117;font-weight:900">#${rider.bib}</strong>
+            <strong style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:18px;color:#0D1117;font-weight:900">#${escapeHtml(rider.bib)}</strong>
           </div>
         </div>
 

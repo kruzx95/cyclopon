@@ -166,6 +166,22 @@ test('Notifications Engine & API', async (t) => {
     await new Promise(r => setTimeout(r, 100));
   });
 
+  await t.test('sendWebhook blocks loopback & cloud metadata in production mode (SSRF protection)', async () => {
+    const origEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      const resLocal = await notifications.sendWebhook('http://127.0.0.1:8082/api', { test: true });
+      assert.equal(resLocal.success, false);
+      assert.match(resLocal.error, /SSRF protection/);
+
+      const resMeta = await notifications.sendWebhook('http://169.254.169.254/latest/meta-data', { test: true });
+      assert.equal(resMeta.success, false);
+      assert.match(resMeta.error, /SSRF protection/);
+    } finally {
+      process.env.NODE_ENV = origEnv;
+    }
+  });
+
   await t.test('teardown', async () => {
     db.db.prepare('DELETE FROM events WHERE id = ?').run(testEventId);
     db.db.prepare('DELETE FROM settings WHERE key LIKE ?').run('telegram%');

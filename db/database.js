@@ -86,6 +86,13 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_history_event_time ON position_history(event_id, recorded_at);
   CREATE INDEX IF NOT EXISTS idx_history_rider ON position_history(rider_id, recorded_at);
 
+  -- High-frequency query indexes
+  CREATE INDEX IF NOT EXISTS idx_riders_traccar_device ON riders(traccar_device_id);
+  CREATE INDEX IF NOT EXISTS idx_alerts_event_resolved ON alerts(event_id, resolved);
+  CREATE INDEX IF NOT EXISTS idx_alerts_resolved ON alerts(resolved);
+  CREATE INDEX IF NOT EXISTS idx_checkpoints_event_km ON checkpoints(event_id, km_distance);
+  CREATE INDEX IF NOT EXISTS idx_rider_splits_event ON rider_splits(event_id);
+
   CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT

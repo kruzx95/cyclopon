@@ -160,6 +160,45 @@ test('Telemetry History Logger & API', async (t) => {
     assert.equal(allRiderPoints.length, 7); // 2 previous + 5 newly flushed
   });
 
+  await t.test('POST /api/events/:id/history rejects payloads exceeding 300 points', async () => {
+    const { eventId, rider1Id } = t.context;
+    const oversizedBatch = Array.from({ length: 301 }, (_, i) => ({
+      rider_id: rider1Id,
+      latitude: -6.9 + (i * 0.0001),
+      longitude: 107.6,
+      speed: 20
+    }));
+
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positions: oversizedBatch })
+    });
+
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.match(data.error, /melebihi batas maksimal/);
+  });
+
+  await t.test('POST /api/events/:id/history skips invalid/NaN GPS coordinates safely', async () => {
+    const { eventId, rider1Id } = t.context;
+    const mixedBatch = [
+      { rider_id: rider1Id, latitude: -6.935, longitude: 107.640, speed: 25 },
+      { rider_id: rider1Id, latitude: 999.0, longitude: 107.640, speed: 25 }, // Invalid lat (> 90)
+      { rider_id: rider1Id, latitude: 'invalid', longitude: 107.640, speed: 25 } // NaN
+    ];
+
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positions: mixedBatch })
+    });
+
+    assert.equal(res.status, 201);
+    const data = await res.json();
+    assert.equal(data.inserted, 1); // Only the 1 valid point was recorded
+  });
+
   await t.test('teardown', async () => {
     const { eventId } = t.context;
     try {

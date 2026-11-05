@@ -65,10 +65,10 @@ async function renderEventResults(params) {
               </a>
               <div>
                 <h1 class="results-title">
-                  <span>Hasil Resmi: ${event.name}</span>
+                  <span>Hasil Resmi: ${escapeHtml(event.name)}</span>
                 </h1>
                 <div class="results-event-subtitle">
-                  <span class="results-sub-pill">📅 ${event.date}</span>
+                  <span class="results-sub-pill">📅 ${escapeHtml(event.date)}</span>
                   <span class="results-sub-pill">🚴 Starter: <strong>${summary.total_riders}</strong></span>
                   <span class="results-sub-pill success">🏅 Finisher: <strong>${summary.finishers}</strong> (${finisherRate}%)</span>
                 </div>

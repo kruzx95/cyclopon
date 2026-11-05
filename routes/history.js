@@ -38,15 +38,26 @@ router.post('/events/:id/history', (req, res) => {
     return res.status(400).json({ error: 'Data posisi tidak valid' });
   }
 
+  // Guard against massive batch payloads (DoS protection)
+  if (positions.length > 300) {
+    return res.status(400).json({ error: 'Ukuran batch melebihi batas maksimal (300 titik)' });
+  }
+
   try {
     const insertTx = db.db.transaction((items) => {
       let count = 0;
       for (const pos of items) {
+        const lat = Number(pos.latitude);
+        const lon = Number(pos.longitude);
+        if (Number.isNaN(lat) || Number.isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          continue; // Skip invalid coordinates safely
+        }
+
         db.recordPositionHistory.run({
           event_id: eventId,
           rider_id: Number(pos.rider_id),
-          latitude: Number(pos.latitude),
-          longitude: Number(pos.longitude),
+          latitude: lat,
+          longitude: lon,
           speed: Number(pos.speed || 0),
           distance_km: Number(pos.distance_km || 0),
           recorded_at: pos.recorded_at || new Date().toISOString()

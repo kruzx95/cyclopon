@@ -2751,10 +2751,15 @@ async function renderLiveMap(params) {
   let liveWsReconnectTimer = null;
   let liveWsBackoffMs = 2000;
   let isLiveMapMounted = true;
+  let historyPollInterval = null;
 
   if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
     Router.onUnmount(() => {
       isLiveMapMounted = false;
+      if (historyPollInterval) {
+        clearInterval(historyPollInterval);
+        historyPollInterval = null;
+      }
       if (liveWsReconnectTimer) {
         clearTimeout(liveWsReconnectTimer);
         liveWsReconnectTimer = null;
@@ -2762,6 +2767,14 @@ async function renderLiveMap(params) {
       if (liveWs) {
         try { liveWs.close(); } catch (e) {}
         liveWs = null;
+      }
+      if (typeof simIntervalId !== 'undefined' && simIntervalId) {
+        clearInterval(simIntervalId);
+        simIntervalId = null;
+      }
+      if (typeof replayTimer !== 'undefined' && replayTimer) {
+        clearInterval(replayTimer);
+        replayTimer = null;
       }
     });
   }
@@ -2887,10 +2900,13 @@ async function renderLiveMap(params) {
   // Fetch immediately on load
   syncLatestPositionsFromHistory();
   // Periodic fallback sync every 8 seconds
-  const historyPollInterval = setInterval(syncLatestPositionsFromHistory, 8000);
+  historyPollInterval = setInterval(syncLatestPositionsFromHistory, 8000);
 
   window.addEventListener('popstate', () => {
-    clearInterval(historyPollInterval);
+    if (historyPollInterval) {
+      clearInterval(historyPollInterval);
+      historyPollInterval = null;
+    }
   }, { once: true });
 
   connectWs();

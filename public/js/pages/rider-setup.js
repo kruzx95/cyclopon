@@ -62,7 +62,7 @@ function renderRiderSetup() {
             </span>
           ` : ''}
           <span class="hub-bib-badge">
-            BIB #${rider.bib}
+            BIB #${escapeHtml(rider.bib)}
           </span>
           <button id="btnRiderLogout" class="hub-logout-btn" title="Keluar dari sesi rider">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,16 +84,16 @@ function renderRiderSetup() {
         </div>
         <div class="rider-welcome-info">
           <div class="rider-greeting-row">
-            <h2 class="rider-welcome-name">Halo, ${rider.name}</h2>
-            <span class="rider-event-tag">🏁 ${event.name}</span>
+            <h2 class="rider-welcome-name">Halo, ${escapeHtml(rider.name)}</h2>
+            <span class="rider-event-tag">🏁 ${escapeHtml(event.name)}</span>
           </div>
           <p class="rider-welcome-meta">
-            Tanggal: <strong>${event.date}</strong> &nbsp;·&nbsp; Status: <span style="color:#047857;font-weight:700">Terdaftar Aktif</span>
+            Tanggal: <strong>${escapeHtml(event.date)}</strong> &nbsp;·&nbsp; Status: <span style="color:#047857;font-weight:700">Terdaftar Aktif</span>
           </p>
         </div>
         <div class="rider-device-pill" title="ID Perangkat Traccar Client">
           <span class="device-label">DEVICE ID</span>
-          <span class="device-val">${traccar.deviceIdentifier}</span>
+          <span class="device-val">${escapeHtml(traccar.deviceIdentifier)}</span>
         </div>
       </div>
 

@@ -76,7 +76,7 @@ const Router = {
       <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;">
         <div style="font-size:64px;margin-bottom:16px">🚧</div>
         <h1 style="font-size:24px;font-weight:700;margin-bottom:8px">Halaman tidak ditemukan</h1>
-        <p style="color:#8B949E;margin-bottom:24px">Path: ${cleanPath}</p>
+        <p style="color:#8B949E;margin-bottom:24px">Path: ${typeof escapeHtml === 'function' ? escapeHtml(cleanPath) : String(cleanPath).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
         <a href="/" data-link style="color:var(--color-yellow);text-decoration:none;font-weight:700">← Kembali ke beranda</a>
       </div>
     `;
