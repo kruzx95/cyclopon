@@ -29,6 +29,15 @@ for (let i = 0; i < args.length; i++) {
   if (args[i] === '--port' && args[i + 1]) serverPort = Number(args[i + 1]);
 }
 
+// Fallback to active event if --event argument was not passed
+if (!args.includes('--event')) {
+  const activeEv = db.db.prepare('SELECT id FROM events WHERE active = 1 ORDER BY id DESC LIMIT 1').get()
+                || db.db.prepare('SELECT id FROM events ORDER BY id DESC LIMIT 1').get();
+  if (activeEv) {
+    eventId = activeEv.id;
+  }
+}
+
 // 2. Load Event Data
 const event = db.getEventById.get(eventId);
 if (!event) {

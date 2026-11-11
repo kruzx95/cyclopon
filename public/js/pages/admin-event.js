@@ -82,9 +82,16 @@ async function renderAdminEvent(params) {
               </div>
             </div>
             ` : ''}
-            <button class="btn btn-primary" type="submit" id="saveEventBtn" style="padding:10px 20px">
-              ${isNew ? 'Buat Event' : 'Simpan Perubahan'}
-            </button>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
+              <button class="btn btn-primary" type="submit" id="saveEventBtn" style="padding:10px 20px">
+                ${isNew ? 'Buat Event' : 'Simpan Perubahan'}
+              </button>
+              ${!isNew ? `
+                <button type="button" class="btn btn-outline" id="btnDeleteCurrentEvent" style="color:#DC2626;border-color:#FCA5A5;padding:10px 16px;font-size:12.5px" title="Hapus event secara permanen">
+                  🗑️ Hapus Event
+                </button>
+              ` : ''}
+            </div>
           </form>
         </div>
 
@@ -271,6 +278,28 @@ async function renderAdminEvent(params) {
   });
 
   if (isNew) return;
+
+  // ── Delete event handler ──
+  document.getElementById('btnDeleteCurrentEvent')?.addEventListener('click', async () => {
+    if (!confirm(`Hapus event "${event.name}" secara permanen?\nSemua peserta, checkpoint, dan rute GPX akan dihapus.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/events/admin/${eventId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('Event berhasil dihapus!', 'success');
+        Router.navigate('/admin/dashboard');
+      } else {
+        showToast(data.error || 'Gagal menghapus event', 'error');
+      }
+    } catch {
+      showToast('Terjadi kesalahan saat menghapus event', 'error');
+    }
+  });
 
   // ── GPX upload handler ──
   document.getElementById('gpxFileInput').addEventListener('change', async e => {

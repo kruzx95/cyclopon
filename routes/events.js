@@ -123,4 +123,18 @@ router.post('/admin/:id/gpx', requireAdminAuth, upload.single('gpx'), (req, res)
   }
 });
 
+// DELETE /api/events/admin/:id — delete event and associated records
+router.delete('/admin/:id', requireAdminAuth, (req, res) => {
+  const event = db.getEventById.get(req.params.id);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  const targetGpx = path.join(gpxDir, `${event.id}.gpx`);
+  if (fs.existsSync(targetGpx)) {
+    try { fs.unlinkSync(targetGpx); } catch (e) {}
+  }
+
+  db.deleteEvent.run(event.id);
+  res.json({ success: true, message: `Event #${event.id} berhasil dihapus` });
+});
+
 module.exports = router;

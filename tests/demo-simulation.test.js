@@ -97,5 +97,10 @@ test('Demo Event Seeder & Race Simulation Integrity', async (t) => {
     assert.equal(sim.riderStates[0].isFinished, false);
     assert.ok(sim.riderStates[0].curKm < 1.0);
   });
+
+  t.after(() => {
+    // Teardown: Clean up demo event 21 so test suite leaves the database completely clean
+    db.db.prepare('DELETE FROM events WHERE id = 21').run();
+  });
 });
 

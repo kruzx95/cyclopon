@@ -2209,19 +2209,19 @@ async function renderLiveMap(params) {
       return;
     }
 
+    if (!riders || !riders.length) {
+      showToast('Belum ada data rider yang terdaftar pada event ini.', 'warning');
+      return;
+    }
+
     isSimulating = true;
     const simBtn = document.getElementById('btnSimulator');
     if (simBtn) simBtn.classList.add('active');
     const simLbl = document.getElementById('simBtnLabel');
-    if (simLbl) simLbl.textContent = 'Stop Demo';
+    if (simLbl) simLbl.textContent = 'Hentikan Simulasi';
     showToast('Simulasi GPS rider dimulai! 🚴‍♂️', 'success');
 
-    // Use registered event riders or create realistic demo riders
-    const demoRiders = riders.length ? riders : [
-      { id: 101, bib: '001', name: 'Ahmad Pelari', color: '#FFE600', role: 'rider' },
-      { id: 102, bib: '002', name: 'Budi Santoso', color: '#10B981', role: 'rider' },
-      { id: 103, bib: 'SWP-1', name: 'Doni Sweeper', color: '#F97316', role: 'sweeper' }
-    ];
+    const demoRiders = riders;
 
     const baseBatteries = [94, 78, 17]; // Rider 3 has low battery (17%) to demonstrate low battery alert
 
@@ -2468,36 +2468,6 @@ async function renderLiveMap(params) {
       replayHistory = res.ok ? await res.json() : [];
     } catch {
       replayHistory = [];
-    }
-
-    // If history is empty, synthesize a replay history trail from GPX route
-    if (!replayHistory.length && routeCoords.length) {
-      const simRiders = riders.length ? riders : [
-        { id: 1, bib: '001', name: 'Ahmad Rider', color: '#D1A980' },
-        { id: 2, bib: '002', name: 'Budi Santoso', color: '#748873' }
-      ];
-      const baseStart = Date.now() - (7200 * 1000); // 2 hours ago
-      simRiders.forEach((r, rIdx) => {
-        const totalSteps = 40;
-        for (let s = 0; s <= totalSteps; s++) {
-          const coordIdx = Math.min(routeCoords.length - 1, Math.floor((s / totalSteps) * (routeCoords.length - (rIdx * 12))));
-          const pt = routeCoords[coordIdx];
-          const distKm = Math.round(((coordIdx / routeCoords.length) * (routeKm || 100)) * 10) / 10;
-          const recTime = new Date(baseStart + (s * 180 * 1000) + (rIdx * 60 * 1000)).toISOString();
-          replayHistory.push({
-            rider_id: r.id,
-            rider_name: r.name,
-            rider_bib: r.bib,
-            rider_color: r.color,
-            latitude: pt[0],
-            longitude: pt[1],
-            speed: 25 + (rIdx * 2) + (s % 5),
-            distance_km: distKm,
-            recorded_at: recTime
-          });
-        }
-      });
-      replayHistory.sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
     }
 
     if (!replayHistory.length) {

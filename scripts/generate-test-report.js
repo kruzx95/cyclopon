@@ -118,12 +118,14 @@ async function runDiagnosticTrial() {
   const results = [];
 
   // Setup Isolated Trial Event & Entities
-  const trialTimestamp = Date.now();
-  const trialEventRes = db.createEvent.run({
-    name: `VPS Trial Run #${trialTimestamp}`,
-    date: new Date().toISOString().substring(0, 10)
-  });
-  const trialEventId = Number(trialEventRes.lastInsertRowid);
+  let trialEventId = null;
+  try {
+    const trialTimestamp = Date.now();
+    const trialEventRes = db.createEvent.run({
+      name: `VPS Trial Run #${trialTimestamp}`,
+      date: new Date().toISOString().substring(0, 10)
+    });
+    trialEventId = Number(trialEventRes.lastInsertRowid);
 
   const rider1Res = db.createRider.run({
     event_id: trialEventId,
@@ -443,16 +445,20 @@ async function runDiagnosticTrial() {
 
   console.log(`  ${stage6Pass ? C.green + '✔' : C.yellow + '▲'}${C.reset} Heap Digunakan: ${heapUsedMb} MB | Delta RSS: +${rssDeltaMb} MB`);
 
-  // ── Teardown & Clean Trial Entities ──
-  closeUpstream();
-  if (mockTraccarSocket) mockTraccarSocket.close();
-  if (mockTraccarServer) await new Promise((r) => mockTraccarServer.close(r));
-  if (appServer) await new Promise((r) => appServer.close(r));
+  } finally {
+    // ── Teardown & Clean Trial Entities ──
+    try { closeUpstream(); } catch (e) {}
+    try { if (mockTraccarSocket) mockTraccarSocket.close(); } catch (e) {}
+    try { if (mockTraccarServer) await new Promise((r) => mockTraccarServer.close(r)); } catch (e) {}
+    try { if (appServer) await new Promise((r) => appServer.close(r)); } catch (e) {}
 
-  // Clean trial event records to keep DB pristine
-  try {
-    db.db.prepare('DELETE FROM events WHERE id = ?').run(trialEventId);
-  } catch (e) {}
+    // Clean trial event records unconditionally to keep DB pristine
+    if (trialEventId) {
+      try {
+        db.db.prepare('DELETE FROM events WHERE id = ?').run(trialEventId);
+      } catch (e) {}
+    }
+  }
 
   const trialDurationSec = ((performance.now() - trialStartTime) / 1000).toFixed(2);
   const hasFailures = results.some((r) => r.status === 'FAIL');

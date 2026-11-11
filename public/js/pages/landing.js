@@ -124,35 +124,16 @@ function renderLanding() {
               <div class="dossier-peloton-stream">
                 <div class="peloton-stream-header">
                   <span>// ACTIVE PELOTON RADAR</span>
-                  <span class="peloton-status-text">ONLINE</span>
+                  <span class="peloton-status-text" id="dossierPelotonStatus">STANDBY</span>
                 </div>
-                <div class="peloton-rider-row">
-                  <div class="peloton-rider-meta">
-                    <span class="peloton-dot rider-leader"></span>
-                    <span class="peloton-bib">#001</span>
-                    <span class="peloton-name">Ahmad Pelari</span>
+                <div id="dossierPelotonList">
+                  <div style="padding:14px;font-size:12px;color:rgba(255,255,255,0.6);text-align:center">
+                    Menghubungkan ke telemetri event...
                   </div>
-                  <span class="peloton-pace">28.4 km/h · ON ROUTE</span>
-                </div>
-                <div class="peloton-rider-row">
-                  <div class="peloton-rider-meta">
-                    <span class="peloton-dot rider-chaser"></span>
-                    <span class="peloton-bib">#002</span>
-                    <span class="peloton-name">Budi Santoso</span>
-                  </div>
-                  <span class="peloton-pace">26.1 km/h · ON ROUTE</span>
-                </div>
-                <div class="peloton-rider-row">
-                  <div class="peloton-rider-meta">
-                    <span class="peloton-dot rider-sweeper"></span>
-                    <span class="peloton-bib">🧹</span>
-                    <span class="peloton-name">Doni Sweeper</span>
-                  </div>
-                  <span class="peloton-pace">22.0 km/h · LAST RIDER</span>
                 </div>
               </div>
 
-              <a href="/watch/1" id="btnDossierLaunch" data-link class="btn-dossier-launch">
+              <a href="#" id="btnDossierLaunch" data-link class="btn-dossier-launch">
                 <span>BUKA RADAR EVENT INI</span>
                 <span class="dossier-launch-arrow">→</span>
               </a>
@@ -285,7 +266,17 @@ function renderLanding() {
   fetch('/api/events')
     .then(r => r.json())
     .then(events => {
-      if (!Array.isArray(events) || !events.length) return;
+      const streamEl = document.getElementById('dossierPelotonList');
+      if (!Array.isArray(events) || !events.length) {
+        if (streamEl) {
+          streamEl.innerHTML = `
+            <div style="padding:14px;font-size:12px;color:rgba(255,255,255,0.6);text-align:center">
+              Belum ada event balap yang aktif saat ini.
+            </div>
+          `;
+        }
+        return;
+      }
 
       const active = events.filter(e => e.active);
       const targetEvents = active.length ? active : events.slice(0, 1);
@@ -297,6 +288,40 @@ function renderLanding() {
       const dossierLaunch = document.getElementById('btnDossierLaunch');
       if (dossierName && topEvent.name) dossierName.textContent = topEvent.name;
       if (dossierLaunch) dossierLaunch.setAttribute('href', `/watch/${topEvent.id}`);
+
+      // Fetch accurate count of riders and checkpoints for the featured event
+      Promise.all([
+        fetch(`/api/events/${topEvent.id}/riders`).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`/api/events/${topEvent.id}/checkpoints`).then(r => r.ok ? r.json() : []).catch(() => [])
+      ]).then(([riders, cps]) => {
+        const ridersEl = document.getElementById('dossierRiders');
+        const cpsEl = document.getElementById('dossierCps');
+        const pelotonStatus = document.getElementById('dossierPelotonStatus');
+        if (ridersEl) ridersEl.textContent = Array.isArray(riders) ? riders.length : 0;
+        if (cpsEl) cpsEl.textContent = Array.isArray(cps) ? cps.length : 0;
+        if (pelotonStatus) pelotonStatus.textContent = Array.isArray(riders) && riders.length ? 'ONLINE' : 'STANDBY';
+
+        if (streamEl) {
+          if (Array.isArray(riders) && riders.length) {
+            streamEl.innerHTML = riders.slice(0, 3).map(r => `
+              <div class="peloton-rider-row">
+                <div class="peloton-rider-meta">
+                  <span class="peloton-dot" style="background:${escapeHtml(r.color || '#00E5FF')}"></span>
+                  <span class="peloton-bib">#${escapeHtml(r.bib)}</span>
+                  <span class="peloton-name">${escapeHtml(r.name)}</span>
+                </div>
+                <span class="peloton-pace">${r.role === 'sweeper' ? 'SWEEPER' : r.role === 'medic' ? 'MEDIS' : 'PESERTA'}</span>
+              </div>
+            `).join('');
+          } else {
+            streamEl.innerHTML = `
+              <div style="padding:14px;font-size:12px;color:rgba(255,255,255,0.6);text-align:center">
+                Belum ada rider terdaftar pada event ini.
+              </div>
+            `;
+          }
+        }
+      });
 
       const container = document.getElementById('activeEventContainer');
       const list = document.getElementById('activeEventList');

@@ -143,6 +143,7 @@ module.exports = {
   createEvent:    db.prepare('INSERT INTO events (name, date) VALUES (@name, @date)'),
   updateEvent:    db.prepare('UPDATE events SET name=@name, date=@date, active=@active WHERE id=@id'),
   updateEventGpx: db.prepare('UPDATE events SET gpx_path=? WHERE id=?'),
+  deleteEvent:    db.prepare('DELETE FROM events WHERE id = ?'),
 
   // Riders
   getRidersByEvent:          db.prepare("SELECT * FROM riders WHERE event_id = ? ORDER BY CASE WHEN role != 'rider' THEN 0 ELSE 1 END, CAST(bib AS INTEGER) ASC, bib ASC"),

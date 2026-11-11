@@ -1092,6 +1092,9 @@ async function renderAdminDashboard() {
              href="/watch/${ev.id}?admin=1" target="_blank" rel="noopener">🗺️ Live Map</a>
           <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
              href="/events/${ev.id}/results" target="_blank" rel="noopener">🏆 Hasil &amp; Brevet</a>
+          <button class="btn btn-outline" style="font-size:12px;padding:7px 12px;color:#DC2626;border-color:#FCA5A5"
+                  onclick="confirmDeleteEvent(${ev.id}, '${escapeHtml(ev.name).replace(/'/g, "\\'")}')"
+                  title="Hapus Event Ini">🗑️ Hapus</button>
         </div>
       </div>
     `).join('');
@@ -1100,3 +1103,24 @@ async function renderAdminDashboard() {
       `<p style="color:var(--color-red)">Gagal memuat event: ${err.message}</p>`;
   }
 }
+
+window.confirmDeleteEvent = async function(id, name) {
+  if (!confirm(`Hapus event "${name}"?\nSemua peserta, checkpoint, dan rute GPX akan dihapus permanen.`)) {
+    return;
+  }
+  try {
+    const res = await fetch(`/api/events/admin/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('Event berhasil dihapus!', 'success');
+      renderAdminDashboard();
+    } else {
+      showToast(data.error || 'Gagal menghapus event', 'error');
+    }
+  } catch (err) {
+    showToast('Terjadi kesalahan saat menghubungi server', 'error');
+  }
+};

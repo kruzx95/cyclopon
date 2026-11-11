@@ -9,6 +9,7 @@
     "test": "node --test",
     "benchmark": "node scripts/benchmark.js",
     "test:report": "node scripts/generate-test-report.js",
+    "clean:data": "node scripts/clean-demo-data.js",
     "seed:demo": "node scripts/seed-demo.js",
     "simulate": "node scripts/simulate-race.js",
     "deploy:vps": "bash scripts/deploy-vps.sh"

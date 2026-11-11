@@ -14,12 +14,45 @@ const db = require('../db/database');
 
 console.log('\n🚴 \x1b[1m\x1b[32m[CYCLOPON SEEDER]\x1b[0m Inisialisasi data event balap sepeda realistis...');
 
-// 1. Verify GPX Track File
+// 1. Verify GPX Track File (or auto-generate if missing)
+const gpxDir = path.join(__dirname, '..', 'public', 'gpx');
+if (!fs.existsSync(gpxDir)) {
+  fs.mkdirSync(gpxDir, { recursive: true });
+}
+
 const gpxRelPath = '/gpx/21.gpx';
-const gpxAbsPath = path.join(__dirname, '..', 'public', 'gpx', '21.gpx');
+const gpxAbsPath = path.join(gpxDir, '21.gpx');
+
 if (!fs.existsSync(gpxAbsPath)) {
-  console.error('\x1b[31m[ERROR] File GPX public/gpx/21.gpx tidak ditemukan!\x1b[0m');
-  process.exit(1);
+  const src231 = path.join(gpxDir, '231.gpx');
+  if (fs.existsSync(src231)) {
+    fs.copyFileSync(src231, gpxAbsPath);
+    console.log('✓ Memulihkan file rute dari 231.gpx ke 21.gpx');
+  } else {
+    const cps = [
+      { lat: -7.328078, lon: 108.229500, ele: 350 },
+      { lat: -7.342565, lon: 108.263873, ele: 620 },
+      { lat: -7.350830, lon: 108.284902, ele: 750 },
+      { lat: -7.375867, lon: 108.252282, ele: 480 },
+      { lat: -7.346917, lon: 108.207560, ele: 320 }
+    ];
+    let trk = '';
+    for (let i = 0; i < cps.length - 1; i++) {
+      const steps = 40;
+      for (let s = 0; s < steps; s++) {
+        const t = s / steps;
+        const lat = (cps[i].lat + (cps[i + 1].lat - cps[i].lat) * t).toFixed(6);
+        const lon = (cps[i].lon + (cps[i + 1].lon - cps[i].lon) * t).toFixed(6);
+        const ele = (cps[i].ele + (cps[i + 1].ele - cps[i].ele) * t).toFixed(1);
+        trk += `      <trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele></trkpt>\n`;
+      }
+    }
+    const last = cps[cps.length - 1];
+    trk += `      <trkpt lat="${last.lat}" lon="${last.lon}"><ele>${last.ele}</ele></trkpt>\n`;
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="CycloPon">\n  <trk>\n    <name>Gravel to Gang // Pro Telemetry 2026</name>\n    <trkseg>\n${trk}    </trkseg>\n  </trk>\n</gpx>`;
+    fs.writeFileSync(gpxAbsPath, xml);
+    console.log('✓ File rute demo public/gpx/21.gpx berhasil dibuat otomatis.');
+  }
 }
 
 // 2. Setup or Update Flagship Demo Event

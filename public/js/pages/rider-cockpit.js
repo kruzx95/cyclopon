@@ -73,14 +73,26 @@ async function renderRiderCockpit() {
     }
   }
 
-  // Fallback demo config if no session exists
-  const isDemo = !config;
-  if (isDemo) {
-    config = {
-      rider: { id: 999, bib: '101', name: 'Rider Demo', phone: '08123456789' },
-      event: { id: 1, name: 'Audax Rinjani 200 BRM', gpx_path: null },
-      traccar: { deviceIdentifier: 'BIB-101', serverUrl: 'http://localhost:5055', osmandPort: 5055, interval: 10 }
-    };
+  // Validate rider session
+  if (!config || !config.rider || !config.event) {
+    document.body.classList.remove('cockpit-active');
+    cockpitActive = false;
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center">
+        <div style="max-width:440px;background:var(--card-bg, #fff);border:1px solid var(--border-color, #e5e7eb);border-radius:12px;padding:36px 28px;box-shadow:0 8px 24px rgba(0,0,0,0.06)">
+          <div style="font-size:44px;margin-bottom:14px">🚴</div>
+          <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text-primary, #111827)">Sesi Rider Belum Ditemukan</h2>
+          <p style="font-size:14px;color:var(--text-secondary, #6b7280);line-height:1.5;margin-bottom:24px">
+            Anda belum masuk ke sesi rider aktif. Masuk menggunakan nomor BIB dan PIN atau gunakan tautan personal registrasi Anda untuk mengakses Cockpit Telemetri.
+          </p>
+          <a href="/rider" data-link class="btn btn-primary" style="display:inline-block;padding:12px 24px;font-weight:700;text-decoration:none">
+            Masuk ke Rider Portal →
+          </a>
+        </div>
+      </div>
+    `;
+    return;
   }
 
   const { rider, event } = config;
@@ -124,12 +136,7 @@ async function renderRiderCockpit() {
         </div>
       </div>
 
-      ${isDemo ? `
-        <div style="background:rgba(242,132,47,0.14);border-bottom:1px solid rgba(242,132,47,0.35);padding:6px 14px;font-size:12px;color:var(--color-orange);display:flex;align-items:center;justify-content:space-between">
-          <span>⚠️ <strong>Mode Demo Simulator</strong> — Anda belum login.</span>
-          <a href="/rider" data-link style="color:var(--color-orange);font-weight:800;text-decoration:underline">Login Rider →</a>
-        </div>
-      ` : ''}
+
 
       <!-- Off-Route Warning Alert Banner -->
       <div id="cockpitOffRouteAlert" class="cockpit-offroute-banner">
@@ -544,37 +551,17 @@ async function renderRiderCockpit() {
     console.warn('[Cockpit] Init fetch error:', err);
   }
 
-  // Fallback coords for demo or empty route
+  // Empty route fallback handling
   if (!routeCoords.length) {
-    routeCoords = [
-      [-6.9147, 107.6098],
-      [-6.9170, 107.6150],
-      [-6.9200, 107.6200],
-      [-6.9250, 107.6300],
-      [-6.9300, 107.6400],
-      [-6.9350, 107.6500],
-      [-6.9400, 107.6600],
-      [-6.9450, 107.6700]
-    ];
-    totalKm = 25.0;
+    totalKm = 0;
     gpxPoints = [];
-    for (let i = 0; i < routeCoords.length; i++) {
-      const dist = Math.round((i / (routeCoords.length - 1)) * totalKm * 100) / 100;
-      let ele = 100;
-      if (dist >= 6 && dist <= 15) {
-        ele = 100 + ((dist - 6) / 9) * 280;
-      } else if (dist > 15) {
-        ele = 380 - ((dist - 15) / 10) * 150;
-      }
-      gpxPoints.push({ lat: routeCoords[i][0], lng: routeCoords[i][1], ele: Math.round(ele * 10) / 10, distKm: dist, gradePct: 0 });
-    }
-    routeClimbs = typeof detectClimbs === 'function' ? detectClimbs(gpxPoints) : [];
-    totalElevGain = 280;
+    routeClimbs = [];
+    totalElevGain = 0;
   }
 
-  document.getElementById('cockpitTotalDistSub').textContent = `Total Rute: ${totalKm} km`;
+  document.getElementById('cockpitTotalDistSub').textContent = totalKm ? `Total Rute: ${totalKm} km` : 'Rute belum diunggah';
   const climbSumInit = document.getElementById('cockpitClimbSummarySub');
-  if (climbSumInit) climbSumInit.textContent = `${routeClimbs.length} Tanjakan Terdeteksi`;
+  if (climbSumInit) climbSumInit.textContent = routeClimbs.length ? `${routeClimbs.length} Tanjakan Terdeteksi` : 'Tidak ada data tanjakan';
 
   // Initial Checkpoint state
   updateCheckpointWidget(0, 0);
