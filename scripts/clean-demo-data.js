@@ -16,8 +16,9 @@ console.log('\n🧹 \x1b[1m\x1b[36m[CYCLOPON CLEAN-CODE]\x1b[0m Pembersihan data
 // 1. Identify demo/dummy events to delete
 const demoEvents = db.db.prepare(`
   SELECT id, name FROM events
-  WHERE id IN (1, 2, 21)
+  WHERE id IN (1, 2, 21, 231)
      OR name LIKE '%Gravel to Gang%'
+     OR name LIKE '%Tour de Gang%'
      OR name LIKE '%Demo%'
      OR name LIKE '%Trial Run%'
      OR name LIKE '%Test%'

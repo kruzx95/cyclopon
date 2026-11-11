@@ -128,6 +128,9 @@ SSH_CMD="
     docker compose -f \$COMPOSE_FILE restart cyclopon
   fi
 
+  echo '→ Running clean-demo-data inside cyclopon container...'
+  docker compose -f \$COMPOSE_FILE exec -T cyclopon node scripts/clean-demo-data.js || true
+
   echo '→ Verifying container status...'
   docker compose -f \$COMPOSE_FILE ps
 "
