@@ -2,10 +2,12 @@ async function renderAdminEvent(params) {
   loadCss('/css/admin.css');
 
   // Route guard: check if admin is logged in
-  if (!sessionStorage.getItem('adminUser')) {
+  const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
+  if (!adminUser) {
     Router.navigate('/admin');
     return;
   }
+  if (!sessionStorage.getItem('adminUser')) sessionStorage.setItem('adminUser', adminUser);
 
   const eventId = params.id;
   const isNew   = eventId === 'new';
@@ -164,6 +166,9 @@ async function renderAdminEvent(params) {
               </p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-outline" style="font-size:12px;padding:7px 12px;font-weight:700" id="btnPrintAllQrs" title="Cetak Kartu BIB / QR Code semua peserta untuk event ini">
+                🖨️ Cetak Semua QR (Batch BIB)
+              </button>
               <a class="btn btn-outline" style="font-size:12px;padding:7px 12px" href="/api/admin/riders/events/${eventId}/template" download="template_riders_cyclopon.csv" title="Unduh contoh template Excel/CSV">
                 📥 Template CSV
               </a>
@@ -214,6 +219,18 @@ async function renderAdminEvent(params) {
   const riderTableBody = document.getElementById('riderTableBody');
   if (riderTableBody) {
     riderTableBody.addEventListener('click', (e) => {
+      const btnQr = e.target.closest('.btn-qr-code');
+      if (btnQr) {
+        showRiderQrModal({
+          token: btnQr.dataset.token,
+          bib: btnQr.dataset.bib,
+          name: btnQr.dataset.name,
+          role: btnQr.dataset.role,
+          pin: btnQr.dataset.pin,
+          eventName: btnQr.dataset.event
+        });
+        return;
+      }
       const btnCopy = e.target.closest('.btn-copy-magic');
       if (btnCopy) {
         copyMagicLink(btnCopy.dataset.token, btnCopy.dataset.bib);
@@ -229,6 +246,14 @@ async function renderAdminEvent(params) {
         deleteRider(btnDel.dataset.id, btnDel.dataset.bib);
         return;
       }
+    });
+  }
+
+  // Batch Print All QRs Handler
+  const btnPrintAllQrs = document.getElementById('btnPrintAllQrs');
+  if (btnPrintAllQrs) {
+    btnPrintAllQrs.addEventListener('click', () => {
+      showBatchPrintModal(riders, event.name);
     });
   }
 
@@ -636,6 +661,9 @@ function renderRiderTableRows(riders, eventName) {
         <td>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             ${safeToken ? `
+              <button class="btn btn-outline btn-qr-code" style="padding:4px 8px;font-size:11px;font-weight:800;color:#0D1117;border-color:#0D1117;background:#F9FAFB" data-token="${escapeHtml(safeToken)}" data-bib="${escapeHtml(safeBib)}" data-name="${escapeHtml(safeName)}" data-role="${escapeHtml(r.role || 'rider')}" data-pin="${escapeHtml(safePin)}" data-event="${escapeHtml(safeEventName)}" title="Lihat dan Cetak QR Code Akses">
+                📱 QR Code
+              </button>
               <button class="btn btn-outline btn-copy-magic" style="padding:4px 8px;font-size:11px;font-weight:800" data-token="${escapeHtml(safeToken)}" data-bib="${escapeHtml(safeBib)}" title="Salin tautan login instan tanpa ketik">
                 📋 Salin Link
               </button>
@@ -694,6 +722,245 @@ async function deleteRider(riderId, bib) {
   }
 }
 
+// ── QR Code Generator & Modal Functions (100% Client-Side / Zero VPS Load) ──
+function getQrSvgString(text, cellSize = 4, margin = 8) {
+  try {
+    if (typeof qrcode !== 'function') {
+      console.warn('[QR] Library qrcode belum dimuat');
+      return '<div style="padding:20px;color:red;font-size:12px">Library QR belum siap</div>';
+    }
+    const qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    return qr.createSvgTag(cellSize, margin);
+  } catch (err) {
+    console.error('[QR] Gagal generate QR code:', err);
+    return '<div style="padding:20px;color:red;font-size:12px">Gagal render QR</div>';
+  }
+}
+
+function showRiderQrModal(data) {
+  const { token, bib, name, role, pin, eventName } = data;
+  const magicUrl = `${window.location.origin}/r/${token}`;
+
+  // Remove existing modal if any
+  const oldModal = document.getElementById('riderQrModal');
+  if (oldModal) oldModal.remove();
+
+  const roleText = role === 'sweeper' ? '🧹 SWEEPER' : (role === 'marshall' ? '🏍️ MARSHALL' : (role === 'medic' ? '🚑 MEDIS' : '🚴 RIDER'));
+
+  const modal = document.createElement('div');
+  modal.id = 'riderQrModal';
+  modal.className = 'qr-modal-overlay';
+  modal.innerHTML = `
+    <div class="qr-modal-card">
+      <div class="qr-modal-header">
+        <h3 class="qr-modal-title">
+          <span>📱</span> AKSES LOGIN QR PESERTA
+        </h3>
+        <button class="qr-modal-close" id="btnCloseQrModal" title="Tutup">✕</button>
+      </div>
+
+      <div class="qr-pass-container">
+        <div class="qr-bib-card" id="printableBibCard">
+          <div class="qr-bib-top">
+            <div>
+              <div class="qr-bib-event-title">${escapeHtml(eventName || 'CYCLOPON LIVE')}</div>
+              <div style="font-size:10px;color:#9CA3AF;font-family:ui-monospace,monospace;font-weight:700">OFFICIAL ATHLETE PASS</div>
+            </div>
+            <span class="badge ${role === 'sweeper' ? 'badge-sweeper' : (role === 'marshall' ? 'badge-marshall' : (role === 'medic' ? 'badge-medic' : 'badge-rider'))}">
+              ${roleText}
+            </span>
+          </div>
+
+          <div class="qr-bib-number-large">#${escapeHtml(bib)}</div>
+          <div class="qr-bib-rider-name">${escapeHtml(name)}</div>
+
+          <div class="qr-image-wrapper" id="qrCanvasContainer">
+            <!-- QR code rendered here -->
+          </div>
+
+          <p style="font-size:11.5px;color:#4B5563;margin:0 0 10px 0;line-height:1.4">
+            Arahkan kamera HP ke QR Code untuk <strong>login instan 1-klik</strong> tanpa mengetik BIB & PIN.
+          </p>
+
+          <div class="qr-credentials-strip">
+            <div class="qr-cred-item">
+              <span class="qr-cred-label">NOMOR BIB</span>
+              <span class="qr-cred-value">#${escapeHtml(bib)}</span>
+            </div>
+            <div style="width:1px;height:24px;background:#E5E7EB"></div>
+            <div class="qr-cred-item">
+              <span class="qr-cred-label">PIN AKSES</span>
+              <span class="qr-cred-value">${escapeHtml(pin || '1234')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qr-modal-actions">
+        <button class="btn btn-primary" id="btnDownloadQrPng" style="flex:1;font-size:12px;padding:9px 12px;display:flex;align-items:center;justify-content:center;gap:6px">
+          <span>📥</span> Unduh QR (PNG)
+        </button>
+        <button class="btn btn-outline" id="btnCopyQrUrl" style="font-size:12px;padding:9px 12px" title="Salin URL Magic Link">
+          📋 Salin Link
+        </button>
+        <button class="btn btn-outline" id="btnPrintSingleCard" style="font-size:12px;padding:9px 12px" title="Cetak Kartu">
+          🖨️ Cetak
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Render QR Code onto high-res canvas
+  const container = modal.querySelector('#qrCanvasContainer');
+  const canvas = document.createElement('canvas');
+  try {
+    const qr = qrcode(0, 'M');
+    qr.addData(magicUrl);
+    qr.make();
+    // cellSize 8 gives high-res sharp QR code
+    qr.renderToCanvas(canvas, 6, 8);
+    canvas.style.maxWidth = '180px';
+    canvas.style.maxHeight = '180px';
+    canvas.style.width = '100%';
+    canvas.style.height = 'auto';
+    container.appendChild(canvas);
+  } catch (err) {
+    container.innerHTML = getQrSvgString(magicUrl, 5, 8);
+  }
+
+  // Handlers
+  modal.querySelector('#btnCloseQrModal').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+  });
+
+  modal.querySelector('#btnCopyQrUrl').addEventListener('click', () => {
+    copyMagicLink(token, bib);
+  });
+
+  modal.querySelector('#btnDownloadQrPng').addEventListener('click', () => {
+    try {
+      const link = document.createElement('a');
+      link.download = `QR_BIB_${bib}_${name.replace(/\s+/g, '_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast(`QR Code BIB #${bib} berhasil diunduh!`, 'success');
+    } catch {
+      showToast('Gagal mengunduh gambar QR.', 'error');
+    }
+  });
+
+  modal.querySelector('#btnPrintSingleCard').addEventListener('click', () => {
+    showBatchPrintModal([{ bib, name, role, pin, token }], eventName);
+  });
+}
+
+function showBatchPrintModal(ridersList, eventName) {
+  if (!ridersList || !ridersList.length) {
+    showToast('Belum ada peserta terdaftar untuk dicetak!', 'error');
+    return;
+  }
+
+  // Remove existing modal if any
+  const oldModal = document.getElementById('batchPrintModal');
+  if (oldModal) oldModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'batchPrintModal';
+  modal.innerHTML = `
+    <div class="batch-print-toolbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:20px">🖨️</span>
+        <div>
+          <strong style="font-size:14px;letter-spacing:0.02em;text-transform:uppercase">Cetak Kartu BIB &amp; QR Code</strong>
+          <div style="font-size:11px;color:#9CA3AF">${escapeHtml(eventName || 'Event')} — ${ridersList.length} Peserta</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary" id="btnExecutePrint" style="padding:8px 16px;font-size:12px;font-weight:800;background:#00E5FF;color:#0D1117">
+          🖨️ Print Sekarang / Simpan PDF
+        </button>
+        <button class="btn btn-outline" id="btnCloseBatchPrint" style="padding:8px 14px;font-size:12px;color:#FFF;border-color:rgba(255,255,255,0.3)">
+          ✕ Tutup
+        </button>
+      </div>
+    </div>
+
+    <div class="batch-print-body">
+      <div class="batch-print-paper" id="batchPrintPaper">
+        <div style="text-align:center;margin-bottom:24px;border-bottom:2px solid #0D1117;padding-bottom:12px">
+          <h1 style="font-family:'Inter',system-ui,sans-serif;font-size:20px;font-weight:900;letter-spacing:-0.02em;margin:0;color:#0D1117;text-transform:uppercase">
+            ${escapeHtml(eventName || 'CYCLOPON LIVE TRACKING')}
+          </h1>
+          <p style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:#4B5563;margin:4px 0 0 0">
+            KARTU RESMI NOMOR BIB &amp; AKSES QR CODE PELACAK GPS REAL-TIME
+          </p>
+        </div>
+
+        <div class="batch-grid">
+          ${ridersList.map(r => {
+            const safeBib = escapeHtml(r.bib || '');
+            const safeName = escapeHtml(r.name || '');
+            const safeRole = r.role || 'rider';
+            const safePin = escapeHtml(r.pin || '1234');
+            const safeToken = r.token || '';
+            const magicUrl = `${window.location.origin}/r/${safeToken}`;
+            const qrSvg = getQrSvgString(magicUrl, 4, 6);
+            const roleLabel = safeRole === 'sweeper' ? 'SWEEPER' : (safeRole === 'marshall' ? 'MARSHALL' : (safeRole === 'medic' ? 'MEDIS' : 'RIDER'));
+
+            return `
+              <div class="batch-card">
+                <div class="batch-cut-badge">✂️ Gunting di sini</div>
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E5E7EB;padding-bottom:6px;margin-bottom:8px">
+                  <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:900;color:#0D1117;letter-spacing:0.04em">
+                    ${escapeHtml(eventName || 'CYCLOPON')}
+                  </span>
+                  <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:900;padding:2px 6px;border-radius:3px;border:1px solid #0D1117;background:#F3F4F6">
+                    ${roleLabel}
+                  </span>
+                </div>
+
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
+                  <div>
+                    <div style="font-family:ui-monospace,monospace;font-size:32px;font-weight:900;color:#0D1117;line-height:1">
+                      #${safeBib}
+                    </div>
+                    <div style="font-size:14px;font-weight:800;color:#0D1117;margin-top:4px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                      ${safeName}
+                    </div>
+                  </div>
+                  <div style="width:110px;height:110px;flex-shrink:0;background:#FFFFFF;border:1px solid #0D1117;border-radius:6px;padding:4px;display:flex;align-items:center;justify-content:center">
+                    ${qrSvg}
+                  </div>
+                </div>
+
+                <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:4px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
+                  <span style="color:#6B7280;font-family:ui-monospace,monospace">Scan kamera HP untuk masuk</span>
+                  <span style="font-family:ui-monospace,monospace;font-weight:900;color:#0D1117">PIN: ${safePin}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  modal.querySelector('#btnCloseBatchPrint').addEventListener('click', () => modal.remove());
+  modal.querySelector('#btnExecutePrint').addEventListener('click', () => {
+    window.print();
+  });
+}
+
+window.showRiderQrModal = showRiderQrModal;
+window.showBatchPrintModal = showBatchPrintModal;
 window.deleteRider = deleteRider;
 window.deleteCheckpoint = deleteCheckpoint;
 window.copyMagicLink = copyMagicLink;

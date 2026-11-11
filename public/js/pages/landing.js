@@ -356,12 +356,15 @@ function renderLanding() {
                 ` : ''}
               </div>
               <h3 class="featured-event-title" title="${escapeHtml(ev.name)}">
-                ${escapeHtml(ev.name)}
+                <a href="/events/${ev.id}" data-link style="color:inherit;text-decoration:none">${escapeHtml(ev.name)}</a>
               </h3>
             </div>
           </div>
 
           <div class="featured-event-actions">
+            <a href="/events/${ev.id}" data-link class="btn-gpx-chip" style="color:#0D1117;border-color:#0D1117;background:#FFFFFF;font-weight:800" title="Lihat Aktivitas & Roster Peserta (Kuyy Style)">
+              <span>👥 DAFTAR &amp; ROSTER</span>
+            </a>
             ${ev.gpx_path ? `
               <a href="/api/events/${ev.id}/gpx/download" download class="btn-gpx-chip" title="Unduh File GPX Resmi">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>

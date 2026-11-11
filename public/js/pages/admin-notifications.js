@@ -3,10 +3,12 @@ async function renderAdminNotifications() {
   loadCss('/css/admin.css');
 
   // Route guard: check if admin is logged in
-  if (!sessionStorage.getItem('adminUser')) {
+  const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
+  if (!adminUser) {
     Router.navigate('/admin');
     return;
   }
+  if (!sessionStorage.getItem('adminUser')) sessionStorage.setItem('adminUser', adminUser);
 
   const app = document.getElementById('app');
   app.innerHTML = `

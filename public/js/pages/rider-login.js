@@ -138,8 +138,16 @@ async function renderLoginForm() {
             <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="36" height="36" style="border-radius:8px;box-shadow:0 3px 8px rgba(13,17,23,0.15)">
             <span style="font-family:'Inter',system-ui,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
           </div>
-          <h1 class="login-title">Akses Peserta & Panitia</h1>
-          <p class="login-subtitle">Pilih event resmi dan masukkan nomor BIB & PIN Anda</p>
+          <h1 class="login-title">Akses Peserta &amp; Panitia</h1>
+          <p class="login-subtitle">Pilih event resmi dan masukkan nomor BIB &amp; PIN Anda</p>
+        </div>
+
+        <!-- QR Scan Hint for Fast Pass -->
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 14px;margin-bottom:18px;display:flex;align-items:center;gap:12px;text-align:left">
+          <span style="font-size:24px;flex-shrink:0">📷</span>
+          <div style="font-size:12px;color:#166534;line-height:1.4">
+            <strong>Punya Kartu BIB ber-QR?</strong> Cukup arahkan <strong>kamera HP</strong> ke QR Code pada kartu untuk langsung masuk instan tanpa ketik.
+          </div>
         </div>
 
         <form id="riderLoginForm" onsubmit="return false;">

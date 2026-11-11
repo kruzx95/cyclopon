@@ -491,11 +491,16 @@ const AdminSosMonitor = {
 };
 window.AdminSosMonitor = AdminSosMonitor;
 
-function logoutAdmin() {
+async function logoutAdmin() {
   if (confirm('Keluar dari Admin Panel?')) {
     if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
+    try {
+      await fetch('/api/auth/admin/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
     sessionStorage.removeItem('adminUser');
     localStorage.removeItem('adminUser');
+    sessionStorage.removeItem('adminToken');
+    localStorage.removeItem('adminToken');
     showToast('Berhasil logout dari Admin.', 'info');
     Router.navigate('/admin');
   }
@@ -507,7 +512,9 @@ function renderAdminLogin() {
   loadCss('/css/admin.css');
 
   // If already logged in, redirect directly to dashboard
-  if (sessionStorage.getItem('adminUser')) {
+  const user = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
+  if (user) {
+    if (!sessionStorage.getItem('adminUser')) sessionStorage.setItem('adminUser', user);
     Router.navigate('/admin/dashboard');
     return;
   }
@@ -587,6 +594,10 @@ function renderAdminLogin() {
       if (res.ok) {
         sessionStorage.setItem('adminUser', JSON.stringify(data.user));
         localStorage.setItem('adminUser', JSON.stringify(data.user));
+        if (data.token) {
+          sessionStorage.setItem('adminToken', data.token);
+          localStorage.setItem('adminToken', data.token);
+        }
         Router.navigate('/admin/dashboard');
       } else {
         errEl.textContent = data.error || 'Login gagal.';
@@ -606,10 +617,12 @@ async function renderAdminDashboard() {
   loadCss('/css/admin.css');
 
   // Route guard: check if admin is logged in
-  if (!sessionStorage.getItem('adminUser')) {
+  const user = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
+  if (!user) {
     Router.navigate('/admin');
     return;
   }
+  if (!sessionStorage.getItem('adminUser')) sessionStorage.setItem('adminUser', user);
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="admin-layout">

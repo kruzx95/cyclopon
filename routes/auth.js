@@ -157,11 +157,23 @@ function registerRateLimiter(req, res, next) {
 // POST /api/auth/rider/register — On-the-spot self-registration (for walk-in riders, sweepers, marshalls)
 router.post('/rider/register', registerRateLimiter, (req, res) => {
   const { event_id, bib, name, phone, pin, role } = req.body;
-  if (!event_id || !bib || !name) {
-    return res.status(400).json({ error: 'Event, nomor BIB, dan nama wajib diisi' });
+  if (!event_id || !name || !String(name).trim()) {
+    return res.status(400).json({ error: 'Event dan nama peserta wajib diisi' });
   }
 
-  const cleanBib = String(bib).trim().toUpperCase();
+  const existing = db.getRidersByEvent.all(Number(event_id));
+  const existingBibs = new Set(existing.map(r => String(r.bib).toUpperCase()));
+
+  let cleanBib = bib ? String(bib).trim().toUpperCase() : '';
+  if (!cleanBib) {
+    // Auto-generate BIB if not provided: 001, 002, 003...
+    let nextNum = existing.length + 1;
+    while (existingBibs.has(String(nextNum).padStart(3, '0'))) {
+      nextNum++;
+    }
+    cleanBib = String(nextNum).padStart(3, '0');
+  }
+
   const cleanRole = role && ['rider', 'sweeper', 'marshall', 'medic'].includes(String(role).toLowerCase())
     ? String(role).toLowerCase()
     : 'rider';
@@ -177,7 +189,6 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
   }
 
   try {
-    const existing = db.getRidersByEvent.all(Number(event_id));
     const color = determineColorForRole(cleanRole, existing.length);
 
     const result = db.createRider.run({
@@ -202,7 +213,9 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
         role: newRider.role || 'rider',
         phone: newRider.phone,
         color: newRider.color,
-        traccar_device_id: newRider.traccar_device_id
+        traccar_device_id: newRider.traccar_device_id,
+        token: newRider.token,
+        pin: newRider.pin
       },
       event: { id: event.id, name: event.name, date: event.date },
       traccar: getPublicTraccarConfig(req, newRider)
@@ -247,9 +260,10 @@ router.post('/admin/login', async (req, res) => {
   if ((email === envUser || email === 'admin' || email === 'admin@example.com' || email === 'admin@cyclopon.local') && password === envPass) {
     adminLoginAttempts.delete(clientIp);
     const session = generateAdminSession();
+    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.cookie('cyclopon_admin', session.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
       path: '/'
@@ -280,9 +294,10 @@ router.post('/admin/login', async (req, res) => {
 
     adminLoginAttempts.delete(clientIp);
     const session = generateAdminSession();
+    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
     res.cookie('cyclopon_admin', session.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000,
       path: '/'
@@ -299,8 +314,10 @@ router.post('/admin/login', async (req, res) => {
 // GET /api/auth/admin/session — check session validity
 router.get('/admin/session', (req, res) => {
   const cookieToken = req.cookies?.cyclopon_admin;
-  const isValid = cookieToken ? verifyAdminSession(cookieToken) : false;
-  res.json({ ok: isValid });
+  const headerToken = req.headers['authorization']?.replace(/^Bearer\s+/i, '') || req.headers['x-admin-token'];
+  const isValid = (cookieToken && verifyAdminSession(cookieToken)) ||
+                  (headerToken && verifyAdminSession(headerToken));
+  res.json({ ok: !!isValid });
 });
 
 // POST /api/auth/admin/logout — clear admin session

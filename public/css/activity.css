@@ -1,0 +1,553 @@
+/* ==========================================================================
+   CycloPon Activity & Rider Roster Page (Kuyy.app Athletic Minimalist Style)
+   ========================================================================== */
+
+.activity-page-wrapper {
+  min-height: 100vh;
+  background: #F8F9FA;
+  padding-bottom: 90px; /* Space for sticky bottom bar */
+  color: #0D1117;
+}
+
+/* ── Top Bar Navigation ── */
+.activity-top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #E5E7EB;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.activity-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4B5563;
+  text-decoration: none;
+  background: #F3F4F6;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.15s ease;
+}
+.activity-back-btn:hover {
+  background: #E5E7EB;
+  color: #0D1117;
+}
+.activity-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #0D1117;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+/* ── Hero Activity Card (Kuyy Banner Style) ── */
+.activity-hero-card {
+  max-width: 800px;
+  margin: 16px auto;
+  padding: 0 16px;
+}
+.activity-banner {
+  background: linear-gradient(135deg, #0D1117 0%, #1A2332 100%);
+  border-radius: 20px;
+  padding: 24px;
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(13, 17, 23, 0.12);
+}
+.activity-banner::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.activity-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.sport-pill {
+  background: rgba(0, 229, 255, 0.18);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  color: #00E5FF;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.status-pill-open {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34D399;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.pulse-dot-green {
+  width: 6px;
+  height: 6px;
+  background: #34D399;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #34D399;
+  animation: pulse 1.5s infinite;
+}
+.activity-title {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  margin-bottom: 16px;
+}
+@media (min-width: 640px) {
+  .activity-title {
+    font-size: 30px;
+  }
+}
+.activity-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 14px;
+}
+@media (max-width: 480px) {
+  .activity-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.meta-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.meta-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: block;
+}
+.meta-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+/* ── Content Container & Tabs (Kuyy Navigation) ── */
+.activity-content-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.activity-tabs-row {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid #E5E7EB;
+  margin-bottom: 18px;
+  padding-bottom: 2px;
+}
+.activity-tab-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 800;
+  color: #6B7280;
+  padding: 10px 16px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.activity-tab-btn.active {
+  color: #0D1117;
+}
+.activity-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #0D1117;
+  border-radius: 3px;
+}
+.tab-count-badge {
+  background: #E5E7EB;
+  color: #374151;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  font-weight: 800;
+}
+.activity-tab-btn.active .tab-count-badge {
+  background: #0D1117;
+  color: #FFFFFF;
+}
+
+/* ── Search & Filter Bar ── */
+.roster-controls-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.roster-search-box {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 8px 14px;
+  transition: border-color 0.15s;
+}
+.roster-search-box:focus-within {
+  border-color: #0D1117;
+}
+.roster-search-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0D1117;
+  outline: none;
+}
+.roster-search-input::placeholder {
+  color: #9CA3AF;
+  font-weight: 500;
+}
+.filter-pills-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.filter-pills-row::-webkit-scrollbar {
+  display: none;
+}
+.filter-chip {
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4B5563;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.filter-chip:hover {
+  border-color: #9CA3AF;
+}
+.filter-chip.active {
+  background: #0D1117;
+  color: #FFFFFF;
+  border-color: #0D1117;
+}
+
+/* ── Kuyy Participant Card (Roster Items) ── */
+.roster-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.roster-item-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.roster-item-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+.roster-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.roster-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: #FFFFFF;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border: 2px solid #FFFFFF;
+}
+.roster-info {
+  min-width: 0;
+}
+.roster-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.roster-name {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #0D1117;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.verified-icon {
+  color: #10B981;
+  font-size: 12px;
+}
+.roster-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.bib-pill-small {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 900;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  color: #1F2937;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.role-badge-tag {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+.role-badge-tag.rider { background: #E0F2FE; color: #0369A1; }
+.role-badge-tag.sweeper { background: #FFEDD5; color: #C2410C; }
+.role-badge-tag.marshall { background: #EDE9FE; color: #6D28D9; }
+.role-badge-tag.medic { background: #FEE2E2; color: #B91C1C; }
+
+.roster-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-confirmed-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* ── Sticky Bottom Bar (Kuyy App CTA) ── */
+.activity-sticky-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1.5px solid #E5E7EB;
+  padding: 12px 16px;
+  z-index: 1000;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+}
+.sticky-bar-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.sticky-info-col {
+  display: flex;
+  flex-direction: column;
+}
+.sticky-info-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sticky-info-val {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0D1117;
+}
+.sticky-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-kuyy-join {
+  background: #0D1117;
+  color: #FFFFFF;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 12px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px rgba(13, 17, 23, 0.2);
+}
+.btn-kuyy-join:hover {
+  background: #1F2937;
+  transform: translateY(-1px);
+}
+.btn-kuyy-live {
+  background: #00E5FF;
+  color: #0D1117;
+  border: 1.5px solid #0D1117;
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.btn-kuyy-live:hover {
+  background: #33ECFF;
+}
+
+/* ── Modal Registration (Kuyy Style Dialog) ── */
+.kuyy-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.75);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.15s ease;
+}
+.kuyy-modal-card {
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.kuyy-modal-header {
+  background: #0D1117;
+  color: #FFFFFF;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kuyy-modal-title {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kuyy-modal-body {
+  padding: 20px;
+}
+
+/* ── Digital Ticket Pass Display ── */
+.ticket-pass-box {
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+.ticket-qr-wrap {
+  background: #FFFFFF;
+  border: 1.5px solid #0D1117;
+  border-radius: 10px;
+  padding: 10px;
+  display: inline-block;
+  margin: 12px auto;
+}
+.ticket-qr-wrap svg,
+.ticket-qr-wrap canvas {
+  display: block;
+  width: 160px;
+  height: 160px;
+}
+

@@ -1326,3 +1326,257 @@
   margin-bottom: 6px;
 }
 
+/* ── Rider QR Code Modal & Pass Card ── */
+.qr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.qr-modal-card {
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+  animation: qrModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes qrModalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.qr-modal-header {
+  background: #0D1117;
+  color: #FFFFFF;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.qr-modal-title {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qr-modal-close {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+.qr-modal-close:hover {
+  background: rgba(255,255,255,0.3);
+}
+.qr-pass-container {
+  padding: 24px;
+  text-align: center;
+}
+.qr-bib-card {
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  position: relative;
+}
+.qr-bib-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px dashed #E5E7EB;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+.qr-bib-event-title {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #4B5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: left;
+}
+.qr-bib-number-large {
+  font-family: ui-monospace, monospace;
+  font-size: 38px;
+  font-weight: 900;
+  color: #0D1117;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin: 4px 0 8px 0;
+}
+.qr-bib-rider-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0D1117;
+  margin-bottom: 14px;
+}
+.qr-image-wrapper {
+  background: #FFFFFF;
+  border: 1.5px solid #0D1117;
+  border-radius: 10px;
+  display: inline-block;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom: 14px;
+}
+.qr-image-wrapper svg,
+.qr-image-wrapper canvas {
+  display: block;
+  width: 170px;
+  height: 170px;
+}
+.qr-credentials-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #F8F9FA;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+}
+.qr-cred-item {
+  text-align: center;
+}
+.qr-cred-label {
+  font-family: ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #6B7280;
+  text-transform: uppercase;
+  display: block;
+}
+.qr-cred-value {
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  font-weight: 900;
+  color: #0D1117;
+}
+.qr-modal-actions {
+  padding: 14px 24px 20px;
+  display: flex;
+  gap: 10px;
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* ── Batch BIB / QR Code Printable Sheet ── */
+#batchPrintModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(5px);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+}
+.batch-print-toolbar {
+  background: #0D1117;
+  color: #FFFFFF;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.batch-print-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 16px;
+  background: #E5E7EB;
+  display: flex;
+  justify-content: center;
+}
+.batch-print-paper {
+  background: #FFFFFF;
+  width: 100%;
+  max-width: 900px;
+  min-height: 1000px;
+  padding: 30px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  border-radius: 8px;
+}
+.batch-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.batch-card {
+  border: 2px dashed #0D1117;
+  border-radius: 8px;
+  padding: 16px;
+  background: #FFFFFF;
+  page-break-inside: avoid;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.batch-cut-badge {
+  position: absolute;
+  top: -9px;
+  right: 16px;
+  background: #FFFFFF;
+  padding: 0 6px;
+  font-size: 11px;
+  color: #6B7280;
+  font-family: ui-monospace, monospace;
+}
+
+/* ── Print Media Query for Clean Paper Output ── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #batchPrintPaper, #batchPrintPaper * {
+    visibility: visible;
+  }
+  #batchPrintPaper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+  #batchPrintModal, .batch-print-body {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .batch-print-toolbar {
+    display: none !important;
+  }
+  .batch-card {
+    page-break-inside: avoid !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+

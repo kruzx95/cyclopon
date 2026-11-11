@@ -78,6 +78,23 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLiveMap(params);
   });
 
+  // ── Event Activity & Rider Roster Page (Kuyy.app Style) ──
+  Router.register('/events/:id', async (params) => {
+    await loadPageDeps(
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js'],
+      ['/css/activity.css']
+    );
+    renderEventActivity(params);
+  });
+
+  Router.register('/activities/:id', async (params) => {
+    await loadPageDeps(
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js'],
+      ['/css/activity.css']
+    );
+    renderEventActivity(params);
+  });
+
   // ── Official Event Results & Brevet Certificate ──
   Router.register('/events/:id/results', async (params) => {
     await loadPageDeps(
@@ -114,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js', '/js/pages/admin-event.js'],
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js', '/js/pages/admin-event.js'],
       ['/css/admin.css']
     );
     renderAdminEvent(params);
