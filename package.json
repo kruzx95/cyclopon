@@ -10,7 +10,8 @@
     "benchmark": "node scripts/benchmark.js",
     "test:report": "node scripts/generate-test-report.js",
     "seed:demo": "node scripts/seed-demo.js",
-    "simulate": "node scripts/simulate-race.js"
+    "simulate": "node scripts/simulate-race.js",
+    "deploy:vps": "bash scripts/deploy-vps.sh"
   },
   "keywords": [],
   "author": "",

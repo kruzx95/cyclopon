@@ -1,18 +1,18 @@
 /* ── CycloPon Rider Live Cockpit HUD CSS ── */
 
 :root {
-  --cockpit-bg: #F8F9FA;
+  --cockpit-bg: #F8FAFC;
   --cockpit-card: #FFFFFF;
   --cockpit-card-sub: #F1F5F9;
-  --cockpit-card-border: #0D1117;
-  --cockpit-border-subtle: #CBD5E1;
-  --cockpit-yellow: #D97706;
-  --cockpit-cyan: #0D1117;
+  --cockpit-card-border: #0F172A;
+  --cockpit-border-subtle: #94A3B8;
+  --cockpit-yellow: #B45309;
+  --cockpit-cyan: #0F172A;
   --cockpit-green: #047857;
-  --cockpit-red: #DC2626;
-  --cockpit-orange: #EA580C;
-  --cockpit-text: #0D1117;
-  --cockpit-muted: #64748B;
+  --cockpit-red: #B91C1C;
+  --cockpit-orange: #C2410C;
+  --cockpit-text: #020617;
+  --cockpit-muted: #334155; /* High-contrast outdoor readability: 7.8:1 on #FFF (WCAG AAA) */
 }
 
 body.cockpit-active {
@@ -38,74 +38,76 @@ body.cockpit-active {
 .cockpit-topbar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 12px 14px;
   background: var(--cockpit-card);
-  border: 1.5px solid #0D1117;
+  border: 2px solid var(--cockpit-card-border);
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(13, 17, 23, 0.05);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
 .cockpit-topbar-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
 .cockpit-rider-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   flex: 1;
 }
 
 .cockpit-hub-link {
-  color: #0D1117;
+  color: var(--cockpit-text);
   text-decoration: none;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   background: #F1F5F9;
-  border: 1px solid #CBD5E1;
-  padding: 4px 8px;
-  border-radius: 4px;
+  border: 1.5px solid #0F172A;
+  padding: 6px 10px;
+  min-height: 38px;
+  box-sizing: border-box;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   transition: all 0.15s;
   flex-shrink: 0;
 }
 
 .cockpit-hub-link:hover {
-  background: #0D1117;
+  background: #0F172A;
   color: #FFFFFF;
 }
 
 .cockpit-top-quick {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .cockpit-bib-badge {
-  background: #0D1117;
+  background: #0F172A;
   color: #FFFFFF;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-weight: 900;
-  font-size: 12px;
-  padding: 3px 8px;
-  border-radius: 4px;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 6px;
   letter-spacing: 0.05em;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .cockpit-rider-name {
-  font-weight: 800;
-  font-size: 14px;
+  font-weight: 900;
+  font-size: 15px;
   color: var(--cockpit-text);
   white-space: nowrap;
   overflow: hidden;
@@ -116,56 +118,64 @@ body.cockpit-active {
 .cockpit-top-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
   width: 100%;
   flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
 }
 
 .cockpit-top-actions::-webkit-scrollbar {
   display: none;
 }
 
+/* Ergonomic Mobile Pill Buttons: Min 40px Height for Cycling Gloves */
 .cockpit-pill-btn {
   background: #FFFFFF;
-  border: 1.5px solid #0D1117;
-  color: #0D1117;
-  font-size: 11px;
+  border: 2px solid #0F172A;
+  color: #0F172A;
+  font-size: 12px;
   font-weight: 800;
-  padding: 5px 10px;
+  padding: 8px 12px;
+  min-height: 40px;
+  box-sizing: border-box;
   border-radius: 6px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: all 0.15s;
   white-space: nowrap;
   flex-shrink: 0;
+  touch-action: manipulation;
 }
 
 .cockpit-pill-btn.icon-only {
-  padding: 5px 8px;
-  min-width: 32px;
+  padding: 8px;
+  min-width: 40px;
+  min-height: 40px;
   justify-content: center;
+  font-size: 15px;
 }
 
 .cockpit-pill-btn.danger {
-  color: var(--cockpit-red);
-  border-color: var(--cockpit-red);
+  color: #B91C1C;
+  border-color: #B91C1C;
+  background: #FEF2F2;
 }
 
 .cockpit-pill-btn:hover {
-  background: #0D1117;
+  background: #0F172A;
   color: #FFFFFF;
 }
 
 .cockpit-pill-btn.active {
-  background: #0D1117;
-  border-color: #0D1117;
+  background: #0F172A;
+  border-color: #0F172A;
   color: #FFFFFF;
 }
 
@@ -176,8 +186,8 @@ body.cockpit-active {
 }
 
 .cockpit-pill-btn.sim-active {
-  background: #0D1117;
-  border-color: #0D1117;
+  background: #0F172A;
+  border-color: #0F172A;
   color: #FFFFFF;
 }
 
@@ -188,53 +198,42 @@ body.cockpit-active {
   font-weight: 900;
 }
 
-/* ── Off-Route Banner Alert ── */
+/* ── Off-Route Banner Alert (High Contrast Tactical) ── */
 .cockpit-offroute-banner {
   display: none;
-  background: linear-gradient(90deg, #EF4444, #B91C1C);
+  background: #DC2626;
+  border: 2px solid #991B1B;
   color: #FFFFFF;
   padding: 12px 16px;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-weight: 800;
   font-size: 13px;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 18px rgba(239, 68, 68, 0.4);
-  animation: cockpitPulseRed 1.2s infinite alternate;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
 }
 
 .cockpit-offroute-banner.active {
   display: flex;
 }
 
-@keyframes cockpitPulseRed {
-  0% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1.01); filter: brightness(1.25); box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); }
-}
-
 /* ── Checkpoint Proximity Banner Alert ── */
 .cockpit-proximity-banner {
   display: none;
-  background: linear-gradient(90deg, #059669, #047857);
+  background: #047857;
+  border: 2px solid #064E3B;
   color: #FFFFFF;
   padding: 12px 16px;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   font-weight: 800;
   font-size: 13px;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 18px rgba(5, 150, 105, 0.45);
-  animation: cockpitPulseGreen 1.2s infinite alternate;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(4, 120, 87, 0.3);
 }
 
 .cockpit-proximity-banner.active {
   display: flex;
-}
-
-@keyframes cockpitPulseGreen {
-  0% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1.01); filter: brightness(1.25); box-shadow: 0 0 25px rgba(5, 150, 105, 0.65); }
 }
 
 /* ── Pocket Mode (Background GPS Keep-Alive) Banner ── */
@@ -303,13 +302,13 @@ body.cockpit-active {
 /* ── Speedometer Hero Display ── */
 .cockpit-speedo-card {
   background: #FFFFFF;
-  border: 2px solid #0D1117;
+  border: 2px solid var(--cockpit-card-border);
   border-radius: 8px;
   padding: 24px 16px 20px 16px;
   text-align: center;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(13, 17, 23, 0.06);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 }
 
 .cockpit-speedo-card::before {
@@ -318,13 +317,13 @@ body.cockpit-active {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: #0D1117;
+  height: 4px;
+  background: var(--cockpit-card-border);
 }
 
 .cockpit-speed-number {
   font-family: 'JetBrains Mono', 'Fira Code', -apple-system, sans-serif;
-  font-size: 80px;
+  font-size: 84px;
   line-height: 1;
   font-weight: 900;
   color: var(--cockpit-text);
@@ -335,10 +334,10 @@ body.cockpit-active {
 
 .cockpit-speed-unit {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
   letter-spacing: 0.15em;
-  color: #64748B;
+  color: var(--cockpit-muted);
   text-transform: uppercase;
 }
 
@@ -349,38 +348,39 @@ body.cockpit-active {
   align-items: center;
   gap: 16px;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 11px;
-  color: #64748B;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cockpit-muted);
 }
 
 .cockpit-speed-sub strong {
   color: var(--cockpit-text);
-  font-weight: 800;
+  font-weight: 900;
 }
 
-/* ── Metrics Grid (4-box) ── */
+/* ── Metrics Grid (4-box High Contrast) ── */
 .cockpit-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .cockpit-stat-box {
   background: var(--cockpit-card);
-  border: 1.5px solid #0D1117;
+  border: 2px solid var(--cockpit-card-border);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 84px;
-  box-shadow: 0 1px 3px rgba(13, 17, 23, 0.03);
+  min-height: 90px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .cockpit-stat-label {
-  font-size: 10px;
-  font-weight: 800;
-  color: #64748B;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--cockpit-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -391,7 +391,7 @@ body.cockpit-active {
 
 .cockpit-stat-value {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 900;
   color: var(--cockpit-text);
   font-variant-numeric: tabular-nums;
@@ -400,16 +400,17 @@ body.cockpit-active {
 }
 
 .cockpit-stat-unit {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748B;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--cockpit-muted);
   margin-left: 2px;
 }
 
 .cockpit-stat-sub {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 10px;
-  color: #64748B;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cockpit-muted);
   margin-top: 4px;
 }
 
@@ -535,17 +536,17 @@ body.cockpit-active {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Checkpoint & COT Widget ── */
+/* ── Checkpoint & COT Widget (High Visibility Outdoor) ── */
 .cockpit-cp-card {
   background: var(--cockpit-card);
-  border: 1.5px solid #0D1117;
+  border: 2px solid var(--cockpit-card-border);
   border-radius: 8px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   position: relative;
-  box-shadow: 0 2px 6px rgba(13, 17, 23, 0.04);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
 }
 
 .cockpit-cp-header {
@@ -559,18 +560,18 @@ body.cockpit-active {
   align-items: center;
   gap: 8px;
   font-weight: 900;
-  font-size: 14px;
-  color: #0D1117;
+  font-size: 15px;
+  color: var(--cockpit-text);
 }
 
 .cockpit-cp-status-pill {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 900;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  padding: 3px 8px;
-  border-radius: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
   text-transform: uppercase;
-  border: 1px solid #0D1117;
+  border: 1.5px solid var(--cockpit-card-border);
 }
 
 .cockpit-cp-status-pill.safe {
@@ -581,27 +582,28 @@ body.cockpit-active {
 
 .cockpit-cp-status-pill.warning {
   background: #FFFBEB;
-  color: #D97706;
-  border-color: #D97706;
+  color: #B45309;
+  border-color: #B45309;
 }
 
 .cockpit-cp-status-pill.late {
   background: #FEF2F2;
-  color: #DC2626;
-  border-color: #DC2626;
+  color: #B91C1C;
+  border-color: #B91C1C;
 }
 
 .cockpit-cp-progress-bar {
   width: 100%;
-  height: 6px;
+  height: 8px;
   background: #E2E8F0;
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
+  border: 1px solid #CBD5E1;
 }
 
 .cockpit-cp-progress-fill {
   height: 100%;
-  background: #0D1117;
+  background: #0F172A;
   width: 0%;
   transition: width 0.3s;
 }
@@ -614,30 +616,28 @@ body.cockpit-active {
 }
 
 .cockpit-cp-detail-box {
-  background: #F8F9FA;
-  padding: 8px;
+  background: #F8FAFC;
+  padding: 10px 8px;
   border-radius: 6px;
-  border: 1px solid #E2E8F0;
+  border: 1.5px solid #E2E8F0;
   transition: all 0.2s;
 }
 
 .cockpit-cp-detail-lbl {
   font-size: 10px;
-  color: #64748B;
-  font-weight: 800;
+  color: var(--cockpit-muted);
+  font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .cockpit-cp-detail-val {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 900;
   color: var(--cockpit-text);
-  margin-top: 2px;
+  margin-top: 3px;
 }
-
-
 
 /* ── Sticky Emergency / Action Bar (50:50 Full Width Ergonomic Pro) ── */
 .cockpit-bottom-bar {
@@ -648,12 +648,10 @@ body.cockpit-active {
   padding-top: 12px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-bottom: max(20px, calc(12px + env(safe-area-inset-bottom, 0px)));
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1.5px solid rgba(13, 17, 23, 0.12);
-  box-shadow: 0 -6px 24px rgba(13, 17, 23, 0.08);
+  padding-bottom: max(20px, calc(14px + env(safe-area-inset-bottom, 0px)));
+  background: #FFFFFF;
+  border-top: 2px solid var(--cockpit-card-border);
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -666,28 +664,28 @@ body.cockpit-active {
 /* SOS High-Vis Tactical Full-Width Button */
 .cockpit-sos-btn {
   width: 100%;
-  height: 50px;
-  min-height: 50px;
-  background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%);
+  height: 52px;
+  min-height: 52px;
+  background: #DC2626;
   color: #FFFFFF;
-  border: 1.5px solid #B91C1C;
-  border-radius: 12px;
+  border: 2px solid #991B1B;
+  border-radius: 10px;
   padding: 0 16px;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 900;
   font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
   user-select: none;
   -webkit-user-select: none;
-  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  transition: transform 0.12s ease, filter 0.15s ease;
   box-sizing: border-box;
 }
 
@@ -742,18 +740,18 @@ body.cockpit-active {
   }
 }
 
-/* Live Map Stealth Obsidian Full-Width Button */
+/* Live Map High-Contrast Tactical Full-Width Button */
 .cockpit-nav-btn {
   width: 100%;
-  height: 50px;
-  min-height: 50px;
-  background: linear-gradient(180deg, #1C2128 0%, #0D1117 100%);
+  height: 52px;
+  min-height: 52px;
+  background: #0F172A;
   color: #FFFFFF;
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
+  border: 2px solid #020617;
+  border-radius: 10px;
   padding: 0 16px;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 900;
   font-family: 'JetBrains Mono', -apple-system, BlinkMacSystemFont, monospace;
   cursor: pointer;
   display: flex;
@@ -765,6 +763,19 @@ body.cockpit-active {
   text-transform: uppercase;
   white-space: nowrap;
   user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+  transition: transform 0.12s ease, filter 0.15s ease;
+  box-sizing: border-box;
+}
+
+.cockpit-nav-btn:hover {
+  filter: brightness(1.15);
+}
+
+.cockpit-nav-btn:active {
+  transform: scale(0.97);
+}
   -webkit-user-select: none;
   box-shadow: 0 4px 14px rgba(13, 17, 23, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
@@ -831,9 +842,9 @@ body.cockpit-active.night-mode {
   --cockpit-bg: #000000;
   --cockpit-card: #0A0D0B;
   --cockpit-card-sub: #111713;
-  --cockpit-card-border: #1E293B;
+  --cockpit-card-border: #334155;
   --cockpit-text: #FFFFFF;
-  --cockpit-muted: #94A3B8;
+  --cockpit-muted: #CBD5E1; /* High contrast: 11.5:1 against pitch black (WCAG AAA) */
 }
 
 body.cockpit-active.night-mode .cockpit-container,
@@ -841,9 +852,9 @@ body.cockpit-active.night-mode .cockpit-container,
   --cockpit-bg: #000000;
   --cockpit-card: #0A0D0B;
   --cockpit-card-sub: #111713;
-  --cockpit-card-border: #1E293B;
+  --cockpit-card-border: #334155;
   --cockpit-text: #FFFFFF;
-  --cockpit-muted: #94A3B8;
+  --cockpit-muted: #CBD5E1;
   background-color: #000000 !important;
   color: #FFFFFF !important;
 }

@@ -192,7 +192,27 @@ Data posisi GPS rider akan langsung terpancar ke Live Map panitia dan penonton s
 ---
 
 
-## 7. Prosedur Pencadangan (Backup) & Pemulihan (Restore)
+## 7. Skrip Otomatis Push & Deploy ke VPS
+
+Telah disiapkan skrip otomatis di laptop untuk commit, push ke Git, dan langsung memperbarui container di VPS:
+
+```bash
+# Deploy cepat (push git + pull di VPS + restart container)
+npm run deploy:vps
+
+# Deploy dengan pesan commit kustom
+npm run deploy:vps -- -m "feat: perbaikan fitur X"
+
+# Deploy dengan build ulang image Docker (jika ada dependensi baru di package.json)
+npm run deploy:vps -- --rebuild
+
+# Deploy sekaligus sinkronisasi database lokal ke VPS
+npm run deploy:vps -- --sync-db
+```
+
+---
+
+## 8. Prosedur Pencadangan (Backup) & Pemulihan (Restore)
 
 ### Menjalankan Backup Manual
 Skrip pencadangan telah disiapkan di folder `scripts/`:

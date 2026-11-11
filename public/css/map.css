@@ -937,53 +937,56 @@
 .leaderboard-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: 48px;
+  box-sizing: border-box;
   background: #FFFFFF;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
-  border: 1.5px solid #E2E8F0;
-  box-shadow: 0 1px 3px rgba(13, 17, 23, 0.03);
+  border: 1.5px solid #CBD5E1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  touch-action: manipulation;
 }
 .leaderboard-item:hover {
   background: #FFFFFF;
-  border-color: #0D1117;
+  border-color: #0F172A;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(13, 17, 23, 0.08);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 .leaderboard-item.focused-rider {
-  border-color: #0D1117 !important;
-  background: #F8F9FA !important;
-  box-shadow: 0 0 0 2px #0D1117 !important;
+  border-color: #0F172A !important;
+  background: #F1F5F9 !important;
+  box-shadow: 0 0 0 2px #0F172A !important;
 }
 
 .leaderboard-rank {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 13px;
   font-weight: 900;
-  color: #64748B;
+  color: #334155; /* High contrast: 7.8:1 on white (WCAG AAA) */
   width: 24px;
   text-align: center;
   flex-shrink: 0;
 }
 .leaderboard-rank.top {
   font-size: 15px;
-  color: #0D1117;
+  color: #0F172A;
 }
 
 .rider-avatar {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   color: #FFFFFF;
-  border: 1.5px solid #0D1117;
+  border: 2px solid #0F172A;
   flex-shrink: 0;
 }
 
@@ -999,24 +1002,24 @@
 }
 
 .leaderboard-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #0D1117;
+  color: #0F172A;
   flex: 1;
   min-width: 0;
 }
 
 .leaderboard-bib-tag {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 10px;
-  font-weight: 800;
-  color: #0D1117;
+  font-size: 11px;
+  font-weight: 900;
+  color: #0F172A;
   background: #F1F5F9;
-  border: 1px solid #CBD5E1;
-  padding: 1px 5px;
+  border: 1.5px solid #0F172A;
+  padding: 2px 6px;
   border-radius: 4px;
   flex-shrink: 0;
 }
@@ -1259,26 +1262,30 @@
     gap: 6px;
   }
 
-  /* Compact Action Buttons on Mobile - icon buttons */
+  /* Ergonomic Action Buttons on Mobile (Min 40px Tap Target - WCAG AA) */
   .header-action-btn {
     padding: 0;
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: var(--radius-sm);
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 800;
+    border: 1.5px solid #0F172A;
+    border-radius: 6px;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    touch-action: manipulation;
   }
 
   /* Leaderboard button on mobile shows icon + count pill */
   .header-action-btn.btn-highlight-leaderboard {
     width: auto;
-    padding: 0 8px;
-    gap: 4px;
+    padding: 0 10px;
+    min-height: 40px;
+    gap: 6px;
   }
 
   /* Labels are hidden on mobile to keep header clean and spacious */
@@ -1287,32 +1294,38 @@
   }
 
   #headerRiderCount {
-    font-size: 10px;
-    padding: 1px 5px;
+    font-size: 11px;
+    font-weight: 900;
+    padding: 2px 6px;
     border-radius: 99px;
   }
 
-  /* Floating Controls on Mobile */
+  /* Floating Controls on Mobile (Min 44px Touch Targets) */
   .map-floating-stack {
-    top: 10px;
-    right: 10px;
-    gap: 6px;
+    top: 12px;
+    right: 12px;
+    gap: 8px;
   }
 
   .map-fab-btn {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     border-radius: 10px;
+    border: 1.5px solid #0F172A;
+    touch-action: manipulation;
   }
 
   .map-fab-btn .fab-icon {
-    font-size: 17px;
+    font-size: 19px;
   }
 
   .fab-layer-popover {
-    right: 46px;
-    width: 220px;
-    padding: 10px;
+    right: 52px;
+    width: 230px;
+    padding: 12px;
+    border: 2px solid #0F172A;
   }
 
   /* ── Viewport Grid & Sidebar ── */
@@ -1326,65 +1339,75 @@
   }
 
   .map-sidebar {
-    max-height: 44vh;
+    max-height: 48vh;
     border-left: none;
-    border-top: 1px solid var(--border);
+    border-top: 2px solid #0F172A;
     transition: max-height 0.25s ease, opacity 0.2s ease;
   }
 
   .map-sidebar-header {
-    padding: 10px 12px;
-    gap: 8px;
+    padding: 12px 14px;
+    gap: 10px;
   }
 
   .sidebar-title-row h2 {
     font-size: 15px;
+    font-weight: 900;
+    color: #0F172A;
   }
 
+  /* Ergonomic Close Drawer Button (Min 36px) */
   .btn-mobile-sidebar-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
     border-radius: 50%;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    font-size: 12px;
+    background: #F1F5F9;
+    border: 1.5px solid #0F172A;
+    color: #0F172A;
+    font-size: 14px;
+    font-weight: 800;
     cursor: pointer;
     transition: var(--transition);
+    touch-action: manipulation;
   }
 
   .btn-mobile-sidebar-close:hover {
-    color: var(--text-primary);
-    border-color: var(--color-sand);
+    color: #FFFFFF;
+    background: #0F172A;
   }
 
+  /* Bottom Floating Handlebar Toggle */
   .btn-mobile-sidebar-float {
     position: absolute;
-    bottom: 14px;
+    bottom: max(16px, env(safe-area-inset-bottom, 16px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 550;
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: blur(12px);
-    border: 1.5px solid var(--color-sage);
+    background: #FFFFFF;
+    border: 2px solid #0F172A;
     border-radius: 999px;
-    padding: 8px 16px;
-    font-weight: 800;
-    font-size: 12px;
-    color: var(--color-sage);
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.16);
+    padding: 10px 20px;
+    min-height: 44px;
+    box-sizing: border-box;
+    font-weight: 900;
+    font-size: 13px;
+    color: #0F172A;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     transition: var(--transition);
+    touch-action: manipulation;
   }
 
   .btn-mobile-sidebar-float:hover {
-    background: var(--color-sage);
+    background: #0F172A;
     color: #FFFFFF;
   }
 
