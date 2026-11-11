@@ -28,7 +28,7 @@ echo -e "Git Branch    : ${YELLOW}${BRANCH}${NC}"
 echo ""
 
 # Parse flags
-REBUILD_DOCKER=false
+REBUILD_DOCKER=true
 SYNC_DATABASE=false
 COMMIT_MSG=""
 
