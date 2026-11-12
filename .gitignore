@@ -3,6 +3,7 @@ data/
 .env
 public/gpx/
 *.db
+*.sql
 .superpowers/
 reports/test-report-*.md
 
