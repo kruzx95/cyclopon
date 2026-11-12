@@ -917,8 +917,9 @@ async function renderAdminDashboard() {
           const used = sys.vps.usedMemMB;
           const total = sys.vps.totalMemMB;
           const pct = sys.vps.memUsagePct;
+          const freeMB = sys.vps.freeMemMB !== undefined ? sys.vps.freeMemMB : Math.max(0, total - used);
           ramVal.textContent = `${used.toLocaleString()} MB`;
-          if (ramSub) ramSub.textContent = `${pct}% dari ${total.toLocaleString()} MB (Heap: ${sys.process?.heapUsedMB || 0} MB)`;
+          if (ramSub) ramSub.textContent = `${pct}% dari ${total.toLocaleString()} MB (Sisa Bebas: ${freeMB.toLocaleString()} MB)`;
           if (ramBar) {
             ramBar.style.width = `${Math.min(100, Math.max(5, pct))}%`;
             ramBar.style.background = pct > 85 ? '#EF4444' : (pct > 70 ? '#F59E0B' : '#10B981');
@@ -930,7 +931,7 @@ async function renderAdminDashboard() {
           const load1m = sys.vps.cpuLoadAvg ? sys.vps.cpuLoadAvg[0] : 0;
           const pct = sys.vps.cpuLoadPct || 0;
           cpuVal.textContent = `${pct}%`;
-          if (cpuSub) cpuSub.textContent = `${sys.vps.cpuCount} Core · Load 1m: ${load1m}`;
+          if (cpuSub) cpuSub.textContent = `${sys.vps.cpuCount} vCPU · Load 1m: ${load1m}`;
           if (cpuBar) {
             cpuBar.style.width = `${Math.min(100, Math.max(5, pct))}%`;
             cpuBar.style.background = pct > 80 ? '#EF4444' : (pct > 60 ? '#F59E0B' : '#10B981');
@@ -971,7 +972,8 @@ async function renderAdminDashboard() {
           dbVal.textContent = 'WAL AKTIF';
           if (dbSub) {
             const dbKB = sys.database.totalSizeKB || 0;
-            dbSub.textContent = `Ukuran: ${dbKB.toLocaleString()} KB · Integrity: OK`;
+            const diskInfo = sys.disk ? ` · Disk: ${sys.disk.usedGB}/${sys.disk.totalGB} GB` : '';
+            dbSub.textContent = `DB: ${dbKB.toLocaleString()} KB${diskInfo}`;
           }
           if (dbBar) {
             dbBar.style.width = '100%';
@@ -993,10 +995,11 @@ async function renderAdminDashboard() {
         }
 
         if (footerSpec && sys.vps) {
-          footerSpec.textContent = `${sys.vps.cpuCount} Core CPU · Total RAM ${sys.vps.totalMemMB.toLocaleString()} MB (Sisa Bebas: ${sys.vps.freeMemMB.toLocaleString()} MB)`;
+          const diskTotal = sys.disk ? ` · ${sys.disk.totalGB} GB Storage (Sisa: ${sys.disk.freeGB} GB)` : '';
+          footerSpec.textContent = `${sys.vps.cpuCount} vCPU · RAM ${sys.vps.totalMemMB.toLocaleString()} MB${diskTotal}`;
         }
         if (footerNode && sys.process) {
-          footerNode.textContent = `Node ${sys.process.nodeVersion} (RSS: ${sys.process.rssMB} MB) · SQLite WAL`;
+          footerNode.textContent = `Node ${sys.process.nodeVersion} (App Heap: ${sys.process.heapUsedMB} MB) · SQLite WAL`;
         }
         if (footerUptime && sys.process) {
           const uptimeSec = sys.process.uptimeSec || 0;

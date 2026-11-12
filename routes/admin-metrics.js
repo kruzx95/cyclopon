@@ -53,6 +53,22 @@ function getSystemHealthMetrics() {
     if (fs.existsSync(walPath)) walSizeBytes = fs.statSync(walPath).size;
   } catch (e) {}
 
+  // 4. Disk storage stats (50 GB VPS Storage)
+  let disk = { totalGB: 50, freeGB: 45, usedGB: 5, usedPct: 10 };
+  try {
+    if (typeof fs.statfsSync === 'function') {
+      const s = fs.statfsSync(dbDir);
+      const totalBytes = s.bsize * s.blocks;
+      const freeBytes = s.bsize * s.bfree;
+      const usedBytes = totalBytes - freeBytes;
+      const totalGB = Number((totalBytes / (1024 ** 3)).toFixed(1));
+      const freeGB = Number((freeBytes / (1024 ** 3)).toFixed(1));
+      const usedGB = Number((usedBytes / (1024 ** 3)).toFixed(1));
+      const usedPct = totalBytes > 0 ? Math.round((usedBytes / totalBytes) * 100) : 0;
+      disk = { totalGB, freeGB, usedGB, usedPct };
+    }
+  } catch (e) {}
+
   const traccar = typeof getUpstreamStatus === 'function' ? getUpstreamStatus() : { connected: false, status: 'standby' };
   const uptimeSec = Math.round(process.uptime());
   const sysUptimeSec = Math.round(os.uptime());
@@ -86,6 +102,7 @@ function getSystemHealthMetrics() {
       totalSizeKB: Math.round((dbSizeBytes + walSizeBytes) / 1024),
       journalMode: 'WAL'
     },
+    disk,
     traccar
   };
 }

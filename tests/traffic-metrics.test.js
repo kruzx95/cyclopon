@@ -113,6 +113,8 @@ test('Traffic & Visitor Analytics Engine', async (t) => {
     assert.ok(typeof data.process.heapUsedMB === 'number');
     assert.ok(data.database);
     assert.equal(data.database.journalMode, 'WAL');
+    assert.ok(data.disk);
+    assert.ok(typeof data.disk.totalGB === 'number');
     assert.ok(data.traccar);
   });
 
