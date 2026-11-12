@@ -121,11 +121,12 @@ SSH_CMD="
   echo \"→ Active Compose File: \$COMPOSE_FILE\"
 
   if [ \"${REBUILD_DOCKER}\" = true ]; then
-    echo '→ Rebuilding cyclopon container image...'
-    docker compose -f \$COMPOSE_FILE up -d --build cyclopon
+    echo '→ Rebuilding cyclopon container image and refreshing services...'
+    docker compose -f \$COMPOSE_FILE up -d --build
   else
     echo '→ Restarting cyclopon container to apply code updates...'
     docker compose -f \$COMPOSE_FILE restart cyclopon
+    docker compose -f \$COMPOSE_FILE up -d traccar
   fi
 
   echo '→ Running clean-demo-data inside cyclopon container...'
@@ -140,9 +141,13 @@ ssh -p "${VPS_PORT}" "${VPS_USER}@${VPS_IP}" "${SSH_CMD}"
 # Step 5: Verification & Summary
 echo ""
 echo -e "${CYAN}[4/4] Verifying deployment health...${NC}"
-sleep 2
+sleep 3
 
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 5 "http://${VPS_IP}:3000" || echo "FAILED")
+# Test port 80 (Caddy/Production) first, fallback to port 3000 (Standalone)
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 5 "http://${VPS_IP}" || true)
+if [ "${HTTP_CODE}" = "000" ] || [ "${HTTP_CODE}" = "" ]; then
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 5 "http://${VPS_IP}:3000" || echo "FAILED")
+fi
 
 if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "301" ] || [ "${HTTP_CODE}" = "302" ]; then
   echo -e "${GREEN}✓ VPS Web Server responded with HTTP ${HTTP_CODE}${NC}"

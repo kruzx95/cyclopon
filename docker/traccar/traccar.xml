@@ -6,7 +6,6 @@
 
     <!-- Web Interface & API Port -->
     <entry key='web.port'>8082</entry>
-    <entry key='web.path'>./modern</entry>
 
     <!-- Database: Lightweight Built-in H2 (Zero-configuration, low-RAM) -->
     <entry key='database.driver'>org.h2.Driver</entry>
