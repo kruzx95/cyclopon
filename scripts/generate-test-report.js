@@ -14,8 +14,7 @@
  * 
  * Output:
  * - Color-coded ANSI terminal report
- * - Timestamped markdown report in `reports/test-report-YYYY-MM-DD-HHmmss.md`
- * - Synced latest report in `reports/LATEST_REPORT.md`
+ * - Single persistent markdown report in `reports/LATEST_REPORT.md`
  */
 
 const http = require('node:http');
@@ -477,10 +476,8 @@ async function runDiagnosticTrial() {
   const overallStatus = hasFailures ? 'FAIL' : hasWarnings ? 'WARNING' : 'PASSED';
 
   // ════════════════════════════════════════════════════════════════
-  // Generate Markdown Report
+  // Generate Markdown Report (Single LATEST_REPORT.md)
   // ════════════════════════════════════════════════════════════════
-  const reportFilename = `test-report-${startTimeDate.toISOString().replace(/[:.]/g, '-').substring(0, 19)}.md`;
-  const reportFilePath = path.join(reportsDir, reportFilename);
   const latestFilePath = path.join(reportsDir, 'LATEST_REPORT.md');
 
   const reportMarkdown = `# 📊 Laporan Diagnostik Kesiapan Produksi VPS — CycloPon Live Tracker
@@ -591,15 +588,13 @@ Berdasarkan hasil uji diagnostik beban di atas, berikut adalah matriks ukuran (*
 *Laporan ini dibuat otomatis oleh CycloPon Test Report Generator (\`npm run test:report\`).*
 `;
 
-  fs.writeFileSync(reportFilePath, reportMarkdown, 'utf8');
   fs.writeFileSync(latestFilePath, reportMarkdown, 'utf8');
 
   // Terminal Final Summary
   console.log(`\n${'='.repeat(72)}`);
   console.log(`${C.bold}HASIL DIAGNOSTIK KESIAPAN VPS: ${overallVerdict}${C.reset}`);
   console.log(`${'='.repeat(72)}`);
-  console.log(`  ${C.blue}•${C.reset} Laporan Tersimpan   : ${C.bold}${reportFilePath}${C.reset}`);
-  console.log(`  ${C.blue}•${C.reset} Salinan Terkini     : ${C.bold}${latestFilePath}${C.reset}`);
+  console.log(`  ${C.blue}•${C.reset} Laporan Tersimpan   : ${C.bold}${latestFilePath}${C.reset}`);
   console.log(`  ${C.blue}•${C.reset} Total Waktu Uji     : ${trialDurationSec} detik`);
   console.log(`${'='.repeat(72)}\n`);
 
