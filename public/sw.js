@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v55';
+const CACHE_NAME = 'cyclopon-v56';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -122,6 +122,6 @@ self.addEventListener('fetch', event => {
         }
         return res;
       })
-      .catch(() => caches.match(request).then(cached => cached || caches.match('/index.html')))
+      .catch(() => caches.match(request, { ignoreSearch: true }).then(cached => cached || caches.match('/index.html')))
   );
 });

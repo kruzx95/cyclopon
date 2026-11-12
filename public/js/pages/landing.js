@@ -1,4 +1,280 @@
+function ensureLandingGuideStyles() {
+  if (document.getElementById('landingGuideStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'landingGuideStyles';
+  style.textContent = `
+    .landing-guide-section {
+      margin: 36px 0;
+      padding: 26px 22px;
+      background: #FFFFFF;
+      border: 1.5px solid #E5E7EB;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    .landing-guide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .guide-mono-tag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      font-weight: 800;
+      color: #16A34A;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .guide-main-title {
+      font-size: 21px;
+      font-weight: 900;
+      color: #0D1117;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .guide-subtitle {
+      font-size: 13.5px;
+      color: #4B5563;
+      margin: 0;
+      line-height: 1.5;
+      max-width: 640px;
+    }
+    .guide-store-badges {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .store-badge-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #0D1117;
+      color: #FFFFFF !important;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .store-badge-btn:hover {
+      background: #1C3E24;
+    }
+    .guide-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .guide-step-card {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+    .guide-step-card.primary-step {
+      border-color: #CBD5E1;
+      background: #F8FAFC;
+    }
+    .guide-step-card.alert-step {
+      border-color: #FED7AA;
+      background: #FFFBF5;
+    }
+    .step-card-num {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      font-weight: 800;
+      color: #64748B;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    .step-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0D1117;
+      margin-bottom: 8px;
+    }
+    .step-card-desc {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.5;
+      margin: 0 0 12px;
+    }
+    .step-code-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0D1117;
+      color: #00E5FF;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .btn-copy-code {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .btn-copy-code.copied {
+      background: #16A34A;
+      border-color: #16A34A;
+    }
+    .step-card-hint {
+      font-size: 11.5px;
+      color: #64748B;
+      line-height: 1.4;
+    }
+    .step-bib-example {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .bib-pill {
+      background: #0D1117;
+      color: #FFFFFF;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+    .bib-sep {
+      font-size: 12px;
+      color: #94A3B8;
+      font-weight: 600;
+    }
+    .step-action-link {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0D1117;
+      text-decoration: underline;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+    .step-checklist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 12.5px;
+      color: #334155;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .sub-switches {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .switch-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: #DCFCE7;
+      color: #166534;
+    }
+    .step-warning-box {
+      background: #FEF3C7;
+      border-left: 3px solid #F59E0B;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #92400E;
+      line-height: 1.5;
+    }
+    .guide-alternative-box {
+      background: #F1F5F9;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .alt-box-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .alt-box-icon {
+      font-size: 24px;
+    }
+    .alt-box-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0D1117;
+      margin-bottom: 2px;
+    }
+    .alt-box-desc {
+      font-size: 12.5px;
+      color: #64748B;
+      line-height: 1.4;
+    }
+    .btn-alt-cockpit {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #0D1117;
+      color: #FFFFFF !important;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    @media (max-width: 768px) {
+      .landing-guide-section {
+        padding: 18px 14px;
+        margin: 24px 0;
+      }
+      .landing-guide-header {
+        flex-direction: column;
+        gap: 14px;
+      }
+      .guide-main-title {
+        font-size: 18px;
+      }
+      .guide-steps-grid {
+        grid-template-columns: 1fr;
+      }
+      .guide-alternative-box {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .btn-alt-cockpit {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function renderLanding() {
+  ensureLandingGuideStyles();
   const app = document.getElementById('app');
   const currentHost = (window.location && window.location.hostname) ? window.location.hostname : '43.173.51.161';
   const traccarServerUrl = `http://${currentHost}:5055`;
