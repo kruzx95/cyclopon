@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const fetch = require('node-fetch');
-const { generateAdminSession, verifyAdminSession } = require('../lib/admin-auth');
+const { generateAdminSession, verifyAdminSession, safeStringCompare } = require('../lib/admin-auth');
 const { determineColorForRole } = require('../lib/constants');
 
 // Brute-force protection for 4-digit rider PIN logins
@@ -253,26 +253,45 @@ router.post('/admin/login', async (req, res) => {
     }
   };
 
-  const envUser = process.env.TRACCAR_USER || 'admin';
-  const envPass = process.env.TRACCAR_PASS || 'admin';
+  const adminUser = process.env.ADMIN_USER || process.env.TRACCAR_USER || 'admin';
+  const adminPass = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASS || process.env.TRACCAR_PASS || 'admin';
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  // Support direct login using credentials from .env or default admin account
-  if ((email === envUser || email === 'admin' || email === 'admin@example.com' || email === 'admin@cyclopon.local') && password === envPass) {
-    adminLoginAttempts.delete(clientIp);
-    const session = generateAdminSession();
-    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.cookie('cyclopon_admin', session.token, {
-      httpOnly: true,
-      secure: isHttps,
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
-      path: '/'
+  // Cegah penggunaan password default 'admin' saat mode production aktif di VPS
+  if (isProduction && (adminPass === 'admin' || password === 'admin')) {
+    recordFailedAdminAttempt();
+    console.error('[SECURITY ALERT] Login admin ditolak: Penggunaan password default "admin" dilarang pada mode production!');
+    return res.status(403).json({
+      error: 'Akses ditolak: Password default ("admin") dinonaktifkan di VPS/Production. Silakan perbarui ADMIN_PASSWORD di .env.'
     });
-    return res.json({
-      success: true,
-      token: session.token,
-      user: { id: 1, name: 'Admin CycloPon', email: envUser, administrator: true }
-    });
+  }
+
+  // Verifikasi kredensial admin CycloPon secara timing-safe
+  const isUserMatch = isProduction
+    ? safeStringCompare(email, adminUser)
+    : (safeStringCompare(email, adminUser) || email === 'admin' || email === 'admin@example.com' || email === 'admin@cyclopon.local');
+
+  if (isUserMatch) {
+    if (safeStringCompare(password, adminPass)) {
+      adminLoginAttempts.delete(clientIp);
+      const session = generateAdminSession();
+      const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+      res.cookie('cyclopon_admin', session.token, {
+        httpOnly: true,
+        secure: isHttps,
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000,
+        path: '/'
+      });
+      return res.json({
+        success: true,
+        token: session.token,
+        user: { id: 1, name: 'Admin CycloPon', email: adminUser, administrator: true }
+      });
+    } else {
+      recordFailedAdminAttempt();
+      return res.status(401).json({ error: 'Login gagal: Kredensial tidak valid.' });
+    }
   }
 
   try {
@@ -285,7 +304,7 @@ router.post('/admin/login', async (req, res) => {
 
     if (!response.ok) {
       recordFailedAdminAttempt();
-      return res.status(401).json({ error: 'Login gagal. Periksa email/password Traccar Anda.' });
+      return res.status(401).json({ error: 'Login gagal. Kredensial tidak valid.' });
     }
 
     // Forward the Set-Cookie header so browser stores the Traccar session

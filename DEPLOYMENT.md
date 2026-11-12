@@ -101,6 +101,8 @@ nano .env
 Sesuaikan variabel berikut di `.env`:
 ```env
 PORT=3000
+ADMIN_USER=admin
+ADMIN_PASSWORD=KredensialKuatAdmin2026!
 TRACCAR_HOST=http://traccar:8082
 TRACCAR_USER=admin
 TRACCAR_PASS=admin
@@ -143,6 +145,8 @@ Isi konfigurasi produksi:
 ```env
 DOMAIN=live.audaxrinjani.com
 ACME_EMAIL=panitia@audaxrinjani.com
+ADMIN_USER=admin
+ADMIN_PASSWORD=GantiPasswordKuatAdminCycloPon2026!
 SESSION_SECRET=kunci_rahasia_acak_minimal_32_karakter_aman_sekali
 TRACCAR_USER=admin
 TRACCAR_PASS=GantiPasswordKuatTraccar2026!

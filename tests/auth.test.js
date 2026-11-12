@@ -97,6 +97,57 @@ test('Auth API & Flow Validation', async (t) => {
     assert.equal(data.user.administrator, true);
   });
 
+  await t.test('POST /api/auth/admin/login rejects default admin password in production mode', async () => {
+    const origEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      const res = await fetch(`${baseUrl}/api/auth/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'admin', password: 'admin' })
+      });
+      assert.equal(res.status, 403);
+      const data = await res.json();
+      assert.ok(data.error.includes('dinonaktifkan di VPS/Production'));
+    } finally {
+      process.env.NODE_ENV = origEnv;
+    }
+  });
+
+  await t.test('POST /api/auth/admin/login authenticates with custom ADMIN_USER and ADMIN_PASSWORD in production', async () => {
+    const origEnv = process.env.NODE_ENV;
+    const origUser = process.env.ADMIN_USER;
+    const origPass = process.env.ADMIN_PASSWORD;
+    process.env.NODE_ENV = 'production';
+    process.env.ADMIN_USER = 'racecontrol_official';
+    process.env.ADMIN_PASSWORD = 'SuperSecureRaceControlPass2026!';
+
+    try {
+      // 1. Wrong password rejected
+      const failRes = await fetch(`${baseUrl}/api/auth/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'racecontrol_official', password: 'wrongpassword' })
+      });
+      assert.equal(failRes.status, 401);
+
+      // 2. Correct credentials accepted
+      const passRes = await fetch(`${baseUrl}/api/auth/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'racecontrol_official', password: 'SuperSecureRaceControlPass2026!' })
+      });
+      assert.equal(passRes.status, 200);
+      const data = await passRes.json();
+      assert.equal(data.success, true);
+      assert.equal(data.user.email, 'racecontrol_official');
+    } finally {
+      process.env.NODE_ENV = origEnv;
+      process.env.ADMIN_USER = origUser;
+      process.env.ADMIN_PASSWORD = origPass;
+    }
+  });
+
   await t.test('teardown', async () => {
     const { eventId1, eventId2 } = t.context;
     db.db.prepare('DELETE FROM events WHERE id IN (?, ?)').run(eventId1, eventId2);

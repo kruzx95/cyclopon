@@ -30,6 +30,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - TRACCAR_HOST=http://traccar:8082
       - TRACCAR_USER=${TRACCAR_USER:-admin}
       - TRACCAR_PASS=${TRACCAR_PASS:-admin}

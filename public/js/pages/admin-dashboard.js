@@ -548,19 +548,15 @@ function renderAdminLogin() {
             <label for="adminEmail" style="display:block;font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">USERNAME / EMAIL</label>
             <div class="admin-input-group">
               <span class="admin-input-icon">👤</span>
-              <input class="admin-input-field" type="text" id="adminEmail" placeholder="admin atau email" value="admin" required autocomplete="username">
+              <input class="admin-input-field" type="text" id="adminEmail" placeholder="Username atau email admin" required autocomplete="username">
             </div>
           </div>
           <div style="margin-bottom:16px">
             <label for="adminPassword" style="display:block;font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">PASSWORD</label>
             <div class="admin-input-group">
               <span class="admin-input-icon">🔒</span>
-              <input class="admin-input-field" type="password" id="adminPassword" placeholder="••••••••" value="admin" required autocomplete="current-password">
+              <input class="admin-input-field" type="password" id="adminPassword" placeholder="••••••••" required autocomplete="current-password">
             </div>
-          </div>
-
-          <div class="admin-dev-box">
-            💡 <strong>Mode Dev:</strong> user <code>admin</code>, pass <code>admin</code>
           </div>
 
           <p id="loginError" style="color:#DC2626;font-size:13px;margin-bottom:10px;min-height:18px;text-align:center;font-weight:700"></p>
