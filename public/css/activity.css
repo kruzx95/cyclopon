@@ -738,7 +738,8 @@
    ========================================================================== */
 @media (max-width: 768px) {
   .activity-page-wrapper {
-    padding-bottom: 125px; /* Ample clearance for 2-row sticky bottom bar */
+    padding-bottom: 140px;
+    padding-bottom: max(140px, calc(110px + env(safe-area-inset-bottom, 0px)));
   }
 
   /* 1. Header Navigation Bar (Fix: Button Beranda & Buka Radar) */
@@ -827,9 +828,15 @@
     border-radius: 99px;
   }
 
-  /* 3. Bottom Sticky Bar (Fix: Button Pantau Radar & Gabung / Daftar) */
+  /* 3. Bottom Sticky Bar (Fix: Button Pantau Radar & Gabung / Daftar with iPhone Safe Area) */
   .activity-sticky-bar {
-    padding: 10px 14px max(12px, env(safe-area-inset-bottom, 12px));
+    padding-top: 10px;
+    padding-left: 16px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: 16px;
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: 28px; /* Safe fallback for emulators & non-homebar browsers */
+    padding-bottom: max(28px, calc(16px + env(safe-area-inset-bottom, 0px)));
   }
 
   .sticky-bar-inner {
