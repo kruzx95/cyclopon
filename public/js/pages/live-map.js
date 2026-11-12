@@ -84,12 +84,7 @@ async function renderLiveMap(params) {
           ${isAdmin ? `
             <span class="badge badge-admin-mode" style="background:#0D1117;color:#FFF;border:1.5px solid #0D1117;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:900;letter-spacing:0.06em;font-family:monospace">🛡️ PANITIA</span>
             <a href="/admin/events/${eventId}" data-link class="btn-back-admin" style="color:var(--text-secondary);text-decoration:none;font-size:11px;font-weight:700">← Dashboard</a>
-          ` : `
-            <div class="live-status-pill">
-              <span class="live-dot pulse" id="liveDot"></span>
-              <span id="liveStatusText">● LIVE STREAM</span>
-            </div>
-          `}
+          ` : ''}
           <div class="event-info-cluster">
             <h1 class="header-event-title" id="eventBadge">Memuat Event...</h1>
             <span class="header-event-stats" id="eventStats">Menghitung...</span>
@@ -97,23 +92,13 @@ async function renderLiveMap(params) {
         </div>
 
         <div class="header-right">
-          ${isAdmin ? `
-            <!-- Simulator Button (Demo Panitia) -->
-            <button class="header-action-btn" id="btnSimulator" title="[PANITIA] Uji simulasi pergerakan rider langsung di rute GPX">
-              ${ICONS.simulasi}<span class="action-btn-label" id="simBtnLabel">Simulasi</span>
-            </button>
-
-            <!-- Time Machine Replay Button (Panitia) -->
-            <button class="header-action-btn" id="btnToggleReplay" title="[PANITIA] Buka Kontrol Replay Time Machine">
-              ${ICONS.replay}<span class="action-btn-label">Replay</span>
+          ${!isMobile ? `
+            <!-- Toggle Leaderboard (Desktop) -->
+            <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
+              ${ICONS.leaderboard}<span class="action-btn-label">Leaderboard</span>
+              <span class="badge" id="headerRiderCount" style="background:#FFFFFF;color:#0D1117;border:1px solid #0D1117;font-family:monospace;font-weight:900;border-radius:4px;padding:1px 6px">0</span>
             </button>
           ` : ''}
-
-          <!-- Toggle Leaderboard -->
-          <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
-            ${ICONS.leaderboard}<span class="action-btn-label">Leaderboard</span>
-            <span class="badge" id="headerRiderCount" style="background:#FFFFFF;color:#0D1117;border:1px solid #0D1117;font-family:monospace;font-weight:900;border-radius:4px;padding:1px 6px">0</span>
-          </button>
         </div>
       </header>
 
@@ -329,7 +314,6 @@ async function renderLiveMap(params) {
           <div class="leaderboard" id="leaderboard">
             <div style="padding:28px 16px;text-align:center;color:var(--text-secondary);font-size:13px">
               ⏳ Menunggu sinyal GPS aktif dari rider...
-              ${isAdmin ? '<br><small style="opacity:0.7;display:block;margin-top:6px">[Mode Panitia]: Klik tombol <strong>🎮 Simulasi</strong> di atas untuk demo.</small>' : ''}
             </div>
           </div>
         </aside>
@@ -385,7 +369,8 @@ async function renderLiveMap(params) {
   document.getElementById('eventBadge').textContent = event.name;
   document.getElementById('sidebarTitle').textContent = event.name;
   document.getElementById('sidebarRiderBadge').textContent = `${riders.length} Rider`;
-  document.getElementById('headerRiderCount').textContent = riders.length;
+  const headerRiderCountEl = document.getElementById('headerRiderCount');
+  if (headerRiderCountEl) headerRiderCountEl.textContent = riders.length;
   document.title = `${event.name} — CycloPon Live`;
 
   // ── Init Leaflet Map (Touch pinch-to-zoom & mouse scroll zoom enabled) ──
@@ -503,7 +488,7 @@ async function renderLiveMap(params) {
 
   function setSidebarCollapsed(collapsed) {
     mapViewport.classList.toggle('sidebar-collapsed', collapsed);
-    btnToggleSidebar.classList.toggle('active', !collapsed);
+    if (btnToggleSidebar) btnToggleSidebar.classList.toggle('active', !collapsed);
     if (btnMobileOpenSidebar) {
       btnMobileOpenSidebar.style.display = (collapsed && window.innerWidth <= 768) ? 'inline-flex' : 'none';
     }
@@ -513,10 +498,12 @@ async function renderLiveMap(params) {
     }, 310);
   }
 
-  btnToggleSidebar.addEventListener('click', () => {
-    const isCollapsed = mapViewport.classList.contains('sidebar-collapsed');
-    setSidebarCollapsed(!isCollapsed);
-  });
+  if (btnToggleSidebar) {
+    btnToggleSidebar.addEventListener('click', () => {
+      const isCollapsed = mapViewport.classList.contains('sidebar-collapsed');
+      setSidebarCollapsed(!isCollapsed);
+    });
+  }
 
   if (btnMobileCloseSidebar) {
     btnMobileCloseSidebar.addEventListener('click', () => {
@@ -1852,7 +1839,7 @@ async function renderLiveMap(params) {
       }
       emptyNotice.innerHTML = searchQuery || currentStatusFilter !== 'all'
         ? '🔍 Tidak ada rider yang cocok dengan filter atau pencarian.'
-        : `⏳ Menunggu sinyal GPS aktif dari rider...${isAdmin ? '<br><small style="opacity:0.7;display:block;margin-top:6px">[Mode Panitia]: Klik tombol <strong>🎮 Simulasi</strong> di atas untuk demo.</small>' : ''}`;
+        : '⏳ Menunggu sinyal GPS aktif dari rider...';
       emptyNotice.style.display = 'block';
       return;
     } else {

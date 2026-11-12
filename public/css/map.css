@@ -1212,12 +1212,13 @@
     white-space: nowrap;
   }
 
+  /* Sembunyikan tag // LIVE MATRIX di mobile agar judul event memiliki ruang lega */
+  .header-meta-tag {
+    display: none !important;
+  }
+
   .live-status-pill {
-    display: inline-flex;
-    padding: 2px 6px;
-    font-size: 10px;
-    font-weight: 800;
-    flex-shrink: 0;
+    display: none !important;
   }
 
   .badge-admin-mode {
@@ -1253,51 +1254,12 @@
     display: none !important;
   }
 
-  .header-right {
-    flex-shrink: 0;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-  }
-
-  /* Ergonomic Action Buttons on Mobile (Min 40px Tap Target - WCAG AA) */
-  .header-action-btn {
-    padding: 0;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-    font-size: 14px;
-    font-weight: 800;
-    border: 1.5px solid #0F172A;
-    border-radius: 6px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-  }
-
-  /* Leaderboard button on mobile shows icon + count pill */
-  .header-action-btn.btn-highlight-leaderboard {
-    width: auto;
-    padding: 0 10px;
-    min-height: 40px;
-    gap: 6px;
-  }
-
-  /* Labels are hidden on mobile to keep header clean and spacious */
-  .action-btn-label {
+  /* Mobile View: Sembunyikan header-right serta tombol Simulasi, Replay, dan Leaderboard */
+  .live-map-header .header-right,
+  #btnSimulator,
+  #btnToggleReplay,
+  #btnToggleSidebar {
     display: none !important;
-  }
-
-  #headerRiderCount {
-    font-size: 11px;
-    font-weight: 900;
-    padding: 2px 6px;
-    border-radius: 99px;
   }
 
   /* Floating Controls on Mobile (Min 44px Touch Targets) */
