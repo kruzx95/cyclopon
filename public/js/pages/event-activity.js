@@ -104,11 +104,11 @@ async function renderEventActivity(params) {
             <span class="mono-label">STAGE #${String(event.id).padStart(2, '0')} · EVENT DOSSIER</span>
           </div>
 
-          <div style="display:flex;align-items:center;gap:10px">
-            <a href="/" data-link class="btn-gpx-chip" style="padding:7px 14px;font-size:11.5px" title="Kembali ke Beranda">
+          <div class="activity-nav-actions">
+            <a href="/" data-link class="btn-gpx-chip activity-btn-beranda" title="Kembali ke Beranda">
               <span>← BERANDA</span>
             </a>
-            <a href="/watch/${event.id}" data-link class="btn-watch-action" style="padding:8px 16px;font-size:12px" title="Buka Live Radar GPS">
+            <a href="/watch/${event.id}" data-link class="btn-watch-action activity-btn-radar" title="Buka Live Radar GPS">
               <span>BUKA RADAR</span>
               <span class="btn-arrow-icon">↗</span>
             </a>
