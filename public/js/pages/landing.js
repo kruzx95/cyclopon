@@ -1,5 +1,7 @@
 function renderLanding() {
   const app = document.getElementById('app');
+  const currentHost = (window.location && window.location.hostname) ? window.location.hostname : '43.173.51.161';
+  const traccarServerUrl = `http://${currentHost}:5055`;
 
   app.innerHTML = `
     <div class="landing-page-wrapper">
@@ -156,6 +158,119 @@ function renderLanding() {
           <div id="activeEventList" class="featured-event-list"></div>
         </div>
 
+        <!-- ── Panduan Setup Smartphone Rider (Traccar Client) ── -->
+        <section class="landing-guide-section" id="traccarGuideSection">
+          <div class="landing-guide-header">
+            <div class="guide-tag-wrap">
+              <span class="guide-mono-tag">// PANDUAN APLIKASI · PESEPEDA (RIDER)</span>
+              <h2 class="guide-main-title">
+                <span class="guide-phone-icon">📲</span> Cara Menghubungkan GPS Smartphone (Traccar Client)
+              </h2>
+              <p class="guide-subtitle">
+                Pesepeda cukup menggunakan aplikasi gratis <strong>Traccar Client</strong> resmi.
+                Layar HP bisa dimatikan sepenuhnya dan disimpan aman di saku jersey selama bersepeda.
+              </p>
+            </div>
+            <div class="guide-store-badges">
+              <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener" class="store-badge-btn" title="Download di Google Play Store">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3.609 1.814L13.793 12 3.61 22.186c-.378-.403-.61-.976-.61-1.621V3.435c0-.645.232-1.218.61-1.621zM15.207 13.414l2.564 2.564-11.89 6.837 9.326-9.401zm0-2.828L5.881 1.185l11.89 6.837-2.564 2.564zm1.414 1.414l3.657 2.102c.866.498.866 1.31 0 1.808l-3.657 2.102-2.146-2.146 2.146-2.146z"/>
+                </svg>
+                <span>Google Play</span>
+              </a>
+              <a href="https://apps.apple.com/app/traccar-client/id843156976" target="_blank" rel="noopener" class="store-badge-btn" title="Download di Apple App Store">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.77 1.04-1.84.93-2.91-.9.04-2 .61-2.65 1.37-.57.66-.99 1.74-.86 2.78 1.01.08 1.96-.47 2.58-1.24z"/>
+                </svg>
+                <span>App Store</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="guide-steps-grid">
+            <!-- Step 1: Server URL -->
+            <div class="guide-step-card primary-step">
+              <div class="step-card-num">LANGKAH 1</div>
+              <div class="step-card-title">Atur Server URL</div>
+              <p class="step-card-desc">Buka menu <strong>Settings</strong> di aplikasi Traccar Client, pilih <strong>Server URL</strong> dan masukkan alamat server berikut:</p>
+              <div class="step-code-box">
+                <code id="traccarServerUrlDisplay">${traccarServerUrl}</code>
+                <button id="btnCopyServerUrl" class="btn-copy-code" title="Salin ke Clipboard">
+                  <span id="copyUrlText">Salin URL</span>
+                </button>
+              </div>
+              <div class="step-card-hint">
+                💡 <em>Wajib gunakan awalan <code>http://</code> dan sertakan port <code>:5055</code></em>
+              </div>
+            </div>
+
+            <!-- Step 2: Device Identifier -->
+            <div class="guide-step-card">
+              <div class="step-card-num">LANGKAH 2</div>
+              <div class="step-card-title">Atur Device Identifier</div>
+              <p class="step-card-desc">Ganti angka default dengan nomor BIB resmi Anda yang terdaftar:</p>
+              <div class="step-bib-example">
+                <span class="bib-pill">BIB-001</span>
+                <span class="bib-sep">atau</span>
+                <span class="bib-pill">BIB-012</span>
+              </div>
+              <p class="step-card-desc" style="margin-top:8px">
+                Format: <code>BIB-</code> diikuti nomor peserta Anda.
+              </p>
+              <a href="/rider" data-link class="step-action-link">Cek Nomor BIB / Login Rider →</a>
+            </div>
+
+            <!-- Step 3: Optimal Tuning -->
+            <div class="guide-step-card">
+              <div class="step-card-num">LANGKAH 3</div>
+              <div class="step-card-title">Pengaturan Akurasi & Hemat Baterai</div>
+              <ul class="step-checklist">
+                <li><strong>Location accuracy:</strong> <code>Highest</code> (Akurasi Satelit GPS)</li>
+                <li><strong>Interval:</strong> <code>10</code> detik (uji coba) atau <code>30</code> detik (ultra brevet)</li>
+                <li><strong>Distance:</strong> <code>50</code> – <code>75</code> meter</li>
+                <li><strong>Advanced Settings (Aktifkan):</strong>
+                  <div class="sub-switches">
+                    <span class="switch-badge">✓ Offline Buffering: ON</span>
+                    <span class="switch-badge">✓ Stop Detection: ON</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Step 4: Continuous Tracking & Android Permission -->
+            <div class="guide-step-card alert-step">
+              <div class="step-card-num">LANGKAH 4 (KRUSIAL)</div>
+              <div class="step-card-title">Continuous Tracking & Izin Android</div>
+              <p class="step-card-desc">Kembali ke layar utama, geser saklar <strong>Continuous tracking</strong> ke posisi <strong>ON (Hijau)</strong>.</p>
+              <div class="step-warning-box">
+                <strong>⚠️ Peringatan Izin Lokasi Android:</strong><br>
+                Saat dialog muncul, WAJIB pilih: <strong>"Allow all the time" (Izinkan sepanjang waktu)</strong>.<br>
+                <em>(Jika memilih 'Only while using app', GPS mati saat layar mati di saku jersey).</em>
+              </div>
+              <div class="step-card-hint" style="margin-top:8px">
+                ✅ Tekan <strong>"Send location"</strong> sekali untuk uji coba kirim koordinat awal.
+              </div>
+            </div>
+          </div>
+
+          <!-- Alternative Option Box: No App Needed / Cockpit HUD -->
+          <div class="guide-alternative-box">
+            <div class="alt-box-left">
+              <span class="alt-box-icon">🌐</span>
+              <div>
+                <div class="alt-box-title">Opsi Alternatif: Rider Cockpit HUD Langsung dari Browser</div>
+                <div class="alt-box-desc">
+                  Tidak ingin menginstal aplikasi? Rider juga bisa melacak posisi GPS dan memantau speedometer/live grade langsung via browser web Chrome/Safari.
+                </div>
+              </div>
+            </div>
+            <a href="/rider" data-link class="btn-alt-cockpit">
+              <span>Buka Rider Cockpit</span>
+              <span>→</span>
+            </a>
+          </div>
+        </section>
+
         <!-- ── 3 Pro Technical Equipment Spec Cards ── -->
         <div class="landing-features-grid">
           <div class="feature-item-card">
@@ -259,6 +374,40 @@ function renderLanding() {
       Router.navigate(`/watch/${firstEventId}`);
     } else {
       Router.navigate('/watch/1');
+    }
+  });
+
+  // Traccar Server URL Copy to Clipboard
+  const btnCopy = document.getElementById('btnCopyServerUrl');
+  const copyText = document.getElementById('copyUrlText');
+  btnCopy?.addEventListener('click', () => {
+    const handleSuccess = () => {
+      btnCopy.classList.add('copied');
+      if (copyText) copyText.textContent = '✓ Tersalin!';
+      setTimeout(() => {
+        btnCopy.classList.remove('copied');
+        if (copyText) copyText.textContent = 'Salin URL';
+      }, 2000);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(traccarServerUrl).then(handleSuccess).catch(() => {
+        const tempInput = document.createElement('input');
+        tempInput.value = traccarServerUrl;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        handleSuccess();
+      });
+    } else {
+      const tempInput = document.createElement('input');
+      tempInput.value = traccarServerUrl;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      handleSuccess();
     }
   });
 

@@ -122,11 +122,11 @@ SSH_CMD="
 
   if [ \"${REBUILD_DOCKER}\" = true ]; then
     echo '→ Rebuilding cyclopon container image and refreshing services...'
-    docker compose -f \$COMPOSE_FILE up -d --build
+    docker compose -f \$COMPOSE_FILE up -d --build --force-recreate
   else
     echo '→ Restarting cyclopon container to apply code updates...'
     docker compose -f \$COMPOSE_FILE restart cyclopon
-    docker compose -f \$COMPOSE_FILE up -d traccar
+    docker compose -f \$COMPOSE_FILE up -d --force-recreate traccar
   fi
 
   echo '→ Running clean-demo-data inside cyclopon container...'
@@ -149,7 +149,7 @@ if [ "${HTTP_CODE}" = "000" ] || [ "${HTTP_CODE}" = "" ]; then
   HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 5 "http://${VPS_IP}:3000" || echo "FAILED")
 fi
 
-if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "301" ] || [ "${HTTP_CODE}" = "302" ]; then
+if [ "${HTTP_CODE}" = "200" ] || [ "${HTTP_CODE}" = "301" ] || [ "${HTTP_CODE}" = "302" ] || [ "${HTTP_CODE}" = "308" ]; then
   echo -e "${GREEN}✓ VPS Web Server responded with HTTP ${HTTP_CODE}${NC}"
   echo ""
   echo -e "${GREEN}====================================================${NC}"
