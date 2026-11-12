@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v56';
+const CACHE_NAME = 'cyclopon-v57';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -32,10 +32,7 @@ const SHELL_ASSETS = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-192.svg',
-  '/icons/icon-512.svg',
-  '/img/traccar-guide/traccar-settings-full.png',
-  '/img/traccar-guide/traccar-continuous-tracking.png',
-  '/img/traccar-guide/traccar-location-permission.png'
+  '/icons/icon-512.svg'
 ];
 
 // Install — cache shell
