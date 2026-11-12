@@ -123,6 +123,9 @@ test('Production Security Hardening & Headers', async (t) => {
   });
 
   await t.test('teardown', async () => {
+    if (testEventId) {
+      db.db.prepare('DELETE FROM events WHERE id = ?').run(testEventId);
+    }
     if (server) {
       await new Promise((resolve) => server.close(resolve));
     }

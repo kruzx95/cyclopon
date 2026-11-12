@@ -4,3 +4,5 @@ data/
 public/gpx/
 *.db
 .superpowers/
+reports/test-report-*.md
+
