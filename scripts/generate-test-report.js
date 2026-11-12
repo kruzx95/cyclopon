@@ -119,6 +119,16 @@ async function runDiagnosticTrial() {
 
   // Setup Isolated Trial Event & Entities
   let trialEventId = null;
+  let tIngestDuration = 0;
+  let ingestThroughput = '0';
+  let packetLossRate = '0.00';
+  let p50WsLatency = '0.00';
+  let p95WsLatency = '0.00';
+  let tSosDuration = 0;
+  let heapUsedMb = '0.00';
+  let heapTotalMb = '0.00';
+  let rssDeltaMb = '0.00';
+
   try {
     const trialTimestamp = Date.now();
     const trialEventRes = db.createEvent.run({
@@ -192,9 +202,9 @@ async function runDiagnosticTrial() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ positions: positionsPayload })
   });
-  const tIngestDuration = performance.now() - tIngestStart;
+  tIngestDuration = performance.now() - tIngestStart;
   const ingestJson = await ingestRes.json();
-  const ingestThroughput = (TELEMETRY_BATCH_SIZE / (tIngestDuration / 1000)).toFixed(0);
+  ingestThroughput = (TELEMETRY_BATCH_SIZE / (tIngestDuration / 1000)).toFixed(0);
 
   const stage1Pass = ingestRes.status === 201 && ingestJson.inserted === TELEMETRY_BATCH_SIZE;
   results.push({
@@ -270,11 +280,11 @@ async function runDiagnosticTrial() {
   // Settle fan-out
   await new Promise((r) => setTimeout(r, 200));
 
-  const packetLossRate = (((expectedPackets - totalWsReceived) / expectedPackets) * 100).toFixed(2);
+  packetLossRate = (((expectedPackets - totalWsReceived) / expectedPackets) * 100).toFixed(2);
   wsLatencies.sort((a, b) => a - b);
   const avgWsLatency = wsLatencies.length ? (wsLatencies.reduce((a, b) => a + b, 0) / wsLatencies.length).toFixed(2) : '0';
-  const p50WsLatency = wsLatencies.length ? wsLatencies[Math.floor(wsLatencies.length * 0.5)].toFixed(2) : '0';
-  const p95WsLatency = wsLatencies.length ? wsLatencies[Math.floor(wsLatencies.length * 0.95)].toFixed(2) : '0';
+  p50WsLatency = wsLatencies.length ? wsLatencies[Math.floor(wsLatencies.length * 0.5)].toFixed(2) : '0';
+  p95WsLatency = wsLatencies.length ? wsLatencies[Math.floor(wsLatencies.length * 0.95)].toFixed(2) : '0';
   const p99WsLatency = wsLatencies.length ? wsLatencies[Math.floor(wsLatencies.length * 0.99)].toFixed(2) : '0';
 
   // Close WS spectator connections
@@ -367,7 +377,7 @@ async function runDiagnosticTrial() {
       message: 'Uji Coba Diagnostik Panggilan Darurat Panitia'
     })
   });
-  const tSosDuration = performance.now() - tSosStart;
+  tSosDuration = performance.now() - tSosStart;
   const sosJson = await sosRes.json();
 
   // Verify alert persisted in SQLite
@@ -429,9 +439,9 @@ async function runDiagnosticTrial() {
   flushQueue();
 
   const memEnd = process.memoryUsage();
-  const rssDeltaMb = ((memEnd.rss - memStart.rss) / (1024 * 1024)).toFixed(2);
-  const heapUsedMb = (memEnd.heapUsed / (1024 * 1024)).toFixed(2);
-  const heapTotalMb = (memEnd.heapTotal / (1024 * 1024)).toFixed(2);
+  rssDeltaMb = ((memEnd.rss - memStart.rss) / (1024 * 1024)).toFixed(2);
+  heapUsedMb = (memEnd.heapUsed / (1024 * 1024)).toFixed(2);
+  heapTotalMb = (memEnd.heapTotal / (1024 * 1024)).toFixed(2);
 
   const stage6Pass = Number(rssDeltaMb) < 50;
   results.push({

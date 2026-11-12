@@ -31,7 +31,9 @@ for (let i = 0; i < args.length; i++) {
 
 // Fallback to active event if --event argument was not passed
 if (!args.includes('--event')) {
-  const activeEv = db.db.prepare('SELECT id FROM events WHERE active = 1 ORDER BY id DESC LIMIT 1').get()
+  const activeEv = db.db.prepare("SELECT id FROM events WHERE active = 1 AND gpx_path IS NOT NULL AND gpx_path != '' ORDER BY id DESC LIMIT 1").get()
+                || db.db.prepare("SELECT id FROM events WHERE gpx_path IS NOT NULL AND gpx_path != '' ORDER BY id DESC LIMIT 1").get()
+                || db.db.prepare('SELECT id FROM events WHERE active = 1 ORDER BY id DESC LIMIT 1').get()
                 || db.db.prepare('SELECT id FROM events ORDER BY id DESC LIMIT 1').get();
   if (activeEv) {
     eventId = activeEv.id;
@@ -46,8 +48,8 @@ if (!event) {
   if (require.main === module) process.exit(1);
 }
 
-const gpxAbsPath = event ? path.join(__dirname, '..', 'public', event.gpx_path.replace(/^\//, '')) : '';
-if (event && !fs.existsSync(gpxAbsPath)) {
+const gpxAbsPath = (event && event.gpx_path) ? path.join(__dirname, '..', 'public', event.gpx_path.replace(/^\//, '')) : '';
+if (event && gpxAbsPath && !fs.existsSync(gpxAbsPath)) {
   console.error(`\x1b[31m[ERROR] File GPX ${gpxAbsPath} tidak ditemukan!\x1b[0m`);
   if (require.main === module) process.exit(1);
 }
@@ -89,7 +91,7 @@ function computeTrackCumulativeKm(points) {
   return totalKm;
 }
 
-const gpxContent = (event && fs.existsSync(gpxAbsPath)) ? fs.readFileSync(gpxAbsPath, 'utf-8') : '';
+const gpxContent = (event && gpxAbsPath && fs.existsSync(gpxAbsPath)) ? fs.readFileSync(gpxAbsPath, 'utf-8') : '';
 const trackpoints = parseGpxTrackpoints(gpxContent);
 const totalRouteKm = computeTrackCumulativeKm(trackpoints);
 
@@ -117,11 +119,15 @@ const riderStates = riders.map((r, idx) => {
     curIndex = trackpoints.findIndex(pt => pt.km >= curKm);
     if (curIndex < 0) curIndex = trackpoints.length - 1;
   } else {
-    // Default staggering across the route
-    const staggerFractions = [0.75, 0.68, 0.52, 0.48, 0.38, 0.30, 0.22, 0.18, 0.10, 0.08];
-    const fraction = staggerFractions[idx % staggerFractions.length];
-    curIndex = Math.min(Math.floor(trackpoints.length * fraction), trackpoints.length - 1);
-    curKm = trackpoints[curIndex].km;
+    if (trackpoints.length > 0) {
+      const staggerFractions = [0.75, 0.68, 0.52, 0.48, 0.38, 0.30, 0.22, 0.18, 0.10, 0.08];
+      const fraction = staggerFractions[idx % staggerFractions.length];
+      curIndex = Math.max(0, Math.min(Math.floor(trackpoints.length * fraction), trackpoints.length - 1));
+      curKm = trackpoints[curIndex] ? trackpoints[curIndex].km : 0;
+    } else {
+      curIndex = 0;
+      curKm = 0;
+    }
   }
 
   // Base speed in km/h based on rider role

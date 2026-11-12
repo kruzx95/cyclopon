@@ -2,12 +2,16 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const app = require('../server');
+const db = require('../db/database');
 
 test('Production Security Hardening & Headers', async (t) => {
   let server;
   let baseUrl;
+  let testEventId;
 
   await t.test('setup server on dynamic port', async () => {
+    const res = db.createEvent.run({ name: `Security Test Event ${Date.now()}`, date: '2026-11-12' });
+    testEventId = Number(res.lastInsertRowid);
     await new Promise((resolve) => {
       server = http.createServer(app);
       server.listen(0, () => {
@@ -41,7 +45,7 @@ test('Production Security Hardening & Headers', async (t) => {
       const res = await fetch(`${baseUrl}/api/auth/rider/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: 21, bib: `TEST-${i}`, name: 'Spam Bot' })
+        body: JSON.stringify({ event_id: testEventId, bib: `TEST-${i}`, name: 'Spam Bot' })
       });
       if (res.status === 429) {
         hitRateLimit = true;
@@ -98,7 +102,7 @@ test('Production Security Hardening & Headers', async (t) => {
         'Content-Type': 'application/json',
         'x-enforce-auth': '1'
       },
-      body: JSON.stringify({ event_id: 21, bib: 'HACK-01', name: 'Unauthorized Rider' })
+      body: JSON.stringify({ event_id: testEventId, bib: 'HACK-01', name: 'Unauthorized Rider' })
     });
     assert.equal(unauthRes.status, 401, 'Should block unauthorized access to admin endpoints');
     const unauthData = await unauthRes.json();
@@ -113,7 +117,7 @@ test('Production Security Hardening & Headers', async (t) => {
         'x-enforce-auth': '1',
         'x-admin-key': adminKey
       },
-      body: JSON.stringify({ event_id: 21, bib: `AUTH-${Date.now()}`, name: 'Authorized Admin Rider' })
+      body: JSON.stringify({ event_id: testEventId, bib: `AUTH-${Date.now()}`, name: 'Authorized Admin Rider' })
     });
     assert.equal(authRes.status, 201, 'Should allow authorized access with valid admin key');
   });

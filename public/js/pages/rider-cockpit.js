@@ -57,6 +57,69 @@ function playCheckpointChime() {
   }
 }
 
+let offRouteAudioTimer = null;
+let isCurrentlyOffRoute = false;
+let offRouteMutedByUser = false;
+
+function playOffRouteBeep() {
+  if (!audioAlertEnabled) return;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    if (!audioCtx) audioCtx = new AudioContextClass();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    const now = audioCtx.currentTime;
+
+    // Dual-tone warning pulse: 440Hz (A4) -> 349.23Hz (F4)
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(440.0, now);
+    gain1.gain.setValueAtTime(0.25, now);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.22);
+
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(349.23, now + 0.26);
+    gain2.gain.setValueAtTime(0.28, now + 0.26);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.start(now + 0.26);
+    osc2.stop(now + 0.52);
+  } catch (err) {
+    console.warn('[OffRoute Audio] Error playing beep:', err);
+  }
+}
+
+function startOffRouteAlert() {
+  if (offRouteMutedByUser || !audioAlertEnabled) return;
+  if (!offRouteAudioTimer) {
+    playOffRouteBeep();
+    offRouteAudioTimer = setInterval(() => {
+      if (!offRouteMutedByUser && audioAlertEnabled && isCurrentlyOffRoute) {
+        playOffRouteBeep();
+      } else {
+        stopOffRouteAlert();
+      }
+    }, 5000);
+  }
+}
+
+function stopOffRouteAlert() {
+  if (offRouteAudioTimer) {
+    clearInterval(offRouteAudioTimer);
+    offRouteAudioTimer = null;
+  }
+}
+
 async function renderRiderCockpit() {
   document.body.classList.add('cockpit-active');
   cockpitActive = true;
@@ -147,8 +210,8 @@ async function renderRiderCockpit() {
             <div id="cockpitDeviationText" style="font-size:12px;font-weight:600;opacity:0.9">Deviasi: +0m</div>
           </div>
         </div>
-        <button id="btnDismissOffRoute" style="background:rgba(0,0,0,0.25);border:none;color:#FFF;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">
-          Tutup
+        <button id="btnDismissOffRoute" class="cockpit-offroute-mute-btn" title="Heningkan suara alarm peringatan">
+          🔇 Matikan Suara
         </button>
       </div>
 
@@ -601,15 +664,37 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitCoordsSub').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
 
-    // Off-Route Check
+    // Off-Route Check (Sound-Only Alert, No Vibration)
     const offRouteInfo = checkOffRoute(lat, lng, routeCoords, 100);
     const offRouteBanner = document.getElementById('cockpitOffRouteAlert');
     if (offRouteInfo.isOffRoute) {
-      offRouteBanner.classList.add('active');
-      document.getElementById('cockpitDeviationText').textContent = `Deviasi: +${offRouteInfo.deviationMeters}m dari trek`;
-      if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+      isCurrentlyOffRoute = true;
+      if (offRouteBanner) {
+        offRouteBanner.classList.add('active');
+      }
+      const devEl = document.getElementById('cockpitDeviationText');
+      if (devEl) {
+        devEl.textContent = `Deviasi: +${offRouteInfo.deviationMeters}m dari trek${offRouteMutedByUser ? ' (Suara diheningkan)' : ''}`;
+      }
+      if (!offRouteMutedByUser) {
+        startOffRouteAlert();
+      }
     } else {
-      offRouteBanner.classList.remove('active');
+      // Rider kembali ke rute resmi (Auto-Stop & Reset status)
+      if (isCurrentlyOffRoute) {
+        isCurrentlyOffRoute = false;
+        offRouteMutedByUser = false;
+        stopOffRouteAlert();
+        const btnMute = document.getElementById('btnDismissOffRoute');
+        if (btnMute) {
+          btnMute.innerHTML = '🔇 Matikan Suara';
+          btnMute.classList.remove('muted');
+        }
+      }
+      if (offRouteBanner) {
+        offRouteBanner.classList.remove('active');
+      }
+      stopOffRouteAlert();
     }
 
     // Grade % and Altitude calculation
@@ -1074,9 +1159,32 @@ async function renderRiderCockpit() {
     updateTelemetry(routeCoords[0][0], routeCoords[0][1], 0, 98);
   }
 
-  // Dismiss off-route banner button
-  document.getElementById('btnDismissOffRoute').addEventListener('click', () => {
-    document.getElementById('cockpitOffRouteAlert').classList.remove('active');
+  // Manual Mute / Unmute off-route audio alert button
+  const btnDismissOffRoute = document.getElementById('btnDismissOffRoute');
+  btnDismissOffRoute?.addEventListener('click', () => {
+    if (!offRouteMutedByUser) {
+      // Rider menonaktifkan suara secara manual
+      offRouteMutedByUser = true;
+      stopOffRouteAlert();
+      btnDismissOffRoute.innerHTML = '🔕 Terhening';
+      btnDismissOffRoute.classList.add('muted');
+      const devEl = document.getElementById('cockpitDeviationText');
+      if (devEl) {
+        devEl.textContent = devEl.textContent.replace(' (Suara diheningkan)', '') + ' (Suara diheningkan)';
+      }
+      showToast('🔇 Suara keluar rute diheningkan', 'info');
+    } else {
+      // Rider mengaktifkan kembali suara
+      offRouteMutedByUser = false;
+      btnDismissOffRoute.innerHTML = '🔇 Matikan Suara';
+      btnDismissOffRoute.classList.remove('muted');
+      startOffRouteAlert();
+      const devEl = document.getElementById('cockpitDeviationText');
+      if (devEl) {
+        devEl.textContent = devEl.textContent.replace(' (Suara diheningkan)', '');
+      }
+      showToast('🔔 Suara keluar rute diaktifkan kembali', 'info');
+    }
   });
 
   // Dismiss Checkpoint Proximity banner button
@@ -1156,7 +1264,11 @@ async function renderRiderCockpit() {
     if (audioAlertEnabled) {
       playCheckpointChime();
       showToast('🔔 Audio Chime Checkpoint Diaktifkan', 'info');
+      if (isCurrentlyOffRoute && !offRouteMutedByUser) {
+        startOffRouteAlert();
+      }
     } else {
+      stopOffRouteAlert();
       showToast('🔕 Audio Chime Checkpoint Dimatikan', 'info');
     }
   });
@@ -1329,6 +1441,9 @@ function teardownRiderCockpit() {
     if (window.GpsKeeper && GpsKeeper.isActive()) {
       GpsKeeper.stop();
     }
+    stopOffRouteAlert();
+    isCurrentlyOffRoute = false;
+    offRouteMutedByUser = false;
     if (audioCtx) {
       audioCtx.close().catch(() => {});
       audioCtx = null;
