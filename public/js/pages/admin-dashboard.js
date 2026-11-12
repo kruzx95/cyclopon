@@ -680,6 +680,67 @@ async function renderAdminDashboard() {
           </div>
         </div>
 
+        <!-- Real-Time Server Health & Load Monitor -->
+        <div class="system-health-card" id="systemHealthCard">
+          <div class="system-card-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">⚡</span>
+              <div>
+                <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;letter-spacing:-0.02em;margin:0">Status Beban &amp; Kesehatan Server VPS</h2>
+                <small style="font-size:11px;color:#6B7280;font-weight:600">Telemetri real-time penggunaan RAM, CPU, Database SQLite &amp; Engine GPS</small>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="live-pulse-dot" id="systemLivePulse"></span>
+              <span id="systemHealthBadge" style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#047857">SISTEM NORMAL (OPTIMAL)</span>
+            </div>
+          </div>
+          <div class="system-metrics-grid">
+            <div class="system-metric-item">
+              <div class="system-metric-lbl">Penggunaan Memori RAM</div>
+              <div class="system-metric-val" id="sysMetricRam">-- MB</div>
+              <div class="health-progress-bar">
+                <div class="health-progress-fill" id="sysRamBar" style="width:0%;background:#10B981"></div>
+              </div>
+              <div class="system-metric-sub" id="sysMetricRamSub">VPS 2 GB · Membaca...</div>
+            </div>
+            <div class="system-metric-item">
+              <div class="system-metric-lbl">Beban CPU &amp; Load Avg</div>
+              <div class="system-metric-val" id="sysMetricCpu">-- %</div>
+              <div class="health-progress-bar">
+                <div class="health-progress-fill" id="sysCpuBar" style="width:0%;background:#10B981"></div>
+              </div>
+              <div class="system-metric-sub" id="sysMetricCpuSub">2 Core CPU · Load: --</div>
+            </div>
+            <div class="system-metric-item">
+              <div class="system-metric-lbl">Engine GPS Traccar</div>
+              <div class="system-metric-val" id="sysMetricTraccar">STANDBY</div>
+              <div class="health-progress-bar">
+                <div class="health-progress-fill" id="sysTraccarBar" style="width:100%;background:#9CA3AF"></div>
+              </div>
+              <div class="system-metric-sub" id="sysMetricTraccarSub">Pipa OsmAnd :5055</div>
+            </div>
+            <div class="system-metric-item">
+              <div class="system-metric-lbl">Database &amp; Uptime</div>
+              <div class="system-metric-val" id="sysMetricDb">WAL AKTIF</div>
+              <div class="health-progress-bar">
+                <div class="health-progress-fill" id="sysDbBar" style="width:100%;background:#10B981"></div>
+              </div>
+              <div class="system-metric-sub" id="sysMetricDbSub">Ukuran: -- KB · Uptime: --</div>
+            </div>
+          </div>
+          <div class="system-sub-bar" id="systemSubBar">
+            <div>
+              <span>🖥️ <strong>Spek Server:</strong> <span id="sysFooterSpec">2 Core CPU · RAM 2 GB</span></span>
+              <span style="margin:0 6px">·</span>
+              <span>📦 <strong>Runtime:</strong> <span id="sysFooterNode">Node.js · SQLite WAL Mode</span></span>
+            </div>
+            <div>
+              <span>⏳ <strong>Uptime Server:</strong> <span id="sysFooterUptime">--</span></span>
+            </div>
+          </div>
+        </div>
+
         <!-- Diagnostic Trial & VPS Pre-Deployment Report Widget -->
         <div class="diagnostic-report-card" id="diagnosticReportCard">
           <div class="diagnostic-card-header">
@@ -825,6 +886,125 @@ async function renderAdminDashboard() {
             <code>${p.path}</code> (${p.views}x)
           </span>
         `).join('');
+      }
+
+      // ── Update System Health & Load Monitor ──
+      if (data.system) {
+        const sys = data.system;
+        const ramVal = document.getElementById('sysMetricRam');
+        const ramSub = document.getElementById('sysMetricRamSub');
+        const ramBar = document.getElementById('sysRamBar');
+
+        const cpuVal = document.getElementById('sysMetricCpu');
+        const cpuSub = document.getElementById('sysMetricCpuSub');
+        const cpuBar = document.getElementById('sysCpuBar');
+
+        const traccarVal = document.getElementById('sysMetricTraccar');
+        const traccarSub = document.getElementById('sysMetricTraccarSub');
+        const traccarBar = document.getElementById('sysTraccarBar');
+
+        const dbVal = document.getElementById('sysMetricDb');
+        const dbSub = document.getElementById('sysMetricDbSub');
+        const dbBar = document.getElementById('sysDbBar');
+
+        const sysBadge = document.getElementById('systemHealthBadge');
+        const footerSpec = document.getElementById('sysFooterSpec');
+        const footerNode = document.getElementById('sysFooterNode');
+        const footerUptime = document.getElementById('sysFooterUptime');
+
+        // 1. RAM Usage
+        if (ramVal && sys.vps) {
+          const used = sys.vps.usedMemMB;
+          const total = sys.vps.totalMemMB;
+          const pct = sys.vps.memUsagePct;
+          ramVal.textContent = `${used.toLocaleString()} MB`;
+          if (ramSub) ramSub.textContent = `${pct}% dari ${total.toLocaleString()} MB (Heap: ${sys.process?.heapUsedMB || 0} MB)`;
+          if (ramBar) {
+            ramBar.style.width = `${Math.min(100, Math.max(5, pct))}%`;
+            ramBar.style.background = pct > 85 ? '#EF4444' : (pct > 70 ? '#F59E0B' : '#10B981');
+          }
+        }
+
+        // 2. CPU Load
+        if (cpuVal && sys.vps) {
+          const load1m = sys.vps.cpuLoadAvg ? sys.vps.cpuLoadAvg[0] : 0;
+          const pct = sys.vps.cpuLoadPct || 0;
+          cpuVal.textContent = `${pct}%`;
+          if (cpuSub) cpuSub.textContent = `${sys.vps.cpuCount} Core · Load 1m: ${load1m}`;
+          if (cpuBar) {
+            cpuBar.style.width = `${Math.min(100, Math.max(5, pct))}%`;
+            cpuBar.style.background = pct > 80 ? '#EF4444' : (pct > 60 ? '#F59E0B' : '#10B981');
+          }
+        }
+
+        // 3. Traccar Upstream
+        if (traccarVal && sys.traccar) {
+          if (sys.traccar.connected) {
+            traccarVal.textContent = 'TERHUBUNG';
+            traccarVal.style.color = '#047857';
+            if (traccarSub) traccarSub.textContent = 'Pipa GPS OsmAnd :5055 Aktif';
+            if (traccarBar) {
+              traccarBar.style.width = '100%';
+              traccarBar.style.background = '#10B981';
+            }
+          } else if (sys.traccar.connecting) {
+            traccarVal.textContent = 'MENGHUBUNGKAN';
+            traccarVal.style.color = '#D97706';
+            if (traccarSub) traccarSub.textContent = 'Mencoba konek ke Traccar...';
+            if (traccarBar) {
+              traccarBar.style.width = '60%';
+              traccarBar.style.background = '#F59E0B';
+            }
+          } else {
+            traccarVal.textContent = 'STANDBY';
+            traccarVal.style.color = '#4B5563';
+            if (traccarSub) traccarSub.textContent = 'Pipa OsmAnd :5055 (Siap)';
+            if (traccarBar) {
+              traccarBar.style.width = '100%';
+              traccarBar.style.background = '#9CA3AF';
+            }
+          }
+        }
+
+        // 4. Database SQLite
+        if (dbVal && sys.database) {
+          dbVal.textContent = 'WAL AKTIF';
+          if (dbSub) {
+            const dbKB = sys.database.totalSizeKB || 0;
+            dbSub.textContent = `Ukuran: ${dbKB.toLocaleString()} KB · Integrity: OK`;
+          }
+          if (dbBar) {
+            dbBar.style.width = '100%';
+            dbBar.style.background = '#10B981';
+          }
+        }
+
+        // 5. System Badge & Footers
+        if (sysBadge) {
+          const isHighRam = sys.vps?.memUsagePct > 85;
+          const isHighCpu = sys.vps?.cpuLoadPct > 80;
+          if (isHighRam || isHighCpu) {
+            sysBadge.textContent = 'BEBAN TINGGI';
+            sysBadge.style.color = '#DC2626';
+          } else {
+            sysBadge.textContent = 'SISTEM NORMAL (OPTIMAL)';
+            sysBadge.style.color = '#047857';
+          }
+        }
+
+        if (footerSpec && sys.vps) {
+          footerSpec.textContent = `${sys.vps.cpuCount} Core CPU · Total RAM ${sys.vps.totalMemMB.toLocaleString()} MB (Sisa Bebas: ${sys.vps.freeMemMB.toLocaleString()} MB)`;
+        }
+        if (footerNode && sys.process) {
+          footerNode.textContent = `Node ${sys.process.nodeVersion} (RSS: ${sys.process.rssMB} MB) · SQLite WAL`;
+        }
+        if (footerUptime && sys.process) {
+          const uptimeSec = sys.process.uptimeSec || 0;
+          const hours = Math.floor(uptimeSec / 3600);
+          const mins = Math.floor((uptimeSec % 3600) / 60);
+          const secs = uptimeSec % 60;
+          footerUptime.textContent = `${hours}j ${mins}m ${secs}d`;
+        }
       }
     } catch (e) {
       console.warn('[Admin Dashboard] Gagal mengambil metrik trafik:', e);

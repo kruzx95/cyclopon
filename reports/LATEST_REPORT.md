@@ -1,8 +1,8 @@
 # 📊 Laporan Diagnostik Kesiapan Produksi VPS — CycloPon Live Tracker
 
-> **Tanggal Uji:** Kamis, 12 November 2026 pukul 13.07.16 WIB  
+> **Tanggal Uji:** Kamis, 12 November 2026 pukul 13.51.56 WIB  
 > **Status Kesiapan:** `🟡 SIAP VPS DENGAN CATATAN`  
-> **Durasi Eksekusi Trial:** `0.94 detik`
+> **Durasi Eksekusi Trial:** `0.89 detik`
 
 ---
 
@@ -20,7 +20,7 @@ Hasil pengujian menunjukkan arsitektur CycloPon berjalan secara efisien dan **si
 |---|---|
 | **Sistem Operasi** | linux (x64) (Kernel: 7.3.3-300.fc45.x86_64) |
 | **Prosesor (CPU)** | 8 Cores — 12th Gen Intel(R) Core(TM) i3-1215U |
-| **Memori Sistem (RAM)** | Total: 11.40 GB (Tersedia: 3.77 GB) |
+| **Memori Sistem (RAM)** | Total: 11.40 GB (Tersedia: 3.75 GB) |
 | **Node.js Runtime** | v22.23.1 (V8 Engine) |
 | **Database Engine** | SQLite 3 (`better-sqlite3`) |
 | **Mode Jurnal DB** | `WAL` (Write-Ahead Logging untuk konkurensi tinggi) |
@@ -33,33 +33,33 @@ Hasil pengujian menunjukkan arsitektur CycloPon berjalan secara efisien dan **si
 
 | No | Kategori | Metrik yang Diukur | Standar Target VPS | Hasil Aktual | Status |
 |:--:|---|---|---|---|:--:|
-| 1 | **Database & Ingest** | Batch Ingestion Speed (100 rows) | `< 100 ms` | 147.08 ms (680 rec/sec) | **⚠️ WARN** |
-| 2 | **WebSocket Fan-Out** | Packet Loss Rate & P95 Latency | `Loss = 0.00%, P95 < 50 ms` | Loss: 0.00%, P50: 2.40 ms, P95: 3.15 ms (P99: 3.32 ms) | **✅ PASS** |
-| 3 | **Race Engine & COT** | Split Processing & Status Accuracy | `Akurat 100% (IN_TIME & OVER_COT)` | Valid (IN_TIME & OVER_COT terverifikasi dalam 28.08 ms) | **✅ PASS** |
-| 4 | **Sistem Darurat SOS** | Latensi Respon Endpoint SOS | `< 100 ms (Asynchronous Queue)` | 17.38 ms | **✅ PASS** |
+| 1 | **Database & Ingest** | Batch Ingestion Speed (100 rows) | `< 100 ms` | 123.83 ms (808 rec/sec) | **⚠️ WARN** |
+| 2 | **WebSocket Fan-Out** | Packet Loss Rate & P95 Latency | `Loss = 0.00%, P95 < 50 ms` | Loss: 0.00%, P50: 2.37 ms, P95: 3.41 ms (P99: 3.57 ms) | **✅ PASS** |
+| 3 | **Race Engine & COT** | Split Processing & Status Accuracy | `Akurat 100% (IN_TIME & OVER_COT)` | Valid (IN_TIME & OVER_COT terverifikasi dalam 43.24 ms) | **✅ PASS** |
+| 4 | **Sistem Darurat SOS** | Latensi Respon Endpoint SOS | `< 100 ms (Asynchronous Queue)` | 19.26 ms | **✅ PASS** |
 | 5 | **Keamanan Edge** | HTTP Security Headers & Rate Limiting | `Headers Aktif & HTTP 429 Protection` | X-Powered-By disembunyikan, X-Frame/Nosniff aktif, Rate Limiter 429 aktif | **✅ PASS** |
-| 6 | **Efisiensi Resource** | Pertumbuhan Memori RSS & Heap Digunakan | `Delta RSS < 50 MB, Heap Stabil` | Heap: 19.35 MB / 31.52 MB (Delta RSS: +23.20 MB) | **✅ PASS** |
+| 6 | **Efisiensi Resource** | Pertumbuhan Memori RSS & Heap Digunakan | `Delta RSS < 50 MB, Heap Stabil` | Heap: 19.37 MB / 31.52 MB (Delta RSS: +23.27 MB) | **✅ PASS** |
 
 ---
 
 ## 4. Analisis Mendalam per Komponen
 
 ### 4.1. Ingestion Telemetri & SQLite WAL
-- **Batch Processing:** Berhasil menulis 100 titik telemetri dalam satu transaksi database dalam waktu **147.08 ms**.
-- **Throughput:** Mencapai **680 records/detik**, jauh melampaui kebutuhan balap ultra 200 rider dengan interval kirim 3 detik (~67 records/detik).
+- **Batch Processing:** Berhasil menulis 100 titik telemetri dalam satu transaksi database dalam waktu **123.83 ms**.
+- **Throughput:** Mencapai **808 records/detik**, jauh melampaui kebutuhan balap ultra 200 rider dengan interval kirim 3 detik (~67 records/detik).
 - **WAL Mode:** Mode *Write-Ahead Logging* menjamin operasi baca oleh penonton tidak terkunci oleh operasi tulis posisi rider.
 
 ### 4.2. WebSocket Proxy & Fan-Out Broadcast
 - **Singleton Upstream Connection:** Server hanya membuka **1 koneksi TCP** ke Traccar upstream dan mendistribusikan ulang (fan-out) ke **30 penonton**.
 - **Packet Loss:** Tercatat **0.00%** kehilangan paket.
-- **Latensi Fan-Out:** P50 berada pada **2.40 ms** dan P95 pada **3.15 ms**, menghasilkan pengalaman pelacakan live yang mulus dan instan bagi penonton.
+- **Latensi Fan-Out:** P50 berada pada **2.37 ms** dan P95 pada **3.41 ms**, menghasilkan pengalaman pelacakan live yang mulus dan instan bagi penonton.
 
 ### 4.3. Race Engine & Logika Cut-Off-Time (COT)
 - Split recording berhasil mencatat waktu tiba dan mengklasifikasikan status `IN_TIME` maupun `OVER_COT` secara akurat.
 - Pembaruan leaderboard instan selesai di bawah 10 ms.
 
 ### 4.4. Pipeline Keamanan & Darurat SOS
-- Endpoint `POST /api/events/:id/alerts` merespon dalam **17.38 ms**.
+- Endpoint `POST /api/events/:id/alerts` merespon dalam **19.26 ms**.
 - Pengiriman notifikasi eksternal (Telegram / Webhook) berjalan asinkron (*non-blocking*) menggunakan `setImmediate`, sehingga jika server Telegram lambat, aplikasi tidak mengalami *freeze*.
 
 ### 4.5. Keamanan Edge & Anti-Spam
@@ -68,8 +68,8 @@ Hasil pengujian menunjukkan arsitektur CycloPon berjalan secara efisien dan **si
 - Rate limiter mencegah serangan flooding pendaftaran dan tebak PIN (HTTP 429).
 
 ### 4.6. Profil Memori & Stabilitas
-- Heap yang terpakai adalah **19.35 MB** dari total alokasi **31.52 MB**.
-- Delta RSS selama beban puncak hanya sebesar **+23.20 MB**, menunjukkan tidak adanya indikasi *memory leak*.
+- Heap yang terpakai adalah **19.37 MB** dari total alokasi **31.52 MB**.
+- Delta RSS selama beban puncak hanya sebesar **+23.27 MB**, menunjukkan tidak adanya indikasi *memory leak*.
 
 ---
 

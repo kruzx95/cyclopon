@@ -95,6 +95,25 @@ test('Traffic & Visitor Analytics Engine', async (t) => {
     assert.equal(typeof data.todayUniqueVisitors, 'number');
     assert.ok(Array.isArray(data.viewsLast7Days));
     assert.ok(Array.isArray(data.topPages));
+    assert.ok(data.system, 'Traffic response should contain system metrics');
+    assert.ok(typeof data.system.vps.totalMemMB === 'number');
+    assert.ok(typeof data.system.vps.cpuCount === 'number');
+  });
+
+  await t.test('GET /api/admin/metrics/system returns real-time VPS resource metrics', async () => {
+    const res = await fetch(`${baseUrl}/api/admin/metrics/system`);
+    assert.equal(res.status, 200);
+
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.ok(data.vps);
+    assert.ok(data.vps.cpuCount >= 1);
+    assert.ok(typeof data.vps.memUsagePct === 'number');
+    assert.ok(data.process);
+    assert.ok(typeof data.process.heapUsedMB === 'number');
+    assert.ok(data.database);
+    assert.equal(data.database.journalMode, 'WAL');
+    assert.ok(data.traccar);
   });
 
   await t.test('teardown', async () => {
