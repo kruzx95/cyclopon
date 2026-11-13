@@ -119,16 +119,51 @@ async function renderAdminEventReports(params = {}) {
                 🔍 Reset Zoom
               </button>
 
+              <button id="btnToggleReportReplay" class="btn btn-outline" style="font-size:11px;padding:5px 11px;font-weight:800;display:inline-flex;align-items:center;gap:6px;background:#FFFFFF;border:1.5px solid #0D1117;color:#0D1117;cursor:pointer" title="Buka Kontrol Replay Time Machine">
+                <span>⏱️</span>
+                <span id="btnReportReplayText">Replay Perjalanan</span>
+              </button>
+
               <button id="btnClearTrail" class="btn btn-outline" style="font-size:11px;padding:5px 9px;display:none">
                 ✕ Tutup Jejak
               </button>
             </div>
           </div>
 
-          <div id="reportMapContainer" style="width:100%;height:460px;position:relative;background:#E5E7EB">
+          <div id="reportMapContainer" style="width:100%;height:470px;position:relative;background:#E5E7EB">
             <div id="reportMap" style="width:100%;height:100%"></div>
+            
             <div id="mapTrailBadge" style="display:none;position:absolute;bottom:14px;left:14px;z-index:1000;background:rgba(13,17,23,0.92);color:#FFFFFF;padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:800;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 12px rgba(0,0,0,0.3)">
               <span>📍 Menampilkan jejak rekam pergerakan rider</span>
+            </div>
+
+            <!-- Time Machine Replay Floating Control Bar for Admin Audit -->
+            <div id="reportReplayControlBar" style="display:none;position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:1000;width:min(860px, calc(100% - 28px));background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);border:1.5px solid #0D1117;border-radius:10px;padding:10px 16px;box-shadow:0 10px 30px rgba(0,0,0,0.18)">
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <button id="btnReportReplayPlay" type="button" style="width:36px;height:36px;border-radius:50%;background:#0D1117;color:#FFFFFF;border:none;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.25);transition:transform 0.1s ease" title="Play / Pause Replay">▶</button>
+                
+                <div style="display:flex;flex-direction:column;min-width:85px">
+                  <span style="font-size:9px;font-weight:900;color:#2563EB;letter-spacing:0.5px">REPLAY TIME MACHINE</span>
+                  <span id="reportReplayClock" style="font-family:monospace;font-size:14px;font-weight:800;color:#111827">--:--:--</span>
+                </div>
+
+                <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:180px">
+                  <span id="reportReplayStartTime" style="font-size:11px;font-family:monospace;font-weight:700;color:#6B7280">00:00</span>
+                  <input type="range" id="reportReplaySlider" min="0" max="100" value="0" step="0.2" style="flex:1;cursor:pointer;accent-color:#0D1117">
+                  <span id="reportReplayEndTime" style="font-size:11px;font-family:monospace;font-weight:700;color:#6B7280">00:00</span>
+                </div>
+
+                <div style="display:flex;gap:4px;background:#F3F4F6;padding:3px;border-radius:6px;border:1px solid #E5E7EB">
+                  <button type="button" class="report-speed-btn active" data-speed="1" style="background:#0D1117;color:#FFF;border:none;border-radius:4px;padding:3px 7px;font-size:11px;font-weight:800;cursor:pointer">1x</button>
+                  <button type="button" class="report-speed-btn" data-speed="5" style="background:transparent;color:#374151;border:none;border-radius:4px;padding:3px 7px;font-size:11px;font-weight:800;cursor:pointer">5x</button>
+                  <button type="button" class="report-speed-btn" data-speed="15" style="background:transparent;color:#374151;border:none;border-radius:4px;padding:3px 7px;font-size:11px;font-weight:800;cursor:pointer">15x</button>
+                  <button type="button" class="report-speed-btn" data-speed="60" style="background:transparent;color:#374151;border:none;border-radius:4px;padding:3px 7px;font-size:11px;font-weight:800;cursor:pointer">60x</button>
+                </div>
+
+                <button id="btnExitReportReplay" type="button" style="background:#EF4444;color:#FFFFFF;border:none;border-radius:6px;padding:6px 12px;font-size:11.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                  <span>✕</span> Tutup Replay
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -287,6 +322,9 @@ async function renderAdminEventReports(params = {}) {
 
   // ── 5. Select & Fetch Event Data ──
   async function selectEvent(eventId) {
+    if (isReportReplayActive) {
+      exitReportReplay();
+    }
     initReportMap();
     breadcrumbLayer.clearLayers();
     document.getElementById('btnClearTrail').style.display = 'none';
@@ -596,6 +634,188 @@ async function renderAdminEventReports(params = {}) {
     if (gpxLayer) map.fitBounds(gpxLayer.getBounds(), { padding: [30, 30] });
   });
 
+  // ── 9B. Time Machine Replay Engine for Admin Audit ──
+  let isReportReplayActive = false;
+  let isReportReplayPlaying = false;
+  let reportReplaySpeed = 1;
+  let reportReplayTimer = null;
+  let reportReplayMinTime = 0;
+  let reportReplayMaxTime = 0;
+  let reportReplayCurrentTime = 0;
+  let reportReplaySortedHistory = [];
+  let reportReplayMarkers = {}; // riderId -> L.marker
+
+  function enterReportReplay() {
+    if (!eventHistory || !eventHistory.length) {
+      showToast('Belum ada data rekaman jejak telemetri untuk event ini.', 'warning');
+      return;
+    }
+
+    isReportReplayActive = true;
+    reportReplaySortedHistory = [...eventHistory].sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+
+    reportReplayMinTime = new Date(reportReplaySortedHistory[0].recorded_at).getTime();
+    reportReplayMaxTime = new Date(reportReplaySortedHistory[reportReplaySortedHistory.length - 1].recorded_at).getTime();
+    if (reportReplayMaxTime <= reportReplayMinTime) {
+      reportReplayMaxTime = reportReplayMinTime + 3600000;
+    }
+
+    const replayBar = document.getElementById('reportReplayControlBar');
+    if (replayBar) replayBar.style.display = 'block';
+
+    const btnReplayText = document.getElementById('btnReportReplayText');
+    if (btnReplayText) btnReplayText.textContent = '⏹ Hentikan Replay';
+
+    const btnToggle = document.getElementById('btnToggleReportReplay');
+    if (btnToggle) {
+      btnToggle.style.background = '#0D1117';
+      btnToggle.style.color = '#FFFFFF';
+    }
+
+    const startLabel = document.getElementById('reportReplayStartTime');
+    const endLabel = document.getElementById('reportReplayEndTime');
+    const slider = document.getElementById('reportReplaySlider');
+
+    if (startLabel) startLabel.textContent = formatClockTime(reportReplayMinTime);
+    if (endLabel) endLabel.textContent = formatClockTime(reportReplayMaxTime);
+    if (slider) slider.value = 0;
+
+    reportReplayCurrentTime = reportReplayMinTime;
+
+    // Clear static markers and trails
+    markersLayer.clearLayers();
+    breadcrumbLayer.clearLayers();
+    riderMarkers = {};
+    reportReplayMarkers = {};
+    const clearBtn = document.getElementById('btnClearTrail');
+    const badgeEl = document.getElementById('mapTrailBadge');
+    if (clearBtn) clearBtn.style.display = 'none';
+    if (badgeEl) badgeEl.style.display = 'none';
+
+    applyReportReplayFrame(reportReplayCurrentTime);
+    showToast('Mode Time Machine Replay aktif! Geser slider atau tekan Play ⏱️', 'info');
+  }
+
+  function applyReportReplayFrame(timestampMs) {
+    const clockEl = document.getElementById('reportReplayClock');
+    if (clockEl) clockEl.textContent = formatClockTime(timestampMs);
+
+    // Group latest points by rider up to timestampMs
+    const riderLatest = {};
+    for (let i = 0; i < reportReplaySortedHistory.length; i++) {
+      const pt = reportReplaySortedHistory[i];
+      const ptTime = new Date(pt.recorded_at).getTime();
+      if (ptTime <= timestampMs) {
+        if (!riderLatest[pt.rider_id] || ptTime > riderLatest[pt.rider_id].timeMs) {
+          riderLatest[pt.rider_id] = { ...pt, timeMs: ptTime };
+        }
+      }
+    }
+
+    // Update or create marker for each rider
+    eventRiders.forEach(rider => {
+      const latest = riderLatest[rider.id];
+      if (latest) {
+        const lat = Number(latest.latitude);
+        const lng = Number(latest.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const spd = Number(latest.speed || 0).toFixed(1);
+        const baseColor = rider.color || '#3B82F6';
+
+        if (reportReplayMarkers[rider.id]) {
+          reportReplayMarkers[rider.id].setLatLng([lat, lng]);
+          reportReplayMarkers[rider.id].setTooltipContent(`
+            <div style="font-weight:800;font-size:12px;color:#111827">#${escapeHtml(rider.bib)} ${escapeHtml(rider.name)}</div>
+            <div style="font-size:11px;color:#4B5563">Speed: ${spd} km/h • ${formatClockTime(latest.timeMs)}</div>
+          `);
+        } else {
+          const icon = L.divIcon({
+            className: 'custom-rider-icon',
+            html: `
+              <div style="position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center">
+                <div style="width:30px;height:30px;border-radius:50%;background:${baseColor};border:2px solid #FFFFFF;box-shadow:0 3px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:900;font-size:11px;font-family:monospace">
+                  ${escapeHtml(rider.bib)}
+                </div>
+              </div>
+            `,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+          });
+
+          const m = L.marker([lat, lng], { icon }).addTo(markersLayer);
+          m.bindTooltip(`
+            <div style="font-weight:800;font-size:12px;color:#111827">#${escapeHtml(rider.bib)} ${escapeHtml(rider.name)}</div>
+            <div style="font-size:11px;color:#4B5563">Speed: ${spd} km/h • ${formatClockTime(latest.timeMs)}</div>
+          `, { direction: 'top', offset: [0, -14] });
+          reportReplayMarkers[rider.id] = m;
+        }
+      } else if (reportReplayMarkers[rider.id]) {
+        // Rider hasn't started yet at this timestamp
+        markersLayer.removeLayer(reportReplayMarkers[rider.id]);
+        delete reportReplayMarkers[rider.id];
+      }
+    });
+  }
+
+  function toggleReportReplayPlay() {
+    const btnPlay = document.getElementById('btnReportReplayPlay');
+    if (isReportReplayPlaying) {
+      isReportReplayPlaying = false;
+      if (reportReplayTimer) clearInterval(reportReplayTimer);
+      reportReplayTimer = null;
+      if (btnPlay) btnPlay.textContent = '▶';
+    } else {
+      isReportReplayPlaying = true;
+      if (btnPlay) btnPlay.textContent = '⏸';
+
+      const durationMs = reportReplayMaxTime - reportReplayMinTime;
+      const stepMs = Math.max(1000, 1000 * reportReplaySpeed * 2.5);
+
+      reportReplayTimer = setInterval(() => {
+        reportReplayCurrentTime += stepMs;
+        if (reportReplayCurrentTime >= reportReplayMaxTime) {
+          reportReplayCurrentTime = reportReplayMaxTime;
+          toggleReportReplayPlay();
+        }
+        const pct = durationMs > 0 ? ((reportReplayCurrentTime - reportReplayMinTime) / durationMs) * 100 : 100;
+        const slider = document.getElementById('reportReplaySlider');
+        if (slider) slider.value = Math.min(100, Math.max(0, pct));
+        applyReportReplayFrame(reportReplayCurrentTime);
+      }, 150);
+    }
+  }
+
+  function exitReportReplay() {
+    isReportReplayActive = false;
+    isReportReplayPlaying = false;
+    if (reportReplayTimer) {
+      clearInterval(reportReplayTimer);
+      reportReplayTimer = null;
+    }
+
+    const replayBar = document.getElementById('reportReplayControlBar');
+    if (replayBar) replayBar.style.display = 'none';
+
+    const btnPlay = document.getElementById('btnReportReplayPlay');
+    if (btnPlay) btnPlay.textContent = '▶';
+
+    const btnReplayText = document.getElementById('btnReportReplayText');
+    if (btnReplayText) btnReplayText.textContent = 'Replay Perjalanan';
+
+    const btnToggle = document.getElementById('btnToggleReportReplay');
+    if (btnToggle) {
+      btnToggle.style.background = '#FFFFFF';
+      btnToggle.style.color = '#0D1117';
+    }
+
+    markersLayer.clearLayers();
+    reportReplayMarkers = {};
+
+    renderMapMarkers();
+    showToast('Kembali ke tampilan audit posisi terakhir.', 'info');
+  }
+
   // ── 10. Focus Rider on Map From Table Button ──
   window.focusRiderOnMap = function(riderId) {
     const item = riderTelemetryMap[riderId];
@@ -760,6 +980,43 @@ async function renderAdminEventReports(params = {}) {
     }
   });
 
+  // ── 13B. Replay Event Listeners ──
+  document.getElementById('btnToggleReportReplay')?.addEventListener('click', () => {
+    if (isReportReplayActive) {
+      exitReportReplay();
+    } else {
+      enterReportReplay();
+    }
+  });
+
+  document.getElementById('btnReportReplayPlay')?.addEventListener('click', toggleReportReplayPlay);
+  document.getElementById('btnExitReportReplay')?.addEventListener('click', exitReportReplay);
+
+  document.getElementById('reportReplaySlider')?.addEventListener('input', (e) => {
+    const pct = parseFloat(e.target.value) / 100;
+    const durationMs = reportReplayMaxTime - reportReplayMinTime;
+    reportReplayCurrentTime = reportReplayMinTime + (pct * durationMs);
+    applyReportReplayFrame(reportReplayCurrentTime);
+  });
+
+  document.querySelectorAll('.report-speed-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.report-speed-btn').forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'transparent';
+        b.style.color = '#374151';
+      });
+      e.target.classList.add('active');
+      e.target.style.background = '#0D1117';
+      e.target.style.color = '#FFFFFF';
+      reportReplaySpeed = parseFloat(e.target.dataset.speed) || 1;
+      if (isReportReplayPlaying) {
+        toggleReportReplayPlay();
+        toggleReportReplayPlay();
+      }
+    });
+  });
+
   // ── 14. Table Filters & Search ──
   document.querySelectorAll('.tbl-filter-pill').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -777,6 +1034,9 @@ async function renderAdminEventReports(params = {}) {
 
   // Refresh Button
   document.getElementById('btnRefreshReport')?.addEventListener('click', () => {
+    if (isReportReplayActive) {
+      exitReportReplay();
+    }
     if (currentEvent) {
       selectEvent(currentEvent.id);
       showToast('Data riwayat event diperbarui.', 'success');
@@ -838,7 +1098,17 @@ async function renderAdminEventReports(params = {}) {
     showToast('✓ Laporan CSV berhasil diunduh.', 'success');
   });
 
-  // 16. Start initial load
+  // ── 16. Unmount & Cleanup Hook ──
+  if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
+    Router.onUnmount(() => {
+      if (reportReplayTimer) {
+        clearInterval(reportReplayTimer);
+        reportReplayTimer = null;
+      }
+    });
+  }
+
+  // 17. Start initial load
   await loadEventsList();
 }
 

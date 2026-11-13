@@ -89,12 +89,6 @@ async function renderLiveMap(params) {
         </div>
 
         <div class="header-right">
-          ${isAdmin && !isMobile ? `
-            <!-- Time Machine Replay Button (Panitia Desktop) -->
-            <button class="header-action-btn" id="btnToggleReplay" title="[PANITIA] Buka Kontrol Replay Time Machine">
-              ${ICONS.replay}<span class="action-btn-label">Replay</span>
-            </button>
-          ` : ''}
           ${!isMobile ? `
             <!-- Toggle Leaderboard (Desktop) -->
             <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
@@ -114,32 +108,6 @@ async function renderLiveMap(params) {
         <div class="emergency-actions">
           <button class="btn-emergency-focus" id="btnFocusEmergency">🎯 Fokus Lokasi</button>
           ${isAdmin ? `<button class="btn-emergency-resolve" id="btnResolveEmergency">✓ Selesai</button>` : ''}
-        </div>
-      </div>
-
-      <!-- ── Time Machine Replay Control Bar ── -->
-      <div id="replayControlBar" class="replay-control-bar" style="display:none">
-        <div class="replay-bar-inner">
-          <button class="replay-btn replay-play-btn" id="btnReplayPlay" title="Play / Pause Replay">▶</button>
-          <div class="replay-time-display">
-            <span class="replay-badge">REPLAY</span>
-            <span id="replayClock" class="replay-clock">--:--:--</span>
-          </div>
-
-          <div class="replay-slider-wrap">
-            <span class="replay-time-bound" id="replayStartTime">00:00</span>
-            <input type="range" class="replay-slider" id="replaySlider" min="0" max="100" value="0" step="0.2">
-            <span class="replay-time-bound" id="replayEndTime">00:00</span>
-          </div>
-
-          <div class="replay-speed-group">
-            <button class="replay-speed-btn active" data-speed="1">1x</button>
-            <button class="replay-speed-btn" data-speed="5">5x</button>
-            <button class="replay-speed-btn" data-speed="15">15x</button>
-            <button class="replay-speed-btn" data-speed="60">60x</button>
-          </div>
-
-          <button class="replay-btn replay-exit-btn" id="btnExitReplay" title="Kembali ke Mode Live">🔴 Live</button>
         </div>
       </div>
 
@@ -2355,165 +2323,7 @@ async function renderLiveMap(params) {
   checkActiveAlerts();
   const alertCheckInterval = setInterval(checkActiveAlerts, 8000);
 
-
-  // ── Time Machine Replay State & Handlers ──
-  let isReplayActive = false;
-  let isReplayPlaying = false;
-  let replaySpeed = 1;
-  let replayTimer = null;
-  let replayHistory = [];
-  let replayMinTime = 0;
-  let replayMaxTime = 0;
-  let replayCurrentTime = 0;
-  const lastHistoryLogByRider = {};
-
-  const replayControlBar = document.getElementById('replayControlBar');
-  const btnToggleReplay = document.getElementById('btnToggleReplay');
-  const btnReplayPlay = document.getElementById('btnReplayPlay');
-  const replayClock = document.getElementById('replayClock');
-  const replaySlider = document.getElementById('replaySlider');
-  const replayStartTime = document.getElementById('replayStartTime');
-  const replayEndTime = document.getElementById('replayEndTime');
-  const btnExitReplay = document.getElementById('btnExitReplay');
-
-  async function enterReplayMode() {
-    isReplayActive = true;
-    btnToggleReplay?.classList.add('active');
-    if (replayControlBar) replayControlBar.style.display = 'block';
-
-    // Clear live markers before starting replay
-    Object.values(markerById).forEach(m => {
-      if (m && clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
-    });
-    for (const k in markerById) delete markerById[k];
-    for (const k in progressById) delete progressById[k];
-
-    try {
-      const res = await fetch(`/api/events/${eventId}/history`);
-      replayHistory = res.ok ? await res.json() : [];
-    } catch {
-      replayHistory = [];
-    }
-
-    if (!replayHistory.length) {
-      showToast('Belum ada data rekaman race untuk replay.', 'warning');
-      exitReplayMode();
-      return;
-    }
-
-    replayMinTime = new Date(replayHistory[0].recorded_at).getTime();
-    replayMaxTime = new Date(replayHistory[replayHistory.length - 1].recorded_at).getTime();
-    if (replayMaxTime <= replayMinTime) replayMaxTime = replayMinTime + 3600000;
-
-    replayStartTime.textContent = new Date(replayMinTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    replayEndTime.textContent = new Date(replayMaxTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    replayCurrentTime = replayMinTime;
-    replaySlider.value = 0;
-    applyReplayFrame(replayCurrentTime);
-    showToast('Mode Time Machine Replay aktif! Geser slider atau tekan Play ⏱️', 'info');
-  }
-
-  function exitReplayMode() {
-    isReplayActive = false;
-    isReplayPlaying = false;
-    if (replayTimer) clearInterval(replayTimer);
-    replayTimer = null;
-    btnToggleReplay?.classList.remove('active');
-    if (replayControlBar) replayControlBar.style.display = 'none';
-    if (btnReplayPlay) btnReplayPlay.textContent = '▶';
-
-    // Clear replay markers and re-sync live positions
-    Object.values(markerById).forEach(m => {
-      if (m && clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
-    });
-    for (const k in markerById) delete markerById[k];
-    for (const k in progressById) delete progressById[k];
-    syncLatestPositionsFromHistory();
-    showToast('Kembali ke mode Live tracking 🔴', 'success');
-  }
-
-  function applyReplayFrame(timestampMs) {
-    replayClock.textContent = new Date(timestampMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-    const riderPoints = {};
-    replayHistory.forEach(h => {
-      const ptTime = new Date(h.recorded_at).getTime();
-      if (ptTime <= timestampMs) {
-        if (!riderPoints[h.rider_id] || ptTime > riderPoints[h.rider_id].timeMs) {
-          riderPoints[h.rider_id] = { ...h, timeMs: ptTime };
-        }
-      }
-    });
-
-    Object.values(riderPoints).forEach(pt => {
-      const rider = riders.find(r => r.id === pt.rider_id) || {
-        id: pt.rider_id,
-        bib: pt.rider_bib,
-        name: pt.rider_name,
-        color: pt.rider_color,
-        traccar_device_id: pt.rider_id
-      };
-      const devId = rider.traccar_device_id || pt.rider_id;
-      riderById[devId] = rider;
-
-      updateRiderPosition(devId, {
-        latitude: pt.latitude,
-        longitude: pt.longitude,
-        speed: pt.speed,
-        isKmh: true,
-        fixTime: pt.recorded_at
-      });
-    });
-  }
-
-  function toggleReplayPlay() {
-    if (isReplayPlaying) {
-      isReplayPlaying = false;
-      if (replayTimer) clearInterval(replayTimer);
-      replayTimer = null;
-      btnReplayPlay.textContent = '▶';
-    } else {
-      isReplayPlaying = true;
-      btnReplayPlay.textContent = '⏸';
-      const stepMs = 1000 * replaySpeed * 2.5;
-      replayTimer = setInterval(() => {
-        replayCurrentTime += stepMs;
-        if (replayCurrentTime >= replayMaxTime) {
-          replayCurrentTime = replayMaxTime;
-          toggleReplayPlay();
-        }
-        const pct = ((replayCurrentTime - replayMinTime) / (replayMaxTime - replayMinTime)) * 100;
-        replaySlider.value = Math.min(100, Math.max(0, pct));
-        applyReplayFrame(replayCurrentTime);
-      }, 150);
-    }
-  }
-
-  btnToggleReplay?.addEventListener('click', () => {
-    if (isReplayActive) exitReplayMode();
-    else enterReplayMode();
-  });
-  btnReplayPlay?.addEventListener('click', toggleReplayPlay);
-  btnExitReplay?.addEventListener('click', exitReplayMode);
-
-  replaySlider?.addEventListener('input', e => {
-    const pct = parseFloat(e.target.value) / 100;
-    replayCurrentTime = replayMinTime + (pct * (replayMaxTime - replayMinTime));
-    applyReplayFrame(replayCurrentTime);
-  });
-
-  document.querySelectorAll('.replay-speed-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      document.querySelectorAll('.replay-speed-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      replaySpeed = parseFloat(e.target.dataset.speed) || 1;
-      if (isReplayPlaying) {
-        toggleReplayPlay();
-        toggleReplayPlay();
-      }
-    });
-  });
+  const isReplayActive = false;
 
   // ── Head-to-Head Comparison State & Engine ──
   let comparingRiderId = null;
@@ -2662,10 +2472,6 @@ async function renderLiveMap(params) {
       if (liveWs) {
         try { liveWs.close(); } catch (e) {}
         liveWs = null;
-      }
-      if (typeof replayTimer !== 'undefined' && replayTimer) {
-        clearInterval(replayTimer);
-        replayTimer = null;
       }
     });
   }
