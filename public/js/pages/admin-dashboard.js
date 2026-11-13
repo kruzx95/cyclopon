@@ -47,6 +47,9 @@ function adminSidebar(activeKey) {
         <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
           <span>📊</span> Dashboard
         </a>
+        <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
+          <span>📑</span> Laporan &amp; Riwayat Event
+        </a>
         <a href="/admin/notifications" data-link class="${activeKey === 'notifications' ? 'active' : ''}">
           <span>📢</span> Notifikasi Panitia
         </a>
@@ -82,6 +85,9 @@ function adminSidebar(activeKey) {
         <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}" style="justify-content:space-between">
           <span style="display:flex;align-items:center;gap:8px">📊 Dashboard</span>
           <span class="sidebar-sos-badge" style="display:none">0 SOS</span>
+        </a>
+        <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
+          <span style="display:flex;align-items:center;gap:8px">📑 Laporan &amp; Riwayat Event</span>
         </a>
         <a href="/admin/notifications" data-link class="${activeKey === 'notifications' ? 'active' : ''}" style="justify-content:space-between">
           <span style="display:flex;align-items:center;gap:8px">📢 Notifikasi Panitia</span>
@@ -154,7 +160,7 @@ const AdminSosMonitor = {
   },
 
   async poll() {
-    if (!window.location.pathname.startsWith('/admin') || !sessionStorage.getItem('adminUser')) {
+    if (!window.location.pathname.startsWith('/admin') || window.location.pathname === '/admin' || !sessionStorage.getItem('adminUser')) {
       this.stop();
       return;
     }
@@ -511,12 +517,33 @@ window.logoutAdmin = logoutAdmin;
 function renderAdminLogin() {
   loadCss('/css/admin.css');
 
-  // If already logged in, redirect directly to dashboard
+  // Stop any lingering background intervals from dashboard
+  if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
+
+  // If already logged in, verify session with server first before redirecting to dashboard
   const user = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
-  if (user) {
-    if (!sessionStorage.getItem('adminUser')) sessionStorage.setItem('adminUser', user);
-    Router.navigate('/admin/dashboard');
-    return;
+  const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+
+  if (user && token) {
+    fetch('/api/auth/admin/session', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.ok) {
+          if (!sessionStorage.getItem('adminUser')) sessionStorage.setItem('adminUser', user);
+          Router.navigate('/admin/dashboard');
+        } else {
+          sessionStorage.removeItem('adminUser');
+          localStorage.removeItem('adminUser');
+          sessionStorage.removeItem('adminToken');
+          localStorage.removeItem('adminToken');
+        }
+      })
+      .catch(() => {
+        sessionStorage.removeItem('adminUser');
+        localStorage.removeItem('adminUser');
+        sessionStorage.removeItem('adminToken');
+        localStorage.removeItem('adminToken');
+      });
   }
 
   document.getElementById('app').innerHTML = `
@@ -850,18 +877,32 @@ async function renderAdminDashboard() {
   // ── Real-Time Traffic Metrics Polling ──
   let trafficInterval = null;
   async function fetchTrafficMetrics() {
+    if (!window.location.pathname.startsWith('/admin') || window.location.pathname === '/admin' || !sessionStorage.getItem('adminUser')) {
+      if (trafficInterval) {
+        clearInterval(trafficInterval);
+        trafficInterval = null;
+      }
+      return;
+    }
     try {
       const res = await fetch('/api/admin/metrics/traffic', { credentials: 'include' });
       if (!res.ok) {
         if (res.status === 401) {
+          if (trafficInterval) {
+            clearInterval(trafficInterval);
+            trafficInterval = null;
+          }
+          if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
           sessionStorage.removeItem('adminUser');
           localStorage.removeItem('adminUser');
           sessionStorage.removeItem('adminToken');
           localStorage.removeItem('adminToken');
-          if (typeof showToast === 'function') {
-            showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
+          if (window.location.pathname !== '/admin') {
+            if (typeof showToast === 'function') {
+              showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
+            }
+            Router.navigate('/admin');
           }
-          Router.navigate('/admin');
         }
         return;
       }
@@ -1155,18 +1196,26 @@ async function renderAdminDashboard() {
   }
 
   async function fetchDiagnosticReport() {
+    if (!sessionStorage.getItem('adminUser') || window.location.pathname === '/admin') return;
     try {
       const res = await fetch('/api/admin/reports/latest', { credentials: 'include' });
       if (!res.ok) {
         if (res.status === 401) {
+          if (trafficInterval) {
+            clearInterval(trafficInterval);
+            trafficInterval = null;
+          }
+          if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
           sessionStorage.removeItem('adminUser');
           localStorage.removeItem('adminUser');
           sessionStorage.removeItem('adminToken');
           localStorage.removeItem('adminToken');
-          if (typeof showToast === 'function') {
-            showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
+          if (window.location.pathname !== '/admin') {
+            if (typeof showToast === 'function') {
+              showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
+            }
+            Router.navigate('/admin');
           }
-          Router.navigate('/admin');
         }
         return;
       }
@@ -1264,8 +1313,27 @@ async function renderAdminDashboard() {
     });
   }
 
+  // Register cleanup when navigating away from dashboard
+  if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
+    Router.onUnmount(() => {
+      if (trafficInterval) {
+        clearInterval(trafficInterval);
+        trafficInterval = null;
+      }
+      if (window.AdminSosMonitor) {
+        window.AdminSosMonitor.stop();
+      }
+    });
+  }
+
   window.addEventListener('popstate', () => {
-    if (trafficInterval) clearInterval(trafficInterval);
+    if (trafficInterval) {
+      clearInterval(trafficInterval);
+      trafficInterval = null;
+    }
+    if (window.AdminSosMonitor) {
+      window.AdminSosMonitor.stop();
+    }
   }, { once: true });
 
   try {

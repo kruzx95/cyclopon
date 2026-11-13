@@ -1678,4 +1678,35 @@
   }
 }
 
+/* ── Admin Event Telemetry Audit & Report Page ── */
+.tbl-filter-pill {
+  border: 1px solid #D1D5DB;
+  background: #FFFFFF;
+  color: #4B5563;
+  padding: 5px 12px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tbl-filter-pill:hover {
+  background: #F3F4F6;
+  border-color: #9CA3AF;
+}
+
+.tbl-filter-pill.active {
+  background: #0D1117;
+  color: #FFFFFF;
+  border-color: #0D1117;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.rider-report-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+
 

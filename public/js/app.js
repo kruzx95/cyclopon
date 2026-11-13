@@ -121,6 +121,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAdminDashboard();
   });
 
+  Router.register('/admin/event-reports', async (params) => {
+    await loadPageDeps(
+      ['/js/pages/admin-dashboard.js', '/js/pages/admin-event-reports.js'],
+      ['/css/admin.css']
+    );
+    renderAdminEventReports(params);
+  });
+
+  Router.register('/admin/reports', async (params) => {
+    Router.navigate('/admin/event-reports');
+  });
+
   Router.register('/admin/notifications', async () => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js', '/js/pages/admin-notifications.js'],

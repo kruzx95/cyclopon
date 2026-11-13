@@ -1198,23 +1198,46 @@ async function renderLiveMap(params) {
     return { label, color, isRole: false };
   }
 
-  function createRiderIcon(rider, isOffRoute) {
+  function createRiderIcon(rider, isOffRoute, status = null) {
     const meta = getRiderMarkerMeta(rider || {});
-    const baseColor = isOffRoute ? '#EF4444' : meta.color;
-    const offRouteTag = isOffRoute
-      ? `<div style="
+    const isOffline = status && (status.text === 'Offline' || status.text === 'Blank Spot');
+    const isIdle = status && status.text === 'Idle';
+
+    const baseColor = isOffRoute ? '#EF4444' : (isOffline ? '#94A3B8' : meta.color);
+    const markerOpacity = isOffline ? '0.42' : (isIdle ? '0.75' : '1.0');
+
+    let statusTag = '';
+    if (isOffRoute) {
+      statusTag = `<div style="
           position:absolute;top:-36px;left:50%;transform:translateX(-50%);
           background:#EF4444;color:#FFFFFF;font-size:9px;font-weight:900;
           padding:1px 6px;border-radius:100px;white-space:nowrap;
           box-shadow:0 0 12px #EF4444;animation:pulse 1.2s infinite;
           pointer-events:none;z-index:10;
-        ">⚠️ NYASAR</div>`
-      : '';
+        ">⚠️ NYASAR</div>`;
+    } else if (isOffline) {
+      statusTag = `<div style="
+          position:absolute;top:-36px;left:50%;transform:translateX(-50%);
+          background:rgba(71,85,105,0.92);color:#F1F5F9;font-size:8px;font-weight:800;
+          padding:1px 6px;border-radius:100px;white-space:nowrap;
+          border:1px solid rgba(255,255,255,0.25);
+          box-shadow:0 2px 6px rgba(0,0,0,0.3);
+          pointer-events:none;z-index:10;
+        ">⚪ NONAKTIF</div>`;
+    } else if (isIdle) {
+      statusTag = `<div style="
+          position:absolute;top:-36px;left:50%;transform:translateX(-50%);
+          background:rgba(217,119,6,0.92);color:#FFFFFF;font-size:8px;font-weight:800;
+          padding:1px 6px;border-radius:100px;white-space:nowrap;
+          box-shadow:0 2px 6px rgba(217,119,6,0.4);
+          pointer-events:none;z-index:10;
+        ">⏸️ DIAM</div>`;
+    }
 
     return L.divIcon({
       html: `
-        <div style="position:relative;width:20px;height:20px">
-          ${offRouteTag}
+        <div style="position:relative;width:20px;height:20px;opacity:${markerOpacity};filter:${isOffline ? 'grayscale(45%)' : 'none'};transition:all 0.3s ease">
+          ${statusTag}
           <div style="
             width:14px;height:14px;border-radius:50%;
             background:${baseColor};
@@ -1635,7 +1658,7 @@ async function renderLiveMap(params) {
 
     // Smoothly update existing marker or create once
     let marker = markerById[canonicalId] || (rider.traccar_device_id && markerById[rider.traccar_device_id]);
-    const updatedIcon = createRiderIcon(rider, telem.isOffRoute);
+    const updatedIcon = createRiderIcon(rider, telem.isOffRoute, status);
 
     if (marker && (clusterGroup.hasLayer(marker) || map.hasLayer(marker))) {
       marker.setLatLng(latlng);
