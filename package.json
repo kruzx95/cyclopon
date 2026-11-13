@@ -12,7 +12,7 @@
     "clean:data": "node scripts/clean-demo-data.js",
     "seed:demo": "node scripts/seed-demo.js",
     "simulate": "node scripts/simulate-race.js",
-    "deploy:vps": "bash scripts/deploy-vps.sh"
+    "deploy:vps": "node scripts/deploy-runner.js"
   },
   "keywords": [],
   "author": "",
