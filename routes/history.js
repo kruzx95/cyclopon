@@ -75,6 +75,11 @@ router.post('/events/:id/history', (req, res) => {
         const wsPositions = positions.map(pos => {
           const r = db.getRiderById.get(Number(pos.rider_id));
           const devId = (r && r.traccar_device_id) ? r.traccar_device_id : (r && r.bib ? (Number(r.bib) || pos.rider_id) : pos.rider_id);
+          const rawBatt = pos.battery != null ? pos.battery : (pos.attributes && pos.attributes.batteryLevel != null ? pos.attributes.batteryLevel : (pos.batteryLevel != null ? pos.batteryLevel : null));
+          const attributes = {};
+          if (rawBatt != null) {
+            attributes.batteryLevel = rawBatt;
+          }
           return {
             deviceId: devId,
             rider_id: Number(pos.rider_id),
@@ -85,7 +90,7 @@ router.post('/events/:id/history', (req, res) => {
             course: Number(pos.course || 0),
             altitude: Number(pos.altitude || 0),
             fixTime: pos.recorded_at || new Date().toISOString(),
-            attributes: {}
+            attributes
           };
         });
         broadcastToClients(JSON.stringify({ positions: wsPositions }), eventId);

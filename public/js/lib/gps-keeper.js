@@ -29,7 +29,24 @@ const GpsKeeper = (() => {
   let lastCoord = null;
   let latestAccuracy = null;
   let latestSpeedKmh = 0;
+  let latestBatteryPct = null;
   let offlineQueue = [];
+
+  // Listen to device battery level if Battery API is supported
+  if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+    navigator.getBattery().then(batt => {
+      const syncBatt = () => {
+        if (typeof normalizeBattery === 'function') {
+          latestBatteryPct = normalizeBattery(batt.level);
+        } else {
+          latestBatteryPct = Math.round(batt.level * 100);
+        }
+      };
+      syncBatt();
+      batt.addEventListener('levelchange', syncBatt);
+      batt.addEventListener('chargingchange', syncBatt);
+    }).catch(() => {});
+  }
 
   // Load any previously unsent offline points from localStorage
   try {
@@ -267,7 +284,11 @@ const GpsKeeper = (() => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
             const rawSpeed = pos.coords.speed != null ? pos.coords.speed * 3.6 : 0;
-            latestSpeedKmh = Math.max(0, Math.round(rawSpeed * 10) / 10);
+            if (typeof normalizeSpeedKmh === 'function') {
+              latestSpeedKmh = normalizeSpeedKmh(rawSpeed, true);
+            } else {
+              latestSpeedKmh = rawSpeed < 1.8 ? 0 : Math.max(0, Math.round(rawSpeed * 10) / 10);
+            }
             latestAccuracy = pos.coords.accuracy;
 
             // Distance calculation with jitter filter (> 3 meters)
@@ -292,6 +313,7 @@ const GpsKeeper = (() => {
                 speed: latestSpeedKmh,
                 accuracy: latestAccuracy,
                 distanceKm: Math.round(totalDistanceKm * 10) / 10,
+                battery: latestBatteryPct,
                 heading: pos.coords.heading,
                 altitude: pos.coords.altitude
               });
@@ -307,6 +329,7 @@ const GpsKeeper = (() => {
                 longitude: lng,
                 speed: latestSpeedKmh,
                 distance_km: Math.round(totalDistanceKm * 10) / 10,
+                battery: latestBatteryPct,
                 recorded_at: new Date().toISOString()
               });
             }

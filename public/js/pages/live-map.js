@@ -58,9 +58,6 @@ async function renderLiveMap(params) {
       <path d="M10 14.66V17c0 .55-.45 1-1 1H7v2h10v-2h-2c-.55 0-1-.45-1-1v-2.34"></path>
       <path d="M6 4h12v5a6 6 0 0 1-12 0V4z"></path>
     </svg>`,
-    simulasi: `<svg class="nav-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-    </svg>`,
     replay: `<svg class="nav-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M1 4v6h6"></path>
       <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
@@ -1374,15 +1371,17 @@ async function renderLiveMap(params) {
     const latlng = [pos.latitude, pos.longitude];
     const fixTime = pos.fixTime || pos.deviceTime || new Date().toISOString();
 
-    // 1. Determine base speed in km/h
+    // 1. Determine base speed in km/h with deadband & sanity limits
     let speedKmh = null;
     if (pos.speed != null) {
-      const raw = Number(pos.speed);
-      if (!isNaN(raw)) {
-        // Sanity check: If raw > 70 and not explicitly knots, it is already in km/h.
-        // Cap realistic cycling speed at 85 km/h to prevent GPS jitter spikes or double-conversion anomalies.
-        const converted = pos.isKmh ? raw : (raw > 70 ? raw : raw * 1.852);
-        speedKmh = Math.max(0, Math.min(85, Math.round(converted)));
+      if (typeof normalizeSpeedKmh === 'function') {
+        speedKmh = normalizeSpeedKmh(pos.speed, !!pos.isKmh);
+      } else {
+        const raw = Number(pos.speed);
+        if (!isNaN(raw)) {
+          const converted = pos.isKmh ? raw : (raw > 70 ? raw : raw * 1.852);
+          speedKmh = converted < 1.8 ? 0 : Math.max(0, Math.min(90, Math.round(converted)));
+        }
       }
     }
 
@@ -1423,10 +1422,14 @@ async function renderLiveMap(params) {
     }
 
     let batteryLevel = null;
-    if (pos.attributes && pos.attributes.batteryLevel != null) {
-      batteryLevel = Math.round(Number(pos.attributes.batteryLevel));
-    } else if (pos.battery != null) {
-      batteryLevel = Math.round(Number(pos.battery));
+    const rawBatt = (pos.attributes && pos.attributes.batteryLevel != null)
+      ? pos.attributes.batteryLevel
+      : (pos.battery != null ? pos.battery : null);
+
+    if (rawBatt != null) {
+      batteryLevel = typeof normalizeBattery === 'function'
+        ? normalizeBattery(rawBatt)
+        : Math.round(Number(rawBatt));
     }
 
     // 3. Initialize or retrieve rider telemetry state
@@ -2186,100 +2189,6 @@ async function renderLiveMap(params) {
     }
   }
 
-  // ── Simulator Mode (Demo GPS) ──
-  let simIntervalId = null;
-  let isSimulating  = false;
-
-  function startSimulator() {
-    if (!routeCoords || routeCoords.length < 2) {
-      showToast('Upload file GPX rute event terlebih dahulu untuk simulasi.', 'error');
-      return;
-    }
-
-    if (!riders || !riders.length) {
-      showToast('Belum ada data rider yang terdaftar pada event ini.', 'warning');
-      return;
-    }
-
-    isSimulating = true;
-    const simBtn = document.getElementById('btnSimulator');
-    if (simBtn) simBtn.classList.add('active');
-    const simLbl = document.getElementById('simBtnLabel');
-    if (simLbl) simLbl.textContent = 'Hentikan Simulasi';
-    showToast('Simulasi GPS rider dimulai! 🚴‍♂️', 'success');
-
-    const demoRiders = riders;
-
-    const baseBatteries = [94, 78, 17]; // Rider 3 has low battery (17%) to demonstrate low battery alert
-
-    const simState = demoRiders.map((r, idx) => {
-      const devId = r.traccar_device_id || (idx + 9001);
-      r.traccar_device_id = devId;
-      riderById[devId] = r;
-      bibToRider[r.bib] = r;
-
-      // Stagger initial progress along route
-      const staggerIndex = Math.min(Math.floor((idx + 1) * (routeCoords.length / (demoRiders.length + 3))), routeCoords.length - 2);
-      return {
-        rider: r,
-        devId,
-        currentIndex: staggerIndex,
-        baseSpeed: 24 + (idx * 3.5),
-        stepSize: Math.max(1, Math.floor(routeCoords.length / 100)) + (idx * 2),
-        battery: baseBatteries[idx % baseBatteries.length],
-        tick: 0
-      };
-    });
-
-    function advanceSim() {
-      simState.forEach(sim => {
-        sim.tick++;
-        sim.currentIndex = (sim.currentIndex + sim.stepSize) % routeCoords.length;
-        const pt = routeCoords[sim.currentIndex];
-
-        // Rider 2 occasionally simulates a wrong turn off-route (+150m) to test warning pill
-        const isOffRouteSim = (sim.rider.bib === '002' || sim.rider.bib === '2') && (sim.tick % 8 >= 4);
-        const latOffset = isOffRouteSim ? 0.0015 : (Math.random() - 0.5) * 0.00015;
-        const lngOffset = isOffRouteSim ? 0.0015 : (Math.random() - 0.5) * 0.00015;
-
-        const lat = pt[0] + latOffset;
-        const lng = pt[1] + lngOffset;
-        const currentSpeed = Math.round(sim.baseSpeed + (Math.random() - 0.5) * 3);
-
-        updateRiderPosition(sim.devId, {
-          latitude: lat,
-          longitude: lng,
-          speed: currentSpeed,
-          isKmh: true,
-          battery: sim.battery,
-          fixTime: new Date().toISOString()
-        });
-      });
-    }
-
-    advanceSim();
-    simIntervalId = setInterval(advanceSim, 2500);
-  }
-
-  function stopSimulator() {
-    isSimulating = false;
-    if (simIntervalId) clearInterval(simIntervalId);
-    simIntervalId = null;
-    const simBtn = document.getElementById('btnSimulator');
-    if (simBtn) simBtn.classList.remove('active');
-    const simLbl = document.getElementById('simBtnLabel');
-    if (simLbl) simLbl.textContent = 'Simulasi';
-    showToast('Simulasi GPS dihentikan.', 'info');
-  }
-
-  const btnSimulator = document.getElementById('btnSimulator');
-  if (btnSimulator) {
-    btnSimulator.addEventListener('click', () => {
-      if (isSimulating) stopSimulator();
-      else startSimulator();
-    });
-  }
-
   // ── Active SOS Alerts System ──
   const emergencyBar        = document.getElementById('liveEmergencyBar');
   const emergencyText       = document.getElementById('emergencyText');
@@ -2724,10 +2633,6 @@ async function renderLiveMap(params) {
       if (liveWs) {
         try { liveWs.close(); } catch (e) {}
         liveWs = null;
-      }
-      if (typeof simIntervalId !== 'undefined' && simIntervalId) {
-        clearInterval(simIntervalId);
-        simIntervalId = null;
       }
       if (typeof replayTimer !== 'undefined' && replayTimer) {
         clearInterval(replayTimer);

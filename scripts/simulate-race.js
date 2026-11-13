@@ -145,6 +145,7 @@ const riderStates = riders.map((r, idx) => {
     curKm,
     baseSpeed,
     curSpeed: baseSpeed,
+    initialBattery: 94 + (idx % 6),
     isFinished: curKm >= totalRouteKm,
     finishRank: null,
     lastCheckpoint: 'Start'
@@ -240,6 +241,7 @@ async function simulationTick() {
     if (st.isFinished) {
       // Stay parked at finish line with 0 speed until everyone finishes
       const finishPt = trackpoints[trackpoints.length - 1];
+      const finishBatt = Math.max(18, Math.round(st.initialBattery - 22));
       positionsToPost.push({
         rider_id: st.rider.id,
         latitude: finishPt.lat,
@@ -247,6 +249,7 @@ async function simulationTick() {
         speed: 0,
         altitude: finishPt.ele,
         distance_km: Math.round(totalRouteKm * 10) / 10,
+        battery: finishBatt,
         recorded_at: nowIso
       });
       continue;
@@ -306,6 +309,9 @@ async function simulationTick() {
       }
     }
 
+    const fractionDone = totalRouteKm > 0 ? (st.curKm / totalRouteKm) : 0;
+    const currentBatt = Math.max(18, Math.round(st.initialBattery - fractionDone * 22));
+
     positionsToPost.push({
       rider_id: st.rider.id,
       latitude: currentCoords.lat,
@@ -313,6 +319,7 @@ async function simulationTick() {
       speed: st.curSpeed,
       altitude: currentCoords.ele,
       distance_km: Math.round(st.curKm * 10) / 10,
+      battery: currentBatt,
       recorded_at: nowIso
     });
   }

@@ -8,7 +8,6 @@ let cockpitWakeLock = null;
 let cockpitWs = null;
 let cockpitWsReconnectTimer = null;
 let cockpitWsBackoffMs = 2000;
-let cockpitSimTimer = null;
 let cockpitGeoWatchId = null;
 let cockpitTimerInterval = null;
 let audioCtx = null;
@@ -178,23 +177,11 @@ async function renderRiderCockpit() {
           </div>
         </div>
         <div class="cockpit-top-actions">
-          <button id="btnShareCockpit" class="cockpit-pill-btn" title="Bagikan Tautan Live Tracking Saya ke WhatsApp / Medsos">
-            📲 <span id="shareStatusText">Bagikan</span>
+          <button id="btnToggleWakeLock" class="cockpit-pill-btn" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
+            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar ON</span>
           </button>
           <button id="btnTogglePocket" class="cockpit-pill-btn" title="Mode Kantong Jersey (Background GPS Keep-Alive saat layar dikunci)">
             <span id="pocketIcon">🎒</span> <span id="pocketStatusText">Kantong</span>
-          </button>
-          <button id="btnToggleNight" class="cockpit-pill-btn" title="Mode Malam AMOLED / Siang">
-            <span id="nightIcon">🌙</span> <span id="nightStatusText">Malam</span>
-          </button>
-          <button id="btnToggleAudio" class="cockpit-pill-btn" title="Toggle Suara Notifikasi Checkpoint">
-            <span id="audioIcon">🔔</span> <span id="audioStatusText">Suara</span>
-          </button>
-          <button id="btnToggleWakeLock" class="cockpit-pill-btn" title="Toggle Screen Wake Lock">
-            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar</span>
-          </button>
-          <button id="btnToggleSim" class="cockpit-pill-btn" title="Toggle Ride Simulator">
-            🎮 <span id="simStatusText">Sim</span>
           </button>
         </div>
       </div>
@@ -468,10 +455,35 @@ async function renderRiderCockpit() {
   let currentLat = null;
   let currentLng = null;
   let currentSpeed = 0;
+  let smoothedSpeed = 0;
   let maxSpeed = 0;
   let speedSamples = [];
   let coveredKm = 0;
+  let movingSeconds = 0;
+  let currentBatteryLevel = null;
+  let deviceBatteryManager = null;
+  let batteryChangeHandler = null;
   let startTime = Date.now();
+
+  // ── Device Battery API Listener ──
+  if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+    navigator.getBattery().then(batt => {
+      deviceBatteryManager = batt;
+      batteryChangeHandler = () => {
+        const norm = typeof normalizeBattery === 'function' ? normalizeBattery(batt.level) : Math.round(batt.level * 100);
+        if (norm != null) {
+          currentBatteryLevel = norm;
+          const el = document.getElementById('cockpitBattery');
+          if (el) el.textContent = `${norm}%`;
+        }
+      };
+      batteryChangeHandler();
+      batt.addEventListener('levelchange', batteryChangeHandler);
+      batt.addEventListener('chargingchange', batteryChangeHandler);
+    }).catch(err => {
+      console.log('[Cockpit Battery API] Info:', err.message);
+    });
+  }
 
   // ── 1. Wake Lock API ──
   const btnWakeLock = document.getElementById('btnToggleWakeLock');
@@ -513,40 +525,6 @@ async function renderRiderCockpit() {
     else activateWakeLock();
   });
 
-  // ── Share Live Tracking Link ──
-  const btnShareCockpit = document.getElementById('btnShareCockpit');
-  if (btnShareCockpit) {
-    btnShareCockpit.addEventListener('click', async () => {
-      const shareUrl = `${window.location.origin}/watch/${event.id}?bib=${encodeURIComponent(rider.bib)}`;
-      const shareText = `🚴 Pantau posisi gowes saya (${rider.name} - BIB #${rider.bib}) secara langsung di ${event.name} via CycloPon Live Map:\n${shareUrl}`;
-
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: `Live Tracking ${rider.name} - CycloPon`,
-            text: shareText,
-            url: shareUrl
-          });
-          showToast('Tautan pelacakan berhasil dibagikan!', 'success');
-          return;
-        } catch (err) {
-          if (err.name === 'AbortError') return;
-        }
-      }
-
-      if (navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-          showToast('✓ Tautan Live Tracking disalin ke clipboard!', 'success');
-        } catch {
-          prompt('Salin link tracking ini:', shareUrl);
-        }
-      } else {
-        prompt('Salin link tracking ini:', shareUrl);
-      }
-    });
-  }
-
   // Re-acquire lock on tab visibility change
   document.addEventListener('visibilitychange', () => {
     if (cockpitActive && document.visibilityState === 'visible' && !cockpitWakeLock) {
@@ -574,15 +552,17 @@ async function renderRiderCockpit() {
     Router.onUnmount(teardownRiderCockpit);
   }
 
-  // ── 3. Elapsed Time Clock ──
+  // ── 3. Moving Time & Elapsed Clock ──
   const movingTimeEl = document.getElementById('cockpitMovingTime');
   if (cockpitTimerInterval) clearInterval(cockpitTimerInterval);
   cockpitTimerInterval = setInterval(() => {
     if (!cockpitActive) return;
-    const diffSec = Math.floor((Date.now() - startTime) / 1000);
-    const hrs = String(Math.floor(diffSec / 3600)).padStart(2, '0');
-    const mins = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
-    const secs = String(diffSec % 60).padStart(2, '0');
+    if (currentSpeed > 2.0) {
+      movingSeconds++;
+    }
+    const hrs = String(Math.floor(movingSeconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((movingSeconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(movingSeconds % 60).padStart(2, '0');
     if (movingTimeEl) movingTimeEl.textContent = `${hrs}:${mins}:${secs}`;
   }, 1000);
 
@@ -630,25 +610,58 @@ async function renderRiderCockpit() {
   updateCheckpointWidget(0, 0);
 
   // ── 5. Telemetry Update Handler ──
-  function updateTelemetry(lat, lng, speedKmh, batteryLevel = null) {
+  function updateTelemetry(lat, lng, speedKmh, batteryLevel = null, isKmh = true) {
     currentLat = lat;
     currentLng = lng;
-    currentSpeed = Math.max(0, Math.round((speedKmh || 0) * 10) / 10);
+
+    // 1. Normalize speed (knots conversion, deadband <1.8km/h, and max 90km/h clamp)
+    const rawTarget = typeof normalizeSpeedKmh === 'function'
+      ? normalizeSpeedKmh(speedKmh, isKmh)
+      : (speedKmh < 1.8 ? 0 : Math.min(90, Math.max(0, Math.round((speedKmh || 0) * 10) / 10)));
+
+    // 2. Exponential Moving Average (EMA) Speed Smoothing
+    if (rawTarget === 0) {
+      smoothedSpeed = 0; // Immediate zero when stopping (no sluggish lag at lights)
+    } else if (smoothedSpeed === 0) {
+      smoothedSpeed = rawTarget; // Instant response on acceleration from standstill
+    } else {
+      // Responsive yet jitter-free smoothing filter
+      smoothedSpeed = (rawTarget * 0.45) + (smoothedSpeed * 0.55);
+    }
+    currentSpeed = Math.round(smoothedSpeed * 10) / 10;
 
     if (currentSpeed > maxSpeed) maxSpeed = currentSpeed;
-    if (currentSpeed > 2) speedSamples.push(currentSpeed);
-    if (speedSamples.length > 30) speedSamples.shift();
+    if (currentSpeed > 2.0) {
+      speedSamples.push(currentSpeed);
+      if (speedSamples.length > 300) speedSamples.shift();
+    }
 
-    const avgSpeed = speedSamples.length
-      ? Math.round((speedSamples.reduce((a, b) => a + b, 0) / speedSamples.length) * 10) / 10
-      : currentSpeed;
+    // Garmin/Wahoo style Average Moving Speed (Distance / Moving Hours)
+    const movingHours = movingSeconds / 3600;
+    let avgSpeed = 0;
+    if (movingHours > (10 / 3600) && coveredKm > 0.05) {
+      avgSpeed = Math.round((coveredKm / movingHours) * 10) / 10;
+    } else if (speedSamples.length > 0) {
+      avgSpeed = Math.round((speedSamples.reduce((a, b) => a + b, 0) / speedSamples.length) * 10) / 10;
+    } else {
+      avgSpeed = currentSpeed;
+    }
 
     // Update Speed Display
     document.getElementById('cockpitSpeedVal').textContent = currentSpeed.toFixed(1);
     document.getElementById('cockpitMaxSpeed').textContent = maxSpeed.toFixed(1);
     document.getElementById('cockpitAvgSpeed').textContent = avgSpeed.toFixed(1);
+
+    // Battery Display with Multi-Format Normalization
     if (batteryLevel != null) {
-      document.getElementById('cockpitBattery').textContent = `${Math.round(batteryLevel)}%`;
+      const norm = typeof normalizeBattery === 'function' ? normalizeBattery(batteryLevel) : Math.round(Number(batteryLevel));
+      if (norm != null) {
+        currentBatteryLevel = norm;
+      }
+    }
+    const battEl = document.getElementById('cockpitBattery');
+    if (battEl) {
+      battEl.textContent = currentBatteryLevel != null ? `${currentBatteryLevel}%` : '--%';
     }
 
     // Nearest point & distance covered
@@ -1030,9 +1043,11 @@ async function renderRiderCockpit() {
 
             if (matchesRider) {
               const rawSpeed = Number(pos.speed || 0);
-              const spd = pos.isKmh ? rawSpeed : rawSpeed * 1.852;
-              const batt = pos.attributes?.batteryLevel != null ? Number(pos.attributes.batteryLevel) : null;
-              updateTelemetry(pos.latitude, pos.longitude, spd, batt);
+              const isKmh = !!pos.isKmh;
+              const rawBatt = pos.attributes?.batteryLevel != null
+                ? pos.attributes.batteryLevel
+                : (pos.battery != null ? pos.battery : null);
+              updateTelemetry(pos.latitude, pos.longitude, rawSpeed, rawBatt, isKmh);
             }
           });
         }
@@ -1076,8 +1091,7 @@ async function renderRiderCockpit() {
         }
 
         const rawSpeed = pos.coords.speed != null ? pos.coords.speed * 3.6 : 0;
-        const speedKmh = Math.max(0, Math.round(rawSpeed * 10) / 10);
-        updateTelemetry(pos.coords.latitude, pos.coords.longitude, speedKmh);
+        updateTelemetry(pos.coords.latitude, pos.coords.longitude, rawSpeed, currentBatteryLevel, true);
 
         // Auto-report telemetry to server every 5 seconds for live tracking
         const now = Date.now();
@@ -1087,8 +1101,9 @@ async function renderRiderCockpit() {
             rider_id: rider.id,
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
-            speed: speedKmh,
+            speed: currentSpeed,
             distance_km: coveredKm,
+            battery: currentBatteryLevel,
             recorded_at: new Date().toISOString()
           };
 
@@ -1121,42 +1136,9 @@ async function renderRiderCockpit() {
     );
   }
 
-  // ── 9. Ride Simulator Toggle ──
-  const btnSim = document.getElementById('btnToggleSim');
-  const simText = document.getElementById('simStatusText');
-  let simActive = false;
-  let simStep = 0;
-
-  btnSim.addEventListener('click', () => {
-    simActive = !simActive;
-    if (simActive) {
-      btnSim.classList.add('sim-active');
-      simText.textContent = 'Sim ON';
-      startSimulation();
-      showToast('Ride Simulator Aktif! Data kecepatan disimulasikan.', 'info');
-    } else {
-      btnSim.classList.remove('sim-active');
-      simText.textContent = 'Sim';
-      clearInterval(cockpitSimTimer);
-      showToast('Simulator dinonaktifkan.', 'info');
-    }
-  });
-
-  function startSimulation() {
-    clearInterval(cockpitSimTimer);
-    cockpitSimTimer = setInterval(() => {
-      if (!cockpitActive || !simActive) return;
-      simStep = (simStep + 1) % routeCoords.length;
-      const pt = routeCoords[simStep];
-      const simSpeed = 26 + (Math.sin(simStep * 0.4) * 6) + (Math.random() * 2);
-      const simBatt = Math.max(15, 95 - Math.floor(simStep * 0.5));
-      updateTelemetry(pt[0], pt[1], simSpeed, simBatt);
-    }, 2000);
-  }
-
   // Initial update with route start
   if (routeCoords.length) {
-    updateTelemetry(routeCoords[0][0], routeCoords[0][1], 0, 98);
+    updateTelemetry(routeCoords[0][0], routeCoords[0][1], 0, currentBatteryLevel, true);
   }
 
   // Manual Mute / Unmute off-route audio alert button
@@ -1192,12 +1174,7 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
   });
 
-  // ── AMOLED Night Mode Toggle & Persistence ──
-  const btnToggleNight = document.getElementById('btnToggleNight');
-  const nightIcon = document.getElementById('nightIcon');
-  const nightStatusText = document.getElementById('nightStatusText');
-  const cockpitContainer = document.querySelector('.cockpit-container');
-
+  // ── Auto Night Mode ──
   const savedNight = localStorage.getItem('cyclopon_cockpit_night');
   let nightModeActive = false;
   if (savedNight !== null) {
@@ -1206,6 +1183,7 @@ async function renderRiderCockpit() {
     const curHour = new Date().getHours();
     nightModeActive = curHour < 6 || curHour >= 18;
   }
+  const cockpitContainer = document.querySelector('.cockpit-container');
   const bottomBar = document.querySelector('.cockpit-bottom-bar');
 
   function applyNightMode(isNight) {
@@ -1213,65 +1191,14 @@ async function renderRiderCockpit() {
       document.body.classList.add('night-mode');
       cockpitContainer?.classList.add('night-mode');
       bottomBar?.classList.add('night-mode');
-      btnToggleNight?.classList.add('night-active');
-      if (nightIcon) nightIcon.textContent = '☀️';
-      if (nightStatusText) nightStatusText.textContent = 'Siang';
-      if (btnToggleNight) btnToggleNight.title = 'Beralih ke Mode Siang (Terang)';
     } else {
       document.body.classList.remove('night-mode');
       cockpitContainer?.classList.remove('night-mode');
       bottomBar?.classList.remove('night-mode');
-      btnToggleNight?.classList.remove('night-active');
-      if (nightIcon) nightIcon.textContent = '🌙';
-      if (nightStatusText) nightStatusText.textContent = 'Malam';
-      if (btnToggleNight) btnToggleNight.title = 'Beralih ke Mode Malam AMOLED (Hitam Pekat Anti-Silau)';
     }
   }
 
   applyNightMode(nightModeActive);
-
-  btnToggleNight?.addEventListener('click', () => {
-    nightModeActive = !nightModeActive;
-    localStorage.setItem('cyclopon_cockpit_night', nightModeActive);
-    applyNightMode(nightModeActive);
-    showToast(nightModeActive ? '🌙 Mode Malam AMOLED Aktif (Hemat Baterai)' : '☀️ Mode Siang Aktif', 'info');
-  });
-
-  // ── Audio Checkpoint Chime Toggle & Persistence ──
-  const btnToggleAudio = document.getElementById('btnToggleAudio');
-  const audioIcon = document.getElementById('audioIcon');
-  const audioStatusText = document.getElementById('audioStatusText');
-
-  function updateAudioBtnUI() {
-    if (audioAlertEnabled) {
-      btnToggleAudio?.classList.remove('audio-muted');
-      if (audioIcon) audioIcon.textContent = '🔔';
-      if (audioStatusText) audioStatusText.textContent = 'Suara';
-      if (btnToggleAudio) btnToggleAudio.title = 'Audio Chime Checkpoint Aktif (Klik untuk Mute)';
-    } else {
-      btnToggleAudio?.classList.add('audio-muted');
-      if (audioIcon) audioIcon.textContent = '🔕';
-      if (audioStatusText) audioStatusText.textContent = 'Mute';
-      if (btnToggleAudio) btnToggleAudio.title = 'Audio Chime Checkpoint Dimatikan (Klik untuk Aktifkan)';
-    }
-  }
-  updateAudioBtnUI();
-
-  btnToggleAudio?.addEventListener('click', () => {
-    audioAlertEnabled = !audioAlertEnabled;
-    localStorage.setItem('cyclopon_cockpit_audio', audioAlertEnabled);
-    updateAudioBtnUI();
-    if (audioAlertEnabled) {
-      playCheckpointChime();
-      showToast('🔔 Audio Chime Checkpoint Diaktifkan', 'info');
-      if (isCurrentlyOffRoute && !offRouteMutedByUser) {
-        startOffRouteAlert();
-      }
-    } else {
-      stopOffRouteAlert();
-      showToast('🔕 Audio Chime Checkpoint Dimatikan', 'info');
-    }
-  });
 
   // ── Pocket Mode (Background GPS Keep-Alive) Handlers ──
   const btnTogglePocket = document.getElementById('btnTogglePocket');
@@ -1430,10 +1357,6 @@ function teardownRiderCockpit() {
       try { cockpitWs.close(); } catch (e) {}
       cockpitWs = null;
     }
-    if (cockpitSimTimer) {
-      clearInterval(cockpitSimTimer);
-      cockpitSimTimer = null;
-    }
     if (cockpitGeoWatchId != null && 'geolocation' in navigator) {
       navigator.geolocation.clearWatch(cockpitGeoWatchId);
       cockpitGeoWatchId = null;
@@ -1447,6 +1370,14 @@ function teardownRiderCockpit() {
     if (audioCtx) {
       audioCtx.close().catch(() => {});
       audioCtx = null;
+    }
+    if (deviceBatteryManager && batteryChangeHandler) {
+      try {
+        deviceBatteryManager.removeEventListener('levelchange', batteryChangeHandler);
+        deviceBatteryManager.removeEventListener('chargingchange', batteryChangeHandler);
+      } catch (e) {}
+      deviceBatteryManager = null;
+      batteryChangeHandler = null;
     }
   }
 }

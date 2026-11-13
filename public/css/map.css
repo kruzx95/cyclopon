@@ -1254,9 +1254,8 @@
     display: none !important;
   }
 
-  /* Mobile View: Sembunyikan header-right serta tombol Simulasi, Replay, dan Leaderboard */
+  /* Mobile View: Sembunyikan header-right serta tombol Replay dan Leaderboard */
   .live-map-header .header-right,
-  #btnSimulator,
   #btnToggleReplay,
   #btnToggleSidebar {
     display: none !important;

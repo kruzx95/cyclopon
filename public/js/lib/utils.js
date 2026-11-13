@@ -77,6 +77,7 @@ function loadScripts(srcs) {
  * HTTP/HTTPS transitions, or cookie restrictions.
  */
 (function() {
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') return;
   const _origFetch = window.fetch;
   window.fetch = async function(resource, init = {}) {
     const url = typeof resource === 'string' ? resource : (resource?.url || '');
@@ -117,4 +118,85 @@ function loadScripts(srcs) {
     return res;
   };
 })();
+
+/**
+ * Normalizes raw battery readings from various GPS trackers / devices into integer percentage (0-100)
+ * Handles:
+ * - 0 - 100 percentage
+ * - 0.0 - 1.0 fraction (e.g. 0.85 -> 85%)
+ * - 2.8V - 4.5V single-cell Li-ion voltage (e.g. 3.85V -> 53%)
+ * - 2500mV - 5000mV millivolts (e.g. 3850mV -> 53%)
+ * - 10.5V - 15.0V vehicle 12V system (e.g. 12.4V -> 60%)
+ * @param {number|string|null} raw
+ * @returns {number|null}
+ */
+function normalizeBattery(raw) {
+  if (raw == null || raw === '') return null;
+  const num = Number(String(raw).replace(/%/g, '').trim());
+  if (isNaN(num) || num < 0) return null;
+
+  // Millivolts (e.g. 2500 - 5000 mV)
+  if (num >= 2500 && num <= 5000) {
+    const volts = num / 1000;
+    return Math.max(0, Math.min(100, Math.round(((volts - 3.45) / 0.75) * 100)));
+  }
+
+  // Single cell Li-ion Voltage (e.g. 2.8V - 4.5V)
+  if (num > 1.0 && num <= 5.0) {
+    return Math.max(0, Math.min(100, Math.round(((num - 3.45) / 0.75) * 100)));
+  }
+
+  // 12V Lead-acid / vehicle battery system (10.5V - 15.0V)
+  if (num > 5.0 && num <= 15.0) {
+    return Math.max(0, Math.min(100, Math.round(((num - 11.8) / 1.0) * 100)));
+  }
+
+  // Fractional 0.0 - 1.0 (e.g. 0.85 -> 85%)
+  if (num > 0 && num <= 1.0) {
+    return Math.max(0, Math.min(100, Math.round(num * 100)));
+  }
+
+  // Standard percentage (0 - 100)
+  if (num >= 0 && num <= 100) {
+    return Math.round(num);
+  }
+
+  return null;
+}
+
+/**
+ * Normalizes raw GPS speed to km/h, removing jitter, applying deadband and capping realistic limits.
+ * Handles knot-to-km/h conversion and sanity bounds for cycling.
+ * @param {number|string|null} rawSpeed
+ * @param {boolean} [isKmh=false]
+ * @returns {number} Speed in km/h rounded to 1 decimal place
+ */
+function normalizeSpeedKmh(rawSpeed, isKmh = false) {
+  if (rawSpeed == null || rawSpeed === '') return 0;
+  const num = Number(rawSpeed);
+  if (isNaN(num) || num <= 0) return 0;
+
+  // Convert knots if not already km/h
+  // If raw > 70 and isKmh is false, heuristic assumes it's already km/h
+  const kmh = isKmh ? num : (num > 70 ? num : num * 1.852);
+
+  // Low-speed deadband: cycling speeds under 1.8 km/h are usually GPS noise/drift while stopped
+  if (kmh < 1.8) return 0;
+
+  // Clamp realistic cycling speed ceiling (90 km/h)
+  return Math.min(90, Math.round(kmh * 10) / 10);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    showToast,
+    escapeHtml,
+    loadCss,
+    loadScript,
+    loadScripts,
+    normalizeBattery,
+    normalizeSpeedKmh
+  };
+}
+
 
