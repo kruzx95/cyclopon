@@ -121,13 +121,14 @@ function loadScripts(srcs) {
 
     // If server responds 401 on an admin endpoint, gracefully notify user & redirect to login
     if (res.status === 401 && isAdminEndpoint && !url.includes('/api/auth/admin/login')) {
+      if (window._isLoggingOut) return res;
       console.warn('[Admin Auth] Session token invalid or expired on server.');
       sessionStorage.removeItem('adminUser');
       localStorage.removeItem('adminUser');
       sessionStorage.removeItem('adminToken');
       localStorage.removeItem('adminToken');
       if (typeof window.Router !== 'undefined' && window.Router.navigate) {
-        if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin') {
+        if (!window._isLoggingOut && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin') {
           if (typeof showToast === 'function') {
             showToast('Sesi akses Panitia berakhir. Silakan login kembali.', 'warning');
           }

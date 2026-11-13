@@ -27,7 +27,11 @@ const Router = {
     }
   },
 
-  navigate(path) {
+  navigate(path, force = false) {
+    const currentFull = window.location.pathname + window.location.search;
+    if (!force && path === currentFull) {
+      return;
+    }
     window.history.pushState({}, '', path);
     this.resolve(path);
   },

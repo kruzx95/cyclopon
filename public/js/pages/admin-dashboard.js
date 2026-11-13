@@ -160,12 +160,20 @@ const AdminSosMonitor = {
   },
 
   async poll() {
+    if (window._isLoggingOut) {
+      this.stop();
+      return;
+    }
     if (!window.location.pathname.startsWith('/admin') || window.location.pathname === '/admin' || !sessionStorage.getItem('adminUser')) {
       this.stop();
       return;
     }
     try {
       const res = await fetch('/api/admin/alerts/active', { credentials: 'include' });
+      if (window._isLoggingOut) {
+        this.stop();
+        return;
+      }
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) this.stop();
         return;
@@ -497,19 +505,61 @@ const AdminSosMonitor = {
 };
 window.AdminSosMonitor = AdminSosMonitor;
 
+let trafficInterval = null;
+
+function stopAdminBackgroundTasks() {
+  if (trafficInterval) {
+    clearInterval(trafficInterval);
+    trafficInterval = null;
+  }
+  if (window._adminTrafficInterval) {
+    clearInterval(window._adminTrafficInterval);
+    window._adminTrafficInterval = null;
+  }
+  if (window.AdminSosMonitor) {
+    window.AdminSosMonitor.stop();
+  }
+}
+window.stopAdminBackgroundTasks = stopAdminBackgroundTasks;
+
 async function logoutAdmin() {
-  if (confirm('Keluar dari Admin Panel?')) {
-    if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
-    try {
-      await fetch('/api/auth/admin/logout', { method: 'POST', credentials: 'include' });
-    } catch {}
-    sessionStorage.removeItem('adminUser');
-    localStorage.removeItem('adminUser');
-    sessionStorage.removeItem('adminToken');
-    localStorage.removeItem('adminToken');
+  if (!confirm('Keluar dari Admin Panel?')) return;
+
+  // 1. Immediately flag logging-out state to suppress 401 interceptors, warnings & redirect loops
+  window._isLoggingOut = true;
+
+  // 2. Stop all polling and sound monitors immediately
+  stopAdminBackgroundTasks();
+
+  // 3. Clear local storage & session storage immediately
+  sessionStorage.removeItem('adminUser');
+  localStorage.removeItem('adminUser');
+  sessionStorage.removeItem('adminToken');
+  localStorage.removeItem('adminToken');
+
+  // 4. Request backend session teardown in background (non-blocking)
+  try {
+    fetch('/api/auth/admin/logout', {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true
+    }).catch(() => {});
+  } catch {}
+
+  // 5. User feedback
+  if (typeof showToast === 'function') {
     showToast('Berhasil logout dari Admin.', 'info');
+  }
+
+  // 6. Navigate to login if not already there
+  if (window.location.pathname !== '/admin') {
     Router.navigate('/admin');
   }
+
+  // Release the guard flag after UI has settled
+  setTimeout(() => {
+    window._isLoggingOut = false;
+  }, 600);
 }
 window.logoutAdmin = logoutAdmin;
 
@@ -518,13 +568,13 @@ function renderAdminLogin() {
   loadCss('/css/admin.css');
 
   // Stop any lingering background intervals from dashboard
-  if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
+  stopAdminBackgroundTasks();
 
-  // If already logged in, verify session with server first before redirecting to dashboard
+  // If already logged in and not currently logging out, verify session with server first before redirecting to dashboard
   const user = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
   const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
 
-  if (user && token) {
+  if (user && token && !window._isLoggingOut) {
     fetch('/api/auth/admin/session', { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
@@ -875,29 +925,23 @@ async function renderAdminDashboard() {
   AdminSosMonitor.init();
 
   // ── Real-Time Traffic Metrics Polling ──
-  let trafficInterval = null;
   async function fetchTrafficMetrics() {
+    if (window._isLoggingOut) return;
     if (!window.location.pathname.startsWith('/admin') || window.location.pathname === '/admin' || !sessionStorage.getItem('adminUser')) {
-      if (trafficInterval) {
-        clearInterval(trafficInterval);
-        trafficInterval = null;
-      }
+      stopAdminBackgroundTasks();
       return;
     }
     try {
       const res = await fetch('/api/admin/metrics/traffic', { credentials: 'include' });
+      if (window._isLoggingOut) return;
       if (!res.ok) {
         if (res.status === 401) {
-          if (trafficInterval) {
-            clearInterval(trafficInterval);
-            trafficInterval = null;
-          }
-          if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
+          stopAdminBackgroundTasks();
           sessionStorage.removeItem('adminUser');
           localStorage.removeItem('adminUser');
           sessionStorage.removeItem('adminToken');
           localStorage.removeItem('adminToken');
-          if (window.location.pathname !== '/admin') {
+          if (!window._isLoggingOut && window.location.pathname !== '/admin') {
             if (typeof showToast === 'function') {
               showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
             }
@@ -1069,6 +1113,7 @@ async function renderAdminDashboard() {
 
   fetchTrafficMetrics();
   trafficInterval = setInterval(fetchTrafficMetrics, 5000);
+  window._adminTrafficInterval = trafficInterval;
 
   // ── Pre-Deployment Diagnostic Report Controller ──
   let cachedReportData = null;
@@ -1196,21 +1241,19 @@ async function renderAdminDashboard() {
   }
 
   async function fetchDiagnosticReport() {
+    if (window._isLoggingOut) return;
     if (!sessionStorage.getItem('adminUser') || window.location.pathname === '/admin') return;
     try {
       const res = await fetch('/api/admin/reports/latest', { credentials: 'include' });
+      if (window._isLoggingOut) return;
       if (!res.ok) {
         if (res.status === 401) {
-          if (trafficInterval) {
-            clearInterval(trafficInterval);
-            trafficInterval = null;
-          }
-          if (window.AdminSosMonitor) window.AdminSosMonitor.stop();
+          stopAdminBackgroundTasks();
           sessionStorage.removeItem('adminUser');
           localStorage.removeItem('adminUser');
           sessionStorage.removeItem('adminToken');
           localStorage.removeItem('adminToken');
-          if (window.location.pathname !== '/admin') {
+          if (!window._isLoggingOut && window.location.pathname !== '/admin') {
             if (typeof showToast === 'function') {
               showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
             }
@@ -1316,24 +1359,12 @@ async function renderAdminDashboard() {
   // Register cleanup when navigating away from dashboard
   if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
     Router.onUnmount(() => {
-      if (trafficInterval) {
-        clearInterval(trafficInterval);
-        trafficInterval = null;
-      }
-      if (window.AdminSosMonitor) {
-        window.AdminSosMonitor.stop();
-      }
+      stopAdminBackgroundTasks();
     });
   }
 
   window.addEventListener('popstate', () => {
-    if (trafficInterval) {
-      clearInterval(trafficInterval);
-      trafficInterval = null;
-    }
-    if (window.AdminSosMonitor) {
-      window.AdminSosMonitor.stop();
-    }
+    stopAdminBackgroundTasks();
   }, { once: true });
 
   try {
