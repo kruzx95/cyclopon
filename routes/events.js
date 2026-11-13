@@ -23,18 +23,96 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
 });
 
+// In-memory cache for computed event distance (km)
+const eventDistanceCache = new Map();
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function getEventDistanceKm(event) {
+  if (!event || !event.id) return 0;
+
+  const gpxFilePath = path.join(gpxDir, `${event.id}.gpx`);
+  let fileMtime = 0;
+  try {
+    if (fs.existsSync(gpxFilePath)) {
+      fileMtime = fs.statSync(gpxFilePath).mtimeMs;
+    }
+  } catch {}
+
+  const cacheKey = `${event.id}:${fileMtime}`;
+  if (eventDistanceCache.has(cacheKey)) {
+    return eventDistanceCache.get(cacheKey);
+  }
+
+  // 1. Calculate from GPX file if available
+  if (fileMtime > 0) {
+    try {
+      const gpxText = fs.readFileSync(gpxFilePath, 'utf8');
+      const ptRegex = /<(?:trkpt|rtept)[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"/gi;
+      let match;
+      const coords = [];
+      while ((match = ptRegex.exec(gpxText)) !== null) {
+        const lat = parseFloat(match[1]);
+        const lon = parseFloat(match[2]);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          coords.push([lat, lon]);
+        }
+      }
+      if (coords.length > 1) {
+        let total = 0;
+        for (let i = 1; i < coords.length; i++) {
+          total += haversineDistance(coords[i-1][0], coords[i-1][1], coords[i][0], coords[i][1]);
+        }
+        const distKm = Math.round(total * 10) / 10;
+        eventDistanceCache.set(cacheKey, distKm);
+        return distKm;
+      }
+    } catch (e) {
+      console.warn(`[Events] Failed to parse GPX distance for event ${event.id}:`, e.message);
+    }
+  }
+
+  // 2. Fallback: check checkpoints table for max target KM
+  try {
+    const cp = db.db.prepare('SELECT MAX(km_distance) AS max_km FROM checkpoints WHERE event_id = ?').get(event.id);
+    if (cp && cp.max_km > 0) {
+      const distKm = Math.round(cp.max_km * 10) / 10;
+      eventDistanceCache.set(cacheKey, distKm);
+      return distKm;
+    }
+  } catch {}
+
+  eventDistanceCache.set(cacheKey, 0);
+  return 0;
+}
+
 // ── Public routes ─────────────────────────────────────────────
 
 // GET /api/events — list all events
 router.get('/', (_req, res) => {
-  res.json(db.getAllEvents.all());
+  const events = db.getAllEvents.all().map(ev => ({
+    ...ev,
+    distance_km: getEventDistanceKm(ev)
+  }));
+  res.json(events);
 });
 
 // GET /api/events/:id — event detail
 router.get('/:id', (req, res) => {
   const event = db.getEventById.get(req.params.id);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
-  res.json(event);
+  res.json({
+    ...event,
+    distance_km: getEventDistanceKm(event)
+  });
 });
 
 // GET /api/events/:id/riders — public rider list (no PIN)
@@ -115,6 +193,7 @@ router.post('/admin/:id/gpx', requireAdminAuth, upload.single('gpx'), (req, res)
 
     const gpxUrl = `/gpx/${req.params.id}.gpx`;
     db.updateEventGpx.run(gpxUrl, req.params.id);
+    eventDistanceCache.clear();
 
     res.json({ success: true, gpx_path: gpxUrl });
   } catch (err) {
@@ -134,6 +213,7 @@ router.delete('/admin/:id', requireAdminAuth, (req, res) => {
   }
 
   db.deleteEvent.run(event.id);
+  eventDistanceCache.clear();
   res.json({ success: true, message: `Event #${event.id} berhasil dihapus` });
 });
 

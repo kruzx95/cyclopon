@@ -375,24 +375,24 @@ function renderLanding() {
               </div>
 
               <div class="dossier-event-header">
-                <h3 class="dossier-event-title" id="dossierEventName">Tour de Gang</h3>
-                <div class="dossier-event-location">TASIKMALAYA ENDURANCE CIRCUIT</div>
+                <h3 class="dossier-event-title" id="dossierEventName">Memuat Event...</h3>
+                <div class="dossier-event-location" id="dossierEventLocation">ENDURANCE CIRCUIT</div>
               </div>
 
               <!-- High-Contrast Metric Triplets -->
               <div class="dossier-metrics-grid">
                 <div class="dossier-metric-cell">
-                  <div class="metric-cell-val" id="dossierDistance">31.5</div>
+                  <div class="metric-cell-val" id="dossierDistance">-</div>
                   <div class="metric-cell-unit">KILOMETER</div>
                   <div class="metric-cell-lbl">TOTAL DISTANCE</div>
                 </div>
                 <div class="dossier-metric-cell">
-                  <div class="metric-cell-val" id="dossierRiders">3</div>
+                  <div class="metric-cell-val" id="dossierRiders">-</div>
                   <div class="metric-cell-unit">RIDERS</div>
                   <div class="metric-cell-lbl">ON CIRCUIT</div>
                 </div>
                 <div class="dossier-metric-cell">
-                  <div class="metric-cell-val" id="dossierCps">1</div>
+                  <div class="metric-cell-val" id="dossierCps">-</div>
                   <div class="metric-cell-unit">CP</div>
                   <div class="metric-cell-lbl">CHECKPOINT</div>
                 </div>
@@ -710,21 +710,83 @@ function renderLanding() {
       // Update right-column hero dossier card with real event info
       const topEvent = targetEvents[0];
       const dossierName = document.getElementById('dossierEventName');
+      const dossierLocation = document.getElementById('dossierEventLocation');
+      const dossierCode = document.getElementById('dossierEventCode');
       const dossierLaunch = document.getElementById('btnDossierLaunch');
+      const dossierDist = document.getElementById('dossierDistance');
+
       if (dossierName && topEvent.name) dossierName.textContent = topEvent.name;
+      if (dossierLocation) {
+        dossierLocation.textContent = topEvent.date ? `EDISI: ${topEvent.date} · RESMI` : 'TASIKMALAYA ENDURANCE CIRCUIT';
+      }
+      if (dossierCode) {
+        dossierCode.textContent = topEvent.active ? 'LIVE EVENT' : 'STAGE 01';
+      }
       if (dossierLaunch) dossierLaunch.setAttribute('href', `/watch/${topEvent.id}`);
 
-      // Fetch accurate count of riders and checkpoints for the featured event
+      // If backend already pre-calculated distance_km
+      if (dossierDist && topEvent.distance_km != null && Number(topEvent.distance_km) > 0) {
+        dossierDist.textContent = Number(topEvent.distance_km).toFixed(1);
+      }
+
+      // Fetch accurate count of riders, checkpoints, and GPX distance for the featured event
       Promise.all([
         fetch(`/api/events/${topEvent.id}/riders`).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(`/api/events/${topEvent.id}/checkpoints`).then(r => r.ok ? r.json() : []).catch(() => [])
-      ]).then(([riders, cps]) => {
+        fetch(`/api/events/${topEvent.id}/checkpoints`).then(r => r.ok ? r.json() : []).catch(() => []),
+        (topEvent.distance_km == null || Number(topEvent.distance_km) <= 0) && topEvent.gpx_path
+          ? fetch(topEvent.gpx_path).then(r => r.ok ? r.text() : '').catch(() => '')
+          : Promise.resolve('')
+      ]).then(([riders, cps, gpxText]) => {
         const ridersEl = document.getElementById('dossierRiders');
         const cpsEl = document.getElementById('dossierCps');
         const pelotonStatus = document.getElementById('dossierPelotonStatus');
         if (ridersEl) ridersEl.textContent = Array.isArray(riders) ? riders.length : 0;
         if (cpsEl) cpsEl.textContent = Array.isArray(cps) ? cps.length : 0;
         if (pelotonStatus) pelotonStatus.textContent = Array.isArray(riders) && riders.length ? 'ONLINE' : 'STANDBY';
+
+        // Calculate and display accurate total distance
+        let finalDistance = Number(topEvent.distance_km || 0);
+
+        // Fallback 1: Parse GPX text if available
+        if (finalDistance <= 0 && gpxText) {
+          try {
+            if (typeof parseGpxData === 'function') {
+              const parsed = parseGpxData(gpxText);
+              finalDistance = parsed?.stats?.totalKm || 0;
+            } else {
+              const ptRegex = /<(?:trkpt|rtept)[^>]*lat="([^"]+)"[^>]*lon="([^"]+)"/gi;
+              let match;
+              const coords = [];
+              while ((match = ptRegex.exec(gpxText)) !== null) {
+                const lat = parseFloat(match[1]);
+                const lon = parseFloat(match[2]);
+                if (!isNaN(lat) && !isNaN(lon)) coords.push([lat, lon]);
+              }
+              if (coords.length > 1) {
+                let total = 0;
+                for (let i = 1; i < coords.length; i++) {
+                  const dLat = (coords[i][0] - coords[i-1][0]) * Math.PI / 180;
+                  const dLng = (coords[i][1] - coords[i-1][1]) * Math.PI / 180;
+                  const a = Math.sin(dLat/2)**2 + Math.cos(coords[i-1][0]*Math.PI/180)*Math.cos(coords[i][0]*Math.PI/180)*Math.sin(dLng/2)**2;
+                  total += 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                }
+                finalDistance = Math.round(total * 10) / 10;
+              }
+            }
+          } catch (e) {
+            console.warn('[Landing] Error parsing GPX distance:', e);
+          }
+        }
+
+        // Fallback 2: Maximum checkpoint target km
+        if (finalDistance <= 0 && Array.isArray(cps) && cps.length) {
+          const maxCp = Math.max(...cps.map(c => Number(c.km_distance || 0)));
+          if (maxCp > 0) finalDistance = Math.round(maxCp * 10) / 10;
+        }
+
+        if (dossierDist) {
+          dossierDist.textContent = finalDistance > 0 ? (Math.round(finalDistance * 10) / 10).toFixed(1) : '-';
+        }
 
         if (streamEl) {
           if (Array.isArray(riders) && riders.length) {
@@ -773,6 +835,11 @@ function renderLanding() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   <span>${escapeHtml(ev.date)}</span>
                 </span>
+                ${ev.distance_km ? `
+                  <span class="event-date-chip" style="font-weight:800;color:#059669;background:#ECFDF5;border-color:#A7F3D0">
+                    <span>${ev.distance_km} KM</span>
+                  </span>
+                ` : ''}
                 ${ev.gpx_path ? `
                   <span class="event-gpx-chip">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
