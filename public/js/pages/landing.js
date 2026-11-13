@@ -1,7 +1,10 @@
 function ensureLandingGuideStyles() {
-  if (document.getElementById('landingGuideStyles')) return;
-  const style = document.createElement('style');
-  style.id = 'landingGuideStyles';
+  let style = document.getElementById('landingGuideStyles');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'landingGuideStyles';
+    document.head.appendChild(style);
+  }
   style.textContent = `
     .landing-guide-section {
       margin: 36px 0;
@@ -245,6 +248,123 @@ function ensureLandingGuideStyles() {
       white-space: nowrap;
       flex-shrink: 0;
     }
+    .guide-nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin: 36px 0 16px;
+      padding: 12px 18px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+    }
+    .guide-nav-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .guide-nav-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 800;
+      text-decoration: none;
+      color: #334155;
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .guide-nav-pill-btn:hover {
+      background: #0D1117;
+      color: #FFFFFF !important;
+      border-color: #0D1117;
+    }
+    .guide-nav-pill-btn.active {
+      background: #0D1117;
+      color: #FFFFFF !important;
+      border-color: #0D1117;
+    }
+    .guide-header-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .guide-dual-callout {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .guide-callout-card {
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .guide-callout-card.admin-callout {
+      border-color: #E2DDD5;
+      background: #FBF9F5;
+    }
+    .guide-callout-card.gps-callout {
+      border-color: #CBD5E1;
+      background: #F0FDF4;
+    }
+    .callout-card-header {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .callout-card-icon {
+      font-size: 24px;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .callout-card-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0D1117;
+      margin-bottom: 4px;
+    }
+    .callout-card-desc {
+      font-size: 12.5px;
+      color: #475569;
+      line-height: 1.5;
+    }
+    .callout-card-desc code {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+    }
+    .btn-callout-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #0D1117;
+      color: #FFFFFF !important;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 800;
+      text-decoration: none;
+      align-self: flex-start;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-callout-action:hover {
+      background: #1C3E24;
+    }
     @media (max-width: 768px) {
       .landing-guide-section {
         padding: 18px 14px;
@@ -267,6 +387,26 @@ function ensureLandingGuideStyles() {
       .btn-alt-cockpit {
         width: 100%;
         justify-content: center;
+      }
+      .guide-nav-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+      }
+      .guide-nav-pills {
+        width: 100%;
+      }
+      .guide-nav-pill-btn {
+        flex: 1;
+        justify-content: center;
+        text-align: center;
+      }
+      .guide-dual-callout {
+        grid-template-columns: 1fr;
+      }
+      .btn-callout-action {
+        width: 100%;
       }
     }
   `;
@@ -337,6 +477,9 @@ function renderLanding() {
                 <span class="cta-pulse-dot"></span>
                 <span>PANTAU LIVE MAP</span>
               </button>
+              <a href="#rosterGuideSection" class="btn-hero-secondary" id="btnHeroGuide" style="border-color:#CBD5E1;background:#FFFFFF;color:#0D1117;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+                <span>📋 PANDUAN DAFTAR &amp; ROSTER</span>
+              </a>
             </div>
 
             <!-- Pro Specification Strip -->
@@ -433,6 +576,171 @@ function renderLanding() {
 
           <div id="activeEventList" class="featured-event-list"></div>
         </div>
+
+        <!-- ── Quick Guide Jump Switcher ── -->
+        <div class="guide-nav-bar" id="guideNavBar">
+          <div class="guide-nav-label">
+            <span class="guide-mono-tag" style="margin-bottom:0">// DIREKTORI PANDUAN PENGGUNA CYCLOPON</span>
+          </div>
+          <div class="guide-nav-pills">
+            <a href="#rosterGuideSection" class="guide-nav-pill-btn active" id="pillNavRoster">
+              <span>👥 1. Panduan Daftar &amp; Roster</span>
+            </a>
+            <a href="#traccarGuideSection" class="guide-nav-pill-btn" id="pillNavTraccar">
+              <span>📲 2. Panduan Setup GPS (Traccar)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- ── Panduan Pendaftaran & Roster Peserta (Roster Guide Section) ── -->
+        <section class="landing-guide-section" id="rosterGuideSection">
+          <div class="landing-guide-header">
+            <div class="guide-tag-wrap">
+              <span class="guide-mono-tag">// PANDUAN RESMI · REGISTRASI &amp; DIREKTORI ROSTER</span>
+              <h2 class="guide-main-title">
+                <span class="guide-phone-icon">📋</span> Panduan Pendaftaran Event &amp; Manajemen Roster
+              </h2>
+              <p class="guide-subtitle">
+                Ikuti 4 langkah mudah untuk bergabung ke event sepeda jarak jauh, mendapatkan Nomor BIB resmi &amp; Tiket Pass Digital ber-QR Code instan, serta memantau direktori peleton peserta.
+              </p>
+            </div>
+            <div class="guide-header-actions">
+              <a href="/events/1" id="btnGuideOpenRoster" data-link class="store-badge-btn" style="background:#1C3E24" title="Buka Halaman Roster Event">
+                <span>👥 Buka Roster Event</span>
+                <span>→</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="guide-steps-grid">
+            <!-- Step 1: Pilih Event & Akses Halaman Roster -->
+            <div class="guide-step-card primary-step">
+              <div class="step-card-num">LANGKAH 1</div>
+              <div class="step-card-title">Pilih Event &amp; Buka Roster</div>
+              <p class="step-card-desc">
+                Cari event balap di daftar <strong>Event Sedang Berlangsung</strong> beranda, lalu klik tombol <strong>👥 DAFTAR &amp; ROSTER</strong> untuk membuka halaman direktori resmi.
+              </p>
+              <div class="step-code-box" style="background:#F8FAFC;border:1px solid #CBD5E1;color:#0D1117">
+                <span style="font-size:12px;font-weight:800;color:#1C3E24">STAGE LIVE // EVENT DOSSIER</span>
+                <span style="font-size:11px;background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:4px;font-weight:700">PENDAFTARAN BUKA</span>
+              </div>
+              <div class="step-card-hint">
+                💡 <em>Setiap event memiliki halaman direktori dossier yang memuat profil rute GPX, pos checkpoint, dan daftar rider terdaftar.</em>
+              </div>
+              <a href="/events/1" id="btnRosterGuideStep1Link" data-link class="step-action-link">Buka Roster Event Ini →</a>
+            </div>
+
+            <!-- Step 2: Pendaftaran Mandiri (On-The-Spot) -->
+            <div class="guide-step-card">
+              <div class="step-card-num">LANGKAH 2</div>
+              <div class="step-card-title">Isi Formulir Pendaftaran</div>
+              <p class="step-card-desc">
+                Pada halaman event, klik tombol <strong>"+ GABUNG / DAFTAR"</strong> pada bilah bawah (sticky bar) lalu lengkapi data singkat berikut:
+              </p>
+              <ul class="step-checklist">
+                <li><strong>Nama Lengkap:</strong> Ditampilkan di Leaderboard &amp; Live Radar.</li>
+                <li><strong>Nomor WhatsApp:</strong> Verifikasi &amp; 4 digit terakhir otomatis jadi PIN login.</li>
+                <li><strong>Kategori / Peran:</strong>
+                  <div class="sub-switches" style="flex-wrap:wrap">
+                    <span class="switch-badge" style="background:#E0F2FE;color:#0369A1">🚴 Rider</span>
+                    <span class="switch-badge" style="background:#FEF3C7;color:#92400E">🧹 Sweeper</span>
+                    <span class="switch-badge" style="background:#F3E8FF;color:#6B21A8">🏍️ Marshall</span>
+                    <span class="switch-badge" style="background:#FEE2E2;color:#991B1B">🚑 Medis</span>
+                  </div>
+                </li>
+                <li><strong>Nomor BIB:</strong> Bebas menentukan nomor start pilihan, atau kosongkan untuk nomor urut otomatis sistem (contoh: <code>001</code>, <code>002</code>).</li>
+              </ul>
+              <div class="step-card-hint" style="margin-top:8px">
+                ✅ <em>Pendaftaran instan tanpa syarat rumit dan langsung terverifikasi secara otomatis.</em>
+              </div>
+            </div>
+
+            <!-- Step 3: Tiket Pass Digital & QR Code -->
+            <div class="guide-step-card primary-step">
+              <div class="step-card-num">LANGKAH 3 (INSTAN)</div>
+              <div class="step-card-title">Terbit Tiket Pass Digital &amp; QR Code</div>
+              <p class="step-card-desc">
+                Setelah formulir dikirim, sistem otomatis menerbitkan <strong>Tiket Pass Digital</strong> resmi:
+              </p>
+              <div style="background:#0D1117;border-radius:8px;padding:12px 14px;color:#FFFFFF;margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#94A3B8;letter-spacing:0.06em">DIGITAL PASS // OFFICIAL TICKET</span>
+                  <span style="font-size:14px">🎟️</span>
+                </div>
+                <div style="font-family:ui-monospace,monospace;font-size:20px;font-weight:900;color:#00E5FF;letter-spacing:-0.02em">
+                  #BIB-001
+                </div>
+                <div style="font-size:11.5px;color:#CBD5E1;margin-top:2px">
+                  PIN Keamanan: <strong style="color:#FFFFFF;font-family:ui-monospace,monospace">1234</strong> · Status: <span style="color:#4ADE80;font-weight:700">TERKONFIRMASI ✓</span>
+                </div>
+              </div>
+              <p class="step-card-desc" style="margin:0 0 6px">
+                Gunakan tombol <strong>"🚀 Buka Pelacak GPS Rider"</strong> untuk langsung masuk cockpit tanpa login manual, atau klik <strong>"Simpan QR (PNG)"</strong> ke galeri HP.
+              </p>
+              <div class="step-card-hint">
+                💡 <em>Nomor BIB &amp; PIN juga dapat digunakan untuk login manual via menu Rider Login.</em>
+              </div>
+            </div>
+
+            <!-- Step 4: Pantau Direktori Roster & Pos Checkpoint (COT) -->
+            <div class="guide-step-card">
+              <div class="step-card-num">LANGKAH 4</div>
+              <div class="step-card-title">Pantau Roster &amp; Batas Waktu COT</div>
+              <p class="step-card-desc">
+                Akses informasi lengkap event langsung dari direktori telemetri:
+              </p>
+              <ul class="step-checklist">
+                <li>
+                  <strong>👥 Tab Daftar Peserta:</strong> Cek seluruh pesepeda terdaftar dengan badge verifikasi resmi. Filter berdasarkan peran peserta atau cari nama/BIB dengan cepat.
+                </li>
+                <li>
+                  <strong>🗺️ Tab Rute &amp; Pos CP:</strong> Pantau jarak kilometer tiap pos kontrol dan batas waktu kedatangan <em>Cut-Off Time (COT)</em> agar tidak terkena diskualifikasi DNF.
+                </li>
+                <li>
+                  <strong>📥 Unduh GPX Resmi:</strong> Unduh file rute GPX resmi untuk disinkronkan ke bike computer (Garmin, Wahoo, Bryton, Hammerhead).
+                </li>
+              </ul>
+              <div class="step-card-hint" style="margin-top:8px">
+                ⏱️ <em>Leaderboard dan split time checkpoints diperbarui secara real-time selama event berlangsung.</em>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dual Callout Banner: Admin CSV Import & Next Step GPS -->
+          <div class="guide-dual-callout">
+            <div class="guide-callout-card admin-callout">
+              <div class="callout-card-header">
+                <span class="callout-card-icon">📁</span>
+                <div>
+                  <div class="callout-card-title">Untuk Panitia: Registrasi Massal (Import CSV)</div>
+                  <div class="callout-card-desc">
+                    Panitia pelaksana dapat mengunggah ratusan peserta sekaligus via <strong>Panel Panitia (/admin)</strong> menggunakan template CSV dengan format: <code>bib,nama,no_hp,peran,pin</code>.
+                  </div>
+                </div>
+              </div>
+              <a href="/admin" data-link class="btn-callout-action">
+                <span>Buka Panel Panitia</span>
+                <span>↗</span>
+              </a>
+            </div>
+
+            <div class="guide-callout-card gps-callout">
+              <div class="callout-card-header">
+                <span class="callout-card-icon">📲</span>
+                <div>
+                  <div class="callout-card-title">Langkah Lanjutan: Hubungkan GPS Smartphone</div>
+                  <div class="callout-card-desc">
+                    Sudah terdaftar dan memiliki nomor BIB? Konfigurasikan aplikasi <strong>Traccar Client</strong> agar posisi GPS Anda terpantau langsung di peta radar secara real-time.
+                  </div>
+                </div>
+              </div>
+              <a href="#traccarGuideSection" class="btn-callout-action" id="btnScrollToTraccar">
+                <span>Lihat Panduan Setup GPS</span>
+                <span>↓</span>
+              </a>
+            </div>
+          </div>
+        </section>
 
         <!-- ── Panduan Setup Smartphone Rider (Traccar Client) ── -->
         <section class="landing-guide-section" id="traccarGuideSection">
@@ -653,6 +961,38 @@ function renderLanding() {
     }
   });
 
+  // Smooth scroll links for guides
+  const scrollToEl = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  document.getElementById('btnHeroGuide')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    scrollToEl('rosterGuideSection');
+  });
+
+  document.getElementById('pillNavRoster')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.guide-nav-pill-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pillNavRoster')?.classList.add('active');
+    scrollToEl('rosterGuideSection');
+  });
+
+  document.getElementById('pillNavTraccar')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.guide-nav-pill-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pillNavTraccar')?.classList.add('active');
+    scrollToEl('traccarGuideSection');
+  });
+
+  document.getElementById('btnScrollToTraccar')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.guide-nav-pill-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pillNavTraccar')?.classList.add('active');
+    scrollToEl('traccarGuideSection');
+  });
+
   // Traccar Server URL Copy to Clipboard
   const btnCopy = document.getElementById('btnCopyServerUrl');
   const copyText = document.getElementById('copyUrlText');
@@ -723,6 +1063,18 @@ function renderLanding() {
         dossierCode.textContent = topEvent.active ? 'LIVE EVENT' : 'STAGE 01';
       }
       if (dossierLaunch) dossierLaunch.setAttribute('href', `/watch/${topEvent.id}`);
+
+      // Update Roster Guide section action links with active event info
+      const guideRosterBtn = document.getElementById('btnGuideOpenRoster');
+      if (guideRosterBtn) {
+        guideRosterBtn.setAttribute('href', `/events/${topEvent.id}`);
+        guideRosterBtn.innerHTML = `<span>👥 Buka Roster (${escapeHtml(topEvent.name)})</span><span>→</span>`;
+      }
+      const step1Link = document.getElementById('btnRosterGuideStep1Link');
+      if (step1Link) {
+        step1Link.setAttribute('href', `/events/${topEvent.id}`);
+        step1Link.textContent = `Buka Roster (${escapeHtml(topEvent.name)}) →`;
+      }
 
       // If backend already pre-calculated distance_km
       if (dossierDist && topEvent.distance_km != null && Number(topEvent.distance_km) > 0) {

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=60']);
     renderLanding();
   });
 
