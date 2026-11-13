@@ -852,7 +852,19 @@ async function renderAdminDashboard() {
   async function fetchTrafficMetrics() {
     try {
       const res = await fetch('/api/admin/metrics/traffic', { credentials: 'include' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (res.status === 401) {
+          sessionStorage.removeItem('adminUser');
+          localStorage.removeItem('adminUser');
+          sessionStorage.removeItem('adminToken');
+          localStorage.removeItem('adminToken');
+          if (typeof showToast === 'function') {
+            showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
+          }
+          Router.navigate('/admin');
+        }
+        return;
+      }
       const data = await res.json();
       if (!data.success) return;
 
@@ -1145,7 +1157,19 @@ async function renderAdminDashboard() {
   async function fetchDiagnosticReport() {
     try {
       const res = await fetch('/api/admin/reports/latest', { credentials: 'include' });
-      if (!res.ok) return;
+      if (!res.ok) {
+        if (res.status === 401) {
+          sessionStorage.removeItem('adminUser');
+          localStorage.removeItem('adminUser');
+          sessionStorage.removeItem('adminToken');
+          localStorage.removeItem('adminToken');
+          if (typeof showToast === 'function') {
+            showToast('Sesi akses Panitia telah berakhir. Silakan login kembali.', 'warning');
+          }
+          Router.navigate('/admin');
+        }
+        return;
+      }
       const data = await res.json();
       if (!data.success) return;
 

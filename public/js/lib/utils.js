@@ -92,27 +92,48 @@ function loadScripts(srcs) {
       init.credentials = 'include';
 
       if (!init.headers) {
-        init.headers = { 'Authorization': `Bearer ${adminToken}` };
+        init.headers = { 'Authorization': `Bearer ${adminToken}`, 'x-admin-token': adminToken };
       } else if (init.headers instanceof Headers) {
         if (!init.headers.has('Authorization')) {
           init.headers.set('Authorization', `Bearer ${adminToken}`);
+        }
+        if (!init.headers.has('x-admin-token')) {
+          init.headers.set('x-admin-token', adminToken);
         }
       } else if (Array.isArray(init.headers)) {
         if (!init.headers.some(([k]) => k.toLowerCase() === 'authorization')) {
           init.headers.push(['Authorization', `Bearer ${adminToken}`]);
         }
+        if (!init.headers.some(([k]) => k.toLowerCase() === 'x-admin-token')) {
+          init.headers.push(['x-admin-token', adminToken]);
+        }
       } else {
         if (!init.headers['Authorization'] && !init.headers['authorization']) {
           init.headers['Authorization'] = `Bearer ${adminToken}`;
+        }
+        if (!init.headers['x-admin-token'] && !init.headers['X-Admin-Token']) {
+          init.headers['x-admin-token'] = adminToken;
         }
       }
     }
 
     const res = await _origFetch(resource, init);
 
-    // If server responds 401 on an admin endpoint, gracefully notify user
+    // If server responds 401 on an admin endpoint, gracefully notify user & redirect to login
     if (res.status === 401 && isAdminEndpoint && !url.includes('/api/auth/admin/login')) {
       console.warn('[Admin Auth] Session token invalid or expired on server.');
+      sessionStorage.removeItem('adminUser');
+      localStorage.removeItem('adminUser');
+      sessionStorage.removeItem('adminToken');
+      localStorage.removeItem('adminToken');
+      if (typeof window.Router !== 'undefined' && window.Router.navigate) {
+        if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin') {
+          if (typeof showToast === 'function') {
+            showToast('Sesi akses Panitia berakhir. Silakan login kembali.', 'warning');
+          }
+          window.Router.navigate('/admin');
+        }
+      }
     }
 
     return res;
