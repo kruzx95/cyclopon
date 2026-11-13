@@ -18,3 +18,4 @@ const child = spawn(cmd, args, { stdio: 'inherit' });
 child.on('exit', (code) => {
   process.exit(code || 0);
 });
+
