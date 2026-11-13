@@ -84,13 +84,19 @@ echo -e "${CYAN}[2/4] Pushing changes to remote (${BRANCH})...${NC}"
 git push origin "${BRANCH}"
 echo -e "${GREEN}✓ Successfully pushed to remote.${NC}"
 
+# SSH & SCP command wrapper (supports VPS_PASSWORD via sshpass if provided)
+SSH_PREFIX=()
+if [ -n "${VPS_PASSWORD:-}" ] && command -v sshpass >/dev/null 2>&1; then
+  SSH_PREFIX=(sshpass -p "${VPS_PASSWORD}")
+fi
+
 # Step 3: (Optional) Sync Local SQLite Database to VPS
 if [ "${SYNC_DATABASE}" = true ]; then
   echo ""
   echo -e "${CYAN}[+] Syncing local database to VPS...${NC}"
   if [ -f "data/cyclopon.db" ]; then
-    scp -P "${VPS_PORT}" data/cyclopon.db "${VPS_USER}@${VPS_IP}:/home/${VPS_USER}/cyclopon.db"
-    ssh -p "${VPS_PORT}" "${VPS_USER}@${VPS_IP}" "
+    "${SSH_PREFIX[@]}" scp -P "${VPS_PORT}" data/cyclopon.db "${VPS_USER}@${VPS_IP}:/home/${VPS_USER}/cyclopon.db"
+    "${SSH_PREFIX[@]}" ssh -p "${VPS_PORT}" "${VPS_USER}@${VPS_IP}" "
       cd ${VPS_DIR}
       if docker compose ps --services | grep -q cyclopon; then
         docker compose cp /home/${VPS_USER}/cyclopon.db cyclopon:/app/data/cyclopon.db
@@ -136,7 +142,7 @@ SSH_CMD="
   docker compose -f \$COMPOSE_FILE ps
 "
 
-ssh -p "${VPS_PORT}" "${VPS_USER}@${VPS_IP}" "${SSH_CMD}"
+"${SSH_PREFIX[@]}" ssh -p "${VPS_PORT}" "${VPS_USER}@${VPS_IP}" "${SSH_CMD}"
 
 # Step 5: Verification & Summary
 echo ""
