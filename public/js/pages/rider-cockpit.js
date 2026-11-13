@@ -1237,7 +1237,7 @@ async function renderRiderCockpit() {
         event,
         traccar: config.traccar,
         onUpdate: (data) => {
-          updateTelemetry(data.latitude, data.longitude, data.speed);
+          updateTelemetry(data.latitude, data.longitude, data.speed, data.battery != null ? data.battery : currentBatteryLevel, true);
         },
         onStatus: (status) => {
           if (pocketGpsAcc) pocketGpsAcc.textContent = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Aktif';

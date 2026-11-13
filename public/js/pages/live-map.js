@@ -89,6 +89,12 @@ async function renderLiveMap(params) {
         </div>
 
         <div class="header-right">
+          ${isAdmin && !isMobile ? `
+            <!-- Time Machine Replay Button (Panitia Desktop) -->
+            <button class="header-action-btn" id="btnToggleReplay" title="[PANITIA] Buka Kontrol Replay Time Machine">
+              ${ICONS.replay}<span class="action-btn-label">Replay</span>
+            </button>
+          ` : ''}
           ${!isMobile ? `
             <!-- Toggle Leaderboard (Desktop) -->
             <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
