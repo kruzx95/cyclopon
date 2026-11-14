@@ -810,12 +810,12 @@ function renderLanding() {
               <div class="step-card-title">Pengaturan Akurasi & Hemat Baterai</div>
               <ul class="step-checklist">
                 <li><strong>Location accuracy:</strong> <code>Highest</code> (Akurasi Satelit GPS)</li>
-                <li><strong>Interval:</strong> <code>10</code> detik (uji coba) atau <code>30</code> detik (ultra brevet)</li>
-                <li><strong>Distance:</strong> <code>50</code> – <code>75</code> meter</li>
+                <li><strong>Interval:</strong> <code>10</code> detik (responsif & akurat) atau <code>30</code> detik (ultra brevet)</li>
+                <li><strong>Distance:</strong> <code>0</code> meter (kosongkan / 0 agar update murni berbasis interval)</li>
                 <li><strong>Advanced Settings (Aktifkan):</strong>
                   <div class="sub-switches">
                     <span class="switch-badge">✓ Offline Buffering: ON</span>
-                    <span class="switch-badge">✓ Stop Detection: ON</span>
+                    <span class="switch-badge" style="background:rgba(239,68,68,0.15);color:#EF4444;border-color:rgba(239,68,68,0.3)">✕ Stop Detection: OFF</span>
                   </div>
                 </li>
               </ul>

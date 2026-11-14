@@ -459,6 +459,9 @@ async function renderRiderCockpit() {
   let maxSpeed = 0;
   let speedSamples = [];
   let coveredKm = 0;
+  let totalGroundKm = null;
+  let lastOdoLat = null;
+  let lastOdoLng = null;
   let movingSeconds = 0;
   let currentBatteryLevel = null;
   let deviceBatteryManager = null;
@@ -666,8 +669,24 @@ async function renderRiderCockpit() {
 
     // Nearest point & distance covered
     const nearest = findNearestRoutePoint(lat, lng, routeCoords, totalKm);
-    coveredKm = nearest.distanceKm;
-    const remainingKm = Math.max(0, Math.round((totalKm - coveredKm) * 10) / 10);
+    const offRouteInfo = checkOffRoute(lat, lng, routeCoords, 100);
+
+    // Ground odometer: accumulate real GPS displacement across fixes (especially active when off-route)
+    if (lastOdoLat != null && lastOdoLng != null) {
+      const stepKm = typeof haversineKm === 'function' ? haversineKm(lastOdoLat, lastOdoLng, lat, lng) : 0;
+      if (stepKm >= 0.003 && stepKm < 3.0) {
+        totalGroundKm = Math.round(((totalGroundKm || nearest.distanceKm) + stepKm) * 100) / 100;
+      }
+    } else {
+      totalGroundKm = nearest.distanceKm;
+    }
+    lastOdoLat = lat;
+    lastOdoLng = lng;
+
+    coveredKm = offRouteInfo.isOffRoute
+      ? Math.max(nearest.distanceKm, Math.round((totalGroundKm || nearest.distanceKm) * 10) / 10)
+      : nearest.distanceKm;
+    const remainingKm = Math.max(0, Math.round((totalKm - nearest.distanceKm) * 10) / 10);
     const progressPct = nearest.progressPct;
 
     document.getElementById('cockpitDistCovered').textContent = coveredKm.toFixed(1);
@@ -676,9 +695,7 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitGpsStatus').textContent = 'GPS Terhubung';
     document.getElementById('cockpitCoordsSub').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 
-
     // Off-Route Check (Sound-Only Alert, No Vibration)
-    const offRouteInfo = checkOffRoute(lat, lng, routeCoords, 100);
     const offRouteBanner = document.getElementById('cockpitOffRouteAlert');
     if (offRouteInfo.isOffRoute) {
       isCurrentlyOffRoute = true;

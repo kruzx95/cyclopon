@@ -206,19 +206,24 @@ const insertHistoryStmt = db.db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?)
 `);
 
-const nowIso = new Date().toISOString();
+// Realistic 45-minute race history progression from 07:00 to 07:45
+const raceStartMs = new Date('2026-10-18T07:00:00.000Z').getTime();
+const raceTotalDurationMs = 45 * 60 * 1000;
+
 db.db.transaction(() => {
   insertedRiders.forEach((r, idx) => {
     const fraction = startFractions[idx];
     const targetIdx = Math.min(Math.floor(trackpoints.length * fraction), trackpoints.length - 1);
     
-    // Insert 5 breadcrumb points trailing behind
-    for (let step = 4; step >= 0; step--) {
-      const pIdx = Math.max(0, targetIdx - step * 12);
+    // Generate ~35 realistic breadcrumbs per rider from start arch (KM 0) up to current position
+    const stepCount = Math.max(12, Math.floor(targetIdx / 3));
+    for (let s = 0; s <= stepCount; s++) {
+      const pIdx = Math.min(Math.round((s / stepCount) * targetIdx), trackpoints.length - 1);
       const pt = trackpoints[pIdx];
-      const timeOffsetMs = step * 60000;
-      const recTime = new Date(Date.now() - timeOffsetMs).toISOString();
-      insertHistoryStmt.run(eventId, r.id, pt.lat, pt.lon, r.speedBase, pt.km.toFixed(2), recTime);
+      const timeMs = raceStartMs + Math.round((s / stepCount) * raceTotalDurationMs);
+      const recTime = new Date(timeMs).toISOString();
+      const speed = s === 0 ? 0 : Math.round((r.speedBase + (Math.sin(s + idx) * 3)) * 10) / 10;
+      insertHistoryStmt.run(eventId, r.id, pt.lat, pt.lon, speed, pt.km.toFixed(2), recTime);
     }
   });
 })();

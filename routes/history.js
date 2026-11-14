@@ -2,21 +2,65 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 
+// GET /api/events/:id/history/meta — Fetch history metadata (min/max time, count, riders)
+router.get('/events/:id/history/meta', (req, res) => {
+  const eventId = Number(req.params.id);
+  const event = db.getEventById.get(eventId);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  try {
+    const meta = db.db.prepare(`
+      SELECT 
+        MIN(recorded_at) as start_time,
+        MAX(recorded_at) as end_time,
+        COUNT(*) as total_points,
+        COUNT(DISTINCT rider_id) as rider_count
+      FROM position_history
+      WHERE event_id = ?
+    `).get(eventId);
+    res.json(meta || { start_time: null, end_time: null, total_points: 0, rider_count: 0 });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal mengambil metadata history: ' + err.message });
+  }
+});
+
 // GET /api/events/:id/history — Fetch historical telemetry for replay
 router.get('/events/:id/history', (req, res) => {
   const eventId = Number(req.params.id);
   const event = db.getEventById.get(eventId);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
 
-  const { rider_id } = req.query;
+  const { rider_id, from, to, limit } = req.query;
 
   try {
     let history;
+    const maxLimit = limit ? Math.min(Math.max(1, Number(limit) || 10000), 20000) : 10000;
+
+    let query = `
+      SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color
+      FROM position_history h
+      JOIN riders r ON h.rider_id = r.id
+      WHERE h.event_id = ?
+    `;
+    const params = [eventId];
+
     if (rider_id) {
-      history = db.getHistoryByEventAndRider.all(eventId, Number(rider_id));
-    } else {
-      history = db.getHistoryByEvent.all(eventId);
+      query += ` AND h.rider_id = ?`;
+      params.push(Number(rider_id));
     }
+    if (from) {
+      query += ` AND h.recorded_at >= ?`;
+      params.push(String(from));
+    }
+    if (to) {
+      query += ` AND h.recorded_at <= ?`;
+      params.push(String(to));
+    }
+
+    query += ` ORDER BY h.recorded_at ASC LIMIT ?`;
+    params.push(maxLimit);
+
+    history = db.db.prepare(query).all(...params);
     res.json(history);
   } catch (err) {
     res.status(500).json({ error: 'Gagal mengambil data history: ' + err.message });

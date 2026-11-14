@@ -131,6 +131,33 @@ test('Telemetry History Logger & API', async (t) => {
     assert.ok(points.every(p => p.rider_id === rider1Id));
   });
 
+  await t.test('GET /api/events/:id/history/meta returns telemetry aggregate metadata', async () => {
+    const { eventId } = t.context;
+
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/history/meta`);
+    assert.equal(res.status, 200);
+    const meta = await res.json();
+
+    assert.equal(meta.total_points, 3);
+    assert.equal(meta.rider_count, 2);
+    assert.equal(meta.start_time, '2026-10-20T07:15:00.000Z');
+    assert.equal(meta.end_time, '2026-10-20T07:20:00.000Z');
+  });
+
+  await t.test('GET /api/events/:id/history supports from, to, and limit filtering', async () => {
+    const { eventId } = t.context;
+
+    const resFrom = await fetch(`${baseUrl}/api/events/${eventId}/history?from=2026-10-20T07:20:00.000Z`);
+    assert.equal(resFrom.status, 200);
+    const pointsFrom = await resFrom.json();
+    assert.equal(pointsFrom.length, 2);
+
+    const resLimit = await fetch(`${baseUrl}/api/events/${eventId}/history?limit=1`);
+    assert.equal(resLimit.status, 200);
+    const pointsLimit = await resLimit.json();
+    assert.equal(pointsLimit.length, 1);
+  });
+
   await t.test('POST /api/events/:id/history handles PWA offline queue batch flush', async () => {
     const { eventId, rider1Id } = t.context;
 

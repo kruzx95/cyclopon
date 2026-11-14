@@ -178,12 +178,12 @@ Pesepeda tidak perlu mengunduh aplikasi aneh. Cukup gunakan **Traccar Client** r
      * Jika Opsi A (IP): `http://IP_VPS:5055`
      * Jika Opsi B (Domain): `http://live.domainanda.com:5055` *(Penting: port 5055 menggunakan protokol OsmAnd HTTP)*
    * **Location accuracy:** Pilih opsi **`Highest`** (Akurasi GPS Satelit Tertinggi) agar rute di tikungan & tanjakan sangat presisi.
-   * **Interval (seconds):** Atur ke **`30` detik** (ideal untuk brevet jarak jauh / ultra-endurance agar baterai HP tahan 15–20 jam), atau **`10` detik** untuk balap cepat / gran fondo.
-   * **Distance (meters):** Atur `25` – `75` meter (default: `75`).
+   * **Interval (seconds):** Atur ke **`10` detik** (responsif & akurat) atau **`30` detik** untuk ultra-endurance.
+   * **Distance (meters):** Atur ke **`0` meter** (kosongkan / `0` agar transmisi murni mengikuti timer detik tanpa syarat jarak perpindahan).
 3. **Pengaturan Lanjutan (Advanced Settings - Sangat Direkomendasikan):**
    * Aktifkan saklar **Advanced settings** (saklar hijau).
    * **Offline buffering: ON (Aktif)** — *Fitur krusial!* Koordinat GPS akan disimpan di memori HP saat rider melewati daerah pegunungan/lembah tanpa sinyal (blank spot) dan otomatis disinkronkan ke server begitu sinyal pulih.
-   * **Stop detection: ON (Aktif)** — Menghemat baterai secara signifikan saat rider berhenti istirahat di minimarket/pos kontrol.
+   * **Stop detection: OFF (Nonaktifkan)** — *Penting:* Jangan aktifkan Stop Detection karena dapat menahan paket posisi saat sedang melaju di jalan.
    * **Use system location: ON (Aktif)** — Menggunakan Fused Location Provider untuk akurasi GPS satelit maksimal.
 4. Kembali ke layar utama dan aktifkan saklar **Continuous tracking (Hijau / ON)**.
 5. **PENTING (Izin Lokasi Latar Belakang Android):**

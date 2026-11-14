@@ -122,6 +122,63 @@ test('WebSocket Proxy Singleton Upstream & Fan-Out Broadcast Engine', async (t) 
     client2.close();
   });
 
+  await t.test('auto-maps Traccar devices to riders, enriches positions with rider_id, and replays devices to new clients', async () => {
+    const db = require('../db/database');
+    // Ensure test event and rider exists
+    let ev = db.db.prepare("SELECT id FROM events LIMIT 1").get();
+    let eventId = ev ? ev.id : 1;
+    let rider = db.db.prepare("SELECT * FROM riders WHERE event_id = ? AND bib = '001'").get(eventId);
+    if (!rider) {
+      const res = db.createRider.run({
+        event_id: eventId,
+        bib: '001',
+        name: 'Test Rider 001',
+        pin: '1234',
+        color: '#00E5FF'
+      });
+      rider = db.getRiderById.get(res.lastInsertRowid);
+    }
+
+    // 1. Simulate Traccar upstream sending a device list containing BIB-001 (internal deviceId: 777)
+    mockTraccarSockets[0].send(JSON.stringify({
+      devices: [{ id: 777, uniqueId: 'BIB-001', name: 'Rider Phone' }]
+    }));
+
+    // Wait a tick for proxy to process and sync SQLite
+    await new Promise((r) => setTimeout(r, 120));
+
+    // Verify: SQLite rider table has updated traccar_device_id
+    const updatedRider = db.getRiderById.get(rider.id);
+    assert.equal(updatedRider.traccar_device_id, 777);
+
+    // 2. Connect a new spectator client and verify it immediately receives the cached device list
+    const clientNew = new WebSocket(`ws://127.0.0.1:${appPort}/traccar-ws`);
+    const receivedFromNew = [];
+    clientNew.on('message', (d) => {
+      receivedFromNew.push(JSON.parse(d.toString()));
+    });
+
+    await new Promise((res) => clientNew.on('open', res));
+    await new Promise((r) => setTimeout(r, 120));
+
+    assert.ok(receivedFromNew.some(msg => msg.devices && msg.devices[0].id === 777), 'New client must receive cached devices payload');
+
+    // 3. Simulate Traccar upstream sending a position for deviceId 777
+    mockTraccarSockets[0].send(JSON.stringify({
+      positions: [{ deviceId: 777, latitude: -7.3312, longitude: 108.2415, speed: 22.5 }]
+    }));
+
+    await new Promise((r) => setTimeout(r, 120));
+
+    // Client must receive enriched position with rider_id and bib
+    const posMsg = receivedFromNew.find(msg => msg.positions && msg.positions.some(p => p.deviceId === 777));
+    assert.ok(posMsg, 'Client must receive position update for device 777');
+    assert.equal(posMsg.positions[0].rider_id, rider.id, 'Position must be enriched with rider_id');
+    assert.equal(posMsg.positions[0].bib, '001', 'Position must be enriched with rider bib');
+
+    clientNew.close();
+  });
+
   await t.test('teardown', async () => {
     if (typeof closeUpstream === 'function') closeUpstream();
     for (const s of mockTraccarSockets) s.close();

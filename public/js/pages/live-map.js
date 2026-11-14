@@ -89,6 +89,9 @@ async function renderLiveMap(params) {
         </div>
 
         <div class="header-right">
+          <button class="header-action-btn" id="btnToggleReplay" title="Mode Putar Ulang (Time Machine Replay)">
+            ${ICONS.replay}<span class="action-btn-label">Replay</span>
+          </button>
           ${!isMobile ? `
             <!-- Toggle Leaderboard (Desktop) -->
             <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
@@ -161,6 +164,11 @@ async function renderLiveMap(params) {
               </div>
             </div>
 
+            <!-- Replay FAB (Accessible on all screen sizes) -->
+            <button class="map-fab-btn" id="btnFabReplay" title="Mode Putar Ulang (Time Machine Replay)" aria-label="Replay Telemetri">
+              ${ICONS.replay}
+            </button>
+
             <!-- Fit Route FAB -->
             <button class="map-fab-btn" id="btnFitRoute" title="Pusatkan peta ke seluruh lintasan GPX" aria-label="Fit Rute">
               ${ICONS.fitRoute}
@@ -170,6 +178,29 @@ async function renderLiveMap(params) {
             <button class="map-fab-btn ${isMobile ? '' : 'active'}" id="btnToggleElevation" title="Buka / Tutup Profil Elevasi" aria-label="Toggle Elevasi">
               ${ICONS.elevation}
             </button>
+          </div>
+
+          <!-- ── Time Machine Replay Control Bar ── -->
+          <div id="replayControlBar" class="replay-control-bar" style="display:none">
+            <div class="replay-bar-inner">
+              <button id="btnReplayPlay" class="replay-play-btn" title="Play / Pause Replay" aria-label="Play / Pause">⏸</button>
+              <div class="replay-time-display">
+                <span class="replay-badge">WAKTU REPLAY</span>
+                <span id="replayClock" class="replay-clock">--:--:--</span>
+              </div>
+              <div class="replay-slider-wrap">
+                <span id="replayStartTime" class="replay-time-bound">--:--</span>
+                <input type="range" id="replaySlider" class="replay-slider" min="0" max="100" value="0" step="1" aria-label="Seek Replay">
+                <span id="replayEndTime" class="replay-time-bound">--:--</span>
+              </div>
+              <div class="replay-speed-group">
+                <button class="replay-speed-btn active" data-speed="1">1×</button>
+                <button class="replay-speed-btn" data-speed="2">2×</button>
+                <button class="replay-speed-btn" data-speed="4">4×</button>
+                <button class="replay-speed-btn" data-speed="8">8×</button>
+              </div>
+              <button id="btnExitReplay" class="replay-btn replay-exit-btn" title="Keluar dari Replay">✕ Kembali Live</button>
+            </div>
           </div>
 
           <!-- Floating button to reopen sidebar on mobile when collapsed -->
@@ -442,12 +473,18 @@ async function renderLiveMap(params) {
     bibToRider[cleanBib] = r;
     bibToRider[`BIB-${cleanBib}`] = r;
     bibToRider[`BIB${cleanBib}`] = r;
+    const numBib = String(parseInt(cleanBib, 10));
+    if (numBib && numBib !== 'NaN') {
+      bibToRider[numBib] = r;
+      bibToRider[`BIB-${numBib}`] = r;
+    }
     riderById[r.id] = r;
     riderById[`rider_${r.id}`] = r;
     riderById[`BIB-${cleanBib}`] = r;
     riderById[cleanBib] = r;
     if (r.traccar_device_id) {
       riderById[r.traccar_device_id] = r;
+      riderById[String(r.traccar_device_id)] = r;
     }
   });
 
@@ -832,20 +869,20 @@ async function renderLiveMap(params) {
     Object.entries(progressById).forEach(([devId, prog]) => {
       const rider = riderById[devId];
       if (!rider || prog.distanceKm == null) return;
-      const rDist = Math.max(0, Math.min(totalDist, prog.distanceKm));
+      const rDist = Math.max(0, Math.min(totalDist, prog.routeDistanceKm != null ? prog.routeDistanceKm : prog.distanceKm));
       const rPt = findNearestPointByDist(pts, rDist);
       if (!rPt) return;
 
       const rx = getX(rDist);
       const ry = getY(rPt.ele);
-      const rColor = rider.color || '#FFE600';
+      const rColor = prog.isOffRoute ? '#EF4444' : (rider.color || '#FFE600');
 
-      // Outer glow
+      // Outer glow (enhanced red pulsing glow when off-route)
       ctx.beginPath();
-      ctx.arc(rx, ry, 6.5, 0, Math.PI * 2);
+      ctx.arc(rx, ry, prog.isOffRoute ? 8 : 6.5, 0, Math.PI * 2);
       ctx.fillStyle = rColor;
       ctx.shadowColor = rColor;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = prog.isOffRoute ? 14 : 10;
       ctx.fill();
       ctx.shadowBlur = 0;
 
@@ -857,10 +894,10 @@ async function renderLiveMap(params) {
 
       // BIB tag above dot
       ctx.font = '800 9px Inter, system-ui, sans-serif';
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = prog.isOffRoute ? '#EF4444' : '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.fillText(`#${rider.bib}`, rx, ry - 6);
+      ctx.fillText(prog.isOffRoute ? `⚠️ #${rider.bib}` : `#${rider.bib}`, rx, ry - 6);
     });
 
     // ── Checkpoint Markers on Elevation Profile ──
@@ -1408,7 +1445,9 @@ async function renderLiveMap(params) {
 
           const clockStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           const cotMsg = cotStatus === 'IN_TIME' ? '✅ Lolos COT' : '⏱️ Melebihi COT';
-          showToast(`🚩 #${rider.bib} ${rider.name} tiba di ${cp.name} (${clockStr}) — ${cotMsg}!`, cotStatus === 'IN_TIME' ? 'success' : 'warning');
+          if (!isReplayActive) {
+            showToast(`🚩 #${rider.bib} ${rider.name} tiba di ${cp.name} (${clockStr}) — ${cotMsg}!`, cotStatus === 'IN_TIME' ? 'success' : 'warning');
+          }
         }
       });
     }
@@ -1450,12 +1489,31 @@ async function renderLiveMap(params) {
     telem.isOffRoute = offRoute.isOffRoute;
     telem.deviationMeters = offRoute.deviationMeters;
 
+    // Ground odometer: accumulate real GPS displacement across fixes (especially active when off-route)
+    const curLat = Number(pos.latitude);
+    const curLng = Number(pos.longitude);
+    if (telem.lastLat != null && telem.lastLng != null) {
+      const stepKm = typeof haversineKm === 'function' ? haversineKm(telem.lastLat, telem.lastLng, curLat, curLng) : 0;
+      if (stepKm >= 0.003 && stepKm < 3.0) {
+        telem.totalTraveledKm = Math.round(((telem.totalTraveledKm || calc.distanceKm) + stepKm) * 100) / 100;
+      }
+    } else {
+      telem.totalTraveledKm = (pos.distance_km && Number(pos.distance_km) > 0) ? Number(pos.distance_km) : calc.distanceKm;
+    }
+    telem.lastLat = curLat;
+    telem.lastLng = curLng;
+
+    // When off-route, display real pedaled ground distance so rider's distance doesn't freeze
+    const displayKm = telem.isOffRoute
+      ? Math.max(calc.distanceKm, Math.round((telem.totalTraveledKm || calc.distanceKm) * 10) / 10)
+      : calc.distanceKm;
+
     // 4. Compute ground speed from distance delta if speed is missing or 0 while advancing
     const nowMs = new Date(fixTime).getTime() || Date.now();
     const prevPt = telem.history[telem.history.length - 1];
     if (prevPt) {
       const dtHr = (nowMs - prevPt.timeMs) / 3600000;
-      const dDistKm = calc.distanceKm - prevPt.distanceKm;
+      const dDistKm = displayKm - prevPt.distanceKm;
       if (dtHr > 0.001 && dDistKm > 0) {
         const derivedSpeed = Math.round((dDistKm / dtHr) * 10) / 10;
         if (speedKmh == null || (speedKmh === 0 && derivedSpeed > 1)) {
@@ -1468,7 +1526,7 @@ async function renderLiveMap(params) {
     // 5. Push into rolling history window (up to 8 points)
     telem.history.push({
       timeMs: nowMs,
-      distanceKm: calc.distanceKm,
+      distanceKm: displayKm,
       speed: speedKmh
     });
     if (telem.history.length > 8) telem.history.shift();
@@ -1576,8 +1634,8 @@ async function renderLiveMap(params) {
 
           <div class="popup-metric-box">
             <div class="popup-metric-label">📏 Jarak Ditempuh</div>
-            <div class="popup-metric-value">${calc.distanceKm} <span class="popup-metric-unit">km</span></div>
-            <div class="popup-metric-sub">Sisa: ${telem.remainingKm} km</div>
+            <div class="popup-metric-value">${displayKm} <span class="popup-metric-unit">km</span></div>
+            <div class="popup-metric-sub">${telem.isOffRoute ? `Rute resmi: ${calc.distanceKm} km` : `Sisa: ${telem.remainingKm} km`}</div>
           </div>
 
           <div class="popup-metric-box full-width">
@@ -1634,6 +1692,10 @@ async function renderLiveMap(params) {
       if (marker.getPopup()) {
         marker.setPopupContent(popupHtml);
       }
+      // Re-calculate clusters so marker visual moves immediately at all zoom levels
+      if (clusterGroup && typeof clusterGroup.refreshClusters === 'function' && clusterGroup.hasLayer(marker)) {
+        clusterGroup.refreshClusters(marker);
+      }
     } else {
       if (marker) {
         clusterGroup.removeLayer(marker);
@@ -1653,6 +1715,8 @@ async function renderLiveMap(params) {
     // Save state for leaderboard uniquely by canonical rider.id
     progressById[canonicalId] = {
       ...calc,
+      distanceKm: displayKm,
+      routeDistanceKm: calc.distanceKm,
       speed: telem.currentSpeed,
       movingAvg: telem.movingAvg,
       remainingKm: telem.remainingKm,
@@ -2215,6 +2279,7 @@ async function renderLiveMap(params) {
   }
 
   async function checkActiveAlerts() {
+    if (isReplayActive) return;
     try {
       const res = await fetch(`/api/events/${eventId}/alerts?active=1`);
       if (!res.ok) return;
@@ -2323,7 +2388,397 @@ async function renderLiveMap(params) {
   checkActiveAlerts();
   const alertCheckInterval = setInterval(checkActiveAlerts, 8000);
 
-  const isReplayActive = false;
+  // ── Time Machine Replay Engine State & Lifecycle ──
+  let isReplayActive = false;
+  let replayHistoryData = [];      // Raw array of telemetry history points
+  let replayFrames = [];           // Array of { timeMs, points: [] }
+  let replayFrameIndex = 0;        // Current frame index
+  let replayInterval = null;       // Timer interval
+  let replaySpeed = 1;             // 1, 2, 4, 8
+  let replayIsPlaying = false;
+  let originalSplitsBackup = null; // Backup of splitsCache before replay
+  let replayTrailsByRider = {};    // rider_id -> L.polyline
+
+  function clearReplayTrails() {
+    Object.values(replayTrailsByRider).forEach(poly => {
+      if (poly && map && map.hasLayer(poly)) {
+        map.removeLayer(poly);
+      }
+    });
+    replayTrailsByRider = {};
+  }
+
+  function addReplayTrail(riderId, latlng, color) {
+    if (!map) return;
+    if (!replayTrailsByRider[riderId]) {
+      replayTrailsByRider[riderId] = L.polyline([latlng], {
+        color: color || '#00E5FF',
+        weight: 3,
+        opacity: 0.7,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+    } else {
+      replayTrailsByRider[riderId].addLatLng(latlng);
+    }
+  }
+
+  function buildReplayFrames(points, windowMs = 30000) {
+    if (!points || !points.length) return [];
+    const minTime = new Date(points[0].recorded_at).getTime();
+    const maxTime = new Date(points[points.length - 1].recorded_at).getTime();
+
+    if (minTime >= maxTime) {
+      return [{ timeMs: minTime, points: points }];
+    }
+
+    const frames = [];
+    let curBucket = minTime;
+    let ptIdx = 0;
+
+    while (curBucket <= maxTime) {
+      const bucketEnd = curBucket + windowMs;
+      const bucketPoints = [];
+      while (ptIdx < points.length) {
+        const ptTime = new Date(points[ptIdx].recorded_at).getTime();
+        if (ptTime < bucketEnd) {
+          bucketPoints.push(points[ptIdx]);
+          ptIdx++;
+        } else {
+          break;
+        }
+      }
+      frames.push({
+        timeMs: curBucket,
+        points: bucketPoints
+      });
+      curBucket = bucketEnd;
+    }
+
+    if (ptIdx < points.length && frames.length) {
+      frames[frames.length - 1].points.push(...points.slice(ptIdx));
+    }
+
+    return frames;
+  }
+
+  function applyReplayFrame(targetIdx) {
+    if (targetIdx < 0 || targetIdx >= replayFrames.length) return;
+    replayFrameIndex = targetIdx;
+
+    const frame = replayFrames[targetIdx];
+    const frameDate = new Date(frame.timeMs);
+    const clockStr = frameDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const clockEl = document.getElementById('replayClock');
+    if (clockEl) clockEl.textContent = clockStr;
+    const slider = document.getElementById('replaySlider');
+    if (slider && Number(slider.value) !== targetIdx) slider.value = targetIdx;
+
+    if (frame.points && frame.points.length) {
+      frame.points.forEach(pt => {
+        const r = riders.find(item => item.id === pt.rider_id);
+        if (!r) return;
+        const devKey = r.traccar_device_id || r.id;
+
+        updateRiderPosition(devKey, {
+          latitude: pt.latitude,
+          longitude: pt.longitude,
+          speed: pt.speed || 0,
+          isKmh: true,
+          fixTime: pt.recorded_at,
+          attributes: {}
+        });
+
+        addReplayTrail(pt.rider_id, [pt.latitude, pt.longitude], pt.rider_color || r.color);
+      });
+    }
+  }
+
+  function seekReplay(targetIdx) {
+    if (!isReplayActive || !replayFrames.length) return;
+    targetIdx = Math.max(0, Math.min(targetIdx, replayFrames.length - 1));
+
+    // Reset state to cleanly re-populate up to target frame
+    Object.keys(splitsCache).forEach(k => delete splitsCache[k]);
+    Object.keys(telemetryById).forEach(k => delete telemetryById[k]);
+    Object.keys(progressById).forEach(k => delete progressById[k]);
+    clearReplayTrails();
+
+    const targetTimeMs = replayFrames[targetIdx].timeMs + 30000;
+    const latestPerRider = {};
+
+    for (let i = 0; i < replayHistoryData.length; i++) {
+      const pt = replayHistoryData[i];
+      const ptTime = new Date(pt.recorded_at).getTime();
+      if (ptTime > targetTimeMs) break;
+
+      latestPerRider[pt.rider_id] = pt;
+      addReplayTrail(pt.rider_id, [pt.latitude, pt.longitude], pt.rider_color);
+
+      // Re-populate splitsCache for checkpoints reached up to target time
+      if (checkpoints && checkpoints.length && pt.distance_km > 0) {
+        checkpoints.forEach(cp => {
+          const cacheKey = `${pt.rider_id}_${cp.id}`;
+          if (!splitsCache[cacheKey] && pt.distance_km >= cp.km_distance) {
+            const cpTime = new Date(pt.recorded_at);
+            splitsCache[cacheKey] = {
+              rider_id: pt.rider_id,
+              checkpoint_id: cp.id,
+              cp_name: cp.name,
+              km_distance: cp.km_distance,
+              arrival_time: pt.recorded_at,
+              status: checkCotStatus(cpTime, cp.open_time, cp.close_time)
+            };
+          }
+        });
+      }
+    }
+
+    Object.values(latestPerRider).forEach(pt => {
+      const r = riders.find(item => item.id === pt.rider_id);
+      if (!r) return;
+      const devKey = r.traccar_device_id || r.id;
+      updateRiderPosition(devKey, {
+        latitude: pt.latitude,
+        longitude: pt.longitude,
+        speed: pt.speed || 0,
+        isKmh: true,
+        fixTime: pt.recorded_at,
+        attributes: {}
+      });
+    });
+
+    replayFrameIndex = targetIdx;
+    const frameDate = new Date(replayFrames[targetIdx].timeMs);
+    const clockEl = document.getElementById('replayClock');
+    if (clockEl) {
+      clockEl.textContent = frameDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+  }
+
+  function startReplayTimer() {
+    if (replayInterval) clearInterval(replayInterval);
+    const baseIntervalMs = 800;
+    replayInterval = setInterval(() => {
+      if (!isReplayActive || !replayIsPlaying) return;
+
+      if (replayFrameIndex >= replayFrames.length - 1) {
+        stopReplay(true);
+        return;
+      }
+
+      replayFrameIndex++;
+      applyReplayFrame(replayFrameIndex);
+    }, Math.max(50, Math.round(baseIntervalMs / replaySpeed)));
+  }
+
+  function toggleReplayPlayPause() {
+    if (!isReplayActive) return;
+    replayIsPlaying = !replayIsPlaying;
+    const playBtn = document.getElementById('btnReplayPlay');
+    if (playBtn) {
+      playBtn.innerHTML = replayIsPlaying ? '⏸' : '▶';
+      playBtn.title = replayIsPlaying ? 'Pause Replay' : 'Lanjutkan Replay';
+    }
+    if (replayIsPlaying) {
+      startReplayTimer();
+    } else if (replayInterval) {
+      clearInterval(replayInterval);
+      replayInterval = null;
+    }
+  }
+
+  function setReplaySpeed(speed) {
+    replaySpeed = Number(speed) || 1;
+    document.querySelectorAll('.replay-speed-btn').forEach(btn => {
+      btn.classList.toggle('active', Number(btn.dataset.speed) === replaySpeed);
+    });
+    if (replayIsPlaying) {
+      startReplayTimer();
+    }
+  }
+
+  async function startReplay() {
+    if (isReplayActive) return;
+
+    showToast('Memuat rekaman telemetri event...', 'info');
+
+    let historyPoints = [];
+    try {
+      const res = await fetch(`/api/events/${eventId}/history?limit=10000`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      historyPoints = await res.json();
+    } catch (err) {
+      showToast('Gagal memuat rekaman replay: ' + err.message, 'error');
+      return;
+    }
+
+    if (!Array.isArray(historyPoints) || historyPoints.length === 0) {
+      showToast('Belum ada rekaman riwayat GPS untuk event ini.', 'warning');
+      return;
+    }
+
+    // Chronological order
+    historyPoints.sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+
+    // 1. RISK 1: Mark active, pause live polling, and close WebSocket
+    isReplayActive = true;
+    if (historyPollInterval) {
+      clearInterval(historyPollInterval);
+      historyPollInterval = null;
+    }
+    if (liveWs) {
+      try { liveWs.close(); } catch (e) {}
+      liveWs = null;
+    }
+
+    const dot = document.getElementById('liveDot');
+    const statusText = document.getElementById('liveStatusText');
+    if (dot) { dot.className = 'live-dot'; dot.style.background = '#00E5FF'; }
+    if (statusText) { statusText.textContent = '⏪ REPLAY'; }
+
+    // 2. RISK 2: Backup and clear splitsCache so checkpoints aren't falsely marked
+    originalSplitsBackup = { ...splitsCache };
+    Object.keys(splitsCache).forEach(k => delete splitsCache[k]);
+
+    // Reset telemetry & progress
+    Object.keys(telemetryById).forEach(k => delete telemetryById[k]);
+    Object.keys(progressById).forEach(k => delete progressById[k]);
+    clearReplayTrails();
+
+    // 3. Build frames (30s window)
+    replayHistoryData = historyPoints;
+    replayFrames = buildReplayFrames(historyPoints, 30000);
+    if (!replayFrames.length) {
+      showToast('Tidak ada frame replay yang dapat diproses.', 'warning');
+      stopReplay();
+      return;
+    }
+
+    replayFrameIndex = 0;
+    replaySpeed = 1;
+    replayIsPlaying = true;
+
+    // 4. Update UI
+    const replayControlBar = document.getElementById('replayControlBar');
+    const btnReplay = document.getElementById('btnToggleReplay');
+    const fabReplay = document.getElementById('btnFabReplay');
+    if (btnReplay) btnReplay.classList.add('active');
+    if (fabReplay) fabReplay.classList.add('active');
+    if (replayControlBar) {
+      replayControlBar.style.display = 'block';
+      const playBtn = document.getElementById('btnReplayPlay');
+      if (playBtn) playBtn.innerHTML = '⏸';
+
+      const startDate = new Date(replayFrames[0].timeMs);
+      const endDate = new Date(replayFrames[replayFrames.length - 1].timeMs);
+      const startEl = document.getElementById('replayStartTime');
+      const endEl = document.getElementById('replayEndTime');
+      if (startEl) startEl.textContent = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (endEl) endEl.textContent = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      const slider = document.getElementById('replaySlider');
+      if (slider) {
+        slider.min = 0;
+        slider.max = replayFrames.length - 1;
+        slider.value = 0;
+      }
+    }
+
+    // Collapse elevation drawer if open to give full view
+    if (typeof toggleElevation === 'function') {
+      try { toggleElevation(false); } catch (e) {}
+    }
+
+    // 5. Apply first frame and start timer
+    applyReplayFrame(0);
+    startReplayTimer();
+    showToast('Mode Replay Aktif 🎬 Putar rekaman perlombaan', 'success');
+  }
+
+  function stopReplay(isFinished = false) {
+    if (!isReplayActive) return;
+    isReplayActive = false;
+    replayIsPlaying = false;
+
+    if (replayInterval) {
+      clearInterval(replayInterval);
+      replayInterval = null;
+    }
+
+    const replayControlBar = document.getElementById('replayControlBar');
+    const btnReplay = document.getElementById('btnToggleReplay');
+    const fabReplay = document.getElementById('btnFabReplay');
+    if (replayControlBar) replayControlBar.style.display = 'none';
+    if (btnReplay) btnReplay.classList.remove('active');
+    if (fabReplay) fabReplay.classList.remove('active');
+
+    clearReplayTrails();
+
+    // RISK 2: Restore original splitsCache
+    if (originalSplitsBackup) {
+      Object.keys(splitsCache).forEach(k => delete splitsCache[k]);
+      Object.assign(splitsCache, originalSplitsBackup);
+      originalSplitsBackup = null;
+    }
+
+    // Reset telemetry & progress back to live state
+    Object.keys(telemetryById).forEach(k => delete telemetryById[k]);
+    Object.keys(progressById).forEach(k => delete progressById[k]);
+
+    // RISK 1: Re-sync to latest live positions and restore polling + WebSocket
+    syncLatestPositionsFromHistory().catch(() => {});
+    if (historyPollInterval) clearInterval(historyPollInterval);
+    historyPollInterval = setInterval(syncLatestPositionsFromHistory, 8000);
+    connectWs();
+
+    if (isFinished) {
+      showToast('🏁 Replay selesai — kembali ke Live Tracking', 'info');
+    } else {
+      showToast('Kembali ke Live Tracking', 'info');
+    }
+  }
+
+  // Setup Replay UI event listeners
+  const btnToggleReplay = document.getElementById('btnToggleReplay');
+  if (btnToggleReplay) {
+    btnToggleReplay.addEventListener('click', () => {
+      if (isReplayActive) stopReplay();
+      else startReplay();
+    });
+  }
+
+  const btnFabReplay = document.getElementById('btnFabReplay');
+  if (btnFabReplay) {
+    btnFabReplay.addEventListener('click', () => {
+      if (isReplayActive) stopReplay();
+      else startReplay();
+    });
+  }
+
+  const btnReplayPlay = document.getElementById('btnReplayPlay');
+  if (btnReplayPlay) {
+    btnReplayPlay.addEventListener('click', toggleReplayPlayPause);
+  }
+
+  const btnExitReplay = document.getElementById('btnExitReplay');
+  if (btnExitReplay) {
+    btnExitReplay.addEventListener('click', () => stopReplay(false));
+  }
+
+  const replaySlider = document.getElementById('replaySlider');
+  if (replaySlider) {
+    replaySlider.addEventListener('input', e => {
+      seekReplay(Number(e.target.value));
+    });
+  }
+
+  document.querySelectorAll('.replay-speed-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setReplaySpeed(Number(btn.dataset.speed));
+    });
+  });
 
   // ── Head-to-Head Comparison State & Engine ──
   let comparingRiderId = null;
@@ -2461,6 +2916,11 @@ async function renderLiveMap(params) {
   if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
     Router.onUnmount(() => {
       isLiveMapMounted = false;
+      if (replayInterval) {
+        clearInterval(replayInterval);
+        replayInterval = null;
+      }
+      clearReplayTrails();
       if (historyPollInterval) {
         clearInterval(historyPollInterval);
         historyPollInterval = null;
@@ -2477,7 +2937,7 @@ async function renderLiveMap(params) {
   }
 
   function connectWs() {
-    if (!isLiveMapMounted) return;
+    if (!isLiveMapMounted || isReplayActive) return;
     if (liveWsReconnectTimer) {
       clearTimeout(liveWsReconnectTimer);
       liveWsReconnectTimer = null;
@@ -2493,7 +2953,7 @@ async function renderLiveMap(params) {
     if (statusText) { statusText.textContent = 'Menghubungkan...'; }
 
     ws.onopen = () => {
-      if (!isLiveMapMounted) return;
+      if (!isLiveMapMounted || isReplayActive) return;
       liveWsBackoffMs = 2000;
       if (dot) { dot.className = 'live-dot pulse'; }
       if (statusText) { statusText.textContent = '● LIVE STREAM'; }
@@ -2503,18 +2963,21 @@ async function renderLiveMap(params) {
     };
 
     ws.onmessage = e => {
+      if (isReplayActive) return;
       try {
         const data = JSON.parse(e.data);
 
         // 1. Auto-Mapping Traccar Devices to Riders by BIB Number!
         if (data.devices && Array.isArray(data.devices)) {
           data.devices.forEach(dev => {
-            const rawUnique = String(dev.uniqueId || '').trim();
+            const rawUnique = String(dev.uniqueId || dev.name || '').trim();
             const cleanUnique = rawUnique.replace(/^BIB-?/i, '');
-            const matchedRider = bibToRider[rawUnique] || bibToRider[cleanUnique] || bibToRider[`BIB-${cleanUnique}`];
+            const padded = cleanUnique.padStart(3, '0');
+            const matchedRider = bibToRider[rawUnique] || bibToRider[cleanUnique] || bibToRider[`BIB-${cleanUnique}`] || bibToRider[padded];
             if (matchedRider) {
               matchedRider.traccar_device_id = dev.id;
               riderById[dev.id] = matchedRider;
+              riderById[String(dev.id)] = matchedRider;
               console.log(`[LiveMap] Auto-mapped Traccar device ${dev.id} (${rawUnique}) to rider #${matchedRider.bib} (${matchedRider.name})`);
             }
           });
@@ -2525,9 +2988,13 @@ async function renderLiveMap(params) {
           data.positions.forEach(pos => {
             let rider = riderById[pos.deviceId];
 
-            // Auto-fallback mapping by rider_id or bib string
+            // Auto-fallback mapping by rider_id, bib, or deviceId string
             if (!rider && pos.rider_id && riderById[pos.rider_id]) {
               rider = riderById[pos.rider_id];
+              riderById[pos.deviceId] = rider;
+            }
+            if (!rider && pos.bib && (bibToRider[String(pos.bib)] || bibToRider[String(pos.bib).replace(/^BIB-?/i, '')])) {
+              rider = bibToRider[String(pos.bib)] || bibToRider[String(pos.bib).replace(/^BIB-?/i, '')];
               riderById[pos.deviceId] = rider;
             }
             if (!rider && bibToRider[String(pos.deviceId)]) {
@@ -2546,13 +3013,13 @@ async function renderLiveMap(params) {
     };
 
     ws.onclose = () => {
-      if (!isLiveMapMounted) return;
+      if (!isLiveMapMounted || isReplayActive) return;
       if (dot) { dot.className = 'live-dot offline'; }
       if (statusText) { statusText.textContent = 'Menghubungkan kembali...'; }
       console.log(`[LiveMap] WebSocket disconnected. Reconnecting in ${liveWsBackoffMs / 1000}s...`);
 
       liveWsReconnectTimer = setTimeout(() => {
-        if (isLiveMapMounted) connectWs();
+        if (isLiveMapMounted && !isReplayActive) connectWs();
       }, liveWsBackoffMs);
 
       liveWsBackoffMs = Math.min(Math.round(liveWsBackoffMs * 1.5), 15000);
@@ -2600,6 +3067,11 @@ async function renderLiveMap(params) {
   historyPollInterval = setInterval(syncLatestPositionsFromHistory, 8000);
 
   window.addEventListener('popstate', () => {
+    if (replayInterval) {
+      clearInterval(replayInterval);
+      replayInterval = null;
+    }
+    clearReplayTrails();
     if (historyPollInterval) {
       clearInterval(historyPollInterval);
       historyPollInterval = null;

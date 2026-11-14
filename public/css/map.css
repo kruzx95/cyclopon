@@ -2032,17 +2032,17 @@
 /* ── Time Machine Replay Engine ── */
 .replay-control-bar {
   position: absolute;
-  bottom: 12px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1050;
   width: min(880px, calc(100% - 24px));
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(13, 17, 23, 0.94);
   backdrop-filter: blur(16px);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid rgba(0, 229, 255, 0.35);
   border-radius: var(--radius-lg);
   padding: 12px 18px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 0 25px rgba(116, 136, 115, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 25px rgba(0, 229, 255, 0.15);
   animation: slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes slideUpFade {
@@ -2074,18 +2074,21 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--color-sage);
-  color: #FFFFFF;
+  background: #00E5FF;
+  color: #0D1117;
   border: none;
   font-size: 16px;
   font-weight: 900;
-  box-shadow: 0 4px 14px rgba(116, 136, 115, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 229, 255, 0.35);
   flex-shrink: 0;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .replay-play-btn:hover {
-  background: #60735F;
+  background: #38BDF8;
   transform: scale(1.06);
 }
 .replay-time-display {
@@ -2097,7 +2100,7 @@
 .replay-badge {
   font-size: 9px;
   font-weight: 800;
-  color: var(--color-cyan);
+  color: #00E5FF;
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
@@ -2116,7 +2119,7 @@
 .replay-time-bound {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #94A3B8;
   font-family: monospace;
 }
 .replay-slider {
@@ -2124,7 +2127,7 @@
   height: 6px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 100px;
   outline: none;
   cursor: pointer;
@@ -2136,8 +2139,8 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--color-yellow);
-  box-shadow: 0 0 10px var(--color-yellow);
+  background: #00E5FF;
+  box-shadow: 0 0 10px #00E5FF;
   cursor: pointer;
   transition: transform 0.1s ease;
 }
@@ -2147,15 +2150,15 @@
 .replay-speed-group {
   display: flex;
   gap: 4px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.08);
   padding: 3px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 .replay-speed-btn {
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: #94A3B8;
   font-size: 11px;
   font-weight: 700;
   padding: 4px 8px;
@@ -2167,8 +2170,8 @@
   color: #FFF;
 }
 .replay-speed-btn.active {
-  background: var(--color-sand);
-  color: #18221B;
+  background: #00E5FF;
+  color: #0D1117;
   font-weight: 800;
 }
 .replay-exit-btn {
@@ -2176,14 +2179,55 @@
   font-size: 12px;
   font-weight: 700;
   color: #EF4444;
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.15);
   border-radius: 100px;
   white-space: nowrap;
+  cursor: pointer;
+  transition: var(--transition);
 }
 .replay-exit-btn:hover {
   background: #EF4444;
   color: #FFF;
+}
+
+@media (max-width: 768px) {
+  .replay-control-bar {
+    bottom: 8px;
+    padding: 10px 12px;
+    width: calc(100% - 16px);
+  }
+  .replay-bar-inner {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .replay-slider-wrap {
+    order: 1;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .replay-play-btn {
+    order: 2;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  .replay-time-display {
+    order: 3;
+    min-width: auto;
+  }
+  .replay-clock {
+    font-size: 13px;
+  }
+  .replay-speed-group {
+    order: 4;
+    margin-left: auto;
+  }
+  .replay-exit-btn {
+    order: 5;
+    padding: 4px 10px;
+    font-size: 11px;
+  }
 }
 
 /* ── Head-to-Head Comparison Panel ── */
