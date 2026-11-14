@@ -119,6 +119,62 @@ async function renderLiveMap(params) {
         <div class="h2h-modal" id="h2hModalContent"></div>
       </div>
 
+      <!-- ── Replay Video Export Modal ── -->
+      <div id="modalExportReplay" class="modal-backdrop" style="display:none">
+        <div class="modal-card export-replay-modal">
+          <div class="modal-header" style="padding:16px 20px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:24px">🎥</span>
+              <div>
+                <h3 style="margin:0;font-size:16px;font-weight:900;color:#0D1117">Ekspor Video Replay</h3>
+                <div style="font-size:11.5px;color:#64748B">Rekam pergerakan rute selayaknya screen recorder untuk dibagikan</div>
+              </div>
+            </div>
+            <button class="btn-close-modal" id="btnCloseExportModal" style="background:none;border:none;font-size:18px;cursor:pointer;color:#64748B">✕</button>
+          </div>
+          <div class="modal-body" style="padding:18px 20px">
+            <div style="margin-bottom:16px">
+              <label style="font-size:11px;font-weight:800;text-transform:uppercase;color:#64748B;display:block;margin-bottom:8px">// PILIH METODE PEREKAMAN</label>
+              <div class="export-mode-grid">
+                <div class="export-mode-card active" id="cardModeScreen">
+                  <div class="mode-icon">🖥️</div>
+                  <div class="mode-title">Rekam Layar Peta</div>
+                  <div class="mode-desc">Merekam langsung seluruh tampilan peta Leaflet dengan animasi marker halus, speedometer, dan leaderboard.</div>
+                </div>
+                <div class="export-mode-card" id="cardModeCanvas">
+                  <div class="mode-icon">📱</div>
+                  <div class="mode-title">Video Animasi Story</div>
+                  <div class="mode-desc">Video 15-20 detik format Story (9:16) vertikal elegan ala Strava/Relive. Cocok untuk HP &amp; medsos.</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-bottom:16px">
+              <label style="font-size:11px;font-weight:800;text-transform:uppercase;color:#64748B;display:block;margin-bottom:8px">// KECEPATAN PUTAR REKAMAN</label>
+              <div class="export-speed-pills">
+                <button type="button" class="export-speed-pill" data-speed="1">1× Normal</button>
+                <button type="button" class="export-speed-pill" data-speed="2">2× Cepat</button>
+                <button type="button" class="export-speed-pill active" data-speed="4">4× Story</button>
+                <button type="button" class="export-speed-pill" data-speed="8">8× Kilat</button>
+              </div>
+            </div>
+
+            <div id="exportCanvasProgressWrap" style="display:none;margin-top:14px;background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:14px;text-align:center">
+              <div style="font-size:12.5px;font-weight:800;color:#0D1117;margin-bottom:8px" id="exportProgressText">Memproses Render Video... 0%</div>
+              <div style="height:8px;background:#E2E8F0;border-radius:99px;overflow:hidden">
+                <div id="exportProgressBar" style="height:100%;width:0%;background:#10B981;transition:width 0.15s"></div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="padding:14px 20px;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #E2E8F0;background:#F8FAFC">
+            <button type="button" class="btn" id="btnCancelExportModal" style="padding:8px 16px;border-radius:6px;border:1px solid #CBD5E1;background:#FFF;font-weight:700">Batal</button>
+            <button type="button" class="btn" id="btnStartExportVideo" style="padding:8px 18px;border-radius:6px;background:#E11D48;border:1px solid #BE123C;color:#FFF;font-weight:800">
+              🔴 Mulai Merekam
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Viewport Grid (Map + Sidebar) ── -->
       <div class="map-viewport" id="mapViewport">
         <div class="map-container ${isMobile ? '' : 'elev-open'}" id="mapContainer">
@@ -199,8 +255,16 @@ async function renderLiveMap(params) {
                 <button class="replay-speed-btn" data-speed="4">4×</button>
                 <button class="replay-speed-btn" data-speed="8">8×</button>
               </div>
+              <button id="btnExportReplayVideo" class="replay-btn replay-export-btn" title="Rekam & Ekspor Video Replay">🎥 Rekam Video</button>
               <button id="btnExitReplay" class="replay-btn replay-exit-btn" title="Keluar dari Replay">✕ Kembali Live</button>
             </div>
+          </div>
+
+          <!-- ── Floating Replay Recording Indicator ── -->
+          <div id="replayRecordingBar" class="replay-recording-floating-bar" style="display:none">
+            <span class="recording-pulse-dot"></span>
+            <span class="recording-label">MEREKAM VIDEO... (<span id="recordingTimer">00:00</span>)</span>
+            <button id="btnStopRecordingNow" class="btn-stop-record">■ Selesai &amp; Unduh</button>
           </div>
 
           <!-- Floating button to reopen sidebar on mobile when collapsed -->
@@ -2713,6 +2777,10 @@ async function renderLiveMap(params) {
     isReplayActive = false;
     replayIsPlaying = false;
 
+    if (activeScreenRecorder && activeScreenRecorder.state === 'recording') {
+      stopScreenRecording(true);
+    }
+
     if (replayInterval) {
       clearInterval(replayInterval);
       replayInterval = null;
@@ -2789,6 +2857,480 @@ async function renderLiveMap(params) {
     btn.addEventListener('click', () => {
       setReplaySpeed(Number(btn.dataset.speed));
     });
+  });
+
+  // ── Replay Video Export Engine (Screen & Canvas Story Recorder) ──
+  let activeScreenRecorder = null;
+  let screenRecordStream = null;
+  let screenRecordChunks = [];
+  let screenRecordSeconds = 0;
+  let screenRecordTimerInterval = null;
+  let selectedExportMode = 'screen'; // 'screen' | 'canvas'
+  let selectedExportSpeed = 4; // 1, 2, 4, 8
+
+  const modalExportReplay = document.getElementById('modalExportReplay');
+  const btnExportReplayVideo = document.getElementById('btnExportReplayVideo');
+  const btnCloseExportModal = document.getElementById('btnCloseExportModal');
+  const btnCancelExportModal = document.getElementById('btnCancelExportModal');
+  const btnStartExportVideo = document.getElementById('btnStartExportVideo');
+  const cardModeScreen = document.getElementById('cardModeScreen');
+  const cardModeCanvas = document.getElementById('cardModeCanvas');
+  const replayRecordingBar = document.getElementById('replayRecordingBar');
+  const btnStopRecordingNow = document.getElementById('btnStopRecordingNow');
+  const recordingTimerEl = document.getElementById('recordingTimer');
+
+  function openExportModal() {
+    if (!replayHistoryData.length) {
+      showToast('Data telemetri replay belum siap untuk direkam.', 'warning');
+      return;
+    }
+    // Pause replay while configuring export
+    if (replayIsPlaying) {
+      toggleReplayPlayPause();
+    }
+    modalExportReplay.style.display = 'flex';
+  }
+
+  function closeExportModal() {
+    modalExportReplay.style.display = 'none';
+    const progressWrap = document.getElementById('exportCanvasProgressWrap');
+    if (progressWrap) progressWrap.style.display = 'none';
+    if (btnStartExportVideo) btnStartExportVideo.disabled = false;
+  }
+
+  btnExportReplayVideo?.addEventListener('click', openExportModal);
+  btnCloseExportModal?.addEventListener('click', closeExportModal);
+  btnCancelExportModal?.addEventListener('click', closeExportModal);
+
+  cardModeScreen?.addEventListener('click', () => {
+    selectedExportMode = 'screen';
+    cardModeScreen.classList.add('active');
+    cardModeCanvas.classList.remove('active');
+  });
+
+  cardModeCanvas?.addEventListener('click', () => {
+    selectedExportMode = 'canvas';
+    cardModeCanvas.classList.add('active');
+    cardModeScreen.classList.remove('active');
+  });
+
+  document.querySelectorAll('.export-speed-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.export-speed-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedExportSpeed = Number(pill.dataset.speed) || 4;
+    });
+  });
+
+  btnStopRecordingNow?.addEventListener('click', () => {
+    stopScreenRecording(true);
+  });
+
+  async function startScreenRecording(speed) {
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+      showToast('Browser Anda tidak mendukung perekaman layar langsung. Mengalihkan ke Video Animasi Story...', 'info');
+      startCanvasStoryExport(speed);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser', frameRate: 30 },
+        audio: false,
+        preferCurrentTab: true
+      });
+
+      screenRecordStream = stream;
+      screenRecordChunks = [];
+
+      const mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
+        ? 'video/mp4;codecs=avc1'
+        : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+            ? 'video/webm;codecs=vp9'
+            : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : ''));
+
+      activeScreenRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+
+      activeScreenRecorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) {
+          screenRecordChunks.push(e.data);
+        }
+      };
+
+      activeScreenRecorder.onstop = () => {
+        clearInterval(screenRecordTimerInterval);
+        if (replayRecordingBar) replayRecordingBar.style.display = 'none';
+
+        if (screenRecordStream) {
+          screenRecordStream.getTracks().forEach(tr => tr.stop());
+          screenRecordStream = null;
+        }
+
+        if (screenRecordChunks.length > 0) {
+          const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const blob = new Blob(screenRecordChunks, { type: mimeType || 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const cleanEventName = (event && event.name ? event.name : 'Event').replace(/[^a-zA-Z0-9_-]/g, '_');
+          a.href = url;
+          a.download = `CycloPon-Replay-${cleanEventName}-${Date.now()}.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 3000);
+          showToast('🎉 Video Replay berhasil disimpan!', 'success');
+        }
+        activeScreenRecorder = null;
+      };
+
+      // If user ends share via browser native stop button
+      stream.getVideoTracks()[0].onended = () => {
+        stopScreenRecording(true);
+      };
+
+      activeScreenRecorder.start(500);
+      closeExportModal();
+
+      // Show recording floating indicator
+      if (replayRecordingBar) replayRecordingBar.style.display = 'flex';
+      screenRecordSeconds = 0;
+      if (recordingTimerEl) recordingTimerEl.textContent = '00:00';
+      if (screenRecordTimerInterval) clearInterval(screenRecordTimerInterval);
+      screenRecordTimerInterval = setInterval(() => {
+        screenRecordSeconds++;
+        const mm = String(Math.floor(screenRecordSeconds / 60)).padStart(2, '0');
+        const ss = String(screenRecordSeconds % 60).padStart(2, '0');
+        if (recordingTimerEl) recordingTimerEl.textContent = `${mm}:${ss}`;
+      }, 1000);
+
+      // Start replay playback automatically at selected speed
+      setReplaySpeed(speed);
+      seekReplay(0);
+      if (!replayIsPlaying) {
+        toggleReplayPlayPause();
+      }
+      showToast('🔴 Perekaman Replay Aktif! Klik [■ Selesai & Unduh] saat ingin selesai.', 'info');
+    } catch (err) {
+      console.warn('Screen recording cancelled or failed:', err);
+      if (err.name !== 'NotAllowedError') {
+        showToast('Gagal membuka perekam layar. Mencoba Mode Animasi Story...', 'warning');
+        startCanvasStoryExport(speed);
+      }
+    }
+  }
+
+  function stopScreenRecording(download = true) {
+    if (activeScreenRecorder && activeScreenRecorder.state === 'recording') {
+      try {
+        activeScreenRecorder.stop();
+      } catch (e) {}
+    }
+  }
+
+  async function startCanvasStoryExport(speed) {
+    if (!replayHistoryData || !replayHistoryData.length) {
+      showToast('Data telemetri replay kosong.', 'warning');
+      return;
+    }
+
+    const progressWrap = document.getElementById('exportCanvasProgressWrap');
+    const progressText = document.getElementById('exportProgressText');
+    const progressBar = document.getElementById('exportProgressBar');
+    if (progressWrap) progressWrap.style.display = 'block';
+    if (btnStartExportVideo) btnStartExportVideo.disabled = true;
+
+    // Create 720x1280 (9:16 vertical story) high-resolution canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 1280;
+    const ctx = canvas.getContext('2d');
+
+    // Extract sorted coordinates from replay data
+    const pts = replayHistoryData.filter(p => p.latitude != null && p.longitude != null);
+    if (pts.length < 2) {
+      showToast('Data GPS tidak mencukupi untuk video animasi.', 'warning');
+      closeExportModal();
+      if (btnStartExportVideo) btnStartExportVideo.disabled = false;
+      return;
+    }
+
+    // Determine bounding box
+    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+    pts.forEach(p => {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    });
+
+    // Also include routeCoords if available for full course preview
+    if (routeCoords && routeCoords.length) {
+      routeCoords.forEach(c => {
+        if (c[0] < minLat) minLat = c[0];
+        if (c[0] > maxLat) maxLat = c[0];
+        if (c[1] < minLng) minLng = c[1];
+        if (c[1] > maxLng) maxLng = c[1];
+      });
+    }
+
+    const dLat = (maxLat - minLat) || 0.01;
+    const dLng = (maxLng - minLng) || 0.01;
+
+    // Map viewport area on canvas
+    const mapX = 60, mapY = 240, mapW = 600, mapH = 680;
+
+    function project(lat, lng) {
+      const x = mapX + 30 + ((lng - minLng) / dLng) * (mapW - 60);
+      const y = mapY + mapH - 30 - ((lat - minLat) / dLat) * (mapH - 60);
+      return [x, y];
+    }
+
+    const mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
+      ? 'video/mp4;codecs=avc1'
+      : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+          ? 'video/webm;codecs=vp9'
+          : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : ''));
+
+    const stream = canvas.captureStream(30);
+    const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    const chunks = [];
+    recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+    recorder.onstop = () => {
+      const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+      const blob = new Blob(chunks, { type: mimeType || 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const cleanEventName = (event && event.name ? event.name : 'Event').replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.href = url;
+      a.download = `CycloPon-Story-Replay-${cleanEventName}-${Date.now()}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 3000);
+
+      closeExportModal();
+      if (btnStartExportVideo) btnStartExportVideo.disabled = false;
+      showToast('🎉 Video Animasi Story berhasil diunduh!', 'success');
+    };
+
+    recorder.start();
+
+    // Render loop: ~360 frames (12 seconds at 30 fps)
+    const totalFrames = 360;
+    let frame = 0;
+
+    const renderInterval = setInterval(() => {
+      frame++;
+      const progress = frame / totalFrames;
+
+      // Update progress bar
+      if (progressBar) progressBar.style.width = `${Math.round(progress * 100)}%`;
+      if (progressText) progressText.textContent = `Rendering Video Story... ${Math.round(progress * 100)}%`;
+
+      // Interpolate current position in history
+      const ptIndex = Math.min(pts.length - 1, Math.floor(progress * pts.length));
+      const curPt = pts[ptIndex];
+      const curDist = curPt.distance_km || 0;
+      const curSpeed = curPt.speed || 0;
+      const clockStr = curPt.recorded_at ? new Date(curPt.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+
+      // 1. Background
+      ctx.fillStyle = '#0D1117';
+      ctx.fillRect(0, 0, 720, 1280);
+
+      // Subtle background grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < 720; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1280); ctx.stroke();
+      }
+      for (let y = 0; y < 1280; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(720, y); ctx.stroke();
+      }
+
+      // 2. Top Header Brand & Title
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText('CYCLOPON', 60, 90);
+
+      ctx.fillStyle = '#10B981';
+      ctx.font = '800 13px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillText('// PRO GPS TELEMETRY REPLAY', 220, 90);
+
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = '800 28px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText((event && event.name ? event.name : 'EVENT REPLAY').toUpperCase(), 60, 140);
+
+      const riderName = (curPt.rider_name || (riders[0] ? riders[0].name : 'Mallik 2'));
+      const riderBib = (curPt.rider_bib || (riders[0] ? riders[0].bib : '195'));
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '700 16px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText(`RIDER: #${riderBib} ${riderName.toUpperCase()}`, 60, 175);
+
+      // 3. Map Card Background
+      ctx.fillStyle = '#161B22';
+      ctx.strokeStyle = '#30363D';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(mapX - 10, mapY - 10, mapW + 20, mapH + 20, 16);
+      } else {
+        ctx.rect(mapX - 10, mapY - 10, mapW + 20, mapH + 20);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      // Full Route Ghost Line
+      if (routeCoords && routeCoords.length > 1) {
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        const p0 = project(routeCoords[0][0], routeCoords[0][1]);
+        ctx.moveTo(p0[0], p0[1]);
+        for (let i = 1; i < routeCoords.length; i++) {
+          const pi = project(routeCoords[i][0], routeCoords[i][1]);
+          ctx.lineTo(pi[0], pi[1]);
+        }
+        ctx.stroke();
+      }
+
+      // Active Traversed Glowing Route Line
+      if (ptIndex > 0) {
+        ctx.strokeStyle = '#00E5FF';
+        ctx.lineWidth = 5;
+        ctx.shadowColor = '#00E5FF';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        const p0 = project(pts[0].latitude, pts[0].longitude);
+        ctx.moveTo(p0[0], p0[1]);
+        for (let i = 1; i <= ptIndex; i++) {
+          const pi = project(pts[i].latitude, pts[i].longitude);
+          ctx.lineTo(pi[0], pi[1]);
+        }
+        ctx.stroke();
+        ctx.shadowBlur = 0; // reset
+      }
+
+      // Current Rider Marker Pin
+      const curCoord = project(curPt.latitude, curPt.longitude);
+      // Outer pulse
+      ctx.fillStyle = 'rgba(0, 229, 255, 0.25)';
+      ctx.beginPath();
+      ctx.arc(curCoord[0], curCoord[1], 16 + Math.sin(frame * 0.2) * 4, 0, Math.PI * 2);
+      ctx.fill();
+      // Inner Pin
+      ctx.fillStyle = '#00E5FF';
+      ctx.beginPath();
+      ctx.arc(curCoord[0], curCoord[1], 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // 4. Bottom Dashboard Hero Cards
+      const dashY = 960;
+
+      // Speed Hero Card
+      ctx.fillStyle = '#161B22';
+      ctx.strokeStyle = '#30363D';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(60, dashY, 280, 170, 14);
+      } else {
+        ctx.rect(60, dashY, 280, 170);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '800 12px ui-monospace, monospace';
+      ctx.fillText('// KECEPATAN LIVE', 80, dashY + 36);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 52px ui-monospace, monospace';
+      ctx.fillText(curSpeed.toFixed(1), 80, dashY + 104);
+
+      ctx.fillStyle = '#10B981';
+      ctx.font = '800 15px -apple-system, sans-serif';
+      ctx.fillText('KM / JAM', 220, dashY + 100);
+
+      // Distance & Time Card
+      ctx.fillStyle = '#161B22';
+      ctx.strokeStyle = '#30363D';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(360, dashY, 300, 170, 14);
+      } else {
+        ctx.rect(360, dashY, 300, 170);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '800 12px ui-monospace, monospace';
+      ctx.fillText('// JARAK & WAKTU', 380, dashY + 36);
+
+      ctx.fillStyle = '#00E5FF';
+      ctx.font = '900 36px ui-monospace, monospace';
+      ctx.fillText(`${curDist.toFixed(1)} km`, 380, dashY + 84);
+
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = '700 20px ui-monospace, monospace';
+      ctx.fillText(`🕒 ${clockStr}`, 380, dashY + 128);
+
+      // Progress Bar at bottom
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.fillRect(60, 1160, 600, 8);
+      ctx.fillStyle = '#10B981';
+      ctx.fillRect(60, 1160, 600 * progress, 8);
+
+      // Finisher Overlay for last 1.5 seconds
+      if (frame >= totalFrames - 45) {
+        ctx.fillStyle = 'rgba(13, 17, 23, 0.88)';
+        ctx.fillRect(mapX, mapY + 180, mapW, 280);
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(mapX, mapY + 180, mapW, 280);
+
+        ctx.fillStyle = '#10B981';
+        ctx.font = '900 36px -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🏁 FINISHER', mapX + mapW / 2, mapY + 270);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '800 22px ui-monospace, monospace';
+        ctx.fillText(`TOTAL: ${curDist.toFixed(1)} KM`, mapX + mapW / 2, mapY + 330);
+
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '600 16px -apple-system, sans-serif';
+        ctx.fillText('Selamat atas pencapaian rute Anda!', mapX + mapW / 2, mapY + 380);
+        ctx.textAlign = 'left'; // reset
+      }
+
+      if (frame >= totalFrames) {
+        clearInterval(renderInterval);
+        setTimeout(() => {
+          recorder.stop();
+        }, 500);
+      }
+    }, 33); // ~30 fps
+  }
+
+  btnStartExportVideo?.addEventListener('click', () => {
+    if (selectedExportMode === 'screen') {
+      startScreenRecording(selectedExportSpeed);
+    } else {
+      startCanvasStoryExport(selectedExportSpeed);
+    }
   });
 
   // ── Head-to-Head Comparison State & Engine ──
