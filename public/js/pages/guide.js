@@ -8,7 +8,7 @@ function renderGuide() {
   document.title = 'Panduan Pengguna — CycloPon Live Tracker';
 
   const currentHost = (window.location && window.location.hostname) ? window.location.hostname : 'localhost';
-  const traccarServerUrl = `http://${currentHost}:5055`;
+  const traccarServerUrl = `${window.location.origin}/api/osmand`;
 
   app.innerHTML = `
     <div class="landing-page-wrapper">
@@ -244,7 +244,7 @@ function renderGuide() {
                 </button>
               </div>
               <div class="step-card-hint">
-                💡 <em>Wajib gunakan awalan <code>http://</code> dan sertakan port <code>:5055</code></em>
+                💡 <em>Gunakan protokol HTTPS standar <code>${traccarServerUrl}</code> (tanpa port khusus) agar tidak diblokir provider seluler.</em>
               </div>
             </div>
 

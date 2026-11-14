@@ -27,13 +27,15 @@ if (adminCleanupTimer.unref) adminCleanupTimer.unref();
 
 function getPublicTraccarConfig(req, rider) {
   const hostHeader = (req.headers['x-forwarded-host'] || req.headers.host || 'localhost').split(':')[0];
+  const proto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
   const publicHost = process.env.TRACCAR_PUBLIC_HOST || process.env.DOMAIN || hostHeader;
 
   return {
-    serverUrl:        `http://${publicHost}`,
+    serverUrl:        `${proto}://${publicHost}`,
+    osmandUrl:        `${proto}://${publicHost}/api/osmand`,
     osmandPort:       Number(process.env.TRACCAR_OSMAND_PORT || 5055),
-    deviceIdentifier: rider.traccar_device_id ? String(rider.traccar_device_id) : `BIB-${rider.bib}`,
-    interval:         30,
+    deviceIdentifier: rider.traccar_device_id ? String(rider.traccar_device_id) : String(rider.bib),
+    interval:         10,
   };
 }
 

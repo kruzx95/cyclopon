@@ -178,11 +178,36 @@ async function renderRiderCockpit() {
         </div>
         <div class="cockpit-top-actions">
           <button id="btnToggleWakeLock" class="cockpit-pill-btn" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
-            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar ON</span>
+            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar Melek</span>
           </button>
-          <button id="btnTogglePocket" class="cockpit-pill-btn" title="Mode Kantong Jersey (Background GPS Keep-Alive saat layar dikunci)">
+          <button id="btnTogglePocket" class="cockpit-pill-btn" title="Mode Kantong Jersey (Background GPS Keep-Alive)">
             <span id="pocketIcon">🎒</span> <span id="pocketStatusText">Kantong</span>
           </button>
+          <button id="btnToggleOledPocket" class="cockpit-pill-btn" title="Mode Saku Gelap OLED (Baterai Hemat &amp; Anti-Mati Samsung)">
+            <span>🌙</span> <span id="oledStatusText">Saku Gelap</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── AMOLED Dark Pocket Mode (OLED Saver & Touch Lock) ── -->
+      <div id="pocketOledOverlay" class="pocket-oled-overlay" style="display:none">
+        <div class="oled-lock-header">
+          <span class="oled-pulse-dot"></span>
+          <span class="oled-title">MODE SAKU GELAP (OLED SAVER)</span>
+        </div>
+
+        <div class="oled-metric-box">
+          <div class="oled-speed" id="oledSpeedVal">0.0</div>
+          <div class="oled-speed-unit">KM/JAM</div>
+          <div class="oled-distance" id="oledDistVal">0.0 km • 00:00:00</div>
+          <div class="oled-acc" id="oledGpsAcc">GPS: Standby</div>
+        </div>
+
+        <div class="oled-instruction-box">
+          <div class="oled-lock-icon">🔒</div>
+          <div class="oled-touch-hint">Layar Terkunci &amp; Gelap (Anti-Kepencet di Saku)</div>
+          <div class="oled-double-tap-prompt">Ketuk layar 2× untuk membuka kunci</div>
+          <button id="btnExitOledMode" class="btn-exit-oled">Buka Layar Cockpit</button>
         </div>
       </div>
 
@@ -227,7 +252,12 @@ async function renderRiderCockpit() {
           </button>
         </div>
         <div class="cockpit-pocket-desc">
-          Layar HP dapat dimatikan / dikunci sekarang. Silent audio loop menjaga browser tetap aktif mengirim titik GPS di latar belakang.
+          Audio sunyi menjaga GPS tetap aktif. Untuk HP Android/Samsung agar GPS tidak diputus saat dikantongi, gunakan <strong>Mode Saku Gelap</strong>:
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <button id="btnActivateOledScreen" class="btn-oled-trigger">
+            <span>🌙</span> Kunci Layar Gelap (OLED Saver)
+          </button>
         </div>
         <div class="cockpit-pocket-stats">
           <span>📡 GPS: <strong id="pocketGpsAcc">Mencari...</strong></span>
@@ -498,10 +528,10 @@ async function renderRiderCockpit() {
         cockpitWakeLock = await navigator.wakeLock.request('screen');
         cockpitWakeLock.addEventListener('release', () => {
           btnWakeLock.classList.remove('wake-active');
-          wakeStatusText.textContent = 'Layar Mati';
+          wakeStatusText.textContent = 'Tidur Normal';
         });
         btnWakeLock.classList.add('wake-active');
-        wakeStatusText.textContent = 'Layar ON';
+        wakeStatusText.textContent = 'Layar Melek';
       } catch (err) {
         console.warn('[Cockpit WakeLock] Failed to request:', err);
         btnWakeLock.classList.remove('wake-active');
@@ -520,7 +550,7 @@ async function renderRiderCockpit() {
       } catch { /* ignore */ }
     }
     btnWakeLock.classList.remove('wake-active');
-    wakeStatusText.textContent = 'Layar Mati';
+    wakeStatusText.textContent = 'Tidur Normal';
   }
 
   btnWakeLock.addEventListener('click', () => {
@@ -694,6 +724,17 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitProgressPct').textContent = `Progress: ${progressPct}%`;
     document.getElementById('cockpitGpsStatus').textContent = 'GPS Terhubung';
     document.getElementById('cockpitCoordsSub').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+    // Update OLED Dark Pocket Mode Display
+    const oledSpeed = document.getElementById('oledSpeedVal');
+    if (oledSpeed) oledSpeed.textContent = currentSpeed.toFixed(1);
+    const oledDist = document.getElementById('oledDistVal');
+    if (oledDist) {
+      const hrs = String(Math.floor(movingSeconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((movingSeconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(movingSeconds % 60).padStart(2, '0');
+      oledDist.textContent = `${coveredKm.toFixed(1)} km • ${hrs}:${mins}:${secs}`;
+    }
 
     // Off-Route Check (Sound-Only Alert, No Vibration)
     const offRouteBanner = document.getElementById('cockpitOffRouteAlert');
@@ -1299,6 +1340,90 @@ async function renderRiderCockpit() {
       GpsKeeper.stop();
       updatePocketUI(false);
       showToast('🎒 Mode Kantong Jersey Dinonaktifkan.', 'info');
+    }
+  });
+
+  // ── OLED Dark Pocket Mode (OLED Saver & Touch Lock) Handlers ──
+  const pocketOledOverlay = document.getElementById('pocketOledOverlay');
+  const btnToggleOledPocket = document.getElementById('btnToggleOledPocket');
+  const btnActivateOledScreen = document.getElementById('btnActivateOledScreen');
+  const btnExitOledMode = document.getElementById('btnExitOledMode');
+  const oledStatusText = document.getElementById('oledStatusText');
+
+  let oledModeActive = false;
+
+  async function enterOledMode() {
+    oledModeActive = true;
+    if (pocketOledOverlay) pocketOledOverlay.style.display = 'flex';
+    if (btnToggleOledPocket) btnToggleOledPocket.classList.add('pocket-active');
+    if (oledStatusText) oledStatusText.textContent = 'Terkunci 🌙';
+
+    // Auto-acquire wake lock to ensure screen does not sleep
+    activateWakeLock();
+
+    // Auto-start GpsKeeper if not active yet
+    if (window.GpsKeeper && !GpsKeeper.isActive()) {
+      updatePocketUI(true);
+      await GpsKeeper.start({
+        rider,
+        event,
+        traccar: config.traccar,
+        onUpdate: (data) => {
+          updateTelemetry(data.latitude, data.longitude, data.speed, data.battery != null ? data.battery : currentBatteryLevel, true);
+        },
+        onStatus: (status) => {
+          if (pocketGpsAcc) pocketGpsAcc.textContent = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Aktif';
+          if (pocketPointsSent) pocketPointsSent.textContent = `${status.pointsSent} titik`;
+          if (pocketQueueCount) pocketQueueCount.textContent = `${status.offlineQueueCount}`;
+        }
+      });
+    }
+
+    // Try requesting fullscreen to hide browser bars for 100% black OLED
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+
+    showToast('🌙 Mode Saku Gelap Aktif! Baterai AMOLED hemat. Ketuk 2× untuk membuka.', 'success');
+  }
+
+  function exitOledMode() {
+    oledModeActive = false;
+    if (pocketOledOverlay) pocketOledOverlay.style.display = 'none';
+    if (btnToggleOledPocket) btnToggleOledPocket.classList.remove('pocket-active');
+    if (oledStatusText) oledStatusText.textContent = 'Saku Gelap';
+    showToast('☀️ Layar Cockpit Terbuka.', 'info');
+  }
+
+  btnToggleOledPocket?.addEventListener('click', () => {
+    if (oledModeActive) exitOledMode();
+    else enterOledMode();
+  });
+
+  btnActivateOledScreen?.addEventListener('click', enterOledMode);
+  btnExitOledMode?.addEventListener('click', exitOledMode);
+
+  // Double-tap on OLED overlay to unlock
+  let lastOledTapTime = 0;
+  pocketOledOverlay?.addEventListener('click', (e) => {
+    if (e.target.closest('#btnExitOledMode')) return;
+    const now = Date.now();
+    if (now - lastOledTapTime < 450) {
+      exitOledMode();
+      lastOledTapTime = 0;
+    } else {
+      lastOledTapTime = now;
+      const prompt = document.querySelector('.oled-double-tap-prompt');
+      if (prompt) {
+        prompt.style.color = '#38BDF8';
+        prompt.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          prompt.style.color = '';
+          prompt.style.transform = '';
+        }, 250);
+      }
     }
   });
 

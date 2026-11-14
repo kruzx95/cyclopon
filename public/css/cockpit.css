@@ -1014,3 +1014,154 @@ body.cockpit-active.night-mode #cockpitSosMsgInput {
   border-color: #047857;
 }
 
+/* ── AMOLED Dark Pocket Mode (OLED Saver & Touch Lock) ── */
+.pocket-oled-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #000000;
+  color: #94A3B8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 44px 24px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  font-family: var(--font-mono, monospace);
+}
+
+.oled-lock-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.oled-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 10px #10B981;
+  animation: pulseGreen 1.5s infinite;
+}
+
+.oled-metric-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.oled-speed {
+  font-size: 80px;
+  font-weight: 900;
+  line-height: 1;
+  color: #1E293B; /* Very dim to conserve AMOLED power & avoid burn-in */
+  transition: color 0.3s;
+}
+
+.oled-metric-box:hover .oled-speed,
+.oled-speed.active {
+  color: #334155;
+}
+
+.oled-speed-unit {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1E293B;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}
+
+.oled-distance {
+  font-size: 18px;
+  font-weight: 700;
+  color: #334155;
+  margin-top: 14px;
+}
+
+.oled-acc {
+  font-size: 11px;
+  color: #1E293B;
+  margin-top: 6px;
+}
+
+.oled-instruction-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.oled-lock-icon {
+  font-size: 28px;
+  opacity: 0.3;
+}
+
+.oled-touch-hint {
+  font-size: 11.5px;
+  color: #334155;
+  letter-spacing: 0.05em;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.oled-double-tap-prompt {
+  font-size: 13px;
+  font-weight: 800;
+  color: #475569;
+  animation: oledBlink 2.5s infinite;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+@keyframes oledBlink {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.9; }
+}
+
+.btn-exit-oled {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid #334155;
+  color: #94A3B8;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.btn-exit-oled:hover, .btn-exit-oled:active {
+  background: #334155;
+  color: #FFFFFF;
+}
+
+.btn-oled-trigger {
+  background: #0D1117;
+  border: 1px solid #30363D;
+  color: #38BDF8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.btn-oled-trigger:hover {
+  background: #161B22;
+  border-color: #38BDF8;
+}
+

@@ -19,6 +19,7 @@ function renderRiderSetup() {
 
   const { rider, event, traccar } = config;
   const hostClean = traccar.serverUrl.replace(/^https?:\/\//, '').split(':')[0];
+  const osmandEndpointUrl = traccar.osmandUrl || `${window.location.origin}/api/osmand`;
   const osmandUrl = `http://${hostClean}:${traccar.osmandPort}`;
 
   const nameParts = (rider.name || 'Rider').trim().split(/\s+/);
@@ -163,16 +164,31 @@ function renderRiderSetup() {
                     <line x1="12" y1="18" x2="12.01" y2="18"/>
                   </svg>
                 </div>
-                <span class="hub-action-tag sage">HEMAT BATERAI</span>
+                <span class="hub-action-tag sage">LAYAR MATI (HEMAT BATERAI)</span>
               </div>
-              <div class="hub-action-title">Setup Traccar</div>
+              <div class="hub-action-title">Aplikasi Traccar Client</div>
               <p class="hub-action-desc">
-                Panduan konfigurasi aplikasi resmi Traccar Client agar HP dapat dikantongi dengan layar mati & baterai hemat.
+                Gunakan aplikasi resmi Traccar Client (Play Store) jika ingin HP dikantongi dengan layar mati sepenuhnya.
               </p>
+              <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:11px">
+                <div style="margin-bottom:6px">
+                  <span style="color:#64748B;font-weight:700">SERVER URL:</span><br>
+                  <code style="font-weight:800;color:#0D1117;word-break:break-all">${escapeHtml(osmandEndpointUrl)}</code>
+                </div>
+                <div>
+                  <span style="color:#64748B;font-weight:700">DEVICE IDENTIFIER:</span><br>
+                  <code style="font-weight:900;color:#047857;font-size:13px">${escapeHtml(rider.bib)}</code>
+                </div>
+              </div>
             </div>
-            <a href="/guide#traccarGuideSection" data-link class="btn-hub-secondary">
-              Buka Halaman Panduan →
-            </a>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button id="btnCopyTraccarConfig" class="btn-hub-secondary" style="font-size:11px;padding:8px">
+                📋 Salin URL &amp; Device ID
+              </button>
+              <a href="/guide#traccarGuideSection" data-link class="btn-hub-primary" style="font-size:11px;padding:8px;text-align:center">
+                Lihat Panduan Lengkap →
+              </a>
+            </div>
           </div>
 
           <!-- Action 4: Live Map -->
@@ -343,6 +359,23 @@ function renderRiderSetup() {
         }
       } else {
         prompt('Salin link tracking ini:', shareUrl);
+      }
+    });
+  }
+
+  // Copy Traccar Client Configuration
+  const btnCopyTraccar = document.getElementById('btnCopyTraccarConfig');
+  if (btnCopyTraccar) {
+    btnCopyTraccar.addEventListener('click', () => {
+      const textToCopy = `Server URL: ${osmandEndpointUrl}\nDevice Identifier: ${rider.bib}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showToast('✓ Konfigurasi Traccar berhasil disalin!', 'success');
+        }).catch(() => {
+          prompt('Salin konfigurasi Traccar di bawah ini:', textToCopy);
+        });
+      } else {
+        prompt('Salin konfigurasi Traccar di bawah ini:', textToCopy);
       }
     });
   }
