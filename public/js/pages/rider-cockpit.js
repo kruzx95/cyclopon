@@ -1102,8 +1102,8 @@ async function renderRiderCockpit() {
   if ('geolocation' in navigator) {
     cockpitGeoWatchId = navigator.geolocation.watchPosition(
       pos => {
-        // GPS Accuracy & Jitter Filter: Ignore fixes with > 45m accuracy error
-        if (pos.coords.accuracy && pos.coords.accuracy > 45) {
+        // GPS Accuracy & Jitter Filter: Ignore fixes with excessive error (> 100m)
+        if (pos.coords.accuracy && pos.coords.accuracy > 100) {
           return;
         }
 

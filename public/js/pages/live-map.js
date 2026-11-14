@@ -1050,10 +1050,10 @@ async function renderLiveMap(params) {
     }, 120);
   });
 
-  // ── Marker cluster group ──
+  // ── Marker cluster group (Lower threshold so riders stay visible on active zoom) ──
   const clusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 50,
-    disableClusteringAtZoom: 16,
+    maxClusterRadius: 25,
+    disableClusteringAtZoom: 13,
     iconCreateFunction: cluster => {
       const n = cluster.getChildCount();
       return L.divIcon({
@@ -2972,8 +2972,9 @@ async function renderLiveMap(params) {
           data.devices.forEach(dev => {
             const rawUnique = String(dev.uniqueId || dev.name || '').trim();
             const cleanUnique = rawUnique.replace(/^BIB-?/i, '');
+            const strippedZero = cleanUnique.replace(/^0+/, '') || '0';
             const padded = cleanUnique.padStart(3, '0');
-            const matchedRider = bibToRider[rawUnique] || bibToRider[cleanUnique] || bibToRider[`BIB-${cleanUnique}`] || bibToRider[padded];
+            const matchedRider = bibToRider[rawUnique] || bibToRider[cleanUnique] || bibToRider[`BIB-${cleanUnique}`] || bibToRider[padded] || bibToRider[strippedZero] || (riders.length === 1 ? riders[0] : null);
             if (matchedRider) {
               matchedRider.traccar_device_id = dev.id;
               riderById[dev.id] = matchedRider;
@@ -2993,12 +2994,20 @@ async function renderLiveMap(params) {
               rider = riderById[pos.rider_id];
               riderById[pos.deviceId] = rider;
             }
-            if (!rider && pos.bib && (bibToRider[String(pos.bib)] || bibToRider[String(pos.bib).replace(/^BIB-?/i, '')])) {
-              rider = bibToRider[String(pos.bib)] || bibToRider[String(pos.bib).replace(/^BIB-?/i, '')];
-              riderById[pos.deviceId] = rider;
+            if (!rider && pos.bib) {
+              const bibStr = String(pos.bib).trim();
+              const cleanB = bibStr.replace(/^BIB-?/i, '');
+              const strippedZero = cleanB.replace(/^0+/, '') || '0';
+              rider = bibToRider[bibStr] || bibToRider[cleanB] || bibToRider[cleanB.padStart(3, '0')] || bibToRider[strippedZero];
+              if (rider) riderById[pos.deviceId] = rider;
             }
             if (!rider && bibToRider[String(pos.deviceId)]) {
               rider = bibToRider[String(pos.deviceId)];
+              riderById[pos.deviceId] = rider;
+            }
+            // Solo test fallback: if event only has 1 rider, map incoming position to that rider
+            if (!rider && riders.length === 1) {
+              rider = riders[0];
               riderById[pos.deviceId] = rider;
             }
 
@@ -3028,27 +3037,39 @@ async function renderLiveMap(params) {
     ws.onerror = err => console.error('[LiveMap] WS error:', err);
   }
 
-  // ── Initial and Fallback Polling for Web Telemetry ──
+  // ── Initial and Fallback Polling for Web Telemetry (Ultra-fast Latest Endpoint) ──
   async function syncLatestPositionsFromHistory() {
     if (isReplayActive) return;
     try {
-      const res = await fetch(`/api/events/${eventId}/history`);
-      if (!res.ok) return;
-      const historyPoints = await res.json();
-      if (!Array.isArray(historyPoints) || !historyPoints.length) return;
-
-      const latestPerRider = {};
-      historyPoints.forEach(pt => {
-        if (!latestPerRider[pt.rider_id] || new Date(pt.recorded_at) > new Date(latestPerRider[pt.rider_id].recorded_at)) {
-          latestPerRider[pt.rider_id] = pt;
+      // 1. First attempt the optimized latest-position endpoint
+      let res = await fetch(`/api/events/${eventId}/positions/latest`);
+      let points = [];
+      if (res.ok) {
+        points = await res.json();
+      } else {
+        // Fallback to standard history if latest endpoint unavailable
+        res = await fetch(`/api/events/${eventId}/history`);
+        if (res.ok) {
+          const allHistory = await res.json();
+          if (Array.isArray(allHistory)) {
+            const latestMap = {};
+            allHistory.forEach(pt => {
+              if (!latestMap[pt.rider_id] || new Date(pt.recorded_at) > new Date(latestMap[pt.rider_id].recorded_at)) {
+                latestMap[pt.rider_id] = pt;
+              }
+            });
+            points = Object.values(latestMap);
+          }
         }
-      });
+      }
 
-      Object.values(latestPerRider).forEach(pt => {
-        const r = riders.find(item => item.id === pt.rider_id);
+      if (!Array.isArray(points) || !points.length) return;
+
+      points.forEach(pt => {
+        const r = riders.find(item => item.id === pt.rider_id) || (riders.length === 1 ? riders[0] : null);
         if (!r) return;
 
-        const devKey = r.traccar_device_id || r.id;
+        const devKey = r.traccar_device_id || pt.deviceId || r.id;
         updateRiderPosition(devKey, {
           latitude: pt.latitude,
           longitude: pt.longitude,
@@ -3063,8 +3084,8 @@ async function renderLiveMap(params) {
 
   // Fetch immediately on load
   syncLatestPositionsFromHistory();
-  // Periodic fallback sync every 8 seconds
-  historyPollInterval = setInterval(syncLatestPositionsFromHistory, 8000);
+  // Periodic fallback sync every 5 seconds (matching Traccar typical 10s intervals smoothly)
+  historyPollInterval = setInterval(syncLatestPositionsFromHistory, 5000);
 
   window.addEventListener('popstate', () => {
     if (replayInterval) {

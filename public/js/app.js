@@ -13,9 +13,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=60']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=63']);
     renderLanding();
   });
+
+  // ── Official Guide & Documentation Page ──
+  Router.register('/guide', async () => {
+    await loadPageDeps(['/js/pages/guide.js?v=63']);
+    renderGuide();
+  });
+
+  Router.register('/panduan', () => Router.navigate('/guide'));
 
   // ── Rider flow ──
   Router.register('/r/:token', async (params) => {

@@ -2,6 +2,31 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 
+// GET /api/events/:id/positions/latest — Fetch the single latest position per rider (ultra-fast for live map sync)
+router.get('/events/:id/positions/latest', (req, res) => {
+  const eventId = Number(req.params.id);
+  const event = db.getEventById.get(eventId);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  try {
+    const latestRows = db.db.prepare(`
+      SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color, r.traccar_device_id
+      FROM position_history h
+      JOIN riders r ON h.rider_id = r.id
+      WHERE h.id IN (
+        SELECT MAX(id)
+        FROM position_history
+        WHERE event_id = ?
+        GROUP BY rider_id
+      )
+    `).all(eventId);
+
+    res.json(latestRows || []);
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal mengambil posisi terbaru: ' + err.message });
+  }
+});
+
 // GET /api/events/:id/history/meta — Fetch history metadata (min/max time, count, riders)
 router.get('/events/:id/history/meta', (req, res) => {
   const eventId = Number(req.params.id);

@@ -170,8 +170,8 @@ function renderRiderSetup() {
                 Panduan konfigurasi aplikasi resmi Traccar Client agar HP dapat dikantongi dengan layar mati & baterai hemat.
               </p>
             </div>
-            <a href="/#traccarGuideSection" data-link class="btn-hub-secondary">
-              Lihat Panduan di Beranda →
+            <a href="/guide#traccarGuideSection" data-link class="btn-hub-secondary">
+              Buka Halaman Panduan →
             </a>
           </div>
 

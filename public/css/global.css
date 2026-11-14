@@ -363,6 +363,43 @@ label {
   }
 }
 
+.nav-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-guide-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #0D1117;
+  border: 1.5px solid #CBD5E1;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(13, 17, 23, 0.05);
+}
+
+.btn-guide-nav:hover {
+  background: #F8FAFC;
+  border-color: #1C3E24;
+  color: #1C3E24;
+  transform: translateY(-1px);
+}
+
+.btn-guide-nav.active {
+  background: #1C3E24;
+  color: #FFFFFF;
+  border-color: #1C3E24;
+}
+
 .btn-admin-nav {
   display: inline-flex;
   align-items: center;
@@ -1499,7 +1536,44 @@ label {
   .nav-system-status {
     display: none;
   }
-  .btn-admin-nav {
+  .nav-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-guide-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #0D1117;
+  border: 1.5px solid #CBD5E1;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(13, 17, 23, 0.05);
+}
+
+.btn-guide-nav:hover {
+  background: #F8FAFC;
+  border-color: #1C3E24;
+  color: #1C3E24;
+  transform: translateY(-1px);
+}
+
+.btn-guide-nav.active {
+  background: #1C3E24;
+  color: #FFFFFF;
+  border-color: #1C3E24;
+}
+
+.btn-admin-nav {
     padding: 6px 12px;
     font-size: 11px;
     height: 34px;
@@ -1532,7 +1606,44 @@ label {
       width: 24px;
       height: 24px;
     }
-    .btn-admin-nav {
+    .nav-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-guide-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #0D1117;
+  border: 1.5px solid #CBD5E1;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(13, 17, 23, 0.05);
+}
+
+.btn-guide-nav:hover {
+  background: #F8FAFC;
+  border-color: #1C3E24;
+  color: #1C3E24;
+  transform: translateY(-1px);
+}
+
+.btn-guide-nav.active {
+  background: #1C3E24;
+  color: #FFFFFF;
+  border-color: #1C3E24;
+}
+
+.btn-admin-nav {
       padding: 5px 9px;
       font-size: 10.5px;
       height: 32px;
@@ -1676,3 +1787,141 @@ label {
     justify-content: center;
   }
 }
+
+/* ── Guide Hub Page: Navigation Pills & Dual Callout Cards ── */
+.guide-nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin: 36px 0 16px;
+  padding: 12px 18px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+}
+.guide-nav-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.guide-nav-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+  color: #334155;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.guide-nav-pill-btn:hover,
+.guide-nav-pill-btn.active {
+  background: #0D1117;
+  color: #FFFFFF !important;
+  border-color: #0D1117;
+}
+.guide-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.guide-dual-callout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+.guide-callout-card {
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+.guide-callout-card.admin-callout {
+  border-color: #E2DDD5;
+  background: #FBF9F5;
+}
+.guide-callout-card.gps-callout {
+  border-color: #CBD5E1;
+  background: #F0FDF4;
+}
+.callout-card-header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.callout-card-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.callout-card-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0D1117;
+  margin-bottom: 4px;
+}
+.callout-card-desc {
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.5;
+}
+.callout-card-desc code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+.btn-callout-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #0D1117;
+  color: #FFFFFF !important;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+  align-self: flex-start;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-callout-action:hover {
+  background: #1C3E24;
+}
+@media (max-width: 768px) {
+  .guide-nav-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+  .guide-nav-pills {
+    width: 100%;
+  }
+  .guide-nav-pill-btn {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+  }
+  .guide-dual-callout {
+    grid-template-columns: 1fr;
+  }
+  .btn-callout-action {
+    width: 100%;
+  }
+}
+
