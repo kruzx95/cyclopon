@@ -240,14 +240,22 @@ const GpsKeeper = (() => {
      * Start Background GPS Keep-Alive
      */
     async start({ rider, event, traccar = null, onUpdate = null, onStatus = null, intervalSec = 5 }) {
-      if (isRunning) return true;
+      if (rider) currentRider = rider;
+      if (event) currentEvent = event;
+      if (traccar) currentTraccar = traccar;
+      if (onUpdate) updateCallback = onUpdate;
+      if (onStatus) statusCallback = onStatus;
+      if (intervalSec) reportIntervalMs = intervalSec * 1000;
 
-      currentRider = rider;
-      currentEvent = event;
-      currentTraccar = traccar;
-      updateCallback = onUpdate;
-      statusCallback = onStatus;
-      reportIntervalMs = (intervalSec || 5) * 1000;
+      try {
+        localStorage.setItem('cyclopon_pocket_mode_active', 'true');
+      } catch (e) {}
+
+      if (isRunning) {
+        notifyStatus();
+        return true;
+      }
+
       isRunning = true;
 
       // 1. Silent Audio Loop (Keep browser process alive in jersey pocket)
@@ -359,6 +367,9 @@ const GpsKeeper = (() => {
      */
     stop() {
       isRunning = false;
+      try {
+        localStorage.removeItem('cyclopon_pocket_mode_active');
+      } catch (e) {}
 
       // Stop Audio
       if (audioEl) {
@@ -391,6 +402,12 @@ const GpsKeeper = (() => {
 
     isActive() {
       return isRunning;
+    },
+
+    setCallbacks({ onUpdate, onStatus }) {
+      if (onUpdate !== undefined) updateCallback = onUpdate;
+      if (onStatus !== undefined) statusCallback = onStatus;
+      if (statusCallback && isRunning) notifyStatus();
     },
 
     getStatus() {

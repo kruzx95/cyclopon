@@ -105,10 +105,16 @@ function calculateEventResults(eventId) {
 
     // Determine Status
     let status = 'DNF';
+    const eventDist = event && event.distance_km ? Number(event.distance_km) : 0;
     if (totalCps > 0 && clearedCpCount >= totalCps) {
       status = hasOverCot ? 'OVER_COT' : 'FINISHER';
-    } else if (totalCps === 0 && distanceKm > 0) {
-      status = 'FINISHER';
+    } else if (totalCps === 0) {
+      // If no checkpoints, require completing at least 95% of route distance (or 1km if no route)
+      if (eventDist > 0) {
+        status = distanceKm >= (eventDist * 0.95) ? 'FINISHER' : 'DNF';
+      } else {
+        status = distanceKm >= 1.0 ? 'FINISHER' : 'DNF';
+      }
     }
 
     // If speed is still 0 but we have distance & time

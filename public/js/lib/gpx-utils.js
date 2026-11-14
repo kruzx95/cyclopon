@@ -178,9 +178,10 @@ function parseGpxToCoords(gpxText) {
  * @param {number} lng - rider longitude
  * @param {Array<[number, number]>} routeCoords
  * @param {number} routeTotalKm - pre-computed total distance
+ * @param {number|null} [prevIndex=null] - prior established index on route to protect against loop-start false finish
  * @returns {{ index: number, progressPct: number, distanceKm: number }}
  */
-function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm) {
+function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm, prevIndex = null) {
   if (!routeCoords.length) return { index: 0, progressPct: 0, distanceKm: 0 };
 
   let nearestIndex = 0;
@@ -189,6 +190,25 @@ function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm) {
   for (let i = 0; i < routeCoords.length; i++) {
     const d = haversineKm(lat, lng, routeCoords[i][0], routeCoords[i][1]);
     if (d < minDist) { minDist = d; nearestIndex = i; }
+  }
+
+  // Loop circuit protection:
+  // If start and finish are within 400m of each other (loop course),
+  // and rider has not established significant forward progress (prevIndex == null or prevIndex < routeCoords.length * 0.25),
+  // but candidate nearestIndex is near the end (> 75% of route), check if start is also close (< 600m).
+  // If so, prioritize Start (index 0) over Finish to prevent false 100% progress before start!
+  if (routeCoords.length > 20) {
+    const loopGap = haversineKm(routeCoords[0][0], routeCoords[0][1], routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1]);
+    const isLoopCourse = loopGap < 0.4;
+    const isNearEnd = nearestIndex > routeCoords.length * 0.75;
+    const hasLittleOrNoPriorProgress = prevIndex == null || prevIndex < (routeCoords.length * 0.25);
+
+    if (isLoopCourse && isNearEnd && hasLittleOrNoPriorProgress) {
+      const distToStart = haversineKm(lat, lng, routeCoords[0][0], routeCoords[0][1]);
+      if (distToStart < 0.6) {
+        nearestIndex = 0;
+      }
+    }
   }
 
   // Compute distance covered up to nearestIndex

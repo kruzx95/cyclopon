@@ -208,6 +208,17 @@ async function renderLiveMap(params) {
             ${ICONS.leaderboard} Leaderboard
           </button>
 
+          <!-- ── Active Pocket Mode Keep-Alive Floating Indicator ── -->
+          <div id="riderPocketActivePill" class="rider-pocket-floating-pill" style="display:none">
+            <div class="pocket-pill-info">
+              <span class="pulse-dot-green"></span>
+              <span>🎒 <strong>Mode Kantong Aktif</strong></span>
+            </div>
+            <a href="/rider/cockpit" data-link class="btn-pocket-return-cockpit">
+              🚴 Cockpit →
+            </a>
+          </div>
+
           <!-- ── Target Rider Focus Floating Banner ── -->
           <div id="targetRiderFocusBanner" class="target-rider-focus-bar" style="display:none">
             <div class="focus-rider-info">
@@ -3082,10 +3093,25 @@ async function renderLiveMap(params) {
     } catch (e) {}
   }
 
+  // Check and update pocket mode indicator if rider navigated to map with Pocket Mode active
+  function checkPocketModeIndicator() {
+    const pill = document.getElementById('riderPocketActivePill');
+    if (!pill) return;
+    if (window.GpsKeeper && GpsKeeper.isActive()) {
+      pill.style.display = 'flex';
+    } else {
+      pill.style.display = 'none';
+    }
+  }
+  checkPocketModeIndicator();
+
   // Fetch immediately on load
   syncLatestPositionsFromHistory();
   // Periodic fallback sync every 5 seconds (matching Traccar typical 10s intervals smoothly)
-  historyPollInterval = setInterval(syncLatestPositionsFromHistory, 5000);
+  historyPollInterval = setInterval(() => {
+    checkPocketModeIndicator();
+    syncLatestPositionsFromHistory();
+  }, 5000);
 
   window.addEventListener('popstate', () => {
     if (replayInterval) {

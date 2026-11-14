@@ -1110,6 +1110,12 @@ async function renderRiderCockpit() {
         const rawSpeed = pos.coords.speed != null ? pos.coords.speed * 3.6 : 0;
         updateTelemetry(pos.coords.latitude, pos.coords.longitude, rawSpeed, currentBatteryLevel, true);
 
+        // If Pocket Mode (GpsKeeper) is actively running, let GpsKeeper handle server reporting
+        // to prevent duplicate simultaneous telemetry submissions & distance jumps!
+        if (window.GpsKeeper && GpsKeeper.isActive()) {
+          return;
+        }
+
         // Auto-report telemetry to server every 5 seconds for live tracking
         const now = Date.now();
         if (now - lastCockpitReportTime >= 5000) {
@@ -1241,6 +1247,27 @@ async function renderRiderCockpit() {
     }
   }
 
+  // ── Auto-sync Pocket Mode if already running in background across page navigation ──
+  if (window.GpsKeeper && GpsKeeper.isActive()) {
+    updatePocketUI(true);
+    GpsKeeper.setCallbacks({
+      onUpdate: (data) => {
+        updateTelemetry(data.latitude, data.longitude, data.speed, data.battery != null ? data.battery : currentBatteryLevel, true);
+      },
+      onStatus: (status) => {
+        if (pocketGpsAcc) pocketGpsAcc.textContent = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Aktif';
+        if (pocketPointsSent) pocketPointsSent.textContent = `${status.pointsSent} titik`;
+        if (pocketQueueCount) pocketQueueCount.textContent = `${status.offlineQueueCount}`;
+      }
+    });
+    const curStatus = GpsKeeper.getStatus();
+    if (curStatus) {
+      if (pocketGpsAcc) pocketGpsAcc.textContent = curStatus.accuracy ? `±${Math.round(curStatus.accuracy)}m` : 'Aktif';
+      if (pocketPointsSent) pocketPointsSent.textContent = `${curStatus.pointsSent} titik`;
+      if (pocketQueueCount) pocketQueueCount.textContent = `${curStatus.offlineQueueCount}`;
+    }
+  }
+
   btnTogglePocket?.addEventListener('click', async () => {
     if (window.GpsKeeper && GpsKeeper.isActive()) {
       GpsKeeper.stop();
@@ -1280,6 +1307,9 @@ async function renderRiderCockpit() {
   if (btnCockpitLogout) {
     btnCockpitLogout.addEventListener('click', () => {
       if (confirm('Keluar dari Cockpit HUD dan kembali ke login?')) {
+        if (window.GpsKeeper && GpsKeeper.isActive()) {
+          GpsKeeper.stop();
+        }
         teardownRiderCockpit();
         sessionStorage.removeItem('riderConfig');
         localStorage.removeItem('riderConfig');
@@ -1378,9 +1408,8 @@ function teardownRiderCockpit() {
       navigator.geolocation.clearWatch(cockpitGeoWatchId);
       cockpitGeoWatchId = null;
     }
-    if (window.GpsKeeper && GpsKeeper.isActive()) {
-      GpsKeeper.stop();
-    }
+    // Note: Do NOT stop GpsKeeper here so Pocket Mode keeps tracking in the background
+    // even when the rider views Live Map or navigates between pages!
     stopOffRouteAlert();
     isCurrentlyOffRoute = false;
     offRouteMutedByUser = false;
