@@ -1,10 +1,42 @@
 const express = require('express');
 const router = express.Router();
-const { getOgData, generateOgSvg, generateOgPng } = require('../lib/og-infograph');
+const {
+  getOgData,
+  generateOgSvg,
+  generateOgPng,
+  getHomeOgData,
+  generateHomeOgSvg,
+  generateHomeOgPng
+} = require('../lib/og-infograph');
+
+function handleHomeOgImageRequest(req, res, forceFormat = null) {
+  let format = forceFormat;
+  if (!format) {
+    if (req.path.endsWith('.svg') || req.query.format === 'svg') format = 'svg';
+    else format = 'png';
+  }
+
+  const data = getHomeOgData();
+  res.set('Cache-Control', 'public, max-age=30, s-maxage=60');
+
+  if (format === 'svg') {
+    const svg = generateHomeOgSvg(data);
+    res.set('Content-Type', 'image/svg+xml; charset=utf-8');
+    return res.send(svg);
+  } else {
+    const png = generateHomeOgPng(data);
+    res.set('Content-Type', 'image/png');
+    return res.send(png);
+  }
+}
 
 function handleOgImageRequest(req, res, forceFormat = null) {
   const eventId = req.params.id ? req.params.id.replace(/\.(png|svg)$/i, '') : null;
   const bib = req.query.bib || req.query.rider || null;
+
+  if (eventId === 'home' || eventId === 'cyclopon') {
+    return handleHomeOgImageRequest(req, res, forceFormat);
+  }
 
   if (!eventId || isNaN(Number(eventId))) {
     return res.status(400).send('Invalid event ID');
@@ -39,10 +71,60 @@ function handleOgImageRequest(req, res, forceFormat = null) {
   }
 }
 
-// Routes
+// Home / Root Domain Open Graph Images
+router.get('/home.png', (req, res) => handleHomeOgImageRequest(req, res, 'png'));
+router.get('/home.svg', (req, res) => handleHomeOgImageRequest(req, res, 'svg'));
+router.get('/home', (req, res) => handleHomeOgImageRequest(req, res));
+router.get('/cyclopon.png', (req, res) => handleHomeOgImageRequest(req, res, 'png'));
+router.get('/cyclopon.svg', (req, res) => handleHomeOgImageRequest(req, res, 'svg'));
+
+// Event / Rider Open Graph Images
 router.get('/events/:id.png', (req, res) => handleOgImageRequest(req, res, 'png'));
 router.get('/events/:id.svg', (req, res) => handleOgImageRequest(req, res, 'svg'));
 router.get('/events/:id', (req, res) => handleOgImageRequest(req, res));
+
+// Visual Preview Page for Home Domain
+router.get('/preview/home', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infografis Beranda Domain // CycloPon</title>
+  <style>
+    body { background: #0B0F19; color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px 20px; margin: 0; display: flex; flex-direction: column; align-items: center; }
+    .container { max-width: 1000px; width: 100%; }
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; border-bottom: 1px solid #1E293B; padding-bottom: 16px; }
+    h1 { margin: 0; font-size: 22px; color: #FFFFFF; font-weight: 800; }
+    .subtitle { color: #10B981; font-size: 13px; font-family: monospace; font-weight: 700; margin-top: 4px; }
+    .card-preview { background: #FFFFFF; border: 1.5px solid #0D1117; border-radius: 12px; overflow: hidden; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .card-preview img { width: 100%; height: auto; display: block; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn { background: #0D1117; color: #FFFFFF; border: 1px solid #334155; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13.5px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-outline { background: transparent; color: #F8FAFC; border: 1px solid #334155; }
+    .btn:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Preview Infografis Domain Utama</h1>
+        <div class="subtitle">// OPEN GRAPH CARD UNTUK SHARE DOMAIN (cyclopon.my.id)</div>
+      </div>
+      <div class="actions">
+        <a href="/api/og/home.png" download="cyclopon-home.png" class="btn">📥 Unduh PNG</a>
+        <a href="/api/og/home.svg" target="_blank" class="btn btn-outline">🔍 Buka SVG</a>
+        <a href="/" class="btn btn-outline">← Kembali ke Beranda</a>
+      </div>
+    </div>
+    <div class="card-preview">
+      <img src="/api/og/home.png" alt="Infografis Domain CycloPon">
+    </div>
+  </div>
+</body>
+</html>`);
+});
 
 // Visual Preview Page for Admin & Users
 router.get('/preview/:id', (req, res) => {

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="beranda-dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.2" fill="#0D1117" opacity="0.06"/>
+    </pattern>
+    <filter id="dossier-shadow" x="-5%" y="-5%" width="110%" height="118%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#0D1117" flood-opacity="0.10"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0D1117" flood-opacity="0.04"/>
+    </filter>
+  </defs>
+
+  <style>
+    .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+
+  <rect width="1200" height="630" fill="#F8F9FA"/>
+  <rect width="1200" height="630" fill="url(#beranda-dots)"/>
+
+  <!-- Top Nav Bar -->
+  <g transform="translate(56, 28)">
+    <rect width="36" height="36" rx="8" fill="#0D1117"/>
+    <circle cx="18" cy="18" r="10" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-dasharray="3 3"/>
+    <circle cx="18" cy="18" r="3.5" fill="#10B981"/>
+
+    <text class="font-sans" x="48" y="24" fill="#0D1117" font-size="22" font-weight="900" letter-spacing="-0.04em">CYCLOPON</text>
+    <text class="font-mono" x="178" y="23" fill="#6B7280" font-size="11" font-weight="700" letter-spacing="0.05em">// LIVE TELEMETRY MATRIX</text>
+
+    <g transform="translate(860, 2)">
+      <rect width="228" height="32" rx="16" fill="#FFFFFF" stroke="#E5E7EB" stroke-width="1.2"/>
+      <circle cx="16" cy="16" r="4.5" fill="#10B981"/>
+      <text class="font-mono" x="28" y="20" fill="#374151" font-size="11" font-weight="800" letter-spacing="0.06em">RADAR LIVE // AKTIF</text>
+    </g>
+  </g>
+
+  <!-- Central Dossier Card -->
+  <g filter="url(#dossier-shadow)">
+    <rect x="56" y="80" width="1088" height="490" rx="14" fill="#FFFFFF" stroke="#0D1117" stroke-width="2"/>
+
+    <path d="M 56 94 A 14 14 0 0 1 70 80 L 1130 80 A 14 14 0 0 1 1144 94 L 1144 126 L 56 126 Z" fill="#0D1117"/>
+    <circle cx="78" cy="103" r="4.5" fill="#10B981"/>
+    <text class="font-mono" x="90" y="107" fill="#10B981" font-size="11" font-weight="800" letter-spacing="0.08em">LIVE RADAR // PRO CYCLING TELEMETRY ENGINE</text>
+    <text class="font-mono" x="1122" y="107" text-anchor="end" fill="#9CA3AF" font-size="11" font-weight="800" letter-spacing="0.08em">OFFICIAL PLATFORM</text>
+
+    <g transform="translate(80, 148)">
+      <rect width="205" height="24" rx="4" fill="#EEF4EE" stroke="#C8DEC9" stroke-width="1"/>
+      <text class="font-mono" x="10" y="16" fill="#1C3E24" font-size="10.5" font-weight="800" letter-spacing="0.05em"># PRO CYCLING RADAR</text>
+    </g>
+
+    <text class="font-sans" x="80" y="218" fill="#0D1117" font-size="46" font-weight="900" letter-spacing="-0.035em">CYCLOPON LIVE TRACKER</text>
+    <text class="font-mono" x="80" y="254" fill="#4B5563" font-size="13" font-weight="700">
+      PLATFORM PEMANTAU GPS REAL-TIME  •  ULTRA-DISTANCE &amp; ROAD RACE  •  TASIKMALAYA, ID
+    </text>
+    <text class="font-sans" x="80" y="284" fill="#6B7280" font-size="13" font-weight="500">
+      Event Terkini: CIAMIS LOOP (45.1 KM) • Didukung OsmAnd GPS &amp; Traccar Engine
+    </text>
+
+    <!-- 4 Platform Feature Cards -->
+    <g transform="translate(80, 318)">
+      <rect x="0" y="0" width="240" height="164" rx="8" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="1.2"/>
+      <text class="font-mono" x="18" y="32" fill="#6B7280" font-size="11" font-weight="800" letter-spacing="0.06em">🛰️ GPS ENGINE</text>
+      <text class="font-sans" x="18" y="96" fill="#0D1117" font-size="44" font-weight="900">1.0s</text>
+      <text class="font-sans" x="120" y="92" fill="#10B981" font-size="16" font-weight="800">INGEST</text>
+      <text class="font-sans" x="18" y="134" fill="#6B7280" font-size="12" font-weight="500">Traccar High-Frequency Ingest</text>
+
+      <rect x="256" y="0" width="240" height="164" rx="8" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="1.2"/>
+      <text class="font-mono" x="274" y="32" fill="#6B7280" font-size="11" font-weight="800" letter-spacing="0.06em">🚴 LIVE RADAR</text>
+      <text class="font-sans" x="274" y="96" fill="#0D1117" font-size="38" font-weight="900">REALTIME</text>
+      <text class="font-sans" x="274" y="134" fill="#6B7280" font-size="12" font-weight="500">WebSocket Singleton Fan-Out</text>
+
+      <rect x="512" y="0" width="240" height="164" rx="8" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="1.2"/>
+      <text class="font-mono" x="530" y="32" fill="#6B7280" font-size="11" font-weight="800" letter-spacing="0.06em">🚩 RACE ENGINE</text>
+      <text class="font-sans" x="530" y="96" fill="#0D1117" font-size="44" font-weight="900">COT</text>
+      <text class="font-sans" x="625" y="92" fill="#F59E0B" font-size="16" font-weight="800">AUDIT</text>
+      <text class="font-sans" x="530" y="134" fill="#6B7280" font-size="12" font-weight="500">Split &amp; Leaderboard Otomatis</text>
+
+      <rect x="768" y="0" width="272" height="164" rx="8" fill="#FAFAFA" stroke="#E5E7EB" stroke-width="1.2"/>
+      <text class="font-mono" x="786" y="32" fill="#6B7280" font-size="11" font-weight="800" letter-spacing="0.06em">📱 MOBILE APP</text>
+      <text class="font-sans" x="786" y="96" fill="#0D1117" font-size="38" font-weight="900">OSMAND</text>
+      <text class="font-sans" x="786" y="134" fill="#6B7280" font-size="12" font-weight="500">Kompatibel Android &amp; iOS</text>
+    </g>
+
+    <line x1="56" y1="520" x2="1144" y2="520" stroke="#E5E7EB" stroke-width="1"/>
+    <text class="font-sans" x="80" y="546" fill="#4B5563" font-size="13" font-weight="600">
+      🔗 Kunjungi situs resmi: <tspan fill="#2563EB" font-weight="800">cyclopon.my.id</tspan>
+    </text>
+    <text class="font-mono" x="1120" y="546" text-anchor="end" fill="#9CA3AF" font-size="11" font-weight="700">
+      CYCLOPON // PRO TELEMETRY DOSSIER
+    </text>
+  </g>
+
+  <text class="font-sans" x="56" y="598" fill="#9CA3AF" font-size="11.5" font-weight="500">
+    CycloPon Live Tracker — Sistem Monitoring Balap Sepeda Ultra-Distance &amp; Road Race
+  </text>
+  <text class="font-mono" x="1144" y="598" text-anchor="end" fill="#9CA3AF" font-size="11" font-weight="600">
+    © 2026 CYCLOPON.MY.ID
+  </text>
+</svg>

@@ -9,6 +9,10 @@ const {
   generateOgSvg,
   generateOgPng,
   getOgMetadata,
+  getHomeOgData,
+  generateHomeOgSvg,
+  generateHomeOgPng,
+  getHomeOgMetadata,
   injectOgMeta
 } = require('../lib/og-infograph');
 
@@ -117,6 +121,27 @@ describe('Social Media Infograph & Open Graph Engine', () => {
     assert.ok(result.includes('property="og:image"'));
     assert.ok(result.includes('name="twitter:card"'));
     assert.ok(result.includes('<div id="app"></div>'));
+  });
+
+  test('Home / Root domain OG generation produces valid SVG, PNG and metadata', () => {
+    const homeData = getHomeOgData();
+    assert.ok(homeData);
+
+    const homeSvg = generateHomeOgSvg(homeData);
+    assert.ok(homeSvg.includes('<svg width="1200" height="630"'));
+    assert.ok(homeSvg.includes('CYCLOPON LIVE TRACKER'));
+    assert.ok(homeSvg.endsWith('</svg>'));
+
+    const homePng = generateHomeOgPng(homeData);
+    assert.ok(Buffer.isBuffer(homePng));
+    assert.ok(homePng.length > 5000);
+    const expectedSig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+    assert.deepEqual(homePng.subarray(0, 8), expectedSig);
+
+    const homeMeta = getHomeOgMetadata(homeData, 'cyclopon.my.id', 'https');
+    assert.ok(homeMeta.title.includes('CycloPon'));
+    assert.equal(homeMeta.imageUrl, 'https://cyclopon.my.id/api/og/home.png');
+    assert.equal(homeMeta.pageUrl, 'https://cyclopon.my.id/');
   });
 
   test('teardown test event', () => {

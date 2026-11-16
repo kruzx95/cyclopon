@@ -81,7 +81,13 @@ const adminMetricsRoutes = require('./routes/admin-metrics');
 const adminReportsRoutes = require('./routes/admin-reports');
 const osmandRoutes = require('./routes/osmand');
 const ogRoutes = require('./routes/og');
-const { getOgData, getOgMetadata, injectOgMeta } = require('./lib/og-infograph');
+const {
+  getOgData,
+  getOgMetadata,
+  getHomeOgData,
+  getHomeOgMetadata,
+  injectOgMeta
+} = require('./lib/og-infograph');
 
 // Mount public GPS telemetry endpoints before any generic /api middlewares
 app.use('/api/osmand', osmandRoutes);
@@ -112,9 +118,25 @@ function getCachedIndexHtml() {
   return indexHtmlCache;
 }
 
-// SPA fallback: serve index.html with dynamic Open Graph tags for watch & event links
+// SPA fallback: serve index.html with dynamic Open Graph tags for home, watch & event links
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
+    const host = req.get('x-forwarded-host') || req.get('host') || 'cyclopon.my.id';
+    const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+
+    // 1. Root Domain Share (e.g. cyclopon.my.id or /)
+    if (req.path === '/' || req.path === '') {
+      try {
+        const homeData = getHomeOgData();
+        const meta = getHomeOgMetadata(homeData, host, protocol);
+        const html = injectOgMeta(getCachedIndexHtml(), meta);
+        return res.status(200).type('html').send(html);
+      } catch (err) {
+        // Fallback to static index.html on error
+      }
+    }
+
+    // 2. Watch or Event Link Share (e.g. /watch/798 or /events/798?bib=...)
     const watchMatch = req.path.match(/^\/(?:watch|events)\/(\d+)/);
     if (watchMatch) {
       const eventId = Number(watchMatch[1]);
@@ -122,8 +144,6 @@ app.use((req, res, next) => {
       try {
         const ogData = getOgData(eventId, bib);
         if (ogData && ogData.event) {
-          const host = req.get('x-forwarded-host') || req.get('host') || 'cyclopon.my.id';
-          const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
           const meta = getOgMetadata(ogData, host, protocol);
           const html = injectOgMeta(getCachedIndexHtml(), meta);
           return res.status(200).type('html').send(html);
@@ -132,6 +152,7 @@ app.use((req, res, next) => {
         // Fallback to static index.html on error
       }
     }
+
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   } else {
     next();
