@@ -124,6 +124,10 @@ async function renderAdminEventReports(params = {}) {
                 <span id="btnReportReplayText">Replay Perjalanan</span>
               </button>
 
+              <button id="btnResetEventGps" class="btn btn-outline" style="font-size:11px;padding:5px 9px;color:#EF4444;border-color:rgba(239,68,68,0.4)" title="Bersihkan seluruh riwayat jejak GPS untuk event ini (Reset Data Uji Coba)">
+                🗑️ Reset Jejak GPS
+              </button>
+
               <button id="btnClearTrail" class="btn btn-outline" style="font-size:11px;padding:5px 9px;display:none">
                 ✕ Tutup Jejak
               </button>
@@ -256,10 +260,16 @@ async function renderAdminEventReports(params = {}) {
     return `${hr}j lalu`;
   }
 
-  function formatClockTime(timestamp) {
+  function formatClockTime(timestamp, forceDate = false) {
     if (!timestamp) return '-';
     const d = new Date(timestamp);
     if (isNaN(d.getTime())) return timestamp;
+    const isMultiDay = forceDate || (typeof reportReplayMaxTime !== 'undefined' && typeof reportReplayMinTime !== 'undefined' && (reportReplayMaxTime - reportReplayMinTime > 43200000));
+    if (isMultiDay) {
+      const dateStr = d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+      const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      return `${dateStr} ${timeStr}`;
+    }
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
@@ -644,6 +654,7 @@ async function renderAdminEventReports(params = {}) {
   let reportReplayCurrentTime = 0;
   let reportReplaySortedHistory = [];
   let reportReplayMarkers = {}; // riderId -> L.marker
+  let reportReplayTrails = {};  // riderId -> L.polyline
 
   function enterReportReplay() {
     if (!eventHistory || !eventHistory.length) {
@@ -687,6 +698,7 @@ async function renderAdminEventReports(params = {}) {
     breadcrumbLayer.clearLayers();
     riderMarkers = {};
     reportReplayMarkers = {};
+    reportReplayTrails = {};
     const clearBtn = document.getElementById('btnClearTrail');
     const badgeEl = document.getElementById('mapTrailBadge');
     if (clearBtn) clearBtn.style.display = 'none';
@@ -700,8 +712,10 @@ async function renderAdminEventReports(params = {}) {
     const clockEl = document.getElementById('reportReplayClock');
     if (clockEl) clockEl.textContent = formatClockTime(timestampMs);
 
-    // Group latest points by rider up to timestampMs
+    // Group latest points & accumulate trail points by rider up to timestampMs
     const riderLatest = {};
+    const riderTrailPoints = {};
+
     for (let i = 0; i < reportReplaySortedHistory.length; i++) {
       const pt = reportReplaySortedHistory[i];
       const ptTime = new Date(pt.recorded_at).getTime();
@@ -709,12 +723,34 @@ async function renderAdminEventReports(params = {}) {
         if (!riderLatest[pt.rider_id] || ptTime > riderLatest[pt.rider_id].timeMs) {
           riderLatest[pt.rider_id] = { ...pt, timeMs: ptTime };
         }
+        if (!riderTrailPoints[pt.rider_id]) riderTrailPoints[pt.rider_id] = [];
+        riderTrailPoints[pt.rider_id].push([Number(pt.latitude), Number(pt.longitude)]);
       }
     }
 
-    // Update or create marker for each rider
+    // Update or create marker & dynamic trail for each rider
     eventRiders.forEach(rider => {
       const latest = riderLatest[rider.id];
+      const pts = riderTrailPoints[rider.id] || [];
+
+      // Draw / update breadcrumb trail
+      if (pts.length > 0) {
+        if (reportReplayTrails[rider.id]) {
+          reportReplayTrails[rider.id].setLatLngs(pts);
+        } else {
+          reportReplayTrails[rider.id] = L.polyline(pts, {
+            color: rider.color || '#3B82F6',
+            weight: 4,
+            opacity: 0.85,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(markersLayer);
+        }
+      } else if (reportReplayTrails[rider.id]) {
+        markersLayer.removeLayer(reportReplayTrails[rider.id]);
+        delete reportReplayTrails[rider.id];
+      }
+
       if (latest) {
         const lat = Number(latest.latitude);
         const lng = Number(latest.longitude);
@@ -774,6 +810,17 @@ async function renderAdminEventReports(params = {}) {
 
       reportReplayTimer = setInterval(() => {
         reportReplayCurrentTime += stepMs;
+
+        // Smart Idle Gap Skip: If next point is > 45 seconds away (e.g. overnight gap or long stop),
+        // smoothly jump directly forward so replay never hangs on dead hours!
+        const nextPt = reportReplaySortedHistory.find(p => new Date(p.recorded_at).getTime() > reportReplayCurrentTime);
+        if (nextPt) {
+          const nextTime = new Date(nextPt.recorded_at).getTime();
+          if (nextTime - reportReplayCurrentTime > 45000) {
+            reportReplayCurrentTime = nextTime - 1000;
+          }
+        }
+
         if (reportReplayCurrentTime >= reportReplayMaxTime) {
           reportReplayCurrentTime = reportReplayMaxTime;
           toggleReportReplayPlay();
@@ -811,6 +858,10 @@ async function renderAdminEventReports(params = {}) {
 
     markersLayer.clearLayers();
     reportReplayMarkers = {};
+    Object.values(reportReplayTrails).forEach(trail => {
+      try { markersLayer.removeLayer(trail); } catch (e) {}
+    });
+    reportReplayTrails = {};
 
     renderMapMarkers();
     showToast('Kembali ke tampilan audit posisi terakhir.', 'info');
@@ -977,6 +1028,30 @@ async function renderAdminEventReports(params = {}) {
       map.fitBounds(gpxLayer.getBounds(), { padding: [30, 30] });
     } else {
       map.setView([-7.0, 110.0], 12);
+    }
+  });
+
+  // Reset Event GPS History Button
+  document.getElementById('btnResetEventGps')?.addEventListener('click', async () => {
+    const totalPts = eventHistory ? eventHistory.length : 0;
+    if (!confirm(`⚠️ PERINGATAN: Apakah Anda yakin ingin MENGHAPUS SEMUA titik jejak GPS (${totalPts} titik) untuk event ini?\n\nFitur ini berguna untuk membersihkan jejak uji coba/lama sebelum memulai gowes baru.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/history`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('✓ ' + (data.message || 'Riwayat GPS berhasil dibersihkan!'), 'success');
+        setTimeout(() => window.location.reload(), 900);
+      } else {
+        throw new Error(data.error || 'Gagal menghapus riwayat');
+      }
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
     }
   });
 

@@ -226,6 +226,20 @@ test('Telemetry History Logger & API', async (t) => {
     assert.equal(data.inserted, 1); // Only the 1 valid point was recorded
   });
 
+  await t.test('DELETE /api/events/:id/history clears all position points', async () => {
+    const { eventId } = t.context;
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'DELETE'
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+
+    const checkRes = await fetch(`${baseUrl}/api/events/${eventId}/history`);
+    const remaining = await checkRes.json();
+    assert.equal(remaining.length, 0);
+  });
+
   await t.test('teardown', async () => {
     const { eventId } = t.context;
     try {

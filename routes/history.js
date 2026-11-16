@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
+const { requireAdminAuth } = require('../lib/admin-auth');
 
 // GET /api/events/:id/positions/latest — Fetch the single latest position per rider (ultra-fast for live map sync)
 router.get('/events/:id/positions/latest', (req, res) => {
@@ -169,6 +170,20 @@ router.post('/events/:id/history', (req, res) => {
     res.status(201).json({ success: true, inserted });
   } catch (err) {
     res.status(500).json({ error: 'Gagal menyimpan history: ' + err.message });
+  }
+});
+
+// DELETE /api/events/:id/history — Clear all telemetry history for an event (Admin only)
+router.delete('/events/:id/history', requireAdminAuth, (req, res) => {
+  const eventId = Number(req.params.id);
+  const event = db.getEventById.get(eventId);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  try {
+    const info = db.db.prepare('DELETE FROM position_history WHERE event_id = ?').run(eventId);
+    res.json({ success: true, message: `Berhasil menghapus ${info.changes} titik jejak GPS untuk event ini.` });
+  } catch (err) {
+    res.status(500).json({ error: 'Gagal membersihkan history: ' + err.message });
   }
 });
 
