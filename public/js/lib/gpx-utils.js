@@ -193,14 +193,19 @@ function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm, prevIndex = 
     if (d < minDist) { minDist = d; nearestIndex = i; }
   }
 
-  // Off-track before start protection:
-  // If the rider is more than 300m away from the route (e.g. at home or traveling to the venue),
-  // and has not started / has no prior progress on the route,
-  // they MUST remain at Start (0 km, 0%) instead of snapping to an arbitrary route point or finish!
-  const hasNoPriorProgress = prevIndex == null || prevIndex === 0;
-  const hasNoTraveledDist = cumulativeDistKm == null || cumulativeDistKm < 0.2;
-  if (minDist > 0.3 && hasNoPriorProgress && hasNoTraveledDist) {
-    return { index: 0, progressPct: 0, distanceKm: 0 };
+  // Universal Pre-Start & False-Finish Protection (Applies to ALL GPX / Routes):
+  // A rider who has not started gowes (no prior progress and no pedaled distance)
+  // CANNOT be placed in the middle or at the finish of ANY route.
+  const hasNoPriorProgress = prevIndex == null || prevIndex < Math.max(3, routeCoords.length * 0.2);
+  const hasLowTraveledDist = cumulativeDistKm == null || (routeTotalKm > 0 ? (cumulativeDistKm < Math.min(1.0, routeTotalKm * 0.4)) : (cumulativeDistKm < 0.3));
+
+  if (hasNoPriorProgress && hasLowTraveledDist) {
+    const isBeyondStartArea = nearestIndex > Math.max(5, routeCoords.length * 0.15);
+    // If rider is off-route (> 300m away) or candidate point is beyond start line area,
+    // anchor strictly to Start (index 0, 0 km, 0%).
+    if (minDist > 0.3 || isBeyondStartArea) {
+      return { index: 0, progressPct: 0, distanceKm: 0 };
+    }
   }
 
   // Loop circuit protection:
@@ -216,9 +221,9 @@ function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm, prevIndex = 
     const isLoopCourse = loopGap < 0.8;
     const isNearEnd = nearestIndex > (routeCoords.length * 0.6);
     const hasLittleOrNoPriorProgress = prevIndex == null || prevIndex < (routeCoords.length * 0.25);
-    const hasLowTraveledDist = cumulativeDistKm == null || (routeTotalKm > 0 && cumulativeDistKm < (routeTotalKm * 0.5));
+    const hasLowTraveledDistLoop = cumulativeDistKm == null || (routeTotalKm > 0 && cumulativeDistKm < (routeTotalKm * 0.5));
 
-    if (isLoopCourse && isNearEnd && hasLittleOrNoPriorProgress && hasLowTraveledDist) {
+    if (isLoopCourse && isNearEnd && hasLittleOrNoPriorProgress && hasLowTraveledDistLoop) {
       // Prioritize Start (index 0) over Finish to prevent false finish / 100% progress before start!
       nearestIndex = 0;
     }

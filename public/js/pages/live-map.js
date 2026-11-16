@@ -1643,9 +1643,11 @@ async function renderLiveMap(params) {
     const hasCps = Array.isArray(checkpoints) && checkpoints.length > 0;
     const allCpsCleared = !hasCps || checkpoints.every(cp => !!splitsCache[`${rider.id}_${cp.id}`]);
 
-    // Minimum distance traveled requirement (prevent false finish before ride / at start line)
+    // Minimum distance traveled requirement (prevent false finish before ride / at start line on ANY route)
     const minTraveledRequired = totalDist > 1.0 ? (totalDist * 0.75) : (totalDist * 0.5);
-    const hasTraveledEnough = totalDist > 0 ? ((telem.totalTraveledKm || 0) >= minTraveledRequired) : true;
+    const hasTraveledEnough = totalDist > 0
+      ? ((telem.totalTraveledKm || 0) >= minTraveledRequired)
+      : ((telem.totalTraveledKm || 0) >= 1.0);
 
     // A rider can ONLY finish if:
     // 1. Not currently far off-route (within 100m)

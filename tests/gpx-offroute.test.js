@@ -86,3 +86,53 @@ test('Loop Course False Finish Protection in findNearestRoutePoint', async (t) =
     assert.ok(res.distanceKm >= 2.0, 'Distance should reflect near finish');
   });
 });
+
+test('Universal Pre-Start & False Finish Protection on Non-Loop / Point-to-Point Routes', async (t) => {
+  // A straight point-to-point route from City A (-7.0000, 107.5000) to City B (-7.4000, 107.5000)
+  // Approx 44 km north-to-south
+  const p2pRoute = [];
+  const totalPts = 45;
+  for (let i = 0; i <= totalPts; i++) {
+    const lat = -7.0000 - (i / totalPts) * 0.4000;
+    const lng = 107.5000;
+    p2pRoute.push([lat, lng]);
+  }
+  const totalKm = totalRouteKm(p2pRoute);
+
+  await t.test('rider standing at finish line (City B) before race starts snaps to 0 km (0%), NOT finish', () => {
+    // Rider turns on tracker in City B (finish area) before race starts (pedaled = 0 km, prevIndex = null)
+    const finishCoord = p2pRoute[p2pRoute.length - 1];
+    const res = findNearestRoutePoint(finishCoord[0], finishCoord[1], p2pRoute, totalKm, null, 0);
+    assert.equal(res.index, 0, 'Must snap to Start (index 0)');
+    assert.equal(res.progressPct, 0, 'Must have 0% progress');
+    assert.equal(res.distanceKm, 0, 'Must have 0 km distance');
+  });
+
+  await t.test('rider in hotel near km 30 before race starts snaps to 0 km (0%), NOT mid-route', () => {
+    // Rider in hotel near index 30 before start (pedaled = 0 km, prevIndex = null)
+    const midCoord = p2pRoute[30];
+    const res = findNearestRoutePoint(midCoord[0], midCoord[1], p2pRoute, totalKm, null, 0);
+    assert.equal(res.index, 0, 'Must snap to Start (index 0)');
+    assert.equal(res.progressPct, 0, 'Must have 0% progress');
+    assert.equal(res.distanceKm, 0, 'Must have 0 km distance');
+  });
+
+  await t.test('rider at home 5 km away from point-to-point route snaps to 0 km (0%)', () => {
+    // Rider 5 km east of route before start
+    const offLat = -7.2000;
+    const offLng = 107.5500;
+    const res = findNearestRoutePoint(offLat, offLng, p2pRoute, totalKm, null, 0);
+    assert.equal(res.index, 0, 'Must snap to Start (index 0)');
+    assert.equal(res.progressPct, 0, 'Must have 0% progress');
+    assert.equal(res.distanceKm, 0, 'Must have 0 km distance');
+  });
+
+  await t.test('rider who has actually ridden 40 km and reaches near finish legitimately advances', () => {
+    // Rider legitimately reaches index 42 with 40 km pedaled
+    const nearFinishCoord = p2pRoute[42];
+    const res = findNearestRoutePoint(nearFinishCoord[0], nearFinishCoord[1], p2pRoute, totalKm, 40, 40.0);
+    assert.ok(res.index >= 40, 'Should locate near end point');
+    assert.ok(res.progressPct >= 85, 'Progress should be high');
+    assert.ok(res.distanceKm >= 38.0, 'Distance should reflect 40km ridden');
+  });
+});
