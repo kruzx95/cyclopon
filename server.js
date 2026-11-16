@@ -80,6 +80,8 @@ const notificationRoutes = require('./routes/notifications');
 const adminMetricsRoutes = require('./routes/admin-metrics');
 const adminReportsRoutes = require('./routes/admin-reports');
 const osmandRoutes = require('./routes/osmand');
+const ogRoutes = require('./routes/og');
+const { getOgData, getOgMetadata, injectOgMeta } = require('./lib/og-infograph');
 
 // Mount public GPS telemetry endpoints before any generic /api middlewares
 app.use('/api/osmand', osmandRoutes);
@@ -95,15 +97,41 @@ app.use('/api', resultsRoutes);
 app.use('/api', notificationRoutes);
 app.use('/api/admin/metrics', adminMetricsRoutes);
 app.use('/api/admin/reports', adminReportsRoutes);
+app.use('/api/og', ogRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
 
-// SPA fallback: serve index.html for all non-API routes
+let indexHtmlCache = null;
+function getCachedIndexHtml() {
+  if (!indexHtmlCache || process.env.NODE_ENV !== 'production') {
+    indexHtmlCache = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  }
+  return indexHtmlCache;
+}
+
+// SPA fallback: serve index.html with dynamic Open Graph tags for watch & event links
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
+    const watchMatch = req.path.match(/^\/(?:watch|events)\/(\d+)/);
+    if (watchMatch) {
+      const eventId = Number(watchMatch[1]);
+      const bib = req.query.bib || req.query.rider || null;
+      try {
+        const ogData = getOgData(eventId, bib);
+        if (ogData && ogData.event) {
+          const host = req.get('x-forwarded-host') || req.get('host') || 'cyclopon.my.id';
+          const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+          const meta = getOgMetadata(ogData, host, protocol);
+          const html = injectOgMeta(getCachedIndexHtml(), meta);
+          return res.status(200).type('html').send(html);
+        }
+      } catch (err) {
+        // Fallback to static index.html on error
+      }
+    }
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   } else {
     next();

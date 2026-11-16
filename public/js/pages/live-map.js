@@ -1780,11 +1780,16 @@ async function renderLiveMap(params) {
           </div>
         ` : ''}
 
-        <div class="popup-footer" style="display:flex;align-items:center;justify-content:space-between">
+        <div class="popup-footer" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
           <span>Update: <strong>${formatTimeAgo(fixTime)}</strong></span>
-          <button class="popup-share-link-btn" data-bib="${escapeHtml(rider.bib)}" data-name="${escapeHtml(rider.name)}" onclick="window.shareRiderLink(this.dataset.bib, this.dataset.name)" title="Salin / Bagikan Link Tracking Rider Ini">
-            🔗 Bagikan Link
-          </button>
+          <div style="display:flex;align-items:center;gap:6px">
+            <a href="/api/og/preview/${eventId}?bib=${encodeURIComponent(rider.bib)}" target="_blank" class="popup-og-btn" style="color:var(--text-secondary);text-decoration:none;font-size:11px;font-weight:700;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,0.05);display:inline-flex;align-items:center;gap:3px" title="Lihat kartu infografis medsos">
+              🖼️ Info Graph
+            </a>
+            <button class="popup-share-link-btn" data-bib="${escapeHtml(rider.bib)}" data-name="${escapeHtml(rider.name)}" onclick="window.shareRiderLink(this.dataset.bib, this.dataset.name)" title="Salin / Bagikan Link Tracking Rider Ini">
+              🔗 Bagikan
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -2386,7 +2391,7 @@ async function renderLiveMap(params) {
           text: shareText,
           url: shareUrl
         });
-        showToast('Tautan pelacakan berhasil dibagikan!', 'success');
+        showToast('✓ Tautan & infografis live berhasil dibagikan!', 'success');
         return;
       } catch (err) {
         if (err.name === 'AbortError') return;
@@ -2396,12 +2401,12 @@ async function renderLiveMap(params) {
     if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(shareUrl);
-        showToast(`✓ Tautan pelacakan BIB #${bib} disalin ke clipboard!`, 'success');
+        showToast(`✓ Tautan & infografis BIB #${bib} disalin ke clipboard!`, 'success');
       } catch {
-        prompt('Salin link tracking ini:', shareUrl);
+        prompt('Salin link tracking ini (preview infografis aktif saat dipaste di medsos):', shareUrl);
       }
     } else {
-      prompt('Salin link tracking ini:', shareUrl);
+      prompt('Salin link tracking ini (preview infografis aktif saat dipaste di medsos):', shareUrl);
     }
   };
 
