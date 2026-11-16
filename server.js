@@ -80,6 +80,10 @@ const adminMetricsRoutes = require('./routes/admin-metrics');
 const adminReportsRoutes = require('./routes/admin-reports');
 const osmandRoutes = require('./routes/osmand');
 
+// Mount public GPS telemetry endpoints before any generic /api middlewares
+app.use('/api/osmand', osmandRoutes);
+app.use('/osmand', osmandRoutes);
+
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/admin/riders', riderRoutes);
@@ -90,8 +94,6 @@ app.use('/api', resultsRoutes);
 app.use('/api', notificationRoutes);
 app.use('/api/admin/metrics', adminMetricsRoutes);
 app.use('/api/admin/reports', adminReportsRoutes);
-app.use('/api/osmand', osmandRoutes);
-app.use('/osmand', osmandRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

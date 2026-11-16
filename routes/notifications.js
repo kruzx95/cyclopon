@@ -4,7 +4,7 @@ const notifications = require('../lib/notifications');
 const { requireAdminAuth } = require('../lib/admin-auth');
 
 // Protect all admin notification routes with admin auth
-router.use(requireAdminAuth);
+router.use('/admin/notifications', requireAdminAuth);
 
 /**
  * Mask token string for safe display

@@ -63,6 +63,17 @@ test('OsmAnd / Traccar Client Integration API', async (t) => {
     assert.strictEqual(history.latitude, -6.9200);
   });
 
+  await t.test('GET /api/osmand works without admin authentication (never returns 401)', async () => {
+    await new Promise(r => setTimeout(r, 1100));
+    // Simulate production mode security check where x-enforce-auth is evaluated
+    const res = await fetch(`${baseUrl}/api/osmand?id=998877&lat=-6.9210&lon=107.6210&speed=12.0`, {
+      headers: { 'x-enforce-auth': '1' }
+    });
+    assert.strictEqual(res.status, 200, 'Public telemetry endpoint must not be blocked by admin auth');
+    const body = await res.text();
+    assert.strictEqual(body, 'OK');
+  });
+
   await t.test('GET /api/osmand returns 400 when missing parameters', async () => {
     const res = await fetch(`${baseUrl}/api/osmand?lat=-6.9175`);
     assert.strictEqual(res.status, 400);
