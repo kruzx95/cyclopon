@@ -614,16 +614,16 @@
 }
 
 .popup-metric-box {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   border-radius: 6px;
   padding: 6px 8px;
 }
 
 .popup-metric-box.full-width {
   grid-column: span 2;
-  background: rgba(255, 230, 0, 0.06);
-  border-color: rgba(255, 230, 0, 0.25);
+  background: #FEF9C3;
+  border: 1px solid #FDE047;
 }
 
 .popup-metric-label {
@@ -637,13 +637,13 @@
 .popup-metric-value {
   font-size: 13px;
   font-weight: 800;
-  color: #FFFFFF;
+  color: var(--text-primary);
   margin-top: 2px;
   line-height: 1.2;
 }
 
 .popup-metric-value.highlight {
-  color: var(--color-yellow);
+  color: #B45309;
 }
 
 .popup-metric-unit {
@@ -661,7 +661,7 @@
 .popup-footer {
   font-size: 10px;
   color: var(--text-secondary);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid #E2E8F0;
   padding-top: 6px;
 }
 
