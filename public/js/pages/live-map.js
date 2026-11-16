@@ -89,9 +89,6 @@ async function renderLiveMap(params) {
         </div>
 
         <div class="header-right">
-          <button class="header-action-btn" id="btnToggleReplay" title="Mode Putar Ulang (Time Machine Replay)">
-            ${ICONS.replay}<span class="action-btn-label">Replay</span>
-          </button>
           ${!isMobile ? `
             <!-- Toggle Leaderboard (Desktop) -->
             <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
@@ -219,11 +216,6 @@ async function renderLiveMap(params) {
                 </div>
               </div>
             </div>
-
-            <!-- Replay FAB (Accessible on all screen sizes) -->
-            <button class="map-fab-btn" id="btnFabReplay" title="Mode Putar Ulang (Time Machine Replay)" aria-label="Replay Telemetri">
-              ${ICONS.replay}
-            </button>
 
             <!-- Fit Route FAB -->
             <button class="map-fab-btn" id="btnFitRoute" title="Pusatkan peta ke seluruh lintasan GPX" aria-label="Fit Rute">
@@ -1292,7 +1284,7 @@ async function renderLiveMap(params) {
           position:absolute;top:-36px;left:50%;transform:translateX(-50%);
           background:#EF4444;color:#FFFFFF;font-size:9px;font-weight:900;
           padding:1px 6px;border-radius:100px;white-space:nowrap;
-          box-shadow:0 0 12px #EF4444;animation:pulse 1.2s infinite;
+          box-shadow:0 2px 6px rgba(239,68,68,0.5);
           pointer-events:none;z-index:10;
         ">⚠️ NYASAR</div>`;
     } else if (isOffline) {
@@ -1316,7 +1308,7 @@ async function renderLiveMap(params) {
 
     return L.divIcon({
       html: `
-        <div style="position:relative;width:20px;height:20px;opacity:${markerOpacity};filter:${isOffline ? 'grayscale(45%)' : 'none'};transition:all 0.3s ease">
+        <div style="position:relative;width:20px;height:20px;opacity:${markerOpacity};filter:${isOffline ? 'grayscale(45%)' : 'none'}">
           ${statusTag}
           <div style="
             width:14px;height:14px;border-radius:50%;
@@ -1695,7 +1687,7 @@ async function renderLiveMap(params) {
         </div>
 
         ${telem.isOffRoute ? `
-          <div style="background:rgba(239,68,68,0.2);color:#B91C1C;border:1px solid #EF4444;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">
+          <div class="popup-offroute-warning" style="background:rgba(239,68,68,0.2);color:#B91C1C;border:1px solid #EF4444;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">
             ⚠️ PERINGATAN: KELUAR DARI RUTE RESMI (+${telem.deviationMeters} meter)
           </div>
         ` : ''}
@@ -1760,23 +1752,79 @@ async function renderLiveMap(params) {
     // Smoothly update existing marker or create once
     let marker = markerById[canonicalId] || (rider.traccar_device_id && markerById[rider.traccar_device_id]);
     const updatedIcon = createRiderIcon(rider, telem.isOffRoute, status);
+    const meta = getRiderMarkerMeta(rider || {});
+    const iconKey = `${meta.label}_${meta.color}_${telem.isOffRoute ? 1 : 0}_${status ? status.text : ''}`;
 
     if (marker && (clusterGroup.hasLayer(marker) || map.hasLayer(marker))) {
       marker.setLatLng(latlng);
-      marker.setIcon(updatedIcon);
-      if (marker.getPopup()) {
-        marker.setPopupContent(popupHtml);
+
+      // Only update icon if status/appearance actually changed to prevent DOM thrashing & popup blinking
+      if (marker._iconKey !== iconKey) {
+        marker.setIcon(updatedIcon);
+        marker._iconKey = iconKey;
+        if (!marker.isPopupOpen() && clusterGroup && typeof clusterGroup.refreshClusters === 'function' && clusterGroup.hasLayer(marker)) {
+          clusterGroup.refreshClusters(marker);
+        }
       }
-      // Re-calculate clusters so marker visual moves immediately at all zoom levels
-      if (clusterGroup && typeof clusterGroup.refreshClusters === 'function' && clusterGroup.hasLayer(marker)) {
-        clusterGroup.refreshClusters(marker);
+
+      if (marker.getPopup()) {
+        if (marker.isPopupOpen()) {
+          const popupEl = marker.getPopup().getElement();
+          if (popupEl) {
+            // Calm in-place DOM updates so the popup doesn't flicker or re-render
+            const speedVal = popupEl.querySelector('.popup-metric-box:nth-child(1) .popup-metric-value');
+            if (speedVal) speedVal.innerHTML = `${telem.currentSpeed} <span class="popup-metric-unit">km/h</span>`;
+            const speedSub = popupEl.querySelector('.popup-metric-box:nth-child(1) .popup-metric-sub');
+            if (speedSub) speedSub.textContent = `Avg: ${telem.movingAvg || telem.currentSpeed} km/h`;
+
+            const distVal = popupEl.querySelector('.popup-metric-box:nth-child(2) .popup-metric-value');
+            if (distVal) distVal.innerHTML = `${displayKm} <span class="popup-metric-unit">km</span>`;
+            const distSub = popupEl.querySelector('.popup-metric-box:nth-child(2) .popup-metric-sub');
+            if (distSub) distSub.textContent = telem.isOffRoute ? `Rute resmi: ${calc.distanceKm} km` : `Sisa: ${telem.remainingKm} km`;
+
+            const etaVal = popupEl.querySelector('.popup-metric-box.full-width .popup-metric-value');
+            if (etaVal) etaVal.innerHTML = isFinished ? '🏁 Selesai di Garis Finish' : `${telem.etaTime} (${telem.etaDuration})`;
+
+            const timeAgoVal = popupEl.querySelector('.popup-footer span strong');
+            if (timeAgoVal) timeAgoVal.textContent = formatTimeAgo(fixTime);
+
+            const statusBadge = popupEl.querySelector('.popup-status-badge');
+            if (statusBadge) {
+              statusBadge.style.background = `${status.color}22`;
+              statusBadge.style.color = status.color;
+              statusBadge.style.border = `1px solid ${status.color}55`;
+              statusBadge.textContent = `${status.dot} ${status.text}`;
+            }
+
+            const existingWarn = popupEl.querySelector('.popup-offroute-warning');
+            if (telem.isOffRoute) {
+              if (existingWarn) {
+                existingWarn.textContent = `⚠️ PERINGATAN: KELUAR DARI RUTE RESMI (+${telem.deviationMeters} meter)`;
+              } else {
+                marker.setPopupContent(popupHtml);
+              }
+            } else if (existingWarn) {
+              marker.setPopupContent(popupHtml);
+            }
+          } else {
+            marker.setPopupContent(popupHtml);
+          }
+        } else {
+          marker.setPopupContent(popupHtml);
+        }
       }
     } else {
       if (marker) {
         clusterGroup.removeLayer(marker);
       }
       marker = L.marker(latlng, { icon: updatedIcon });
-      marker.bindPopup(popupHtml);
+      marker._iconKey = iconKey;
+      marker.bindPopup(popupHtml, {
+        autoPan: false,
+        closeButton: true,
+        autoClose: false,
+        offset: [0, -10]
+      });
       clusterGroup.addLayer(marker);
     }
 

@@ -553,6 +553,16 @@
   margin: 12px 14px !important;
 }
 
+/* ── Steady Rider Popup (No Flickering on Live Telemetry Updates) ── */
+.leaflet-popup,
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip-container,
+.rider-map-popup {
+  animation: none !important;
+  transition: none !important;
+  will-change: auto;
+}
+
 /* ── Enhanced Rider Popup ── */
 .rider-map-popup {
   min-width: 210px;
