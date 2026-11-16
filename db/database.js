@@ -85,6 +85,7 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_history_event_time ON position_history(event_id, recorded_at);
   CREATE INDEX IF NOT EXISTS idx_history_rider ON position_history(rider_id, recorded_at);
+  CREATE INDEX IF NOT EXISTS idx_history_event_rider_id ON position_history(event_id, rider_id, id);
 
   -- High-frequency query indexes
   CREATE INDEX IF NOT EXISTS idx_riders_traccar_device ON riders(traccar_device_id);

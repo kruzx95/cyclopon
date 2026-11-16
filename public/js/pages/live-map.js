@@ -2548,8 +2548,9 @@ async function renderLiveMap(params) {
     }
   };
 
+  let alertCheckInterval = null;
   checkActiveAlerts();
-  const alertCheckInterval = setInterval(checkActiveAlerts, 8000);
+  alertCheckInterval = setInterval(checkActiveAlerts, 25000);
 
   // ── Time Machine Replay Engine State & Lifecycle ──
   let isReplayActive = false;
@@ -2897,7 +2898,7 @@ async function renderLiveMap(params) {
     // RISK 1: Re-sync to latest live positions and restore polling + WebSocket
     syncLatestPositionsFromHistory().catch(() => {});
     if (historyPollInterval) clearInterval(historyPollInterval);
-    historyPollInterval = setInterval(syncLatestPositionsFromHistory, 8000);
+    historyPollInterval = setInterval(triggerFallbackPositionSync, 5000);
     connectWs();
 
     if (isFinished) {
@@ -3566,6 +3567,10 @@ async function renderLiveMap(params) {
         clearInterval(historyPollInterval);
         historyPollInterval = null;
       }
+      if (alertCheckInterval) {
+        clearInterval(alertCheckInterval);
+        alertCheckInterval = null;
+      }
       if (liveWsReconnectTimer) {
         clearTimeout(liveWsReconnectTimer);
         liveWsReconnectTimer = null;
@@ -3724,6 +3729,16 @@ async function renderLiveMap(params) {
     } catch (e) {}
   }
 
+  // Trigger position sync fallback only when WebSocket is not actively streaming
+  function triggerFallbackPositionSync() {
+    checkPocketModeIndicator();
+    // If WebSocket is alive and streaming, skip HTTP polling to keep server idle
+    if (liveWs && liveWs.readyState === WebSocket.OPEN) {
+      return;
+    }
+    syncLatestPositionsFromHistory();
+  }
+
   // Check and update pocket mode indicator if rider navigated to map with Pocket Mode active
   function checkPocketModeIndicator() {
     const pill = document.getElementById('riderPocketActivePill');
@@ -3738,11 +3753,8 @@ async function renderLiveMap(params) {
 
   // Fetch immediately on load
   syncLatestPositionsFromHistory();
-  // Periodic fallback sync every 5 seconds (matching Traccar typical 10s intervals smoothly)
-  historyPollInterval = setInterval(() => {
-    checkPocketModeIndicator();
-    syncLatestPositionsFromHistory();
-  }, 5000);
+  // Periodic fallback sync: active only if WebSocket is disconnected or in reconnect state
+  historyPollInterval = setInterval(triggerFallbackPositionSync, 5000);
 
   window.addEventListener('popstate', () => {
     if (replayInterval) {
@@ -3753,6 +3765,18 @@ async function renderLiveMap(params) {
     if (historyPollInterval) {
       clearInterval(historyPollInterval);
       historyPollInterval = null;
+    }
+    if (alertCheckInterval) {
+      clearInterval(alertCheckInterval);
+      alertCheckInterval = null;
+    }
+    if (liveWsReconnectTimer) {
+      clearTimeout(liveWsReconnectTimer);
+      liveWsReconnectTimer = null;
+    }
+    if (liveWs) {
+      try { liveWs.close(); } catch (e) {}
+      liveWs = null;
     }
   }, { once: true });
 

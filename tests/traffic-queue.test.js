@@ -6,7 +6,8 @@ const {
   flushQueue,
   getQueueSize,
   stopQueue,
-  startQueue
+  startQueue,
+  pruneOldPageViews
 } = require('../lib/traffic-queue');
 
 test('In-Memory Traffic Analytics Batch Queue', async (t) => {
@@ -62,6 +63,32 @@ test('In-Memory Traffic Analytics Batch Queue', async (t) => {
     // Final flush
     flushQueue();
     assert.equal(getQueueSize(), 0);
+  });
+
+  await t.test('pruneOldPageViews removes records older than retention threshold', async () => {
+    const PRUNE_HASH = 'test_prune_hash_88';
+
+    // Insert an old record (>60 days ago) and a recent record (5 days ago)
+    db.db.prepare(
+      "INSERT INTO page_views (path, ip_hash, user_agent, viewed_at) VALUES ('/old-visit', ?, 'PruneAgent', datetime('now', '-75 days'))"
+    ).run(PRUNE_HASH);
+
+    db.db.prepare(
+      "INSERT INTO page_views (path, ip_hash, user_agent, viewed_at) VALUES ('/recent-visit', ?, 'PruneAgent', datetime('now', '-5 days'))"
+    ).run(PRUNE_HASH);
+
+    const beforeCount = db.db.prepare("SELECT COUNT(*) as count FROM page_views WHERE ip_hash = ?").get(PRUNE_HASH).count;
+    assert.equal(beforeCount, 2, 'Should have inserted 2 test records');
+
+    const deleted = pruneOldPageViews(60);
+    assert.ok(deleted >= 1, 'Should have pruned at least the old record');
+
+    const remainingRows = db.db.prepare("SELECT path FROM page_views WHERE ip_hash = ?").all(PRUNE_HASH);
+    assert.equal(remainingRows.length, 1, 'Only recent record should remain');
+    assert.equal(remainingRows[0].path, '/recent-visit');
+
+    // Clean up test prune hash
+    db.db.prepare("DELETE FROM page_views WHERE ip_hash = ?").run(PRUNE_HASH);
   });
 
   await t.test('teardown', async () => {
