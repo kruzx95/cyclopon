@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 
+// Universal body parsers for Traccar Client / OsmAnd payloads (form-urlencoded, text, JSON)
+router.use(express.urlencoded({ extended: true, limit: '1mb' }));
+router.use(express.text({ type: ['text/*', 'application/octet-stream', 'application/x-www-form-urlencoded'] }));
+
 let wsBroadcastFn = null;
 try {
   const wsProxy = require('../lib/traccar-ws-proxy');
@@ -28,9 +32,19 @@ const lastCoords = new Map(); // rider_id -> { lat, lon, totalKm, lastTime }
  */
 async function handleOsmandPosition(req, res) {
   try {
-    const rawId = req.query.id || req.query.deviceid || req.body?.id || req.body?.deviceid;
-    const rawLat = req.query.lat || req.query.latitude || req.body?.lat || req.body?.latitude;
-    const rawLon = req.query.lon || req.query.longitude || req.body?.lon || req.body?.longitude;
+    let bodyObj = {};
+    if (typeof req.body === 'object' && req.body !== null) {
+      bodyObj = req.body;
+    } else if (typeof req.body === 'string' && req.body.trim()) {
+      try {
+        bodyObj = Object.fromEntries(new URLSearchParams(req.body));
+      } catch (e) {}
+    }
+
+    const source = { ...req.query, ...bodyObj };
+    const rawId = source.id || source.deviceid || source.deviceId;
+    const rawLat = source.lat || source.latitude;
+    const rawLon = source.lon || source.longitude || source.lng;
 
     if (!rawId || rawLat == null || rawLon == null) {
       return res.status(400).send('Missing id, lat, or lon parameter');
@@ -96,12 +110,12 @@ async function handleOsmandPosition(req, res) {
     }
 
     // Calculate speed: OsmAnd protocol in Traccar sends knots by default
-    const rawSpeed = parseFloat(req.query.speed || req.body?.speed || 0);
+    const rawSpeed = parseFloat(source.speed || 0);
     // If rawSpeed > 70 it's likely already in km/h, otherwise convert knots to km/h (1 knot = 1.852 km/h)
     const speedKmh = rawSpeed > 70 ? rawSpeed : Math.round(rawSpeed * 1.852 * 10) / 10;
 
     // Battery percentage
-    const rawBatt = req.query.batt || req.query.battery || req.body?.batt || req.body?.battery;
+    const rawBatt = source.batt || source.battery;
     const battPct = rawBatt != null ? Math.round(Number(rawBatt)) : null;
 
     // Cumulative distance calculation
@@ -128,7 +142,7 @@ async function handleOsmandPosition(req, res) {
 
     // Timestamp
     let recordedAt = new Date().toISOString();
-    const rawTime = req.query.timestamp || req.query.time || req.body?.timestamp;
+    const rawTime = source.timestamp || source.time;
     if (rawTime) {
       const numTime = Number(rawTime);
       if (!isNaN(numTime)) {

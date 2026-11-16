@@ -74,6 +74,34 @@ test('OsmAnd / Traccar Client Integration API', async (t) => {
     assert.strictEqual(body, 'OK');
   });
 
+  await t.test('POST /api/osmand with x-www-form-urlencoded body succeeds (Traccar Client default)', async () => {
+    await new Promise(r => setTimeout(r, 1100));
+    const res = await fetch(`${baseUrl}/api/osmand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'id=998877&lat=-6.9220&lon=107.6220&speed=15.0&batt=88'
+    });
+    assert.strictEqual(res.status, 200);
+    const body = await res.text();
+    assert.strictEqual(body, 'OK');
+
+    const history = db.db.prepare('SELECT * FROM position_history WHERE rider_id = ? ORDER BY id DESC LIMIT 1').get(testRiderId);
+    assert.strictEqual(history.latitude, -6.9220);
+    assert.strictEqual(history.longitude, 107.6220);
+  });
+
+  await t.test('POST /api/osmand with text/plain body succeeds', async () => {
+    await new Promise(r => setTimeout(r, 1100));
+    const res = await fetch(`${baseUrl}/api/osmand`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: 'id=998877&lat=-6.9230&lon=107.6230&speed=11.0'
+    });
+    assert.strictEqual(res.status, 200);
+    const body = await res.text();
+    assert.strictEqual(body, 'OK');
+  });
+
   await t.test('GET /api/osmand returns 400 when missing parameters', async () => {
     const res = await fetch(`${baseUrl}/api/osmand?lat=-6.9175`);
     assert.strictEqual(res.status, 400);
