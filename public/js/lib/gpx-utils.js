@@ -179,9 +179,10 @@ function parseGpxToCoords(gpxText) {
  * @param {Array<[number, number]>} routeCoords
  * @param {number} routeTotalKm - pre-computed total distance
  * @param {number|null} [prevIndex=null] - prior established index on route to protect against loop-start false finish
+ * @param {number|null} [cumulativeDistKm=null] - cumulative traveled distance if known
  * @returns {{ index: number, progressPct: number, distanceKm: number }}
  */
-function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm, prevIndex = null) {
+function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm, prevIndex = null, cumulativeDistKm = null) {
   if (!routeCoords.length) return { index: 0, progressPct: 0, distanceKm: 0 };
 
   let nearestIndex = 0;
@@ -192,22 +193,34 @@ function findNearestRoutePoint(lat, lng, routeCoords, routeTotalKm, prevIndex = 
     if (d < minDist) { minDist = d; nearestIndex = i; }
   }
 
-  // Loop circuit protection:
-  // If start and finish are within 400m of each other (loop course),
-  // and rider has not established significant forward progress (prevIndex == null or prevIndex < routeCoords.length * 0.25),
-  // but candidate nearestIndex is near the end (> 75% of route), check if start is also close (< 600m).
-  // If so, prioritize Start (index 0) over Finish to prevent false 100% progress before start!
-  if (routeCoords.length > 20) {
-    const loopGap = haversineKm(routeCoords[0][0], routeCoords[0][1], routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1]);
-    const isLoopCourse = loopGap < 0.4;
-    const isNearEnd = nearestIndex > routeCoords.length * 0.75;
-    const hasLittleOrNoPriorProgress = prevIndex == null || prevIndex < (routeCoords.length * 0.25);
+  // Off-track before start protection:
+  // If the rider is more than 300m away from the route (e.g. at home or traveling to the venue),
+  // and has not started / has no prior progress on the route,
+  // they MUST remain at Start (0 km, 0%) instead of snapping to an arbitrary route point or finish!
+  const hasNoPriorProgress = prevIndex == null || prevIndex === 0;
+  const hasNoTraveledDist = cumulativeDistKm == null || cumulativeDistKm < 0.2;
+  if (minDist > 0.3 && hasNoPriorProgress && hasNoTraveledDist) {
+    return { index: 0, progressPct: 0, distanceKm: 0 };
+  }
 
-    if (isLoopCourse && isNearEnd && hasLittleOrNoPriorProgress) {
-      const distToStart = haversineKm(lat, lng, routeCoords[0][0], routeCoords[0][1]);
-      if (distToStart < 0.6) {
-        nearestIndex = 0;
-      }
+  // Loop circuit protection:
+  // In a loop course (start and finish geographically close, e.g. within 800m),
+  // a rider who has not made significant prior progress (prevIndex == null or < 25% of route)
+  // or who has not accumulated sufficient pedaled distance (cumulativeDistKm < 50% of route),
+  // MUST NOT snap to the finish/end segment (> 60% of route).
+  if (routeCoords.length > 20) {
+    const loopGap = haversineKm(
+      routeCoords[0][0], routeCoords[0][1],
+      routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1]
+    );
+    const isLoopCourse = loopGap < 0.8;
+    const isNearEnd = nearestIndex > (routeCoords.length * 0.6);
+    const hasLittleOrNoPriorProgress = prevIndex == null || prevIndex < (routeCoords.length * 0.25);
+    const hasLowTraveledDist = cumulativeDistKm == null || (routeTotalKm > 0 && cumulativeDistKm < (routeTotalKm * 0.5));
+
+    if (isLoopCourse && isNearEnd && hasLittleOrNoPriorProgress && hasLowTraveledDist) {
+      // Prioritize Start (index 0) over Finish to prevent false finish / 100% progress before start!
+      nearestIndex = 0;
     }
   }
 

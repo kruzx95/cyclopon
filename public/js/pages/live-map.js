@@ -1486,10 +1486,69 @@ async function renderLiveMap(params) {
       }
     }
 
-    // 2. Nearest-point route calculation & Off-Route detection
-    let calc = { progressPct: 0, distanceKm: 0 };
+    // 2. Initialize or retrieve rider telemetry state (canonicalized by rider.id)
+    const telemKey = rider.id || deviceId;
+    if (!telemetryById[telemKey]) {
+      telemetryById[telemKey] = {
+        history: [],
+        movingAvg: 0,
+        currentSpeed: 0,
+        remainingKm: 0,
+        etaTime: '-',
+        etaDuration: '-',
+        etaBadgeClass: 'eta-idle',
+        batteryLevel: null,
+        isOffRoute: false,
+        deviationMeters: 0,
+        isFinished: false,
+        lastRouteIndex: null,
+        totalTraveledKm: (pos.distance_km != null && !isNaN(Number(pos.distance_km))) ? Number(pos.distance_km) : 0
+      };
+    }
+    const telem = telemetryById[telemKey];
+    if (deviceId !== telemKey) {
+      telemetryById[deviceId] = telem;
+    }
+
+    // Update battery if available
+    let batteryLevel = null;
+    const rawBatt = (pos.attributes && pos.attributes.batteryLevel != null)
+      ? pos.attributes.batteryLevel
+      : (pos.battery != null ? pos.battery : null);
+
+    if (rawBatt != null) {
+      batteryLevel = typeof normalizeBattery === 'function'
+        ? normalizeBattery(rawBatt)
+        : Math.round(Number(rawBatt));
+    }
+    if (batteryLevel != null) telem.batteryLevel = batteryLevel;
+
+    // Ground odometer: accumulate real GPS displacement or use reported distance_km
+    const curLat = Number(pos.latitude);
+    const curLng = Number(pos.longitude);
+    if (pos.distance_km != null && !isNaN(Number(pos.distance_km))) {
+      telem.totalTraveledKm = Number(pos.distance_km);
+    } else if (telem.lastLat != null && telem.lastLng != null) {
+      const stepKm = typeof haversineKm === 'function' ? haversineKm(telem.lastLat, telem.lastLng, curLat, curLng) : 0;
+      if (stepKm >= 0.003 && stepKm < 3.0) {
+        telem.totalTraveledKm = Math.round(((telem.totalTraveledKm || 0) + stepKm) * 100) / 100;
+      }
+    }
+    telem.lastLat = curLat;
+    telem.lastLng = curLng;
+
+    // 3. Nearest-point route calculation & Off-Route detection
+    let calc = { index: 0, progressPct: 0, distanceKm: 0 };
     if (routeCoords.length) {
-      calc = findNearestRoutePoint(pos.latitude, pos.longitude, routeCoords, routeKm);
+      calc = findNearestRoutePoint(
+        pos.latitude,
+        pos.longitude,
+        routeCoords,
+        routeKm,
+        telem.lastRouteIndex,
+        telem.totalTraveledKm
+      );
+      telem.lastRouteIndex = calc.index;
     }
 
     // Auto-detect Checkpoint crossing for live UI display (Spectator read-only mode)
@@ -1523,56 +1582,12 @@ async function renderLiveMap(params) {
     if (routeCoords.length && typeof checkOffRoute === 'function') {
       offRoute = checkOffRoute(pos.latitude, pos.longitude, routeCoords, 100);
     }
-
-    let batteryLevel = null;
-    const rawBatt = (pos.attributes && pos.attributes.batteryLevel != null)
-      ? pos.attributes.batteryLevel
-      : (pos.battery != null ? pos.battery : null);
-
-    if (rawBatt != null) {
-      batteryLevel = typeof normalizeBattery === 'function'
-        ? normalizeBattery(rawBatt)
-        : Math.round(Number(rawBatt));
-    }
-
-    // 3. Initialize or retrieve rider telemetry state
-    if (!telemetryById[deviceId]) {
-      telemetryById[deviceId] = {
-        history: [],
-        movingAvg: 0,
-        currentSpeed: 0,
-        remainingKm: 0,
-        etaTime: '-',
-        etaDuration: '-',
-        etaBadgeClass: 'eta-idle',
-        batteryLevel: null,
-        isOffRoute: false,
-        deviationMeters: 0,
-        isFinished: false
-      };
-    }
-    const telem = telemetryById[deviceId];
-    if (batteryLevel != null) telem.batteryLevel = batteryLevel;
     telem.isOffRoute = offRoute.isOffRoute;
     telem.deviationMeters = offRoute.deviationMeters;
 
-    // Ground odometer: accumulate real GPS displacement across fixes (especially active when off-route)
-    const curLat = Number(pos.latitude);
-    const curLng = Number(pos.longitude);
-    if (telem.lastLat != null && telem.lastLng != null) {
-      const stepKm = typeof haversineKm === 'function' ? haversineKm(telem.lastLat, telem.lastLng, curLat, curLng) : 0;
-      if (stepKm >= 0.003 && stepKm < 3.0) {
-        telem.totalTraveledKm = Math.round(((telem.totalTraveledKm || calc.distanceKm) + stepKm) * 100) / 100;
-      }
-    } else {
-      telem.totalTraveledKm = (pos.distance_km && Number(pos.distance_km) > 0) ? Number(pos.distance_km) : calc.distanceKm;
-    }
-    telem.lastLat = curLat;
-    telem.lastLng = curLng;
-
     // When off-route, display real pedaled ground distance so rider's distance doesn't freeze
     const displayKm = telem.isOffRoute
-      ? Math.max(calc.distanceKm, Math.round((telem.totalTraveledKm || calc.distanceKm) * 10) / 10)
+      ? Math.max(calc.distanceKm, Math.round((telem.totalTraveledKm || 0) * 10) / 10)
       : calc.distanceKm;
 
     // 4. Compute ground speed from distance delta if speed is missing or 0 while advancing
@@ -1624,10 +1639,31 @@ async function renderLiveMap(params) {
     const remainingKm = Math.max(0, Math.round((totalDist - calc.distanceKm) * 10) / 10);
     telem.remainingKm = remainingKm;
 
-    const isFinished = calc.progressPct >= 99 || (totalDist > 0 && remainingKm <= 0.15);
-    telem.isFinished = isFinished;
+    // Checkpoint completion requirement
+    const hasCps = Array.isArray(checkpoints) && checkpoints.length > 0;
+    const allCpsCleared = !hasCps || checkpoints.every(cp => !!splitsCache[`${rider.id}_${cp.id}`]);
 
-    if (isFinished) {
+    // Minimum distance traveled requirement (prevent false finish before ride / at start line)
+    const minTraveledRequired = totalDist > 1.0 ? (totalDist * 0.75) : (totalDist * 0.5);
+    const hasTraveledEnough = totalDist > 0 ? ((telem.totalTraveledKm || 0) >= minTraveledRequired) : true;
+
+    // A rider can ONLY finish if:
+    // 1. Not currently far off-route (within 100m)
+    // 2. Traveled sufficient cumulative distance (>= 75% of route)
+    // 3. Cleared all checkpoints (if any)
+    // 4. Progressed to the finish point (progress >= 98% or remainingKm <= 0.15)
+    const meetsFinishCriteria = !telem.isOffRoute &&
+      hasTraveledEnough &&
+      allCpsCleared &&
+      (calc.progressPct >= 98 || (totalDist > 0 && remainingKm <= 0.15));
+
+    if (meetsFinishCriteria) {
+      telem.isFinished = true;
+    } else if (!telem.isFinished) {
+      telem.isFinished = false;
+    }
+
+    if (telem.isFinished) {
       telem.etaTime = 'FINISH';
       telem.etaDuration = 'Tiba di Finish';
       telem.etaBadgeClass = 'eta-finished';
@@ -3676,6 +3712,7 @@ async function renderLiveMap(params) {
           longitude: pt.longitude,
           speed: pt.speed || 0,
           isKmh: true,
+          distance_km: Number(pt.distance_km || 0),
           fixTime: pt.recorded_at,
           attributes: {}
         });

@@ -52,6 +52,9 @@ test('Demo Event Seeder & Race Simulation Integrity', async (t) => {
 
   // 3. Verify simulator engine math and execution integrity
   await t.test('verifies scripts/simulate-race.js module exports and tick execution', async () => {
+    if (!process.argv.includes('--event')) {
+      process.argv.push('--event', '21');
+    }
     const sim = require('../scripts/simulate-race.js');
     assert.ok(typeof sim.parseGpxTrackpoints === 'function');
     assert.ok(typeof sim.computeTrackCumulativeKm === 'function');

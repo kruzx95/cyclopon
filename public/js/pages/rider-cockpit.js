@@ -490,6 +490,7 @@ async function renderRiderCockpit() {
   let speedSamples = [];
   let coveredKm = 0;
   let totalGroundKm = null;
+  let lastNearestIndex = null;
   let lastOdoLat = null;
   let lastOdoLng = null;
   let movingSeconds = 0;
@@ -697,8 +698,9 @@ async function renderRiderCockpit() {
       battEl.textContent = currentBatteryLevel != null ? `${currentBatteryLevel}%` : '--%';
     }
 
-    // Nearest point & distance covered
-    const nearest = findNearestRoutePoint(lat, lng, routeCoords, totalKm);
+    // Nearest point & distance covered (protecting loop course from false finish)
+    const nearest = findNearestRoutePoint(lat, lng, routeCoords, totalKm, lastNearestIndex, totalGroundKm);
+    lastNearestIndex = nearest.index;
     const offRouteInfo = checkOffRoute(lat, lng, routeCoords, 100);
 
     // Ground odometer: accumulate real GPS displacement across fixes (especially active when off-route)
@@ -708,7 +710,7 @@ async function renderRiderCockpit() {
         totalGroundKm = Math.round(((totalGroundKm || nearest.distanceKm) + stepKm) * 100) / 100;
       }
     } else {
-      totalGroundKm = nearest.distanceKm;
+      totalGroundKm = (nearest.distanceKm > 0 && nearest.progressPct < 50) ? nearest.distanceKm : 0;
     }
     lastOdoLat = lat;
     lastOdoLng = lng;
