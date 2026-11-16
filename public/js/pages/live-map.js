@@ -1665,6 +1665,8 @@ async function renderLiveMap(params) {
       telem.isFinished = false;
     }
 
+    const isFinished = !!telem.isFinished;
+
     if (telem.isFinished) {
       telem.etaTime = 'FINISH';
       telem.etaDuration = 'Tiba di Finish';
