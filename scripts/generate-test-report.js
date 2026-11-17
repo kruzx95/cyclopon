@@ -195,6 +195,22 @@ async function runDiagnosticTrial() {
     });
   }
 
+  // Warm-up: the very first HTTP request in a fresh process pays for route
+  // init, JIT and connection setup. Send one small batch first so the measured
+  // run below reflects steady-state (race-day) conditions. Cold-start latency
+  // is still recorded in the report details for transparency.
+  let coldStartMs = 0;
+  try {
+    const tColdStart = performance.now();
+    const warmupRes = await fetch(`${baseUrl}/api/events/${trialEventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ positions: positionsPayload.slice(0, 1) })
+    });
+    await warmupRes.arrayBuffer();
+    coldStartMs = performance.now() - tColdStart;
+  } catch (e) {}
+
   const tIngestStart = performance.now();
   const ingestRes = await fetch(`${baseUrl}/api/events/${trialEventId}/history`, {
     method: 'POST',
@@ -212,7 +228,7 @@ async function runDiagnosticTrial() {
     target: '< 100 ms',
     actual: `${tIngestDuration.toFixed(2)} ms (${ingestThroughput} rec/sec)`,
     status: stage1Pass && tIngestDuration < 100 ? 'PASS' : stage1Pass ? 'WARN' : 'FAIL',
-    details: `Tulis batch 100 koordinat dalam satu transaksi SQLite WAL. Berhasil simpan ${ingestJson.inserted} titik.`
+    details: `Tulis batch 100 koordinat dalam satu transaksi SQLite WAL. Berhasil simpan ${ingestJson.inserted} titik. Cold-start request (warm-up, tidak dihitung): ${coldStartMs.toFixed(2)} ms.`
   });
 
   console.log(`  ${stage1Pass ? C.green + '✔' : C.red + '✖'}${C.reset} Ingest 100 paket: ${tIngestDuration.toFixed(2)} ms | Throughput: ${ingestThroughput} records/sec`);

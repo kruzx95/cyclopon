@@ -31,7 +31,9 @@ async function runBenchmark() {
   let mockTraccarSocket = null;
   let appServer = null;
   let appPort = 0;
-  let eventId = 1;
+  let eventId = null;
+  let riderId = null;
+  let isolatedEventId = null;
 
   // 1. Setup Mock Traccar Server
   await new Promise((resolve) => {
@@ -53,12 +55,26 @@ async function runBenchmark() {
     });
   });
 
-  // Ensure test event exists
-  let event = db.getEventById.get(eventId);
-  if (!event) {
-    const res = db.createEvent.run({ name: 'Benchmark Race', date: '2026-10-06' });
-    eventId = Number(res.lastInsertRowid);
-  }
+  // Isolated benchmark event + rider. All telemetry and simulated Traccar
+  // positions land on this event and are removed at teardown, so real event,
+  // rider and leaderboard data is never touched.
+  const BENCH_DEVICE_ID = 990001;
+  const benchEventRes = db.createEvent.run({
+    name: `Benchmark Race ${new Date().toISOString()}`,
+    date: new Date().toISOString().substring(0, 10)
+  });
+  eventId = Number(benchEventRes.lastInsertRowid);
+  isolatedEventId = eventId;
+
+  const benchRiderRes = db.createRider.run({
+    event_id: eventId,
+    bib: 'BM-01',
+    name: 'Benchmark Rider',
+    pin: '0000',
+    traccar_device_id: BENCH_DEVICE_ID,
+    color: '#00E5FF'
+  });
+  riderId = Number(benchRiderRes.lastInsertRowid);
 
   console.log(`\n[1/3] Benchmarking WebSocket Fan-out (${WS_CONCURRENCY} concurrent viewers)...`);
   const wsStartTime = performance.now();
@@ -108,7 +124,7 @@ async function runBenchmark() {
       mockTraccarSocket.send(
         JSON.stringify({
           _t: performance.now(),
-          positions: [{ deviceId: 101, latitude: -6.9 + round * 0.001, longitude: 107.6, speed: 30 }]
+          positions: [{ deviceId: BENCH_DEVICE_ID, latitude: -6.9 + round * 0.001, longitude: 107.6, speed: 30 }]
         })
       );
     }
@@ -146,7 +162,7 @@ async function runBenchmark() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            rider_id: 1,
+            rider_id: riderId,
             latitude: -6.9175,
             longitude: 107.6191,
             speed: 25.5,
@@ -220,6 +236,15 @@ async function runBenchmark() {
   if (mockTraccarSocket) mockTraccarSocket.close();
   if (mockTraccarServer) await new Promise((r) => mockTraccarServer.close(r));
   if (appServer) await new Promise((r) => appServer.close(r));
+
+  // Remove the isolated benchmark event (riders & positions cascade)
+  if (isolatedEventId) {
+    try {
+      db.db.prepare('DELETE FROM events WHERE id = ?').run(isolatedEventId);
+    } catch (e) {
+      console.error('Failed to clean up benchmark event:', e.message);
+    }
+  }
 
   process.exit(allPassed ? 0 : 1);
 }
