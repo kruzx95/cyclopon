@@ -369,6 +369,10 @@ label {
   gap: 8px;
 }
 
+.nav-label-short {
+  display: none;
+}
+
 .btn-guide-nav {
   display: inline-flex;
   align-items: center;
@@ -1925,3 +1929,42 @@ label {
   }
 }
 
+
+/* ── Compact nav labels for small phones (<=480px) ── */
+@media (max-width: 480px) {
+  .landing-nav {
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .landing-nav .brand-title {
+    gap: 7px;
+    min-width: 0;
+  }
+  .landing-nav .brand-logo-emblem {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+  .landing-nav .brand-name {
+    font-size: 16px;
+  }
+  .btn-guide-nav {
+    padding: 8px 10px;
+    gap: 0;
+  }
+  .btn-guide-nav .nav-label-full {
+    display: none;
+  }
+  .btn-admin-nav {
+    padding: 7px 10px;
+    height: 34px;
+    gap: 5px;
+    font-size: 10.5px;
+  }
+  .btn-admin-nav .nav-label-full {
+    display: none;
+  }
+  .nav-label-short {
+    display: inline;
+  }
+}

@@ -756,12 +756,30 @@
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding: 2px 0 2px 0;
+  padding: 2px 8px 4px 2px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  position: relative;
 }
 .sidebar-filter-pills::-webkit-scrollbar {
   display: none;
 }
+
+/* Visual scroll affordance: smooth fade edges when overflowing */
+.sidebar-filter-pills.has-overflow:not(.is-at-end):not(.is-scrolled) {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+}
+.sidebar-filter-pills.has-overflow.is-scrolled:not(.is-at-end) {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 calc(100% - 24px), transparent 100%);
+}
+.sidebar-filter-pills.has-overflow.is-scrolled.is-at-end {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 100%);
+}
+
 .status-filter-pill {
   padding: 4px 10px;
   border-radius: 6px;
@@ -774,6 +792,7 @@
   white-space: nowrap;
   transition: all 0.15s ease;
   line-height: 1.2;
+  flex-shrink: 0;
 }
 .status-filter-pill:hover {
   background: #0D1117;

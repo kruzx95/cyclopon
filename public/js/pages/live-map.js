@@ -592,6 +592,18 @@ async function renderLiveMap(params) {
     });
   }
 
+  // ── Auto-collapse Leaderboard on Mobile (Full-Screen Map Priority) ──
+  if (window.innerWidth <= 768) {
+    setSidebarCollapsed(true);
+  }
+
+  window.addEventListener('resize', () => {
+    if (btnMobileOpenSidebar) {
+      const isCollapsed = mapViewport.classList.contains('sidebar-collapsed');
+      btnMobileOpenSidebar.style.display = (isCollapsed && window.innerWidth <= 768) ? 'inline-flex' : 'none';
+    }
+  });
+
   let polylineBounds = null;
   document.getElementById('btnFitRoute').addEventListener('click', () => {
     if (polylineBounds) {
@@ -2321,6 +2333,24 @@ async function renderLiveMap(params) {
       updateLeaderboard();
     });
   });
+
+  // ── Filter Pills Horizontal Scroll Affordance (Visual Fade Indicator) ──
+  const filterPillsRow = document.getElementById('sidebarFilterPills');
+  if (filterPillsRow) {
+    const updatePillsScrollState = () => {
+      const hasOverflow = filterPillsRow.scrollWidth > filterPillsRow.clientWidth + 2;
+      const atStart = filterPillsRow.scrollLeft <= 4;
+      const atEnd = filterPillsRow.scrollLeft + filterPillsRow.clientWidth >= filterPillsRow.scrollWidth - 4;
+
+      filterPillsRow.classList.toggle('has-overflow', hasOverflow);
+      filterPillsRow.classList.toggle('is-scrolled', !atStart);
+      filterPillsRow.classList.toggle('is-at-end', atEnd);
+    };
+
+    filterPillsRow.addEventListener('scroll', updatePillsScrollState, { passive: true });
+    window.addEventListener('resize', updatePillsScrollState, { passive: true });
+    setTimeout(updatePillsScrollState, 150);
+  }
 
   // ── Focus Floating Bar Button Listeners ──
   const btnFocusPan = document.getElementById('btnFocusPan');

@@ -129,7 +129,8 @@ describe('Social Media Infograph & Open Graph Engine', () => {
 
     const homeSvg = generateHomeOgSvg(homeData);
     assert.ok(homeSvg.includes('<svg width="1200" height="630"'));
-    assert.ok(homeSvg.includes('CYCLOPON LIVE TRACKER'));
+    assert.ok(homeSvg.includes('LIVE GPS TRACKING'));
+    assert.ok(homeSvg.includes('UNTUK BALAP SEPEDA'));
     assert.ok(homeSvg.endsWith('</svg>'));
 
     const homePng = generateHomeOgPng(homeData);

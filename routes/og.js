@@ -9,6 +9,213 @@ const {
   generateHomeOgPng
 } = require('../lib/og-infograph');
 
+function escapeHtml(value) {
+  if (value == null) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderPreviewPage(opts) {
+  const {
+    badge, title, subtitle, imageUrl, pngUrl, svgUrl,
+    downloadName, backUrl, backLabel, alt
+  } = opts;
+
+  return `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>${escapeHtml(title)} // CycloPon</title>
+  <style>
+    :root {
+      --paper: #F6F3EC;
+      --card: #FFFFFF;
+      --ink: #141A17;
+      --body: #424E46;
+      --muted: #7C837D;
+      --border: #DBD4C5;
+      --sage: #2B4E30;
+      --sage-soft: #EAEFE7;
+      --amber: #966025;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(20, 26, 23, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: clamp(16px, 4vw, 40px);
+    }
+    .container { max-width: 1040px; margin: 0 auto; }
+    .preview-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .heading { min-width: 0; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(116, 136, 115, 0.7);
+      border-radius: 999px;
+      background: var(--sage-soft);
+      color: var(--sage);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--sage);
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(20px, 3.6vw, 28px);
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      font-weight: 900;
+    }
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 38px;
+      padding: 9px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(20, 26, 23, 0.08); }
+    .btn-primary { background: var(--sage); border-color: var(--sage); color: #FFFFFF; }
+    .btn-primary:hover { background: #1F3B24; }
+    .btn-ghost { background: transparent; }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+    .hint { color: var(--amber); }
+    .card-scroll {
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+    .card-preview {
+      display: block;
+      width: 100%;
+      min-width: 680px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--card);
+      box-shadow: 0 18px 40px rgba(20, 26, 23, 0.10);
+    }
+    .card-preview img { display: block; width: 100%; height: auto; }
+    .note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    @media (min-width: 721px) {
+      .hint { display: none; }
+    }
+    @media (max-width: 720px) {
+      body { padding: 16px; }
+      .preview-header { align-items: flex-start; flex-direction: column; gap: 14px; }
+      .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+      .btn { padding: 9px 10px; text-align: center; white-space: normal; }
+      .btn-ghost { grid-column: 1 / -1; }
+      .card-preview { min-width: 620px; }
+      .hint { display: inline; }
+    }
+    @media (max-width: 360px) {
+      .btn { font-size: 11px; }
+      .eyebrow { font-size: 9px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="preview-header">
+      <div class="heading">
+        <span class="eyebrow">${escapeHtml(badge)}</span>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="subtitle">${escapeHtml(subtitle)}</p>
+      </div>
+      <nav class="actions" aria-label="Aksi preview">
+        <a class="btn btn-primary" href="${escapeHtml(pngUrl)}" download="${escapeHtml(downloadName)}">Unduh PNG</a>
+        <a class="btn" href="${escapeHtml(svgUrl)}" target="_blank" rel="noopener">Buka SVG</a>
+        <a class="btn btn-ghost" href="${escapeHtml(backUrl)}">${escapeHtml(backLabel)}</a>
+      </nav>
+    </header>
+
+    <div class="toolbar">
+      <span>OPEN GRAPH // 1200 x 630 // PNG + SVG</span>
+      <span class="hint">Geser kartu untuk lihat detail &rarr;</span>
+    </div>
+
+    <div class="card-scroll">
+      <a class="card-preview" href="${escapeHtml(pngUrl)}" target="_blank" rel="noopener" title="Buka gambar ukuran penuh">
+        <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" width="1200" height="630">
+      </a>
+    </div>
+
+    <p class="note">PNG dipakai crawler sosial media; SVG adalah versi vektor. Klik kartu untuk membuka gambar ukuran penuh.</p>
+  </main>
+</body>
+</html>`;
+}
+
 function handleHomeOgImageRequest(req, res, forceFormat = null) {
   let format = forceFormat;
   if (!format) {
@@ -85,144 +292,53 @@ router.get('/events/:id', (req, res) => handleOgImageRequest(req, res));
 
 // Visual Preview Page for Home Domain
 router.get('/preview/home', (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Infografis Beranda Domain // CycloPon</title>
-  <style>
-    body { background: #0B0F19; color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 30px 20px; margin: 0; display: flex; flex-direction: column; align-items: center; }
-    .container { max-width: 1000px; width: 100%; }
-    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; border-bottom: 1px solid #1E293B; padding-bottom: 16px; }
-    h1 { margin: 0; font-size: 22px; color: #FFFFFF; font-weight: 800; }
-    .subtitle { color: #10B981; font-size: 13px; font-family: monospace; font-weight: 700; margin-top: 4px; }
-    .card-preview { background: #FFFFFF; border: 1.5px solid #0D1117; border-radius: 12px; overflow: hidden; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .card-preview img { width: 100%; height: auto; display: block; }
-    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    .btn { background: #0D1117; color: #FFFFFF; border: 1px solid #334155; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13.5px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-outline { background: transparent; color: #F8FAFC; border: 1px solid #334155; }
-    .btn:hover { opacity: 0.9; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1>Preview Infografis Domain Utama</h1>
-        <div class="subtitle">// OPEN GRAPH CARD UNTUK SHARE DOMAIN (cyclopon.my.id)</div>
-      </div>
-      <div class="actions">
-        <a href="/api/og/home.png" download="cyclopon-home.png" class="btn">📥 Unduh PNG</a>
-        <a href="/api/og/home.svg" target="_blank" class="btn btn-outline">🔍 Buka SVG</a>
-        <a href="/" class="btn btn-outline">← Kembali ke Beranda</a>
-      </div>
-    </div>
-    <div class="card-preview">
-      <img src="/api/og/home.png" alt="Infografis Domain CycloPon">
-    </div>
-  </div>
-</body>
-</html>`);
+  res.set('Cache-Control', 'no-cache');
+  res.send(renderPreviewPage({
+    badge: 'Open Graph Preview',
+    title: 'Infografis Domain Utama',
+    subtitle: '// Share card cyclopon.my.id',
+    imageUrl: '/api/og/home.png',
+    pngUrl: '/api/og/home.png',
+    svgUrl: '/api/og/home.svg',
+    downloadName: 'cyclopon-home.png',
+    backUrl: '/',
+    backLabel: '← Kembali ke Beranda',
+    alt: 'Infografis domain CycloPon'
+  }));
 });
 
-// Visual Preview Page for Admin & Users
+// Visual Preview Page for Event & Rider Cards
 router.get('/preview/:id', (req, res) => {
-  const eventId = req.params.id;
-  const bib = req.query.bib || '';
+  const eventId = String(req.params.id || '');
+  const bib = req.query.bib || req.query.rider || '';
+  const encodedId = encodeURIComponent(eventId);
   const bibParam = bib ? `?bib=${encodeURIComponent(bib)}` : '';
 
-  res.send(`<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Infografis Share Preview // CycloPon</title>
-  <style>
-    body {
-      background: #0B0F19;
-      color: #F8FAFC;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 30px 20px;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .container {
-      max-width: 1000px;
-      width: 100%;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      border-bottom: 1px solid #1E293B;
-      padding-bottom: 16px;
-    }
-    h1 { margin: 0; font-size: 22px; color: #FFFFFF; font-weight: 800; }
-    .subtitle { color: #00E5FF; font-size: 13px; font-family: monospace; font-weight: 700; margin-top: 4px; }
-    .card-preview {
-      background: #111827;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    .card-preview img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .btn {
-      background: #00E5FF;
-      color: #070A10;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 13.5px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-outline {
-      background: transparent;
-      color: #F8FAFC;
-      border: 1px solid #334155;
-    }
-    .btn:hover { opacity: 0.9; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <h1>Preview Infografis Sosial Media</h1>
-        <div class="subtitle">// OPEN GRAPH 1200x630 HIGH-RESOLUTION CARD</div>
-      </div>
-      <div class="actions">
-        <a href="/api/og/events/${eventId}.png${bibParam}" download="cyclopon-infograph-${eventId}.png" class="btn">📥 Unduh PNG</a>
-        <a href="/api/og/events/${eventId}.svg${bibParam}" target="_blank" class="btn btn-outline">🔍 Buka SVG Vector</a>
-        <a href="/watch/${eventId}${bibParam}" class="btn btn-outline">← Kembali ke Peta</a>
-      </div>
-    </div>
+  let data = null;
+  try {
+    data = getOgData(eventId, bib || null);
+  } catch (e) {}
+  if (!data || !data.event) return res.status(404).send('Event not found');
 
-    <div class="card-preview">
-      <img src="/api/og/events/${eventId}.png${bibParam}" alt="Infografis Preview">
-    </div>
-  </div>
-</body>
-</html>`);
+  const eventName = data.event.name;
+  const riderLabel = data.rider ? ` · #${data.rider.bib} ${data.rider.name}` : '';
+  const safeName = eventId.replace(/[^a-z0-9_-]/gi, '') || 'event';
+
+  res.set('Cache-Control', 'no-cache');
+  res.send(renderPreviewPage({
+    badge: data.rider ? 'Rider Dossier' : 'Event Dossier',
+    title: `Infografis ${eventName}`,
+    subtitle: data.rider
+      ? `// Open Graph card${riderLabel}`
+      : '// Open Graph card · 1200 x 630',
+    imageUrl: `/api/og/events/${encodedId}.png${bibParam}`,
+    pngUrl: `/api/og/events/${encodedId}.png${bibParam}`,
+    svgUrl: `/api/og/events/${encodedId}.svg${bibParam}`,
+    downloadName: `cyclopon-infograph-${safeName}.png`,
+    backUrl: `/watch/${encodedId}${bibParam}`,
+    backLabel: '← Kembali ke Peta',
+    alt: `Infografis ${eventName}`
+  }));
 });
 
 module.exports = router;
