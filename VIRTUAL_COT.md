@@ -48,9 +48,14 @@ Rute GPX:  START ━━●━━━●━━━━━━━●━━━━━━
 Mengikuti pola migrasi `ALTER TABLE ... try/catch` yang sudah ada:
 
 ```sql
-ALTER TABLE events ADD COLUMN cot_start_time TEXT;  -- jam mulai marker, mis. '05:00'
+ALTER TABLE events ADD COLUMN cot_start_time TEXT;  -- jam mulai marker, mis. '05:00' (WIB, hanya untuk display)
+ALTER TABLE events ADD COLUMN cot_start_ms  INTEGER; -- epoch UTC (ms) hasil konversi cot_start_time → acuan kalkulasi
 ALTER TABLE events ADD COLUMN cot_pace REAL;        -- kecepatan konstan, mis. 20.0 (km/jam)
 ```
+
+- `cot_start_ms` dihitung **sekali saat admin menyimpan** event (konversi `events.date`
+  + `cot_start_time` ke epoch UTC dengan offset tetap **UTC+7/WIB**) — semua
+  kalkulasi marker memakai epoch, bukan parsing jam per-request (lihat §8.1).
 
 - `cot_start_time` dan `cot_pace` **boleh `NULL`** → Virtual COT tidak aktif
   untuk event tersebut (perilaku lama tetap utuh).
@@ -88,7 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_virtual_dnf_event ON virtual_dnf(event_id);
 Fungsi baru (diekstrak/dipakai ulang dari logika GPX yang sudah ada di file ini):
 
 ```
-jarak_marker(t) = cot_pace × (now − cot_start_time pada tanggal event)  [jam]
+jarak_marker(t) = cot_pace × ((now_epoch − cot_start_ms) / 3600000)  [jam]
 ```
 
 - Konversi **jarak → koordinat** (lat/lng) dengan menelusuri titik-titik GPX
@@ -203,12 +208,68 @@ File baru: `tests/virtual-cot.test.js` (runner `node --test`).
 
 ---
 
-## 8. ⚠️ Catatan & Risiko
+## 8. ⚠️ Catatan Risiko & Mitigasi
 
-- **Zona waktu**: `cot_start_time` dihitung pada tanggal event (`events.date`)
-  di zona waktu server — harus konsisten dengan parsing jam `close_time`
-  checkpoint yang sudah ada.
-- **Kinerja**: kalkulasi marker murah (O(1)); deteksi DNF memakai query posisi
-  terakhir per rider — sudah didukung index `idx_history_event_rider_id`.
-- **Backward compatible**: event lama tanpa field COT berperilaku persis
-  seperti sebelumnya.
+### 8.1 Zona Waktu
+
+**Fakta kode saat ini** (hasil audit):
+
+- Semua timestamp disimpan **UTC**: `position_history.recorded_at` memakai
+  `toISOString()`, `datetime('now')` SQLite juga UTC.
+- Evaluasi COT yang sudah ada (`checkCotStatus` di `live-map.js`, countdown di
+  cockpit) dilakukan **client-side** dengan `setHours()` → memakai jam lokal
+  perangkat penonton/rider — ada inkonsistensi laten UTC vs jam lokal browser.
+- Report generator sudah memakai `timeZone: 'Asia/Jakarta'` → project ini
+  WIB-oriented.
+
+**Mitigasi** — hitung semuanya dalam **epoch ms**, konversi zona waktu hanya
+dilakukan sekali saat simpan:
+
+1. Kolom `cot_start_ms` (epoch UTC) dihitung saat admin menyimpan event:
+   `events.date` (YYYY-MM-DD) + `cot_start_time` (HH:MM) → epoch dengan offset
+   tetap **UTC+7 (WIB)**, **bukan** zona waktu server/VPS.
+2. Kalkulasi marker murni aritmetika: `jarak = pace × ((now − cot_start_ms) / 3600000)`
+   — bebas bug lintas tengah malam (tidak ada `setHours` modular) dan kebal
+   terhadap perubahan timezone server.
+3. Indonesia **tidak memiliki DST** → offset UTC+7 konstan sepanjang tahun,
+   aman di-hardcode.
+4. Label waktu di UI ("05:00", dst.) hanya *rendering* via
+   `toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })`.
+5. Test wajib mencakup boundary: event mulai 23:30 WIB dan marker melewati
+   tengah malam.
+
+### 8.2 Kinerja
+
+1. **Cache rute**: jarak kumulatif titik GPX di-parse sekali per event, cache
+   by mtime — pola sama dengan `eventDistanceCache` yang sudah ada di
+   `routes/events.js`.
+2. **Cache posisi marker**: in-memory map per event, TTL ~5 detik — polling
+   banyak penonton tidak memicu kalkulasi berulang; invalidate saat event
+   di-edit.
+3. **Short-circuit**: status `NOT_STARTED` / `FINISHED` → langsung return,
+   **skip evaluasi DNF sama sekali** (kondisi paling sering terjadi).
+4. **Throttle deteksi DNF**: lazily-on-read dibatasi maks. 1× per ~15–30 detik
+   per event (timestamp in-memory).
+5. **Query efisien**: posisi terakhir rider via `MAX(id)` didukung index yang
+   sudah ada `idx_history_event_rider_id (event_id, rider_id, id)`; insert DNF
+   batch memakai `INSERT OR IGNORE` + transaksi (`UNIQUE(rider_id)`) —
+   sekaligus menutup race condition antar request konkuren.
+
+### 8.3 Backward Compatibility
+
+1. Migrasi **murni aditif** — `ALTER TABLE ADD COLUMN` nullable +
+   `CREATE TABLE IF NOT EXISTS`; tidak ada modifikasi data lama.
+2. Kontrak: **`cot_start_time` NULL = fitur off** — jalur kode lama (COT
+   checkpoint, results, replay) tidak tersentuh sama sekali.
+3. Frontend defensif: field baru di response API diabaikan client lama;
+   `enabled: false` ditangani anggun.
+4. **Kill-switch ops**: env `VIRTUAL_COT_ENABLED=false` mematikan fitur instan
+   tanpa rollback kode, jika terjadi masalah di production.
+5. Setelah perubahan DB, jalankan `npm test` (20 suite) sebagai smoke test.
+
+### 8.4 Inkonsistensi COT Lama (Di Luar Scope)
+
+Inkonsistensi laten evaluasi COT client-side (lihat §8.1) **tidak dibenahi**
+dalam fitur ini agar scope tidak melebar. Virtual COT yang murni server-side +
+epoch menetapkan *pattern* yang benar; refactoring COT checkpoint lama menjadi
+task terpisah di kemudian hari.
