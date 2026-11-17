@@ -4,6 +4,14 @@ const db      = require('../db/database');
 const notifications = require('../lib/notifications');
 const { requireAdminAuth } = require('../lib/admin-auth');
 
+let wsBroadcastFn = null;
+try {
+  const wsProxy = require('../lib/traccar-ws-proxy');
+  wsBroadcastFn = wsProxy.broadcastToClients;
+} catch (e) {
+  // WebSocket proxy not loaded in standalone test environment
+}
+
 // In-memory rate limiter for emergency SOS alerts (max 5 per minute per IP)
 const sosRateMap = new Map();
 const sosCleanupTimer = setInterval(() => {
@@ -35,8 +43,8 @@ function sosRateLimiter(req, res, next) {
 router.post('/events/:id/alerts', sosRateLimiter, (req, res) => {
   const event_id = Number(req.params.id);
   const { rider_id, type, message } = req.body;
-  const latitude = (req.body.latitude != null ? req.body.latitude : req.body.lat);
-  const longitude = (req.body.longitude != null ? req.body.longitude : req.body.lng);
+  let latitude = (req.body.latitude != null ? req.body.latitude : req.body.lat);
+  let longitude = (req.body.longitude != null ? req.body.longitude : req.body.lng);
 
   if (!type) {
     return res.status(400).json({ error: 'type alert wajib diisi' });
@@ -44,10 +52,24 @@ router.post('/events/:id/alerts', sosRateLimiter, (req, res) => {
 
   // Verify rider_id exists for this event to prevent FOREIGN KEY violation
   let validRiderId = null;
+  let existingRider = null;
   if (rider_id) {
-    const existingRider = db.getRiderById.get(Number(rider_id));
+    existingRider = db.getRiderById.get(Number(rider_id));
     if (existingRider && existingRider.event_id === event_id) {
       validRiderId = existingRider.id;
+    }
+  }
+
+  // Fallback GPS position from rider's latest recorded location in position_history if not provided
+  if ((latitude == null || longitude == null || (Number(latitude) === 0 && Number(longitude) === 0)) && validRiderId) {
+    try {
+      const lastPos = db.db.prepare('SELECT latitude, longitude FROM position_history WHERE rider_id = ? ORDER BY id DESC LIMIT 1').get(validRiderId);
+      if (lastPos && lastPos.latitude != null && lastPos.longitude != null) {
+        latitude = lastPos.latitude;
+        longitude = lastPos.longitude;
+      }
+    } catch (e) {
+      // ignore
     }
   }
 
@@ -63,6 +85,25 @@ router.post('/events/:id/alerts', sosRateLimiter, (req, res) => {
 
     const created = db.getAlertById.get(result.lastInsertRowid);
     res.status(201).json({ success: true, alert: created });
+
+    // Immediate real-time WebSocket broadcast to connected Live Map spectators & panitia
+    if (typeof wsBroadcastFn === 'function') {
+      try {
+        const fullAlert = {
+          ...created,
+          rider_bib:   existingRider?.bib,
+          rider_name:  existingRider?.name,
+          rider_phone: existingRider?.phone,
+          rider_color: existingRider?.color
+        };
+        wsBroadcastFn(JSON.stringify({
+          type: 'alert',
+          alerts: [fullAlert]
+        }), event_id);
+      } catch (wsErr) {
+        console.warn('[Alerts] Gagal broadcast WebSocket SOS:', wsErr.message);
+      }
+    }
 
     // Asynchronously dispatch external notifications (non-blocking)
     setImmediate(async () => {

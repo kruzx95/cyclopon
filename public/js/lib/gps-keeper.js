@@ -404,6 +404,10 @@ const GpsKeeper = (() => {
       return isRunning;
     },
 
+    getLastCoord() {
+      return lastCoord ? { ...lastCoord } : null;
+    },
+
     setCallbacks({ onUpdate, onStatus }) {
       if (onUpdate !== undefined) updateCallback = onUpdate;
       if (onStatus !== undefined) statusCallback = onStatus;

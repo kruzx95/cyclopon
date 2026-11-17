@@ -453,6 +453,9 @@ function renderRiderSetup() {
 
   btnCloseSos.addEventListener('click', closeSosModal);
   btnCancelSos.addEventListener('click', closeSosModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeSosModal();
+  });
 
   document.querySelectorAll('.sos-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -471,13 +474,23 @@ function renderRiderSetup() {
     let lat = null;
     let lng = null;
 
-    if (navigator.geolocation) {
+    // 1. Prefer instant coordinate from active GpsKeeper tracker if available
+    if (window.GpsKeeper && typeof window.GpsKeeper.getLastCoord === 'function') {
+      const keeperCoord = window.GpsKeeper.getLastCoord();
+      if (keeperCoord && keeperCoord.lat && keeperCoord.lng) {
+        lat = keeperCoord.lat;
+        lng = keeperCoord.lng;
+      }
+    }
+
+    // 2. If no prior GPS lock, attempt rapid geolocation
+    if (!lat && navigator.geolocation) {
       try {
         const pos = await new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 10000
+            timeout: 3000,
+            maximumAge: 15000
           });
         });
         lat = pos.coords.latitude;
@@ -500,7 +513,10 @@ function renderRiderSetup() {
         })
       });
 
-      if (!res.ok) throw new Error('Gagal mengirim sinyal darurat');
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Gagal mengirim sinyal darurat');
+      }
 
       closeSosModal();
       showToast('🚨 Sinyal SOS Darurat berhasil dikirim ke panitia!', 'success');

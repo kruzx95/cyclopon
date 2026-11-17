@@ -2505,7 +2505,21 @@ async function renderLiveMap(params) {
 
         // Add beacon markers on map
         currentAlerts.forEach(a => {
-          if (a.latitude && a.longitude) {
+          let alertLat = a.latitude;
+          let alertLng = a.longitude;
+
+          // Fallback to rider current map marker position if alert coordinates are null
+          if (!alertLat || !alertLng) {
+            const rm = (a.rider_id && riderMarkers[a.rider_id]) ||
+                       (a.rider_bib && bibToRider[a.rider_bib] && riderMarkers[bibToRider[a.rider_bib].id]);
+            if (rm && typeof rm.getLatLng === 'function') {
+              const pos = rm.getLatLng();
+              alertLat = pos.lat;
+              alertLng = pos.lng;
+            }
+          }
+
+          if (alertLat && alertLng) {
             const sosIcon = L.divIcon({
               html: `<div class="sos-map-marker-beacon">🚨</div>`,
               className: '',
@@ -2522,7 +2536,7 @@ async function renderLiveMap(params) {
                 </div>
             `;
 
-            const m = L.marker([a.latitude, a.longitude], { icon: sosIcon, zIndexOffset: 3000 }).addTo(map);
+            const m = L.marker([alertLat, alertLng], { icon: sosIcon, zIndexOffset: 3000 }).addTo(map);
             m.bindPopup(`
               <div style="color:#080A0F;padding:4px">
                 <strong style="color:#EF4444;font-size:13px">🚨 SINYAL SOS DARURAT</strong><br>
@@ -2585,7 +2599,7 @@ async function renderLiveMap(params) {
 
   let alertCheckInterval = null;
   checkActiveAlerts();
-  alertCheckInterval = setInterval(checkActiveAlerts, 25000);
+  alertCheckInterval = setInterval(checkActiveAlerts, 5000);
 
   // ── Time Machine Replay Engine State & Lifecycle ──
   let isReplayActive = false;
@@ -3647,6 +3661,11 @@ async function renderLiveMap(params) {
       if (isReplayActive) return;
       try {
         const data = JSON.parse(e.data);
+
+        // Immediate reaction to emergency SOS alert broadcast
+        if (data.type === 'alert' || data.alerts) {
+          checkActiveAlerts().catch(() => {});
+        }
 
         // 1. Auto-Mapping Traccar Devices to Riders by BIB Number!
         if (data.devices && Array.isArray(data.devices)) {

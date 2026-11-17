@@ -488,6 +488,9 @@ async function renderLoginForm() {
   btnOpenModal?.addEventListener('click', openRegModal);
   btnCloseModal?.addEventListener('click', closeRegModal);
   btnCancelModal?.addEventListener('click', closeRegModal);
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeRegModal();
+  });
 
   selfRegForm?.addEventListener('submit', async (e) => {
     e.preventDefault();

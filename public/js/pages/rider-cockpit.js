@@ -1464,6 +1464,9 @@ async function renderRiderCockpit() {
 
   btnCloseSos.addEventListener('click', closeSos);
   btnCancelSos.addEventListener('click', closeSos);
+  sosModal.addEventListener('click', (e) => {
+    if (e.target === sosModal) closeSos();
+  });
 
   document.querySelectorAll('.sos-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1479,10 +1482,10 @@ async function renderRiderCockpit() {
     btnConfirmSos.textContent = 'MENGIRIM...';
 
     const payload = {
-      rider_id: rider.id || 1,
+      rider_id: rider.id,
       type: selectedSosType,
-      lat: currentLat || (routeCoords[0] ? routeCoords[0][0] : 0),
-      lng: currentLng || (routeCoords[0] ? routeCoords[0][1] : 0),
+      lat: currentLat || (routeCoords[0] ? routeCoords[0][0] : null),
+      lng: currentLng || (routeCoords[0] ? routeCoords[0][1] : null),
       message: note || `Sinyal SOS dari Cockpit Rider #${rider.bib}`
     };
 
@@ -1497,7 +1500,8 @@ async function renderRiderCockpit() {
         showToast('🚨 Sinyal SOS Darurat Berhasil Dikirim ke Panitia!', 'success');
         closeSos();
       } else {
-        showToast('Gagal mengirim SOS. Coba lagi atau hubungi panitia.', 'error');
+        const errJson = await res.json().catch(() => ({}));
+        showToast(errJson.error || 'Gagal mengirim SOS. Coba lagi atau hubungi panitia.', 'error');
       }
     } catch (err) {
       showToast('Koneksi terputus saat kirim SOS.', 'error');

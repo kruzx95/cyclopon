@@ -95,6 +95,39 @@ test('Alerts API & Database', async (t) => {
     assert.equal(stillActive, undefined, 'Resolved alert should not be in active list');
   });
 
+  await t.test('POST /api/events/:id/alerts falls back to latest GPS coordinates from position_history when coordinates not provided', async () => {
+    const { eventId, riderId } = t.context;
+
+    // Seed position_history for the rider
+    db.recordPositionHistory.run({
+      event_id: eventId,
+      rider_id: riderId,
+      latitude: -7.2504,
+      longitude: 112.7688,
+      speed: 25.5,
+      distance_km: 12.4,
+      recorded_at: new Date().toISOString()
+    });
+
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/alerts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rider_id: riderId,
+        type: 'MEDICAL',
+        latitude: null,
+        longitude: null,
+        message: 'Kram otot parah'
+      })
+    });
+
+    assert.equal(res.status, 201);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.alert.latitude, -7.2504);
+    assert.equal(data.alert.longitude, 112.7688);
+  });
+
   await t.test('teardown', async () => {
     const { eventId } = t.context;
     db.db.prepare('DELETE FROM events WHERE id = ?').run(eventId);
