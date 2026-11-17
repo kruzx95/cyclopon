@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
+const virtualCot = require('../lib/virtual-cot');
 
 /**
  * Helper to compute seconds difference between ISO timestamp or HH:MM:SS strings
@@ -40,6 +41,16 @@ function calculateEventResults(eventId) {
   const checkpoints = db.getCheckpointsByEvent.all(eventId);
   const splits = db.getSplitsByEvent.all(eventId);
   const alerts = db.getAlertsByEvent.all(eventId);
+
+  // Refresh the Virtual COT ledger (throttled internally) before reading it
+  try {
+    virtualCot.evaluateThrottled(eventId, { event });
+  } catch (err) {
+    console.warn(`[Results] Evaluasi Virtual COT gagal untuk event ${eventId}:`, err.message);
+  }
+  const virtualDnfByRider = new Map(
+    db.getActiveVirtualDnfByEvent.all(eventId).map(row => [row.rider_id, row])
+  );
 
   // Eliminate N+1 query: Fetch all event history once and group by rider in-memory
   const allHistory = db.getHistoryByEvent.all(eventId);
@@ -117,6 +128,13 @@ function calculateEventResults(eventId) {
       }
     }
 
+    // Virtual COT DNF (only affects riders that did not actually finish)
+    const virtualDnf = virtualDnfByRider.get(rider.id) || null;
+    let dnfReason = null;
+    if (status === 'DNF') {
+      dnfReason = virtualDnf ? 'VIRTUAL_COT' : 'INCOMPLETE';
+    }
+
     // If speed is still 0 but we have distance & time
     if (avgSpeed === 0 && distanceKm > 0 && elapsedSeconds && elapsedSeconds > 0) {
       avgSpeed = Math.round((distanceKm / (elapsedSeconds / 3600)) * 10) / 10;
@@ -128,6 +146,13 @@ function calculateEventResults(eventId) {
       name: rider.name,
       color: rider.color,
       status,
+      dnf_reason: dnfReason,
+      virtual_cot: virtualDnf ? {
+        cot_km: virtualDnf.cot_km,
+        rider_km: virtualDnf.rider_km,
+        last_seen_at: virtualDnf.last_seen_at,
+        marked_at: virtualDnf.marked_at
+      } : null,
       elapsed_seconds: elapsedSeconds || 0,
       elapsed_time: formatDuration(elapsedSeconds),
       distance_km: distanceKm,
@@ -165,7 +190,8 @@ function calculateEventResults(eventId) {
     total_riders: riders.length,
     finishers: results.filter(r => r.status === 'FINISHER').length,
     over_cot: results.filter(r => r.status === 'OVER_COT').length,
-    dnf: results.filter(r => r.status === 'DNF').length
+    dnf: results.filter(r => r.status === 'DNF').length,
+    virtual_dnf: results.filter(r => r.dnf_reason === 'VIRTUAL_COT').length
   };
 
   return { event, results, summary };

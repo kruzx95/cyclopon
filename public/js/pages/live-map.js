@@ -177,6 +177,13 @@ async function renderLiveMap(params) {
         <div class="map-container ${isMobile ? '' : 'elev-open'}" id="mapContainer">
           <div id="leaflet-map"></div>
 
+          <!-- Virtual COT notice banner -->
+          <div id="cotBanner" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:950;max-width:min(92%,640px);pointer-events:none">
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(255,251,235,0.97);border:1px solid #FCD34D;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:800;color:#92400E;box-shadow:0 4px 14px rgba(0,0,0,0.12)">
+              <span id="cotBannerText">COT Virtual</span>
+            </div>
+          </div>
+
           <!-- ── Floating Map Action Controls (Google Maps / Strava Style) ── -->
           <div class="map-floating-stack" id="mapFloatingStack">
             <!-- Floating Layer Picker FAB -->
@@ -1149,6 +1156,105 @@ async function renderLiveMap(params) {
     }
   });
   map.addLayer(clusterGroup);
+
+  // ── Virtual COT: moving cut-off marker ─────────────────────────
+  let cotMarker = null;
+  let cotTimer = null;
+  let cotDnfRiderIds = new Set();
+  const cotBannerEl = document.getElementById('cotBanner');
+  const cotBannerTextEl = document.getElementById('cotBannerText');
+
+  function cotDivIcon() {
+    return L.divIcon({
+      className: '',
+      html: `<div style="width:34px;height:34px;border-radius:50%;background:#DC2626;border:2.5px solid #FFF;box-shadow:0 3px 12px rgba(220,38,38,0.5);display:flex;align-items:center;justify-content:center;font-size:16px">⏱️</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+  }
+
+  function cotStatusLabel(status) {
+    return { MOVING: 'BERGERAK', NOT_STARTED: 'BELUM MULAI', FINISHED: 'SELESAI', DISABLED: 'NONAKTIF' }[status] || status || '—';
+  }
+
+  function applyCotDnfVisuals(ids) {
+    cotDnfRiderIds.forEach(id => {
+      const m = markerById[id];
+      if (m && m._icon) {
+        m._icon.style.filter = '';
+        m._icon.style.opacity = '';
+        m._icon.removeAttribute('title');
+      }
+    });
+
+    const next = new Set(ids || []);
+    cotDnfRiderIds = next;
+
+    next.forEach(id => {
+      const m = markerById[id];
+      if (m && m._icon) {
+        m._icon.style.filter = 'grayscale(1)';
+        m._icon.style.opacity = '0.55';
+        m._icon.title = 'DNF · Tertinggal COT Virtual';
+      }
+    });
+  }
+
+  async function refreshVirtualCot() {
+    try {
+      const res = await fetch(`/api/events/${eventId}/virtual-cot`);
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (!data.enabled || data.latitude == null) {
+        if (cotMarker) { map.removeLayer(cotMarker); cotMarker = null; }
+        if (cotBannerEl) cotBannerEl.style.display = 'none';
+        return;
+      }
+
+      const latlng = [data.latitude, data.longitude];
+
+      if (!cotMarker) {
+        cotMarker = L.marker(latlng, { icon: cotDivIcon(), zIndexOffset: 1600 }).addTo(map);
+      } else {
+        cotMarker.setLatLng(latlng);
+      }
+
+      const popup = `
+        <div style="font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;color:#991B1B;letter-spacing:0.06em">⏱️ COT VIRTUAL</div>
+        <div style="font-weight:900;font-size:15px;color:#0D1117;margin-top:2px">km ${Number(data.distance_km || 0).toFixed(1)}</div>
+        <div style="font-size:12px;color:#4B5563;margin-top:2px">${data.pace ? `${data.pace} km/jam` : '—'} · ${cotStatusLabel(data.status)}</div>
+        <div style="font-size:11px;color:#6B7280;margin-top:4px">Rute ${Number(data.route_length_km || 0).toFixed(1)} km · ${data.dnf_count || 0} rider DNF</div>
+      `;
+      cotMarker.bindPopup(popup, { autoPan: false, closeButton: true, offset: [0, -12], maxWidth: 260 });
+
+      let bannerMsg = null;
+      if (data.evaluation && data.evaluation.state === 'deferred') {
+        bannerMsg = '⚠️ Penilaian DNF ditunda — telemetri rider belum segar';
+      } else if (data.status === 'NOT_STARTED') {
+        bannerMsg = `⏱️ COT Virtual mulai ${data.start_time || '—'} WIB · ${data.pace} km/jam`;
+      } else if (data.status === 'FINISHED') {
+        bannerMsg = '⏱️ COT Virtual sudah mencapai garis finish';
+      }
+
+      if (cotBannerEl && cotBannerTextEl) {
+        if (bannerMsg) {
+          cotBannerTextEl.textContent = bannerMsg;
+          cotBannerEl.style.display = 'block';
+        } else {
+          cotBannerEl.style.display = 'none';
+        }
+      }
+
+      applyCotDnfVisuals((data.dnf_riders || []).map(r => r.rider_id));
+    } catch (err) {
+      // Silent: COT is an enhancement, never block the live map
+    }
+  }
+
+  refreshVirtualCot();
+  cotTimer = setInterval(refreshVirtualCot, 8000);
+  window.addEventListener('beforeunload', () => { if (cotTimer) clearInterval(cotTimer); });
 
   // ── Checkpoint Markers & Cut-Off Time (COT) Engine ──
   const cpMarkers = [];

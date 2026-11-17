@@ -87,6 +87,22 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_history_rider ON position_history(rider_id, recorded_at);
   CREATE INDEX IF NOT EXISTS idx_history_event_rider_id ON position_history(event_id, rider_id, id);
 
+  -- Virtual COT: permanent record of riders left behind by the moving marker
+  CREATE TABLE IF NOT EXISTS virtual_dnf (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id     INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    rider_id     INTEGER NOT NULL REFERENCES riders(id) ON DELETE CASCADE,
+    cot_km       REAL NOT NULL,
+    rider_km     REAL,
+    last_seen_at TEXT,
+    status       TEXT NOT NULL DEFAULT 'ACTIVE',
+    marked_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    voided_at    TEXT,
+    void_reason  TEXT,
+    UNIQUE(rider_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_virtual_dnf_event_status ON virtual_dnf(event_id, status);
+
   -- High-frequency query indexes
   CREATE INDEX IF NOT EXISTS idx_riders_traccar_device ON riders(traccar_device_id);
   CREATE INDEX IF NOT EXISTS idx_alerts_event_resolved ON alerts(event_id, resolved);
@@ -118,6 +134,12 @@ try { db.exec("ALTER TABLE riders ADD COLUMN token TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE riders ADD COLUMN role TEXT DEFAULT 'rider';"); } catch (e) {}
 try { db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_riders_token ON riders(token);"); } catch (e) {}
 
+// ── Migrations for events table (Virtual COT) ──
+try { db.exec("ALTER TABLE events ADD COLUMN cot_start_time TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE events ADD COLUMN cot_start_ms INTEGER;"); } catch (e) {}
+try { db.exec("ALTER TABLE events ADD COLUMN cot_pace REAL;"); } catch (e) {}
+try { db.exec("ALTER TABLE events ADD COLUMN cot_mode TEXT;"); } catch (e) {}
+
 // Populate tokens for any existing riders that lack tokens
 try {
   const crypto = require('crypto');
@@ -143,6 +165,7 @@ module.exports = {
   getEventById:   db.prepare('SELECT * FROM events WHERE id = ?'),
   createEvent:    db.prepare('INSERT INTO events (name, date) VALUES (@name, @date)'),
   updateEvent:    db.prepare('UPDATE events SET name=@name, date=@date, active=@active WHERE id=@id'),
+  updateEventCot: db.prepare('UPDATE events SET cot_start_time=@cot_start_time, cot_start_ms=@cot_start_ms, cot_pace=@cot_pace, cot_mode=@cot_mode WHERE id=@id'),
   updateEventGpx: db.prepare('UPDATE events SET gpx_path=? WHERE id=?'),
   deleteEvent:    db.prepare('DELETE FROM events WHERE id = ?'),
 
@@ -197,6 +220,29 @@ module.exports = {
   recordPositionHistory: db.prepare('INSERT INTO position_history (event_id, rider_id, latitude, longitude, speed, distance_km, recorded_at) VALUES (@event_id, @rider_id, @latitude, @longitude, @speed, @distance_km, @recorded_at)'),
   getHistoryByEvent: db.prepare('SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM position_history h JOIN riders r ON h.rider_id = r.id WHERE h.event_id = ? ORDER BY h.recorded_at ASC'),
   getHistoryByEventAndRider: db.prepare('SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM position_history h JOIN riders r ON h.rider_id = r.id WHERE h.event_id = ? AND h.rider_id = ? ORDER BY h.recorded_at ASC'),
+
+  // Latest position per rider (Virtual COT evaluation)
+  getLatestPositionsByEvent: db.prepare(`
+    SELECT h.rider_id, h.latitude, h.longitude, h.distance_km, h.recorded_at
+    FROM position_history h
+    JOIN (
+      SELECT rider_id, MAX(id) AS max_id
+      FROM position_history
+      WHERE event_id = ?
+      GROUP BY rider_id
+    ) latest ON latest.max_id = h.id
+  `),
+  getNewestPositionAtByEvent: db.prepare('SELECT MAX(recorded_at) AS newest FROM position_history WHERE event_id = ?'),
+
+  // Virtual COT DNF ledger
+  insertVirtualDnf: db.prepare(`
+    INSERT OR IGNORE INTO virtual_dnf (event_id, rider_id, cot_km, rider_km, last_seen_at, status)
+    VALUES (@event_id, @rider_id, @cot_km, @rider_km, @last_seen_at, 'ACTIVE')
+  `),
+  getVirtualDnfByEvent: db.prepare('SELECT v.*, r.bib, r.name, r.color FROM virtual_dnf v JOIN riders r ON r.id = v.rider_id WHERE v.event_id = ? ORDER BY v.id ASC'),
+  getActiveVirtualDnfByEvent: db.prepare("SELECT v.*, r.bib, r.name, r.color FROM virtual_dnf v JOIN riders r ON r.id = v.rider_id WHERE v.event_id = ? AND v.status = 'ACTIVE' ORDER BY v.id ASC"),
+  getVirtualDnfByRider: db.prepare('SELECT * FROM virtual_dnf WHERE rider_id = ?'),
+  voidVirtualDnf: db.prepare("UPDATE virtual_dnf SET status='VOID', voided_at=datetime('now'), void_reason=@reason WHERE event_id=@event_id AND rider_id=@rider_id AND status='ACTIVE'"),
 
   // System Settings (Notifications, etc.)
   getSetting:     db.prepare('SELECT value FROM settings WHERE key = ?'),

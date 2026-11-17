@@ -111,7 +111,9 @@ async function renderEventResults(params) {
             <div class="results-stat-card dnf">
               <div class="results-stat-lbl" style="color:var(--color-red)">Did Not Finish (DNF)</div>
               <div class="results-stat-num" style="color:var(--color-red)">${summary.dnf}</div>
-              <div class="results-stat-sub">Evakuasi / Berhenti</div>
+              <div class="results-stat-sub">
+                ${summary.virtual_dnf > 0 ? `${summary.virtual_dnf} tertinggal COT Virtual` : 'Evakuasi / Berhenti'}
+              </div>
             </div>
 
             <div class="results-stat-card rate">
@@ -198,6 +200,12 @@ async function renderEventResults(params) {
                         <span class="badge-status ${r.status === 'FINISHER' ? 'badge-finisher' : r.status === 'OVER_COT' ? 'badge-over-cot' : 'badge-dnf'}">
                           ${r.status === 'FINISHER' ? '● FINISHER' : r.status === 'OVER_COT' ? '▲ OVER COT' : '✕ DNF'}
                         </span>
+                        ${r.dnf_reason === 'VIRTUAL_COT' ? `
+                          <div style="font-size:10.5px;font-weight:800;color:var(--color-red);margin-top:4px;max-width:170px;line-height:1.35">
+                            DNF · Tertinggal COT Virtual
+                            ${r.virtual_cot ? `<br><span style="font-weight:600;color:var(--text-secondary,#6B7280)">km ${Number(r.virtual_cot.rider_km ?? 0).toFixed(1)} vs COT km ${Number(r.virtual_cot.cot_km ?? 0).toFixed(1)}</span>` : ''}
+                          </div>
+                        ` : ''}
                       </td>
                       <td>
                         <span class="mono-stat time-val">

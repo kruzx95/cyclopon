@@ -13,7 +13,7 @@ async function renderAdminEvent(params) {
   const isNew   = eventId === 'new';
   const app     = document.getElementById('app');
 
-  let event       = { name: '', date: new Date().toISOString().slice(0,10), gpx_path: null, active: 1 };
+  let event       = { name: '', date: new Date().toISOString().slice(0,10), gpx_path: null, active: 1, cot_mode: 'off' };
   let riders      = [];
   let checkpoints = [];
 
@@ -84,6 +84,34 @@ async function renderAdminEvent(params) {
               </div>
             </div>
             ` : ''}
+
+            <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px dashed #E5E7EB">
+              <label style="display:flex;align-items:center;gap:8px">
+                ⏱️ Virtual COT — Garis Potong Bergerak
+              </label>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:6px">
+                <div>
+                  <label for="evCotStart" style="font-size:11px;color:#6B7280">Jam Mulai (WIB)</label>
+                  <input class="input" type="time" id="evCotStart" value="${event.cot_start_time || ''}">
+                </div>
+                <div>
+                  <label for="evCotPace" style="font-size:11px;color:#6B7280">Kecepatan (km/jam)</label>
+                  <input class="input" type="number" min="1" step="0.1" id="evCotPace" value="${event.cot_pace || ''}" placeholder="20">
+                </div>
+                <div>
+                  <label for="evCotMode" style="font-size:11px;color:#6B7280">Mode</label>
+                  <select class="input" id="evCotMode">
+                    <option value="off" ${(event.cot_mode || 'off') === 'off' ? 'selected' : ''}>Nonaktif</option>
+                    <option value="dry_run" ${event.cot_mode === 'dry_run' ? 'selected' : ''}>Uji (dry run)</option>
+                    <option value="live" ${event.cot_mode === 'live' ? 'selected' : ''}>Aktif (live)</option>
+                  </select>
+                </div>
+              </div>
+              <p style="color:#6B7280;font-size:12px;margin:8px 0 0">
+                Kosongkan jam/kecepatan untuk menonaktifkan. Mode <strong>Uji</strong> hanya menghitung kandidat DNF tanpa mencatat apa pun.
+              </p>
+            </div>
+
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
               <button class="btn btn-primary" type="submit" id="saveEventBtn" style="padding:10px 20px">
                 ${isNew ? 'Buat Event' : 'Simpan Perubahan'}
@@ -118,6 +146,25 @@ async function renderAdminEvent(params) {
             <input type="file" id="gpxFileInput" accept=".gpx">
           </label>
           <p id="gpxStatus" style="font-size:13px;margin-top:10px;min-height:18px"></p>
+        </div>
+
+        <!-- Virtual COT Monitor -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
+            <div>
+              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// MOVING CUT-OFF</span>
+              <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
+                Virtual COT — Monitor
+              </h2>
+              <p style="color:#6B7280;font-size:12px;margin-top:2px;margin-bottom:0">
+                Marker bergerak menyusuri rute. Rider dengan posisi segar di belakang marker dicatat DNF.
+              </p>
+            </div>
+            <button class="btn btn-outline" id="btnCotRefresh" style="font-size:12.5px;padding:7px 14px">↻ Muat Ulang</button>
+          </div>
+          <div id="cotMonitor">
+            <p style="color:#6B7280;font-size:13px">Memuat status COT…</p>
+          </div>
         </div>
 
         <!-- Checkpoints & Cut-Off Time (Audax / Brevet) -->
@@ -283,18 +330,46 @@ async function renderAdminEvent(params) {
     const body = {
       name:   document.getElementById('evName').value,
       date:   document.getElementById('evDate').value,
-      active: activeEl ? Number(activeEl.value) : 1
+      active: activeEl ? Number(activeEl.value) : 1,
+      cot_start_time: document.getElementById('evCotStart')?.value || null,
+      cot_pace:       document.getElementById('evCotPace')?.value || null,
+      cot_mode:       document.getElementById('evCotMode')?.value || 'off'
     };
 
     const url    = isNew ? '/api/events/admin' : `/api/events/admin/${eventId}`;
     const method = isNew ? 'POST' : 'PUT';
-    const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
-    const data   = await res.json();
+
+    let res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
+    let data = await res.json();
+
+    // Activation guard: confirm when too many riders would be flagged immediately
+    if (res.status === 409 && data.preview) {
+      const list = (data.preview.candidates || [])
+        .slice(0, 10)
+        .map(c => `• ${c.bib} ${c.name} (km ${Number(c.rider_km).toFixed(1)})`)
+        .join('\n');
+      const more = data.preview.candidates.length > 10 ? `\n…dan ${data.preview.candidates.length - 10} lainnya` : '';
+      const proceed = confirm(
+        `Aktivasi COT akan menandai ${data.preview.candidates.length} dari ${data.preview.riders_total} rider sebagai DNF.\n\n${list}${more}\n\nPeriksa jam mulai & kecepatan. Lanjutkan tetap?`
+      );
+      if (!proceed) {
+        btn.textContent = isNew ? 'Buat Event' : 'Simpan Perubahan';
+        btn.disabled = false;
+        return;
+      }
+      body.force = true;
+      res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
+      data = await res.json();
+    }
 
     if (res.ok) {
       showToast(isNew ? 'Event berhasil dibuat!' : 'Event diperbarui!', 'success');
       if (isNew) Router.navigate(`/admin/events/${data.id}`);
-      else { btn.textContent = 'Simpan Perubahan'; btn.disabled = false; }
+      else {
+        btn.textContent = 'Simpan Perubahan';
+        btn.disabled = false;
+        refreshCotMonitor();
+      }
     } else {
       showToast(data.error || 'Gagal menyimpan.', 'error');
       btn.textContent = isNew ? 'Buat Event' : 'Simpan Perubahan';
@@ -303,6 +378,158 @@ async function renderAdminEvent(params) {
   });
 
   if (isNew) return;
+
+  // ── Virtual COT monitor ─────────────────────────────────────
+  const cotMonitor   = document.getElementById('cotMonitor');
+  const btnCotRefresh = document.getElementById('btnCotRefresh');
+
+  function cotStatCard(label, value, accent) {
+    return `
+      <div style="border:1px solid #E5E7EB;border-radius:8px;padding:10px 12px;background:#FAFAFA">
+        <div style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#6B7280;letter-spacing:0.08em">${label}</div>
+        <div style="font-size:16px;font-weight:900;color:${accent || '#0D1117'};margin-top:2px">${value}</div>
+      </div>`;
+  }
+
+  function formatWib(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function renderCotMonitor(data) {
+    if (!cotMonitor) return;
+
+    const marker = data.marker || {};
+    const statusMap = {
+      MOVING:      ['BERGERAK', '#047857'],
+      NOT_STARTED: ['BELUM MULAI', '#92400E'],
+      FINISHED:    ['SELESAI', '#374151'],
+      DISABLED:    ['NONAKTIF', '#6B7280']
+    };
+    const [statusLabel, statusColor] = statusMap[marker.status] || [marker.status || '—', '#374151'];
+    const modeLabel = { off: 'NONAKTIF', dry_run: 'UJI (DRY RUN)', live: 'LIVE' }[marker.mode] || (marker.mode || '—');
+
+    const candidates = data.candidates || [];
+    const stale = data.stale || [];
+    const ledger = data.ledger || [];
+    const activeDnf = ledger.filter(row => row.status === 'ACTIVE');
+
+    const candidateBlock = candidates.length > 0
+      ? `<div style="border:1px solid #FCA5A5;background:#FEF2F2;border-radius:8px;padding:10px 12px;margin-bottom:12px">
+           <strong style="color:#B91C1C;font-size:12.5px">${candidates.length} kandidat DNF (posisi segar di belakang marker)</strong>
+           <div style="margin-top:6px;font-size:12.5px;color:#7F1D1D">
+             ${candidates.slice(0, 15).map(c => `• ${escapeHtml(c.bib)} ${escapeHtml(c.name)} — km ${Number(c.rider_km).toFixed(1)}`).join('<br>')}
+             ${candidates.length > 15 ? `<br>…dan ${candidates.length - 15} lainnya` : ''}
+           </div>
+         </div>`
+      : '';
+
+    const staleBlock = stale.length > 0
+      ? `<div style="border:1px solid #FDE68A;background:#FFFBEB;border-radius:8px;padding:10px 12px;margin-bottom:12px">
+           <strong style="color:#92400E;font-size:12.5px">${stale.length} rider perlu verifikasi manual (posisi belum segar)</strong>
+           <div style="margin-top:6px;font-size:12.5px;color:#78350F">
+             ${stale.slice(0, 15).map(s => `• ${escapeHtml(s.bib)} ${escapeHtml(s.name)} — terakhir ${formatWib(s.last_seen_at)} (km ${Number(s.rider_km || 0).toFixed(1)})`).join('<br>')}
+           </div>
+         </div>`
+      : '';
+
+    const ledgerRows = ledger.length === 0
+      ? `<tr><td colspan="7" style="text-align:center;color:#6B7280;padding:16px">Belum ada rider yang tercatat DNF.</td></tr>`
+      : ledger.map(row => `
+          <tr>
+            <td><strong>${escapeHtml(row.bib)}</strong></td>
+            <td>${escapeHtml(row.name)}</td>
+            <td>${row.rider_km != null ? Number(row.rider_km).toFixed(1) : '—'}</td>
+            <td>${Number(row.cot_km).toFixed(1)}</td>
+            <td style="font-size:12px;color:#6B7280">${formatWib(row.last_seen_at)}</td>
+            <td>
+              <span class="badge ${row.status === 'ACTIVE' ? 'badge-medic' : 'badge-finished'}">${row.status === 'ACTIVE' ? 'DNF' : 'DIBATALKAN'}</span>
+              ${row.status === 'VOID' && row.void_reason ? `<div style="font-size:11px;color:#6B7280;margin-top:2px">${escapeHtml(row.void_reason)}</div>` : ''}
+            </td>
+            <td>
+              ${row.status === 'ACTIVE'
+                ? `<button class="btn btn-outline btn-void-cot" data-rider="${row.rider_id}" data-bib="${escapeHtml(row.bib)}" style="font-size:11.5px;padding:4px 10px">Batalkan</button>`
+                : '—'}
+            </td>
+          </tr>`).join('');
+
+    cotMonitor.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
+        ${cotStatCard('MODE', modeLabel)}
+        ${cotStatCard('STATUS MARKER', statusLabel, statusColor)}
+        ${cotStatCard('POSISI MARKER', `${Number(marker.distanceKm || 0).toFixed(1)} km`)}
+        ${cotStatCard('KECEPATAN', `${marker.pace ? marker.pace : '—'} km/jam`)}
+        ${cotStatCard('PANJANG RUTE', `${Number(marker.routeLengthKm || 0).toFixed(1)} km`)}
+        ${cotStatCard('DNF AKTIF', activeDnf.length, activeDnf.length > 0 ? '#B91C1C' : '#047857')}
+      </div>
+      ${marker.status === 'FINISHED' ? '<p style="font-size:12.5px;color:#374151;margin-bottom:10px">Marker sudah mencapai finish — tidak ada evaluasi DNF baru.</p>' : ''}
+      ${data.evaluation && data.evaluation.state === 'deferred' ? '<p style="font-size:12.5px;color:#92400E;margin-bottom:10px">⚠️ Penilaian DNF ditunda: telemetri event belum segar.</p>' : ''}
+      ${candidateBlock}
+      ${staleBlock}
+      <div class="table-responsive-wrapper">
+        <table class="rider-table">
+          <thead>
+            <tr><th>BIB</th><th>Rider</th><th>Km Rider</th><th>Km COT</th><th>Posisi Terakhir</th><th>Status</th><th>Aksi</th></tr>
+          </thead>
+          <tbody>${ledgerRows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  async function refreshCotMonitor() {
+    if (!cotMonitor) return;
+    try {
+      // Public status call performs the real (live-mode) evaluation and ledger writes.
+      await fetch(`/api/events/${eventId}/virtual-cot`, { credentials: 'include' }).catch(() => null);
+
+      const res = await fetch(`/api/events/${eventId}/virtual-cot/preview`, { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) {
+        cotMonitor.innerHTML = `<p style="color:#B91C1C;font-size:13px">${escapeHtml(data.error || 'Gagal memuat status COT.')}</p>`;
+        return;
+      }
+      renderCotMonitor(data);
+    } catch (err) {
+      cotMonitor.innerHTML = '<p style="color:#B91C1C;font-size:13px">Gagal memuat status COT.</p>';
+    }
+  }
+
+  if (btnCotRefresh) btnCotRefresh.addEventListener('click', refreshCotMonitor);
+
+  if (cotMonitor) {
+    cotMonitor.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-void-cot');
+      if (!btn) return;
+
+      const reason = prompt(`Batalkan DNF rider ${btn.dataset.bib}?\nTulis alasan pembatalan (tercatat di audit):`);
+      if (!reason || !reason.trim()) return;
+
+      try {
+        const res = await fetch(`/api/events/${eventId}/virtual-cot/void/${btn.dataset.rider}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: reason.trim() }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast(data.error || 'Gagal membatalkan DNF', 'error');
+          return;
+        }
+        showToast('DNF dibatalkan.', 'success');
+        refreshCotMonitor();
+      } catch (err) {
+        showToast('Gagal membatalkan DNF', 'error');
+      }
+    });
+  }
+
+  refreshCotMonitor();
 
   // ── Delete event handler ──
   document.getElementById('btnDeleteCurrentEvent')?.addEventListener('click', async () => {
@@ -342,6 +569,7 @@ async function renderAdminEvent(params) {
     if (res.ok) {
       statusEl.textContent = `✅ Upload berhasil: ${data.gpx_path}`;
       statusEl.style.color = 'var(--color-green)';
+      refreshCotMonitor();
       showToast('File GPX berhasil di-upload!', 'success');
     } else {
       statusEl.textContent = `❌ ${data.error}`;

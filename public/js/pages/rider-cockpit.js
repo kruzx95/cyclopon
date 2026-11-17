@@ -10,6 +10,7 @@ let cockpitWsReconnectTimer = null;
 let cockpitWsBackoffMs = 2000;
 let cockpitGeoWatchId = null;
 let cockpitTimerInterval = null;
+let cockpitCotTimer = null;
 let audioCtx = null;
 let audioAlertEnabled = localStorage.getItem('cyclopon_cockpit_audio') !== 'false';
 const notifiedCpSet = new Set();
@@ -404,6 +405,27 @@ async function renderRiderCockpit() {
         </div>
       </div>
 
+      <!-- Virtual COT Status -->
+      <div class="cockpit-cp-card" id="cockpitCotCard" style="display:none;margin-top:10px">
+        <div class="cockpit-cp-header">
+          <div class="cockpit-cp-title">
+            <span>⏱️</span>
+            <span id="cockpitCotTitle">Virtual COT</span>
+          </div>
+          <span id="cockpitCotPill" class="cockpit-cp-status-pill safe">—</span>
+        </div>
+        <div class="cockpit-cp-details" style="margin-top:8px">
+          <div class="cockpit-cp-detail-box">
+            <div class="cockpit-cp-detail-lbl">Posisi COT</div>
+            <div class="cockpit-cp-detail-val" id="cockpitCotKm">-- km</div>
+          </div>
+          <div class="cockpit-cp-detail-box">
+            <div class="cockpit-cp-detail-lbl">Selisih</div>
+            <div class="cockpit-cp-detail-val" id="cockpitCotDiff">-- km</div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Sticky Bottom Emergency Action Bar -->
@@ -498,6 +520,8 @@ async function renderRiderCockpit() {
   let deviceBatteryManager = null;
   let batteryChangeHandler = null;
   let startTime = Date.now();
+  let lastCoveredKm = 0;
+  let cotStatusCache = null;
 
   // ── Device Battery API Listener ──
   if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
@@ -642,6 +666,11 @@ async function renderRiderCockpit() {
 
   // Initial Checkpoint state
   updateCheckpointWidget(0, 0);
+
+  // Initial Virtual COT state + polling (10s)
+  refreshCotStatus();
+  if (cockpitCotTimer) clearInterval(cockpitCotTimer);
+  cockpitCotTimer = setInterval(refreshCotStatus, 10000);
 
   // ── 5. Telemetry Update Handler ──
   function updateTelemetry(lat, lng, speedKmh, batteryLevel = null, isKmh = true) {
@@ -966,6 +995,8 @@ async function renderRiderCockpit() {
   }
 
   function updateCheckpointWidget(currentCoveredKm, movingAvg) {
+    lastCoveredKm = currentCoveredKm;
+    renderCotWidget(currentCoveredKm);
     const cpCard = document.getElementById('cockpitCpCard');
     const cpDetails = cpCard?.querySelector('.cockpit-cp-details');
     const cpProgressEl = cpCard?.querySelector('.cockpit-cp-progress-bar');
@@ -1070,6 +1101,88 @@ async function renderRiderCockpit() {
         pill.textContent = `LEWAT COT (${deltaMin}m)`;
         pill.className = 'cockpit-cp-status-pill late';
       }
+    }
+  }
+
+  // ── Virtual COT widget ──────────────────────────────────────
+  function renderCotWidget(km) {
+    const card = document.getElementById('cockpitCotCard');
+    if (!card) return;
+
+    const data = cotStatusCache;
+    if (!data || !data.enabled) {
+      card.style.display = 'none';
+      return;
+    }
+
+    card.style.display = 'block';
+
+    const titleEl = document.getElementById('cockpitCotTitle');
+    const pillEl = document.getElementById('cockpitCotPill');
+    const kmEl = document.getElementById('cockpitCotKm');
+    const diffEl = document.getElementById('cockpitCotDiff');
+
+    const cotKm = Number(data.distance_km) || 0;
+    const riderKm = Number(km) || 0;
+    const diff = riderKm - cotKm;
+    const diffStr = `${diff >= 0 ? '+' : ''}${diff.toFixed(1)} km`;
+    const paceStr = data.pace ? ` · ${data.pace} km/jam` : '';
+
+    const setPill = (text, cls) => {
+      if (!pillEl) return;
+      pillEl.textContent = text;
+      pillEl.className = `cockpit-cp-status-pill ${cls}`;
+    };
+
+    if (kmEl) kmEl.textContent = `${cotKm.toFixed(1)} km`;
+    if (diffEl) diffEl.textContent = diffStr;
+
+    // DNF is sticky — checked first
+    const dnfIds = (data.dnf_riders || []).map(r => Number(r.rider_id));
+    if (dnfIds.includes(Number(rider.id))) {
+      if (titleEl) titleEl.textContent = 'Virtual COT — DNF';
+      setPill('DNF', 'late');
+      return;
+    }
+
+    if (data.status === 'NOT_STARTED') {
+      if (titleEl) titleEl.textContent = `Virtual COT · mulai ${data.start_time || '—'} WIB${paceStr}`;
+      setPill('BELUM MULAI', 'warning');
+      return;
+    }
+
+    if (data.status === 'FINISHED') {
+      if (titleEl) titleEl.textContent = 'Virtual COT — sudah finish';
+      setPill('SELESAI', 'safe');
+      return;
+    }
+
+    if (data.evaluation && (data.evaluation.state === 'deferred' || data.evaluation.state === 'disabled')) {
+      if (titleEl) titleEl.textContent = `Virtual COT${paceStr}`;
+      setPill('TERTUNDA', 'warning');
+      return;
+    }
+
+    if (titleEl) titleEl.textContent = `Virtual COT${paceStr}`;
+
+    if (diff >= 1) {
+      setPill(`AMAN (+${diff.toFixed(1)} km)`, 'safe');
+    } else if (diff >= -1) {
+      setPill(`ME PET (${diffStr})`, 'warning');
+    } else {
+      setPill(`TERTINGGAL (${diffStr})`, 'late');
+    }
+  }
+
+  async function refreshCotStatus() {
+    if (!cockpitActive) return;
+    try {
+      const res = await fetch(`/api/events/${event.id}/virtual-cot`);
+      if (!res.ok) return;
+      cotStatusCache = await res.json();
+      renderCotWidget(lastCoveredKm);
+    } catch (err) {
+      // Silent: COT widget is an enhancement, never break the cockpit
     }
   }
 
@@ -1522,6 +1635,10 @@ function teardownRiderCockpit() {
     if (cockpitTimerInterval) {
       clearInterval(cockpitTimerInterval);
       cockpitTimerInterval = null;
+    }
+    if (cockpitCotTimer) {
+      clearInterval(cockpitCotTimer);
+      cockpitCotTimer = null;
     }
     if (cockpitWakeLock) {
       cockpitWakeLock.release().catch(() => {});
