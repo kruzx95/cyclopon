@@ -232,68 +232,208 @@ function renderGuide() {
             </div>
           </div>
 
-          <div class="guide-steps-grid">
-            <!-- Step 1: Server URL -->
-            <div class="guide-step-card primary-step">
-              <div class="step-card-num">LANGKAH 1</div>
-              <div class="step-card-title">Atur Server URL</div>
-              <p class="step-card-desc">Buka menu <strong>Settings</strong> di aplikasi Traccar Client, pilih <strong>Server URL</strong> dan masukkan alamat server berikut:</p>
-              <div class="step-code-box">
-                <code id="traccarServerUrlDisplay">${traccarServerUrl}</code>
-                <button id="btnCopyServerUrl" class="btn-copy-code" title="Salin ke Clipboard">
-                  <span id="copyUrlText">Salin URL</span>
-                </button>
-              </div>
-              <div class="step-card-hint">
-                💡 <em>Gunakan protokol HTTPS standar <code>${traccarServerUrl}</code> (tanpa port khusus) agar tidak diblokir provider seluler.</em>
+          <!-- ── Visual Step-by-Step Guide with Real Screenshots ── -->
+          <div class="guide-visual-card">
+            <div class="guide-phone-frame" data-src="/img/traccar-guide/traccar-settings-full.png" data-caption="Menu Settings Traccar Client: Konfigurasi Server URL, Device Identifier (Nomor BIB), Akurasi Satelit, dan Interval Detik" title="Klik untuk memperbesar screenshot">
+              <img src="/img/traccar-guide/traccar-settings-full.png" alt="Screenshot Menu Settings Traccar Client" class="guide-phone-img" loading="lazy">
+              <div class="guide-zoom-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <line x1="11" y1="8" x2="11" y2="14"></line>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+                <span>Perbesar Gambar</span>
               </div>
             </div>
 
-            <!-- Step 2: Device Identifier -->
-            <div class="guide-step-card">
-              <div class="step-card-num">LANGKAH 2</div>
-              <div class="step-card-title">Atur Device Identifier</div>
-              <p class="step-card-desc">Ganti angka default dengan nomor BIB resmi Anda yang terdaftar:</p>
-              <div class="step-bib-example">
-                <span class="bib-pill">BIB-001</span>
-                <span class="bib-sep">atau</span>
-                <span class="bib-pill">001</span>
-              </div>
-              <p class="step-card-desc" style="margin-top:8px">
-                Format: <code>BIB-</code> diikuti nomor peserta Anda atau angka BIB murni.
+            <div class="guide-step-body">
+              <div class="step-card-num">// LANGKAH 1 &amp; 2 DARI 4 · PENGATURAN PARAMETER GPS</div>
+              <h3 class="step-card-title">Buka Menu Settings &amp; Isi Parameter Server</h3>
+              <p class="step-card-desc">
+                Buka aplikasi Traccar Client di ponsel Anda, lalu ketuk menu <strong>Settings</strong> (ikon setelan). Sesuaikan setiap parameter dengan panduan visual di samping:
               </p>
-              <a href="/rider" data-link class="step-action-link">Cek Nomor BIB / Login Rider →</a>
-            </div>
 
-            <!-- Step 3: Optimal Tuning -->
-            <div class="guide-step-card">
-              <div class="step-card-num">LANGKAH 3</div>
-              <div class="step-card-title">Pengaturan Akurasi &amp; Hemat Baterai</div>
-              <ul class="step-checklist">
-                <li><strong>Location accuracy:</strong> <code>Highest</code> (Akurasi Satelit GPS)</li>
-                <li><strong>Interval:</strong> <code>10</code> detik (responsif &amp; akurat) atau <code>30</code> detik (ultra brevet)</li>
-                <li><strong>Distance:</strong> <code>0</code> meter (kosongkan / 0 agar update murni berbasis interval)</li>
-                <li><strong>Advanced Settings (Aktifkan):</strong>
-                  <div class="sub-switches">
-                    <span class="switch-badge">✓ Offline Buffering: ON</span>
-                    <span class="switch-badge" style="background:rgba(239,68,68,0.15);color:#EF4444;border-color:rgba(239,68,68,0.3)">✕ Stop Detection: OFF</span>
+              <div class="guide-callout-list">
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet sage">1</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Server URL (Endpoint OsmAnd CycloPon)</div>
+                    <div>Masukkan alamat server resmi CycloPon berikut (gunakan HTTPS tanpa port khusus):</div>
+                    <div class="step-code-box" style="margin:8px 0 6px">
+                      <code id="traccarServerUrlDisplay">${traccarServerUrl}</code>
+                      <button id="btnCopyServerUrl" class="btn-copy-code" title="Salin ke Clipboard">
+                        <span id="copyUrlText">Salin URL</span>
+                      </button>
+                    </div>
                   </div>
-                </li>
-              </ul>
+                </div>
+
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet sage">2</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Device identifier (Nomor BIB Peserta)</div>
+                    <div>Ganti angka acak bawaan dengan <strong>Nomor BIB</strong> resmi Anda yang terdaftar:</div>
+                    <div class="step-bib-example" style="margin:6px 0">
+                      <span class="bib-pill">BIB-001</span>
+                      <span class="bib-sep">atau angka murni</span>
+                      <span class="bib-pill">001</span>
+                    </div>
+                    <div style="font-size:11.5px;color:#64748B">
+                      💡 <em>Sistem otomatis mengenali format BIB-001 maupun 001.</em>
+                      <a href="/rider" data-link style="color:#1C3E24;font-weight:700;margin-left:6px;text-decoration:underline">Cek Nomor BIB Anda →</a>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet green">3</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Location accuracy &amp; Interval Detik</div>
+                    <ul class="step-checklist" style="margin-top:6px">
+                      <li><strong>Location accuracy:</strong> Pilih <code>High</code> atau <code>Highest</code> untuk akurasi antena satelit GPS maksimal.</li>
+                      <li><strong>Interval:</strong> Isi <code>10</code> detik (balap/sprint/tanjakan) atau <code>30</code> detik (ultra cycling/brevet 200km–1200km, sangat hemat baterai).</li>
+                      <li><strong>Distance:</strong> Wajib isi <code>0</code> meter agar koordinat tetap terkirim saat berhenti di lampu merah / pos istirahat.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet green">4</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Offline Buffering (Anti Blank Spot)</div>
+                    <div>
+                      Aktifkan centang <strong>Offline buffering: ON</strong> agar smartphone tetap merekam rute di memori internal saat melewati rute tanpa sinyal seluler, dan otomatis diunggah begitu sinyal pulih.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual Step 2: Continuous Tracking Activation & Signal Test -->
+          <div class="guide-visual-card">
+            <div class="guide-phone-frame" data-src="/img/traccar-guide/traccar-continuous-tracking.png" data-caption="Layar Utama Traccar Client: Menyalakan Saklar Continuous Tracking dan Tombol Uji Kirim Lokasi" title="Klik untuk memperbesar screenshot">
+              <img src="/img/traccar-guide/traccar-continuous-tracking.png" alt="Screenshot Layar Utama Traccar Client" class="guide-phone-img" loading="lazy">
+              <div class="guide-zoom-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <line x1="11" y1="8" x2="11" y2="14"></line>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+                <span>Perbesar Gambar</span>
+              </div>
             </div>
 
-            <!-- Step 4: Continuous Tracking & Android Permission -->
-            <div class="guide-step-card alert-step">
-              <div class="step-card-num">LANGKAH 4 (KRUSIAL)</div>
-              <div class="step-card-title">Continuous Tracking &amp; Izin Android</div>
-              <p class="step-card-desc">Kembali ke layar utama, geser saklar <strong>Continuous tracking</strong> ke posisi <strong>ON (Hijau)</strong>.</p>
-              <div class="step-warning-box">
-                <strong>⚠️ Peringatan Izin Lokasi Android:</strong><br>
-                Saat dialog muncul, WAJIB pilih: <strong>"Allow all the time" (Izinkan sepanjang waktu)</strong>.<br>
-                <em>(Jika memilih 'Only while using app', GPS mati saat layar mati di saku jersey).</em>
+            <div class="guide-step-body">
+              <div class="step-card-num">// LANGKAH 3 DARI 4 · AKTIVASI PEMANCAR GPS</div>
+              <h3 class="step-card-title">Nyalakan Saklar Continuous Tracking &amp; Uji Sinyal</h3>
+              <p class="step-card-desc">
+                Kembali ke layar utama Traccar Client dengan menekan tombol kembali (Back). Nyalakan saklar pemancar koordinat:
+              </p>
+
+              <div class="guide-callout-list">
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet green">1</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Geser Saklar "Continuous tracking" ke ON</div>
+                    <div>
+                      Sentuh toggle saklar hingga bergeser ke kanan dan berwarna <strong>Hijau</strong>.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet green">2</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Verifikasi Status Berubah Menjadi "Service started"</div>
+                    <div>
+                      Lihat baris paling atas pada layar aplikasi. Status harus bertuliskan <strong style="color:#166534">Service started</strong>. Jika masih tertulis <em>Service stopped</em>, matikan dan nyalakan saklar sekali lagi.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet sage">3</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Tekan Tombol "Send location" untuk Uji Coba Awal</div>
+                    <div>
+                      Tekan tombol <strong>"Send location"</strong> satu kali untuk mengirimkan koordinat perdana ke server CycloPon secara manual.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="guide-callout-row">
+                  <span class="guide-callout-bullet blue">4</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Marker Langsung Aktif di Live Map</div>
+                    <div>
+                      Buka tautan <strong>Live Map</strong> di browser penonton atau perangkat panitia. Marker dengan nomor BIB Anda akan langsung muncul di garis start atau posisi GPS terkini Anda!
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="step-card-hint" style="margin-top:8px">
-                ✅ Tekan <strong>"Send location"</strong> sekali untuk uji coba kirim koordinat awal.
+
+              <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px 14px;margin-top:14px;font-size:12.5px;color:#166534;line-height:1.5">
+                🎉 <strong>HP Siap Masuk Jersey:</strong> Setelah status "Service started", layar smartphone Anda dapat dimatikan sepenuhnya dan disimpan aman di saku belakang jersey.
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual Step 3: Crucial Android Location Permission ("Allow all the time") -->
+          <div class="guide-visual-card alert-card">
+            <div class="guide-phone-frame" data-src="/img/traccar-guide/traccar-location-permission.png" data-caption="Dialog Izin Android: Wajib Pilih 'Allow all the time' Agar GPS Tidak Mati Saat Layar Mati" title="Klik untuk memperbesar screenshot">
+              <img src="/img/traccar-guide/traccar-location-permission.png" alt="Screenshot Izin Lokasi Android Allow all the time" class="guide-phone-img" loading="lazy">
+              <div class="guide-zoom-badge" style="background:rgba(180, 83, 9, 0.9);border-color:#FCD34D">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <line x1="11" y1="8" x2="11" y2="14"></line>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+                <span>Perbesar Gambar</span>
+              </div>
+            </div>
+
+            <div class="guide-step-body">
+              <div class="step-card-num" style="color:#B45309">// LANGKAH 4 DARI 4 · SANGAT KRUSIAL</div>
+              <h3 class="step-card-title">Izin Lokasi Latar Belakang ("Allow all the time")</h3>
+              <p class="step-card-desc">
+                Penyebab nomor satu mengapa marker pesepeda "membeku" atau berhenti di peta adalah <strong>Android mematikan GPS saat layar mati</strong>. Ikuti langkah perlindungan berikut:
+              </p>
+
+              <div class="guide-callout-list">
+                <div class="guide-callout-row" style="background:#FFFBEB;border-color:#FDE68A">
+                  <span class="guide-callout-bullet amber">!</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title" style="color:#92400E">Wajib Pilih: "Allow all the time" (Izinkan sepanjang waktu)</div>
+                    <div style="color:#78350F;line-height:1.5">
+                      Saat sistem operasi ponsel memunculkan jendela dialog izin lokasi seperti gambar di samping, <strong>WAJIB ketuk pilihan paling atas: "Allow all the time"</strong>.
+                    </div>
+                  </div>
+                </div>
+
+                <div class="guide-callout-row" style="background:#FEF2F2;border-color:#FECACA">
+                  <span class="guide-callout-bullet red">✕</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title" style="color:#991B1B">Hindari Memilih "Only while using the app"</div>
+                    <div style="color:#7F1D1D;line-height:1.5">
+                      Jika Anda memilih opsi ini, Android akan <strong>langsung memutus sinyal GPS</strong> begitu Anda menekan tombol power untuk mematikan layar atau memasukkan ponsel ke kantong jersey!
+                    </div>
+                  </div>
+                </div>
+
+                <div class="guide-callout-row" style="background:#FEFCE8;border-color:#FEF08A">
+                  <span class="guide-callout-bullet sage">✓</span>
+                  <div class="guide-callout-text">
+                    <div class="guide-callout-title">Tips Tambahan: Nonaktifkan Optimalisasi Baterai</div>
+                    <div style="color:#475569;line-height:1.5">
+                      Agar aplikasi tidak dihentikan paksa oleh fitur *Doze Mode* ponsel saat gowes berjam-jam:
+                      <br>Buka <em>Setelan Ponsel &gt; Aplikasi &gt; Traccar Client &gt; Baterai</em> &gt; Ubah menjadi <strong>"Tidak Dibatasi" (Unrestricted)</strong>.
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -478,6 +618,15 @@ function renderGuide() {
 
       </main>
 
+      <!-- ── Lightbox Modal for Fullscreen Screenshots ── -->
+      <div id="guideLightbox" class="guide-lightbox-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Pratinjau Screenshot Panduan">
+        <div class="guide-lightbox-content">
+          <button id="guideLightboxClose" class="guide-lightbox-close" aria-label="Tutup pratinjau">✕</button>
+          <img id="guideLightboxImg" src="" alt="Pratinjau Screenshot" class="guide-lightbox-img">
+          <div id="guideLightboxCaption" class="guide-lightbox-caption"></div>
+        </div>
+      </div>
+
       <!-- ── Footer ── -->
       <footer class="landing-footer">
         <div class="footer-left">
@@ -512,6 +661,51 @@ function renderGuide() {
       }
     });
   }
+
+  // ── Lightbox Modal for Screenshots ──
+  const lightbox = document.getElementById('guideLightbox');
+  const lightboxImg = document.getElementById('guideLightboxImg');
+  const lightboxCaption = document.getElementById('guideLightboxCaption');
+  const lightboxClose = document.getElementById('guideLightboxClose');
+
+  function openLightbox(src, caption) {
+    if (!lightbox || !lightboxImg) return;
+    lightboxImg.src = src;
+    if (lightboxCaption) lightboxCaption.textContent = caption || '';
+    lightbox.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    if (!lightbox) return;
+    lightbox.style.display = 'none';
+    if (lightboxImg) lightboxImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.guide-phone-frame').forEach(frame => {
+    frame.addEventListener('click', () => {
+      const src = frame.getAttribute('data-src');
+      const caption = frame.getAttribute('data-caption');
+      if (src) openLightbox(src, caption);
+    });
+  });
+
+  if (lightboxClose) {
+    lightboxClose.addEventListener('click', closeLightbox);
+  }
+
+  if (lightbox) {
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lightbox && lightbox.style.display === 'flex') {
+      closeLightbox();
+    }
+  });
 
   // ── Smooth Scroll Navigation Pills ──
   const pills = [

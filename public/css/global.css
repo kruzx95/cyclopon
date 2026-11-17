@@ -1929,6 +1929,296 @@ label {
   }
 }
 
+/* ── CycloPon Visual Tutorial Guide Styles ── */
+.guide-visual-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  gap: 24px;
+  align-items: start;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.guide-visual-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.guide-visual-card.alert-card {
+  border-color: #FED7AA;
+  background: #FFFDF9;
+}
+
+.guide-visual-card.alert-card:hover {
+  border-color: #FDBA74;
+}
+
+.guide-phone-frame {
+  background: #0D1117;
+  border-radius: 14px;
+  border: 2.5px solid #1E293B;
+  box-shadow: 0 8px 24px rgba(13, 17, 23, 0.22);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.guide-phone-frame:hover {
+  transform: translateY(-2px);
+  border-color: #10B981;
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.18);
+}
+
+.guide-phone-frame:hover .guide-zoom-badge {
+  background: #1C3E24;
+  color: #FFFFFF;
+  border-color: #10B981;
+}
+
+.guide-phone-img {
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+  display: block;
+  object-fit: contain;
+  background: #000000;
+}
+
+.guide-zoom-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(13, 17, 23, 0.88);
+  backdrop-filter: blur(4px);
+  color: #F8FAFC;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.guide-step-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.guide-step-body .step-card-num {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #1C3E24;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.guide-step-body .step-card-title {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #0D1117;
+  margin-bottom: 8px;
+}
+
+.guide-step-body .step-card-desc {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #475569;
+  margin-bottom: 14px;
+}
+
+.guide-callout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guide-callout-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.guide-callout-row:hover {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+}
+
+.guide-callout-bullet {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.guide-callout-bullet.green {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #86EFAC;
+}
+
+.guide-callout-bullet.sage {
+  background: #1C3E24;
+  color: #FFFFFF;
+  border: 1px solid #1C3E24;
+}
+
+.guide-callout-bullet.blue {
+  background: #DBEAFE;
+  color: #1E40AF;
+  border: 1px solid #93C5FD;
+}
+
+.guide-callout-bullet.amber {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+
+.guide-callout-bullet.red {
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+
+.guide-callout-text {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+.guide-callout-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0D1117;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Lightbox Modal for Fullscreen Screenshots ── */
+.guide-lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(13, 17, 23, 0.88);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInModal 0.2s ease-out;
+}
+
+.guide-lightbox-content {
+  position: relative;
+  max-width: 92vw;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.guide-lightbox-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+  border: 2px solid #334155;
+  background: #000000;
+}
+
+.guide-lightbox-caption {
+  color: #F8FAFC;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 12px;
+  text-align: center;
+  background: rgba(13, 17, 23, 0.75);
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.guide-lightbox-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #1C3E24;
+  color: #FFFFFF;
+  border: 2px solid #FFFFFF;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.guide-lightbox-close:hover {
+  transform: scale(1.1);
+  background: #0D1117;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .guide-visual-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 16px;
+  }
+  .guide-phone-frame {
+    max-width: 250px;
+    margin: 0 auto 8px;
+  }
+  .guide-phone-img {
+    max-height: 380px;
+  }
+}
+
 
 /* ── Compact nav labels for small phones (<=480px) ── */
 @media (max-width: 480px) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v60';
+const CACHE_NAME = 'cyclopon-v61';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -18,6 +18,7 @@ const SHELL_ASSETS = [
   '/js/libs/html2canvas.min.js',
   '/js/app.js',
   '/js/pages/landing.js',
+  '/js/pages/guide.js',
   '/js/pages/rider-login.js',
   '/js/pages/rider-setup.js',
   '/js/pages/rider-cockpit.js',
@@ -27,6 +28,9 @@ const SHELL_ASSETS = [
   '/js/pages/admin-dashboard.js',
   '/js/pages/admin-notifications.js',
   '/js/pages/admin-event.js',
+  '/img/traccar-guide/traccar-settings-full.png',
+  '/img/traccar-guide/traccar-continuous-tracking.png',
+  '/img/traccar-guide/traccar-location-permission.png',
   '/manifest.json',
   '/icons/logo.svg',
   '/icons/logo-emblem.svg',
