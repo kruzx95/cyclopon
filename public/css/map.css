@@ -1196,6 +1196,101 @@
   display: none;
 }
 
+/* ── Sponsor Logo Strip (floating, bottom-center, above Leaderboard) ── */
+.sponsor-strip {
+  position: absolute;
+  bottom: 240px; /* desktop: di atas elevation drawer terbuka (~220px) */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 550;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid #0D1117;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.16);
+  pointer-events: auto;
+  max-width: min(92%, 680px);
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.map-container:not(.elev-open) .sponsor-strip {
+  bottom: 24px; /* drawer tertutup: strip turun ke bawah */
+}
+
+.sponsor-strip-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6B7280;
+  user-select: none;
+}
+
+.sponsor-strip-logos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap; /* mendukung lebih dari 1 logo sponsor */
+  max-width: 100%;
+}
+
+.sponsor-link {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 6px;
+  padding: 2px 4px;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sponsor-link:hover {
+  transform: scale(1.06);
+  opacity: 0.9;
+}
+
+.sponsor-logo {
+  height: 32px;
+  width: auto;
+  max-width: 130px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.06));
+}
+
+@media (min-width: 768px) {
+  .sponsor-logo {
+    height: 38px;
+    max-width: 160px;
+  }
+  .sponsor-strip-logos {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sponsor-strip {
+    bottom: 84px; /* mobile: di atas tombol Leaderboard melayang */
+    padding: 6px 12px;
+    gap: 3px;
+  }
+  .sponsor-logo {
+    height: 26px;
+    max-width: 95px;
+  }
+  .sponsor-strip-logos {
+    gap: 10px;
+  }
+}
+
 @media (max-width: 768px) {
   /* ── Clean & Spacious Header on Mobile ── */
   .live-map-header {

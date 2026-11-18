@@ -11,6 +11,9 @@ const virtualCot = require('../lib/virtual-cot');
 const gpxDir = path.join(__dirname, '..', 'public', 'gpx');
 if (!fs.existsSync(gpxDir)) fs.mkdirSync(gpxDir, { recursive: true });
 
+const sponsorUploadDir = path.join(__dirname, '..', 'public', 'uploads', 'sponsors');
+if (!fs.existsSync(sponsorUploadDir)) fs.mkdirSync(sponsorUploadDir, { recursive: true });
+
 const upload = multer({
   dest: gpxDir,
   fileFilter: (_req, file, cb) => {
@@ -24,6 +27,40 @@ const upload = multer({
   },
   limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
 });
+
+const sponsorStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, sponsorUploadDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || '.png';
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e6);
+    cb(null, `sponsor-${uniqueSuffix}${ext}`);
+  }
+});
+
+const uploadSponsorLogo = multer({
+  storage: sponsorStorage,
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['.png', '.jpg', '.jpeg', '.svg', '.webp'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) {
+      cb(null, true);
+    } else {
+      const err = new Error('Hanya file gambar (.png, .jpg, .jpeg, .svg, .webp) yang diperbolehkan');
+      err.status = 400;
+      cb(err);
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 } // 5 MB
+});
+
+function sanitizeSponsorLink(url) {
+  if (!url) return null;
+  const trimmed = String(url).trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/i.test(trimmed)) return `https://${trimmed}`;
+  return null;
+}
 
 // In-memory cache for computed event distance (km)
 const eventDistanceCache = new Map();
@@ -483,6 +520,74 @@ router.delete('/admin/:id', requireAdminAuth, (req, res) => {
   db.deleteEvent.run(event.id);
   eventDistanceCache.clear();
   res.json({ success: true, message: `Event #${event.id} berhasil dihapus` });
+});
+
+// GET /api/events/:id/sponsors — sponsor logo strip data (public)
+router.get('/:id/sponsors', (req, res) => {
+  const event = db.getEventById.get(req.params.id);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+  const sponsors = db.getSponsorsByEvent.all(req.params.id);
+  res.json(sponsors.map(s => ({
+    ...s,
+    link: sanitizeSponsorLink(s.link)
+  })));
+});
+
+// POST /api/events/admin/:id/sponsors — create sponsor for event
+router.post('/admin/:id/sponsors', requireAdminAuth, (req, res) => {
+  uploadSponsorLogo.single('logo')(req, res, (err) => {
+    if (err) return res.status(err.status || 400).json({ error: err.message });
+
+    const eventId = Number(req.params.id);
+    const event = db.getEventById.get(eventId);
+    if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+    const { name, link, sort_order, logo_path } = req.body || {};
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Nama sponsor wajib diisi' });
+    }
+
+    let resolvedLogo = '';
+    if (req.file) {
+      resolvedLogo = `/uploads/sponsors/${req.file.filename}`;
+    } else if (logo_path && logo_path.trim()) {
+      resolvedLogo = logo_path.trim();
+    } else {
+      return res.status(400).json({ error: 'Logo wajib di-upload atau berupa path/URL gambar' });
+    }
+
+    const cleanLink = sanitizeSponsorLink(link);
+    const order = Number.isFinite(Number(sort_order)) ? Number(sort_order) : 0;
+
+    const result = db.createSponsor.run({
+      event_id: eventId,
+      name: name.trim(),
+      logo_path: resolvedLogo,
+      link: cleanLink,
+      sort_order: order
+    });
+
+    const newSponsor = db.getSponsorById.get(result.lastInsertRowid);
+    res.status(201).json({ success: true, sponsor: newSponsor });
+  });
+});
+
+// DELETE /api/events/admin/sponsors/:id — delete sponsor
+router.delete('/admin/sponsors/:id', requireAdminAuth, (req, res) => {
+  const sponsor = db.getSponsorById.get(req.params.id);
+  if (!sponsor) return res.status(404).json({ error: 'Sponsor tidak ditemukan' });
+
+  // Delete uploaded logo file if managed by CycloPon (starts with /uploads/sponsors/sponsor-)
+  if (sponsor.logo_path && sponsor.logo_path.startsWith('/uploads/sponsors/sponsor-')) {
+    const filename = path.basename(sponsor.logo_path);
+    const targetFile = path.join(sponsorUploadDir, filename);
+    try {
+      if (fs.existsSync(targetFile)) fs.unlinkSync(targetFile);
+    } catch {}
+  }
+
+  db.deleteSponsor.run(req.params.id);
+  res.json({ success: true, message: 'Sponsor berhasil dihapus' });
 });
 
 module.exports = router;

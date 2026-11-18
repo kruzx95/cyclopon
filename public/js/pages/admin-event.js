@@ -16,18 +16,21 @@ async function renderAdminEvent(params) {
   let event       = { name: '', date: new Date().toISOString().slice(0,10), gpx_path: null, active: 1, cot_mode: 'off', access_pin: '' };
   let riders      = [];
   let checkpoints = [];
+  let sponsors    = [];
 
   if (!isNew) {
     try {
-      const [evRes, rRes, cpRes] = await Promise.all([
+      const [evRes, rRes, cpRes, sponRes] = await Promise.all([
         fetch(`/api/events/admin/${eventId}`, { credentials: 'include' }),
         fetch(`/api/admin/riders/events/${eventId}`, { credentials: 'include' }),
-        fetch(`/api/events/${eventId}/checkpoints`, { credentials: 'include' })
+        fetch(`/api/events/${eventId}/checkpoints`, { credentials: 'include' }),
+        fetch(`/api/events/${eventId}/sponsors`, { credentials: 'include' })
       ]);
       if (!evRes.ok) { Router.navigate('/admin/dashboard'); return; }
       event       = await evRes.json();
       riders      = rRes.ok ? await rRes.json() : [];
       checkpoints = cpRes.ok ? await cpRes.json() : [];
+      sponsors    = sponRes.ok ? await sponRes.json() : [];
     } catch { Router.navigate('/admin/dashboard'); return; }
   }
 
@@ -226,6 +229,69 @@ async function renderAdminEvent(params) {
               </thead>
               <tbody id="cpTableBody">
                 ${renderCheckpointTableRows(checkpoints)}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Sponsor & Partner Logos (Live Map) -->
+        <div class="card" style="margin-bottom:20px">
+          <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
+            <div>
+              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// SPONSORSHIP &amp; PARTNER LOGOS</span>
+              <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
+                Logo Sponsor Live Map
+                <span class="badge badge-cyan" id="sponsorCountBadge" style="margin-left:6px">${sponsors.length}</span>
+              </h2>
+              <p style="color:#6B7280;font-size:12px;margin-top:2px;margin-bottom:0">Logo sponsor yang melayang di bagian bawah Live Map publik dan dapat diklik menuju website masing-masing</p>
+            </div>
+            <button class="btn btn-primary" style="font-size:12.5px;padding:7px 14px" id="btnShowAddSponsor">
+              + Tambah Sponsor
+            </button>
+          </div>
+
+          <div id="addSponsorContainer" style="display:none;margin-bottom:16px;background:#F9FAFB;padding:16px;border:1px solid #E5E7EB;border-radius:8px">
+            <form id="addSponsorForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="sponsorName">Nama Sponsor *</label>
+                  <input class="input" id="sponsorName" placeholder="Contoh: Suddenly CC / Polygon" required>
+                </div>
+                <div class="form-group">
+                  <label for="sponsorLink">Tautan Website / Instagram</label>
+                  <input class="input" id="sponsorLink" placeholder="https://instagram.com/suddenlycc">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="sponsorFile">Upload File Logo (.png, .jpg, .svg, .webp)</label>
+                  <input class="input" type="file" id="sponsorFile" accept="image/*">
+                </div>
+                <div class="form-group">
+                  <label for="sponsorLogoPath">Atau Path / URL Logo Gambar</label>
+                  <input class="input" id="sponsorLogoPath" placeholder="/uploads/sponsors/sdnlycc.jpeg">
+                </div>
+                <div class="form-group" style="max-width:120px">
+                  <label for="sponsorSort">Urutan</label>
+                  <input class="input" type="number" id="sponsorSort" value="${sponsors.length + 1}">
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <button type="submit" class="btn btn-primary" id="btnSaveSponsor" style="font-size:12.5px">Simpan Sponsor</button>
+                <button type="button" class="btn btn-outline" id="btnCancelAddSponsor" style="font-size:12.5px">Batal</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="table-responsive-wrapper">
+            <table class="rider-table">
+              <thead>
+                <tr>
+                  <th style="width:110px">Logo</th><th>Nama Sponsor</th><th>Tautan (Link)</th><th style="width:80px">Urutan</th><th style="width:80px">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="sponsorTableBody">
+                ${renderSponsorTableRows(sponsors)}
               </tbody>
             </table>
           </div>
@@ -697,6 +763,76 @@ async function renderAdminEvent(params) {
     });
   });
 
+  // ── Sponsor management handler ──
+  const btnShowAddSponsor = document.getElementById('btnShowAddSponsor');
+  const addSponsorBox = document.getElementById('addSponsorContainer');
+  const btnCancelAddSponsor = document.getElementById('btnCancelAddSponsor');
+  if (btnShowAddSponsor && addSponsorBox) {
+    btnShowAddSponsor.addEventListener('click', () => {
+      addSponsorBox.style.display = addSponsorBox.style.display === 'none' ? 'block' : 'none';
+      if (addSponsorBox.style.display === 'block') {
+        document.getElementById('sponsorName')?.focus();
+      }
+    });
+  }
+  if (btnCancelAddSponsor && addSponsorBox) {
+    btnCancelAddSponsor.addEventListener('click', () => {
+      addSponsorBox.style.display = 'none';
+    });
+  }
+
+  const addSponsorForm = document.getElementById('addSponsorForm');
+  if (addSponsorForm) {
+    addSponsorForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('btnSaveSponsor');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Menyimpan...';
+
+      const fileInput = document.getElementById('sponsorFile');
+      const name = document.getElementById('sponsorName').value.trim();
+      const link = document.getElementById('sponsorLink').value.trim();
+      const logoPath = document.getElementById('sponsorLogoPath').value.trim();
+      const sortOrder = document.getElementById('sponsorSort').value;
+
+      const formData = new FormData();
+      formData.append('name', name);
+      if (link) formData.append('link', link);
+      if (sortOrder) formData.append('sort_order', sortOrder);
+
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        formData.append('logo', fileInput.files[0]);
+      } else if (logoPath) {
+        formData.append('logo_path', logoPath);
+      } else {
+        showToast('Pilih file logo atau masukkan URL logo.', 'error');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Simpan Sponsor';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/events/admin/${eventId}/sponsors`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(`Sponsor "${name}" berhasil ditambahkan!`, 'success');
+          await renderAdminEvent({ id: eventId });
+        } else {
+          showToast(data.error || 'Gagal menambahkan sponsor', 'error');
+        }
+      } catch (err) {
+        showToast('Terjadi kesalahan jaringan.', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Simpan Sponsor';
+      }
+    });
+  }
+
   // ── Show import-rider panel ──
   document.getElementById('btnShowImportRider')?.addEventListener('click', () => {
     const container = document.getElementById('importRiderContainer');
@@ -869,6 +1005,47 @@ async function renderAdminEvent(params) {
     });
   });
 }
+
+function renderSponsorTableRows(sponsors) {
+  if (!sponsors || !sponsors.length) {
+    return '<tr><td colspan="5" style="text-align:center;color:#6B7280;padding:24px;font-weight:600">Belum ada logo sponsor. Tambahkan logo sponsor untuk ditampilkan pada Live Map!</td></tr>';
+  }
+  return sponsors.map(s => {
+    const rawLink = s.link ? String(s.link).trim() : '';
+    const safeLink = rawLink && /^https?:\/\//i.test(rawLink) ? escapeHtml(rawLink) : '';
+    return `
+      <tr>
+        <td>
+          <img src="${escapeHtml(s.logo_path)}" alt="${escapeHtml(s.name)}" style="height:32px;max-width:100px;object-fit:contain;background:#F9FAFB;padding:2px 4px;border:1px solid #E5E7EB;border-radius:4px">
+        </td>
+        <td><strong style="color:#0D1117">${escapeHtml(s.name)}</strong></td>
+        <td>
+          ${safeLink
+            ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" style="color:#2563EB;font-weight:600;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🔗 ${safeLink}</a>`
+            : '<span style="color:#9CA3AF">—</span>'}
+        </td>
+        <td><span class="badge badge-cyan">${s.sort_order || 0}</span></td>
+        <td>
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteSponsor(${s.id}, '${escapeHtml(s.name).replace(/'/g, "\\'")}')">
+            Hapus
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function deleteSponsor(sponsorId, name) {
+  if (!confirm(`Hapus sponsor "${name}"?`)) return;
+  const res = await fetch(`/api/events/admin/sponsors/${sponsorId}`, { method: 'DELETE', credentials: 'include' });
+  if (res.ok) {
+    showToast(`Sponsor "${name}" berhasil dihapus.`, 'success');
+    Router.resolve(window.location.pathname);
+  } else {
+    showToast('Gagal menghapus sponsor.', 'error');
+  }
+}
+window.deleteSponsor = deleteSponsor;
 
 function renderCheckpointTableRows(checkpoints) {
   if (!checkpoints.length) {

@@ -77,7 +77,7 @@ app.use((req, res, next) => {
 });
 
 // Ensure directories exist
-['data', 'public/gpx'].forEach(dir => {
+['data', 'public/gpx', 'public/uploads/sponsors'].forEach(dir => {
   const fullPath = path.join(__dirname, dir);
   if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
 });

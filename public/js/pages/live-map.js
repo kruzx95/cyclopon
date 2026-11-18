@@ -235,6 +235,12 @@ async function renderLiveMap(params) {
             </button>
           </div>
 
+          <!-- ── Sponsor Logo Strip (di atas Leaderboard) ── -->
+          <div id="sponsorStrip" class="sponsor-strip" style="display:none">
+            <span class="sponsor-strip-label">Didukung oleh</span>
+            <div class="sponsor-strip-logos" id="sponsorStripLogos"></div>
+          </div>
+
           <!-- ── Time Machine Replay Control Bar ── -->
           <div id="replayControlBar" class="replay-control-bar" style="display:none">
             <div class="replay-bar-inner">
@@ -415,6 +421,27 @@ async function renderLiveMap(params) {
   let isLiveMapMounted = true;
   let savedPin = sessionStorage.getItem('event_pin_' + eventId) || '';
 
+  function renderSponsorStrip(sponsors) {
+    const strip  = document.getElementById('sponsorStrip');
+    const logos  = document.getElementById('sponsorStripLogos');
+    if (!strip || !logos) return;
+    if (!sponsors || !sponsors.length) {
+      strip.style.display = 'none';
+      return;
+    }
+    logos.innerHTML = sponsors.map(s => {
+      const name = escapeHtml(s.name || 'Sponsor');
+      const logoPath = escapeHtml(s.logo_path || '');
+      const rawLink = s.link ? String(s.link).trim() : '';
+      const safeLink = rawLink && /^https?:\/\//i.test(rawLink) ? escapeHtml(rawLink) : '';
+      const logo = `<img class="sponsor-logo" src="${logoPath}" alt="${name}" title="${name}" loading="lazy">`;
+      return safeLink
+        ? `<a class="sponsor-link" href="${safeLink}" target="_blank" rel="noopener noreferrer" title="${name} — Klik untuk kunjungi tautan">${logo}</a>`
+        : `<span class="sponsor-link" title="${name}">${logo}</span>`;
+    }).join('');
+    strip.style.display = 'flex';
+  }
+
   function eventFetch(url, options = {}) {
     const pin = savedPin || sessionStorage.getItem('event_pin_' + eventId) || '';
     if (!pin) return fetch(url, options);
@@ -427,11 +454,12 @@ async function renderLiveMap(params) {
   let checkpoints = [];
   const splitsCache = {};
   try {
-    const [evRes, rRes, cpRes, spRes] = await Promise.all([
+    const [evRes, rRes, cpRes, spRes, sponRes] = await Promise.all([
       fetch(`/api/events/${eventId}`),
       eventFetch(`/api/events/${eventId}/riders`),
       eventFetch(`/api/events/${eventId}/checkpoints`),
-      eventFetch(`/api/events/${eventId}/splits`)
+      eventFetch(`/api/events/${eventId}/splits`),
+      fetch(`/api/events/${eventId}/sponsors`)
     ]);
     if (!evRes.ok) {
       if (evRes.status === 404) throw new Error('Event tidak ditemukan.');
@@ -461,6 +489,14 @@ async function renderLiveMap(params) {
     initialSplits.forEach(sp => {
       splitsCache[`${sp.rider_id}_${sp.checkpoint_id}`] = sp;
     });
+
+    // Sponsor logo strip — silent, never blocks the live map
+    let sponsors = [];
+    if (sponRes && sponRes.ok) {
+      sponsors = await sponRes.json().catch(() => []);
+      if (!Array.isArray(sponsors)) sponsors = [];
+    }
+    renderSponsorStrip(sponsors);
   } catch (err) {
     app.innerHTML = `
       <div style="padding:60px 20px;text-align:center;color:var(--text-secondary)">

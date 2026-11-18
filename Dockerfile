@@ -26,7 +26,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
 # Ensure persistent directories exist
-RUN mkdir -p data public/gpx
+RUN mkdir -p data public/gpx public/uploads/sponsors
 
 EXPOSE 3000
 

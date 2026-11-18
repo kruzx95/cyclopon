@@ -39,6 +39,7 @@ services:
     volumes:
       - cyclopon_data:/app/data
       - cyclopon_gpx:/app/public/gpx
+      - cyclopon_uploads:/app/public/uploads
     depends_on:
       - traccar
     networks:
@@ -68,6 +69,8 @@ volumes:
     name: cyclopon_data
   cyclopon_gpx:
     name: cyclopon_gpx
+  cyclopon_uploads:
+    name: cyclopon_uploads
   traccar_data:
     name: cyclopon_traccar_data
   traccar_logs:

@@ -111,6 +111,17 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_checkpoints_event_km ON checkpoints(event_id, km_distance);
   CREATE INDEX IF NOT EXISTS idx_rider_splits_event ON rider_splits(event_id);
 
+  CREATE TABLE IF NOT EXISTS sponsors (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id   INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    name       TEXT NOT NULL,
+    logo_path  TEXT NOT NULL,
+    link       TEXT,
+    sort_order INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_sponsors_event ON sponsors(event_id);
+
   CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT
@@ -249,6 +260,12 @@ module.exports = {
   getActiveVirtualDnfByEvent: db.prepare("SELECT v.*, r.bib, r.name, r.color FROM virtual_dnf v JOIN riders r ON r.id = v.rider_id WHERE v.event_id = ? AND v.status = 'ACTIVE' ORDER BY v.id ASC"),
   getVirtualDnfByRider: db.prepare('SELECT * FROM virtual_dnf WHERE rider_id = ?'),
   voidVirtualDnf: db.prepare("UPDATE virtual_dnf SET status='VOID', voided_at=datetime('now'), void_reason=@reason WHERE event_id=@event_id AND rider_id=@rider_id AND status='ACTIVE'"),
+
+  // Sponsors (Live Map Logo Strip)
+  getSponsorsByEvent: db.prepare('SELECT id, name, logo_path, link, sort_order FROM sponsors WHERE event_id = ? ORDER BY sort_order ASC, id ASC'),
+  getSponsorById:     db.prepare('SELECT * FROM sponsors WHERE id = ?'),
+  createSponsor:      db.prepare('INSERT INTO sponsors (event_id, name, logo_path, link, sort_order) VALUES (@event_id, @name, @logo_path, @link, @sort_order)'),
+  deleteSponsor:      db.prepare('DELETE FROM sponsors WHERE id = ?'),
 
   // System Settings (Notifications, etc.)
   getSetting:     db.prepare('SELECT value FROM settings WHERE key = ?'),
