@@ -36,10 +36,20 @@ async function renderEventActivity(params) {
   let riders = [];
   let checkpoints = [];
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryPin = urlParams.get('pin') || urlParams.get('event_pin');
+  if (queryPin) {
+    sessionStorage.setItem('event_pin_' + eventId, queryPin);
+  }
+  let savedPin = sessionStorage.getItem('event_pin_' + eventId) || '';
+  let isRosterLocked = false;
+
   try {
+    const ridersUrl = `/api/events/${eventId}/riders` + (savedPin ? `?pin=${encodeURIComponent(savedPin)}` : '');
+    const ridersHeaders = savedPin ? { 'x-event-pin': savedPin } : {};
     const [evRes, rRes, cpRes] = await Promise.all([
       fetch(`/api/events/${eventId}`),
-      fetch(`/api/events/${eventId}/riders`),
+      fetch(ridersUrl, { headers: ridersHeaders }),
       fetch(`/api/events/${eventId}/checkpoints`).catch(() => ({ ok: false }))
     ]);
 
@@ -50,7 +60,13 @@ async function renderEventActivity(params) {
     }
 
     event = await evRes.json();
-    riders = rRes.ok ? await rRes.json() : [];
+    if (rRes.status === 403) {
+      isRosterLocked = true;
+      riders = [];
+    } else {
+      riders = rRes.ok ? await rRes.json() : [];
+      if (!Array.isArray(riders)) riders = [];
+    }
     checkpoints = cpRes.ok ? await cpRes.json() : [];
   } catch (err) {
     showToast('Gagal terhubung ke server.', 'error');
@@ -108,7 +124,7 @@ async function renderEventActivity(params) {
             <a href="/" data-link class="btn-gpx-chip activity-btn-beranda" title="Kembali ke Beranda">
               <span>← BERANDA</span>
             </a>
-            <a href="/watch/${event.id}" data-link class="btn-watch-action activity-btn-radar" title="Buka Live Radar GPS">
+            <a href="/watch/${event.id}${savedPin ? `?pin=${encodeURIComponent(savedPin)}` : ''}" data-link class="btn-watch-action activity-btn-radar" title="Buka Live Radar GPS">
               <span>BUKA RADAR</span>
               <span class="btn-arrow-icon">↗</span>
             </a>
@@ -144,6 +160,11 @@ async function renderEventActivity(params) {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="10"/></svg>
                     <span>${escapeHtml(event.date || 'TBA')}</span>
                   </span>
+                  ${event.access_pin_required ? `
+                    <span class="event-date-chip" style="font-weight:800;color:#B91C1C;background:#FEF2F2;border-color:#FCA5A5">
+                      <span>🔒 DIBATASI (PIN)</span>
+                    </span>
+                  ` : ''}
                   ${event.gpx_path ? `
                     <span class="event-gpx-chip">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -180,6 +201,21 @@ async function renderEventActivity(params) {
               </div>
             </div>
           </div>
+
+          ${(event.access_pin_required && isRosterLocked) ? `
+            <div id="activityLockedBanner" style="background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:12px">
+                <span style="font-size:26px">🔒</span>
+                <div>
+                  <div style="font-weight:900;color:#991B1B;font-size:14px;letter-spacing:-0.01em">Event Ini Dibatasi (PIN Akses Diperlukan)</div>
+                  <div style="font-size:12px;color:#7F1D1D;line-height:1.45">Event ini diproteksi dengan PIN Akses di <strong>Kelola Event</strong> oleh panitia. Masukkan PIN Akses untuk membuka data roster peserta lengkap &amp; telemetri live radar.</div>
+                </div>
+              </div>
+              <button id="btnUnlockEventActivity" class="btn" style="background:#991B1B;color:#FFF;font-weight:800;font-size:12px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer">
+                🔑 Masukkan PIN Akses
+              </button>
+            </div>
+          ` : ''}
 
           <!-- ── Section Header with Title & Tab Switcher ── -->
           <div class="activity-section-header">
@@ -408,6 +444,16 @@ async function renderEventActivity(params) {
                   </div>
                 </div>
 
+                ${event.access_pin_required ? `
+                  <div style="margin-bottom:16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 14px">
+                    <label for="joinEventPin" style="display:block;font-size:11px;font-weight:800;color:#991B1B;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px">
+                      🔐 PIN AKSES EVENT *
+                    </label>
+                    <input id="joinEventPin" required type="password" inputmode="numeric" maxlength="8" class="modal-input-field" placeholder="PIN akses dari panitia" value="${escapeHtml(savedPin || '')}" style="border-color:#F87171;background:#FFF">
+                    <p style="font-size:11px;color:#7F1D1D;margin:5px 0 0;line-height:1.4">Event ini dibatasi oleh panitia di Kelola Event. Wajib memasukkan PIN akses resmi.</p>
+                  </div>
+                ` : ''}
+
                 <p id="joinErrorMsg" style="color:#DC2626;font-size:12px;min-height:16px;margin-bottom:12px;font-weight:700"></p>
 
                 <div style="display:flex;gap:10px">
@@ -587,6 +633,7 @@ async function renderEventActivity(params) {
       const phone = document.getElementById('joinPhone').value.trim();
       const role = document.getElementById('joinRole').value;
       const bib = document.getElementById('joinBib').value.trim();
+      const eventPin = document.getElementById('joinEventPin')?.value.trim() || savedPin || undefined;
 
       try {
         const res = await fetch('/api/auth/rider/register', {
@@ -597,7 +644,8 @@ async function renderEventActivity(params) {
             name,
             phone: phone || null,
             role,
-            bib: bib || null
+            bib: bib || null,
+            event_pin: eventPin
           })
         });
 
@@ -605,6 +653,10 @@ async function renderEventActivity(params) {
         if (res.ok && data.success) {
           sessionStorage.setItem('riderConfig', JSON.stringify(data));
           localStorage.setItem('riderConfig', JSON.stringify(data));
+          if (eventPin) {
+            sessionStorage.setItem('event_pin_' + eventId, eventPin);
+            savedPin = eventPin;
+          }
 
           riders.push(data.rider);
 
@@ -619,6 +671,16 @@ async function renderEventActivity(params) {
         joinErrMsg.textContent = 'Koneksi ke server bermasalah.';
         btnSubmitJoin.disabled = false;
         btnSubmitJoin.textContent = 'Daftar & Ambil Tiket QR →';
+      }
+    });
+
+    // ── Unlock Event Button on Banner ──
+    document.getElementById('btnUnlockEventActivity')?.addEventListener('click', () => {
+      if (typeof promptEventAccess === 'function') {
+        promptEventAccess(event, (pin) => {
+          sessionStorage.setItem('event_pin_' + eventId, pin);
+          Router.navigate(`/events/${eventId}?pin=${encodeURIComponent(pin)}`, true);
+        });
       }
     });
   }

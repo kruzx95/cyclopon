@@ -91,7 +91,9 @@ router.post('/rider', (req, res) => {
     if (!event_pin || !verifyAccessPin(event, event_pin)) {
       recordFailure();
       return res.status(401).json({
-        error: 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
+        error: event_pin
+          ? 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
+          : 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
       });
     }
   }
@@ -185,7 +187,9 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
   if (isAccessPinRequired(event)) {
     if (!event_pin || !verifyAccessPin(event, event_pin)) {
       return res.status(403).json({
-        error: 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
+        error: event_pin
+          ? 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
+          : 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
       });
     }
   }

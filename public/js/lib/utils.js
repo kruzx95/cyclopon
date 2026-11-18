@@ -328,6 +328,139 @@ function normalizeSpeedKmh(rawSpeed, isKmh = false) {
   return Math.min(90, Math.round(kmh * 10) / 10);
 }
 
+/**
+ * Prompts user for Event Access PIN if event is restricted (has access_pin_required: true).
+ * If already verified in sessionStorage, calls onSuccess(pin) immediately.
+ * Otherwise shows a modal notifying that the event is restricted,
+ * with PIN input, verifying with /api/events/:id/verify-pin.
+ *
+ * @param {object} event - { id, name, access_pin_required }
+ * @param {function(string)} onSuccess - callback when PIN is verified
+ * @param {object} [options] - { onCancel, targetName }
+ */
+function promptEventAccess(event, onSuccess, options = {}) {
+  if (!event || !event.access_pin_required) {
+    if (typeof onSuccess === 'function') onSuccess('');
+    return;
+  }
+
+  const eventId = Number(event.id);
+  const savedPin = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('event_pin_' + eventId) : null;
+  if (savedPin) {
+    if (typeof onSuccess === 'function') onSuccess(savedPin);
+    return;
+  }
+
+  if (typeof document === 'undefined') return;
+
+  // Remove existing modal if any
+  document.getElementById('eventPinAccessModal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'eventPinAccessModal';
+  modal.className = 'event-pin-modal-overlay';
+  modal.innerHTML = `
+    <div class="event-pin-modal-card">
+      <div class="event-pin-modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">🔒</span>
+          <div>
+            <div style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#B91C1C;letter-spacing:0.06em">// EVENT DIBATASI</div>
+            <h3 style="font-size:17px;font-weight:900;color:#0D1117;margin:2px 0 0;letter-spacing:-0.02em">Akses Event Terkunci</h3>
+          </div>
+        </div>
+        <button id="btnClosePinModal" style="background:transparent;border:none;font-size:20px;cursor:pointer;color:#6B7280;padding:4px 8px;border-radius:6px;line-height:1" title="Tutup">✕</button>
+      </div>
+
+      <div class="event-pin-modal-body">
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:left">
+          <div style="font-size:13px;color:#991B1B;font-weight:800;margin-bottom:4px">
+            Event "${typeof escapeHtml === 'function' ? escapeHtml(event.name || 'Event') : (event.name || 'Event')}" dibatasi
+          </div>
+          <div style="font-size:12px;color:#7F1D1D;line-height:1.45">
+            Event ini telah diatur dengan PIN Akses oleh panitia di <strong>Kelola Event</strong>. Silakan masukkan PIN Akses resmi untuk melanjutkan.
+          </div>
+        </div>
+
+        <form id="formEventPinAccess" onsubmit="return false;">
+          <div style="margin-bottom:14px;text-align:left">
+            <label for="inputEventAccessPin" style="display:block;font-size:11px;font-weight:800;color:#374151;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">PIN AKSES EVENT (4 - 8 DIGIT)</label>
+            <input id="inputEventAccessPin" type="password" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Masukkan PIN dari panitia"
+                   style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #0D1117;border-radius:10px;font-size:16px;font-weight:800;letter-spacing:4px;text-align:center;background:#FFF;color:#0D1117;outline:none" autofocus>
+          </div>
+
+          <div id="eventPinErrorMsg" style="color:#DC2626;font-size:12px;font-weight:700;margin-bottom:14px;min-height:16px;text-align:center"></div>
+
+          <div style="display:flex;gap:10px">
+            <button type="submit" id="btnSubmitEventPin" style="flex:1;background:#0D1117;color:#FFF;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:0.02em;transition:background 0.2s">
+              Buka Akses Event →
+            </button>
+            <button type="button" id="btnCancelEventPin" style="background:#FFF;border:1.5px solid #E5E7EB;border-radius:10px;padding:12px 18px;font-size:13px;font-weight:700;color:#4B5563;cursor:pointer">
+              Batal
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const input = document.getElementById('inputEventAccessPin');
+  const errorEl = document.getElementById('eventPinErrorMsg');
+  const btnSubmit = document.getElementById('btnSubmitEventPin');
+  const form = document.getElementById('formEventPinAccess');
+
+  setTimeout(() => input?.focus(), 60);
+
+  function closeModal() {
+    modal.remove();
+    if (typeof options.onCancel === 'function') options.onCancel();
+  }
+
+  document.getElementById('btnClosePinModal')?.addEventListener('click', closeModal);
+  document.getElementById('btnCancelEventPin')?.addEventListener('click', closeModal);
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pin = (input?.value || '').trim();
+    if (!pin) {
+      errorEl.textContent = 'Masukkan PIN Akses terlebih dahulu.';
+      input?.focus();
+      return;
+    }
+
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Memverifikasi...';
+    errorEl.textContent = '';
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/verify-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        sessionStorage.setItem('event_pin_' + eventId, pin);
+        if (typeof showToast === 'function') showToast('Akses event berhasil dibuka!', 'success');
+        modal.remove();
+        if (typeof onSuccess === 'function') onSuccess(pin);
+      } else {
+        errorEl.textContent = data.error || 'PIN Akses Event salah. Periksa kembali PIN dari panitia.';
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Buka Akses Event →';
+        input?.focus();
+        input?.select();
+      }
+    } catch {
+      errorEl.textContent = 'Gagal menghubungi server backend.';
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Buka Akses Event →';
+    }
+  });
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     showToast,
@@ -342,7 +475,8 @@ if (typeof module !== 'undefined' && module.exports) {
     loadScript,
     loadScripts,
     normalizeBattery,
-    normalizeSpeedKmh
+    normalizeSpeedKmh,
+    promptEventAccess
   };
 }
 

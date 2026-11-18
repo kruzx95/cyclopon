@@ -30,8 +30,8 @@ function requireEventAccessForResults(req, res, next) {
     }
   }
 
-  // Check query parameter for event PIN
-  const queryPin = req.query.pin || req.query.event_pin;
+  // Check query parameter or header for event PIN
+  const queryPin = req.query.pin || req.query.event_pin || req.headers['x-event-pin'];
   if (queryPin && verifyAccessPin(event, queryPin)) {
     return next();
   }

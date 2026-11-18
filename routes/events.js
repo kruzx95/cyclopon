@@ -5,7 +5,7 @@ const path    = require('path');
 const fs      = require('fs');
 const db      = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
-const { sanitizeEvent, normalizeAccessPin } = require('../lib/event-access');
+const { sanitizeEvent, normalizeAccessPin, isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
 const virtualCot = require('../lib/virtual-cot');
 
 const gpxDir = path.join(__dirname, '..', 'public', 'gpx');
@@ -236,8 +236,8 @@ function requireEventAccess(req, res, next) {
     }
   }
 
-  // Check query parameter for event PIN (e.g., ?pin=1234)
-  const queryPin = req.query.pin || req.query.event_pin;
+  // Check query parameter or header for event PIN (e.g., ?pin=1234 or header x-event-pin)
+  const queryPin = req.query.pin || req.query.event_pin || req.headers['x-event-pin'];
   if (queryPin && verifyAccessPin(event, queryPin)) {
     req.event = event;
     return next();
@@ -250,6 +250,28 @@ function requireEventAccess(req, res, next) {
     event_id: eventId
   });
 }
+
+// POST /api/events/:id/verify-pin — verify event access PIN for riders / viewers
+router.post('/:id/verify-pin', (req, res) => {
+  const eventId = req.params.id;
+  const event = db.getEventById.get(eventId);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  // If event has no access PIN, it's always open
+  if (!isAccessPinRequired(event)) {
+    return res.json({ success: true, access_pin_required: false });
+  }
+
+  const { pin } = req.body || {};
+  if (!pin || !verifyAccessPin(event, pin)) {
+    return res.status(401).json({
+      success: false,
+      error: 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
+    });
+  }
+
+  res.json({ success: true, access_pin_required: true });
+});
 
 // GET /api/events/:id/riders — public rider list (no PIN)
 // Protected by event access PIN if configured

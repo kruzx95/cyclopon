@@ -407,6 +407,23 @@ async function renderLiveMap(params) {
   loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css');
   loadCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css');
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryPin = urlParams.get('pin') || urlParams.get('event_pin');
+  if (queryPin) {
+    sessionStorage.setItem('event_pin_' + eventId, queryPin);
+  }
+  let savedPin = sessionStorage.getItem('event_pin_' + eventId) || '';
+
+  function eventFetch(url, options = {}) {
+    const pin = savedPin || sessionStorage.getItem('event_pin_' + eventId) || '';
+    if (!pin) return fetch(url, options);
+    const hasQuery = url.includes('?');
+    const separator = hasQuery ? '&' : '?';
+    const targetUrl = url.includes('pin=') ? url : `${url}${separator}pin=${encodeURIComponent(pin)}`;
+    const headers = { ...(options.headers || {}), 'x-event-pin': pin };
+    return fetch(targetUrl, { ...options, headers });
+  }
+
   // ── Fetch event + riders + checkpoints + splits ──
   let event, riders;
   let checkpoints = [];
@@ -414,7 +431,7 @@ async function renderLiveMap(params) {
   try {
     const [evRes, rRes, cpRes, spRes] = await Promise.all([
       fetch(`/api/events/${eventId}`),
-      fetch(`/api/events/${eventId}/riders`),
+      eventFetch(`/api/events/${eventId}/riders`),
       fetch(`/api/events/${eventId}/checkpoints`),
       fetch(`/api/events/${eventId}/splits`)
     ]);
@@ -423,8 +440,23 @@ async function renderLiveMap(params) {
       const errData = await evRes.json().catch(() => ({}));
       throw new Error(errData.error || `Tidak dapat terhubung ke server (HTTP ${evRes.status}). Pastikan server backend sedang aktif.`);
     }
-    event       = await evRes.json();
+    event = await evRes.json();
+
+    if (rRes.status === 403) {
+      if (typeof promptEventAccess === 'function') {
+        promptEventAccess(event, (pin) => {
+          sessionStorage.setItem('event_pin_' + eventId, pin);
+          Router.navigate(`/watch/${eventId}?pin=${encodeURIComponent(pin)}`, true);
+        }, {
+          onCancel: () => Router.navigate('/')
+        });
+        return;
+      }
+      throw new Error('Event ini dibatasi dengan PIN Akses. Silakan masukkan PIN Akses dari panitia.');
+    }
+
     riders      = await rRes.json();
+    if (!Array.isArray(riders)) riders = [];
     checkpoints = cpRes.ok ? await cpRes.json() : [];
     const initialSplits = spRes.ok ? await spRes.json() : [];
     initialSplits.forEach(sp => {
@@ -1202,7 +1234,7 @@ async function renderLiveMap(params) {
 
   async function refreshVirtualCot() {
     try {
-      const res = await fetch(`/api/events/${eventId}/virtual-cot`);
+      const res = await eventFetch(`/api/events/${eventId}/virtual-cot`);
       if (!res.ok) return;
       const data = await res.json();
 
@@ -2925,7 +2957,7 @@ async function renderLiveMap(params) {
 
     let historyPoints = [];
     try {
-      const res = await fetch(`/api/events/${eventId}/history?limit=10000`);
+      const res = await eventFetch(`/api/events/${eventId}/history?limit=10000`);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       historyPoints = await res.json();
     } catch (err) {
@@ -3848,13 +3880,13 @@ async function renderLiveMap(params) {
     if (isReplayActive) return;
     try {
       // 1. First attempt the optimized latest-position endpoint
-      let res = await fetch(`/api/events/${eventId}/positions/latest`);
+      let res = await eventFetch(`/api/events/${eventId}/positions/latest`);
       let points = [];
       if (res.ok) {
         points = await res.json();
       } else {
         // Fallback to standard history if latest endpoint unavailable
-        res = await fetch(`/api/events/${eventId}/history`);
+        res = await eventFetch(`/api/events/${eventId}/history`);
         if (res.ok) {
           const allHistory = await res.json();
           if (Array.isArray(allHistory)) {

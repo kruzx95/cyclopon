@@ -301,20 +301,70 @@ function renderLanding() {
         dossierLocation.textContent = topEvent.date ? `EDISI: ${topEvent.date} · RESMI` : 'TASIKMALAYA ENDURANCE CIRCUIT';
       }
       if (dossierCode) {
-        dossierCode.textContent = topEvent.active ? 'LIVE EVENT' : 'STAGE 01';
+        if (topEvent.access_pin_required) {
+          dossierCode.innerHTML = '<span style="color:#FCA5A5;font-weight:900">🔒 DIBATASI (PIN)</span>';
+        } else {
+          dossierCode.textContent = topEvent.active ? 'LIVE EVENT' : 'STAGE 01';
+        }
       }
-      if (dossierLaunch) dossierLaunch.setAttribute('href', `/watch/${topEvent.id}`);
+      if (dossierLaunch) {
+        dossierLaunch.setAttribute('href', `/watch/${topEvent.id}`);
+        dossierLaunch.onclick = (e) => {
+          if (topEvent.access_pin_required) {
+            const saved = sessionStorage.getItem('event_pin_' + topEvent.id);
+            if (!saved) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof promptEventAccess === 'function') {
+                promptEventAccess(topEvent, (pin) => {
+                  Router.navigate(`/watch/${topEvent.id}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                });
+              } else {
+                Router.navigate(`/watch/${topEvent.id}`);
+              }
+            }
+          }
+        };
+      }
 
       // Update Roster Guide section action links with active event info
       const guideRosterBtn = document.getElementById('btnGuideOpenRoster');
       if (guideRosterBtn) {
         guideRosterBtn.setAttribute('href', `/events/${topEvent.id}`);
         guideRosterBtn.innerHTML = `<span>👥 Buka Roster (${escapeHtml(topEvent.name)})</span><span>→</span>`;
+        guideRosterBtn.onclick = (e) => {
+          if (topEvent.access_pin_required) {
+            const saved = sessionStorage.getItem('event_pin_' + topEvent.id);
+            if (!saved) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof promptEventAccess === 'function') {
+                promptEventAccess(topEvent, (pin) => {
+                  Router.navigate(`/events/${topEvent.id}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                });
+              }
+            }
+          }
+        };
       }
       const step1Link = document.getElementById('btnRosterGuideStep1Link');
       if (step1Link) {
         step1Link.setAttribute('href', `/events/${topEvent.id}`);
         step1Link.textContent = `Buka Roster (${escapeHtml(topEvent.name)}) →`;
+        step1Link.onclick = (e) => {
+          if (topEvent.access_pin_required) {
+            const saved = sessionStorage.getItem('event_pin_' + topEvent.id);
+            if (!saved) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof promptEventAccess === 'function') {
+                promptEventAccess(topEvent, (pin) => {
+                  Router.navigate(`/events/${topEvent.id}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                });
+              }
+            }
+          }
+        };
       }
 
       // If backend already pre-calculated distance_km
@@ -433,6 +483,11 @@ function renderLanding() {
                     <span>${ev.distance_km} KM</span>
                   </span>
                 ` : ''}
+                ${ev.access_pin_required ? `
+                  <span class="event-date-chip" style="font-weight:800;color:#B91C1C;background:#FEF2F2;border-color:#FCA5A5">
+                    <span>🔒 DIBATASI (PIN)</span>
+                  </span>
+                ` : ''}
                 ${ev.gpx_path ? `
                   <span class="event-gpx-chip">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -441,13 +496,13 @@ function renderLanding() {
                 ` : ''}
               </div>
               <h3 class="featured-event-title" title="${escapeHtml(ev.name)}">
-                <a href="/events/${ev.id}" data-link style="color:inherit;text-decoration:none">${escapeHtml(ev.name)}</a>
+                <a href="/events/${ev.id}" class="btn-card-link-roster" data-event-id="${ev.id}" data-link style="color:inherit;text-decoration:none">${escapeHtml(ev.name)}</a>
               </h3>
             </div>
           </div>
 
           <div class="featured-event-actions">
-            <a href="/events/${ev.id}" data-link class="btn-gpx-chip" style="color:#0D1117;border-color:#0D1117;background:#FFFFFF;font-weight:800" title="Lihat Aktivitas & Roster Peserta (Kuyy Style)">
+            <a href="/events/${ev.id}" data-link class="btn-gpx-chip btn-card-action-roster" data-event-id="${ev.id}" style="color:#0D1117;border-color:#0D1117;background:#FFFFFF;font-weight:800" title="Lihat Aktivitas & Roster Peserta (Kuyy Style)">
               <span>👥 DAFTAR &amp; ROSTER</span>
             </a>
             ${ev.gpx_path ? `
@@ -456,13 +511,53 @@ function renderLanding() {
                 <span>GPX DOSSIER</span>
               </a>
             ` : ''}
-            <a href="/watch/${ev.id}" data-link class="btn-watch-action" title="Buka Live Map Penonton">
+            <a href="/watch/${ev.id}" data-link class="btn-watch-action btn-card-action-radar" data-event-id="${ev.id}" title="Buka Live Map Penonton">
               <span>BUKA RADAR</span>
               <svg class="btn-arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
             </a>
           </div>
         </div>
       `).join('');
+
+      list.onclick = (e) => {
+        const rosterBtn = e.target.closest('.btn-card-action-roster, .btn-card-link-roster');
+        const radarBtn = e.target.closest('.btn-card-action-radar');
+        if (rosterBtn) {
+          const evId = Number(rosterBtn.dataset.eventId);
+          const evObj = targetEvents.find(x => x.id === evId);
+          if (evObj && evObj.access_pin_required) {
+            const saved = sessionStorage.getItem('event_pin_' + evId);
+            if (!saved) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof promptEventAccess === 'function') {
+                promptEventAccess(evObj, (pin) => {
+                  Router.navigate(`/events/${evId}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                });
+              } else {
+                Router.navigate(`/events/${evId}`);
+              }
+            }
+          }
+        } else if (radarBtn) {
+          const evId = Number(radarBtn.dataset.eventId);
+          const evObj = targetEvents.find(x => x.id === evId);
+          if (evObj && evObj.access_pin_required) {
+            const saved = sessionStorage.getItem('event_pin_' + evId);
+            if (!saved) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (typeof promptEventAccess === 'function') {
+                promptEventAccess(evObj, (pin) => {
+                  Router.navigate(`/watch/${evId}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                });
+              } else {
+                Router.navigate(`/watch/${evId}`);
+              }
+            }
+          }
+        }
+      };
     })
     .catch(() => {});
 }

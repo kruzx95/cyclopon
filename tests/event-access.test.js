@@ -96,6 +96,45 @@ test('Event Access PIN — locked events for trial riders', async (t) => {
     assert.equal(data.rider.bib, 'ACP-01');
   });
 
+  await t.test('POST /api/events/:id/verify-pin validates event access PIN', async () => {
+    const wrongRes = await fetch(`${baseUrl}/api/events/${eventId}/verify-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: '000000' })
+    });
+    assert.equal(wrongRes.status, 401);
+    const wrong = await wrongRes.json();
+    assert.equal(wrong.success, false);
+    assert.ok(wrong.error.includes('salah'));
+
+    const correctRes = await fetch(`${baseUrl}/api/events/${eventId}/verify-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: '654321' })
+    });
+    assert.equal(correctRes.status, 200);
+    const correct = await correctRes.json();
+    assert.equal(correct.success, true);
+    assert.equal(correct.access_pin_required, true);
+  });
+
+  await t.test('GET /api/events/:id/riders supports x-event-pin header or ?pin query', async () => {
+    const forbiddenRes = await fetch(`${baseUrl}/api/events/${eventId}/riders`);
+    assert.equal(forbiddenRes.status, 403);
+
+    const queryRes = await fetch(`${baseUrl}/api/events/${eventId}/riders?pin=654321`);
+    assert.equal(queryRes.status, 200);
+    const queryRiders = await queryRes.json();
+    assert.ok(Array.isArray(queryRiders));
+
+    const headerRes = await fetch(`${baseUrl}/api/events/${eventId}/riders`, {
+      headers: { 'x-event-pin': '654321' }
+    });
+    assert.equal(headerRes.status, 200);
+    const headerRiders = await headerRes.json();
+    assert.ok(Array.isArray(headerRiders));
+  });
+
   await t.test('admin Magic Link still works without the event PIN', async () => {
     const res = await fetch(`${baseUrl}/api/auth/token/${riderToken}`);
     assert.equal(res.status, 200);
