@@ -2599,7 +2599,7 @@ async function renderLiveMap(params) {
         if (emergencyText) {
           emergencyText.innerHTML = `
             <strong>#${topAlert.rider_bib || '?'} ${topAlert.rider_name || 'Rider'}</strong>
-            — ${topAlert.type}: ${topAlert.message || 'Butuh bantuan segera'}
+            — ${escapeHtml(sosTypeLabel(topAlert.type))}: ${escapeHtml(sosDisplayMessage(topAlert))}
             <span style="opacity:0.75;margin-left:4px">(${formatTimeAgo(topAlert.created_at)})</span>
           `;
         }
@@ -2647,8 +2647,8 @@ async function renderLiveMap(params) {
               <div style="color:#080A0F;padding:4px">
                 <strong style="color:#EF4444;font-size:13px">🚨 SINYAL SOS DARURAT</strong><br>
                 <strong>#${a.rider_bib || '?'} ${a.rider_name || 'Rider'}</strong><br>
-                <span>Jenis: <strong>${a.type}</strong></span><br>
-                <p style="margin:4px 0 8px 0;font-size:12px">${a.message || '-'}</p>
+                <span>Jenis: <strong>${escapeHtml(sosTypeLabel(a.type))}</strong></span><br>
+                <p style="margin:4px 0 8px 0;font-size:12px">${escapeHtml(sosDisplayMessage(a))}</p>
                 ${resolveActionHtml}
               </div>
             `);

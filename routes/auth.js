@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db/database');
 const fetch = require('node-fetch');
 const { generateAdminSession, verifyAdminSession, safeStringCompare } = require('../lib/admin-auth');
+const { isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
 const { determineColorForRole } = require('../lib/constants');
 
 // Brute-force protection for 4-digit rider PIN logins
@@ -41,7 +42,7 @@ function getPublicTraccarConfig(req, rider) {
 
 // POST /api/auth/rider — validate BIB + PIN (+ optional event_id), return Traccar config
 router.post('/rider', (req, res) => {
-  const { bib, pin, event_id } = req.body;
+  const { bib, pin, event_id, event_pin } = req.body;
   if (!bib || !pin) {
     return res.status(400).json({ error: 'BIB dan PIN wajib diisi' });
   }
@@ -60,6 +61,14 @@ router.post('/rider', (req, res) => {
     });
   }
 
+  const recordFailure = () => {
+    if (!attemptRecord || (now - attemptRecord.firstAttempt > 15 * 60 * 1000)) {
+      riderLoginAttempts.set(attemptKey, { failures: 1, firstAttempt: now });
+    } else {
+      attemptRecord.failures++;
+    }
+  };
+
   let rider = null;
   if (event_id) {
     rider = db.getRiderByEventBibPin.get(Number(event_id), cleanBib, cleanPin);
@@ -68,22 +77,27 @@ router.post('/rider', (req, res) => {
   }
 
   if (!rider) {
-    // Record failed attempt
-    if (!attemptRecord || (now - attemptRecord.firstAttempt > 15 * 60 * 1000)) {
-      riderLoginAttempts.set(attemptKey, { failures: 1, firstAttempt: now });
-    } else {
-      attemptRecord.failures++;
-    }
+    recordFailure();
     return res.status(401).json({ error: 'BIB atau PIN tidak valid untuk event yang dipilih' });
   }
-
-  // Clear any failed attempts on success
-  riderLoginAttempts.delete(attemptKey);
 
   const event = db.getEventById.get(rider.event_id);
   if (!event) {
     return res.status(404).json({ error: 'Event tidak ditemukan' });
   }
+
+  // Event-level access PIN: keeps the event locked for invited trial riders only.
+  if (isAccessPinRequired(event) && !verifyAccessPin(event, event_pin)) {
+    recordFailure();
+    return res.status(401).json({
+      error: event_pin
+        ? 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
+        : 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
+    });
+  }
+
+  // Clear any failed attempts on success
+  riderLoginAttempts.delete(attemptKey);
 
   res.json({
     success: true,
@@ -158,9 +172,22 @@ function registerRateLimiter(req, res, next) {
 
 // POST /api/auth/rider/register — On-the-spot self-registration (for walk-in riders, sweepers, marshalls)
 router.post('/rider/register', registerRateLimiter, (req, res) => {
-  const { event_id, bib, name, phone, pin, role } = req.body;
+  const { event_id, bib, name, phone, pin, role, event_pin } = req.body;
   if (!event_id || !name || !String(name).trim()) {
     return res.status(400).json({ error: 'Event dan nama peserta wajib diisi' });
+  }
+
+  const event = db.getEventById.get(Number(event_id));
+  if (!event) {
+    return res.status(404).json({ error: 'Event tidak ditemukan' });
+  }
+
+  if (isAccessPinRequired(event) && !verifyAccessPin(event, event_pin)) {
+    return res.status(403).json({
+      error: event_pin
+        ? 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
+        : 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
+    });
   }
 
   const existing = db.getRidersByEvent.all(Number(event_id));
@@ -204,7 +231,6 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
     });
 
     const newRider = db.getRiderById.get(result.lastInsertRowid);
-    const event = db.getEventById.get(Number(event_id));
 
     res.status(201).json({
       success: true,

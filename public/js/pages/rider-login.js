@@ -191,6 +191,23 @@ async function renderLoginForm() {
             </div>
           </div>
 
+          <!-- Event Access PIN (only when the admin locked this event) -->
+          <div class="form-group-modern" id="eventPinGroup" style="display:none">
+            <div class="field-label-row">
+              <label for="eventPinInput" class="modern-field-label">PIN AKSES EVENT</label>
+              <span class="field-helper-tag">Dari panitia</span>
+            </div>
+            <div class="modern-bib-box">
+              <span class="bib-hash-badge">🔐</span>
+              <input class="modern-bib-input" id="eventPinInput" type="password"
+                     placeholder="PIN event dari panitia" autocomplete="off" inputmode="numeric"
+                     maxlength="8">
+            </div>
+            <p style="font-size:11.5px;color:var(--text-secondary);margin:6px 0 0;line-height:1.4">
+              Event ini dibatasi untuk rider uji coba. Masukkan PIN akses yang diberikan panitia.
+            </p>
+          </div>
+
           <!-- PIN Display Slots -->
           <div class="pin-display-section">
             <div class="pin-label-row">
@@ -321,6 +338,12 @@ async function renderLoginForm() {
             </div>
           </div>
 
+          <div class="form-group" id="regEventPinGroup" style="display:none;margin-bottom:12px">
+            <label style="font-size:11px;font-weight:800;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase">PIN Akses Event</label>
+            <input class="input" id="regEventPinInput" placeholder="PIN dari panitia" inputmode="numeric" maxlength="8" autocomplete="off" style="font-size:13px;border-radius:12px">
+            <p style="font-size:11px;color:var(--text-secondary);margin:4px 0 0;line-height:1.4">Wajib diisi karena event ini dikunci panitia.</p>
+          </div>
+
           <p id="regError" style="color:var(--color-red);font-size:12px;margin-bottom:12px;min-height:16px;font-weight:600"></p>
 
           <div style="display:flex;gap:10px">
@@ -335,6 +358,26 @@ async function renderLoginForm() {
       </div>
     </div>
   `;
+
+  function eventRequiresAccessPin(eventId) {
+    const ev = events.find(e => String(e.id) === String(eventId));
+    return !!(ev && ev.access_pin_required);
+  }
+
+  function syncEventPinVisibility() {
+    const eventSelect = document.getElementById('eventSelect');
+    const group = document.getElementById('eventPinGroup');
+    if (!eventSelect || !group) return;
+    const required = eventRequiresAccessPin(eventSelect.value);
+    group.style.display = required ? '' : 'none';
+    if (!required) {
+      const pinInput = document.getElementById('eventPinInput');
+      if (pinInput) pinInput.value = '';
+    }
+  }
+
+  document.getElementById('eventSelect')?.addEventListener('change', syncEventPinVisibility);
+  syncEventPinVisibility();
 
   function updateDots() {
     const slots = document.querySelectorAll('.pin-slot');
@@ -370,6 +413,7 @@ async function renderLoginForm() {
     const eventSelect = document.getElementById('eventSelect');
     const eventId = eventSelect ? eventSelect.value : null;
     const bib = document.getElementById('bibInput').value.trim();
+    const eventPin = document.getElementById('eventPinInput')?.value.trim() || '';
     const errEl = document.getElementById('loginError');
     errEl.textContent = '';
 
@@ -386,6 +430,11 @@ async function renderLoginForm() {
       errEl.textContent = 'PIN minimal 4 digit.';
       return;
     }
+    if (eventRequiresAccessPin(eventId) && !eventPin) {
+      errEl.textContent = 'Event ini dikunci. Masukkan PIN Akses Event dari panitia.';
+      document.getElementById('eventPinInput')?.focus();
+      return;
+    }
 
     const okBtn = document.getElementById('keyOk');
     const origHtml = okBtn.innerHTML;
@@ -396,7 +445,7 @@ async function renderLoginForm() {
       const res = await fetch('/api/auth/rider', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ event_id: Number(eventId), bib, pin })
+        body:    JSON.stringify({ event_id: Number(eventId), bib, pin, event_pin: eventPin || undefined })
       });
       const data = await res.json();
 
@@ -438,6 +487,13 @@ async function renderLoginForm() {
 
   document.getElementById('keyOk').addEventListener('click', submitLogin);
 
+  document.getElementById('eventPinInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitLogin();
+    }
+  });
+
   // Keyboard navigation & numpad input
   const bibInput = document.getElementById('bibInput');
   bibInput.addEventListener('keydown', e => {
@@ -475,10 +531,27 @@ async function renderLoginForm() {
   const selfRegForm = document.getElementById('selfRegForm');
   const regErrEl = document.getElementById('regError');
   const btnSubmitReg = document.getElementById('btnSubmitSelfReg');
+  const regEventSelect = document.getElementById('regEventSelect');
+  const regEventPinGroup = document.getElementById('regEventPinGroup');
+
+  function syncRegEventPinVisibility() {
+    if (!regEventSelect || !regEventPinGroup) return;
+    const required = eventRequiresAccessPin(regEventSelect.value);
+    regEventPinGroup.style.display = required ? '' : 'none';
+    if (!required) {
+      const pinInput = document.getElementById('regEventPinInput');
+      if (pinInput) pinInput.value = '';
+    }
+  }
+
+  regEventSelect?.addEventListener('change', syncRegEventPinVisibility);
+  syncRegEventPinVisibility();
 
   function openRegModal() {
     modal.style.display = 'flex';
     regErrEl.textContent = '';
+    syncEventPinVisibility();
+    syncRegEventPinVisibility();
   }
 
   function closeRegModal() {
@@ -504,12 +577,21 @@ async function renderLoginForm() {
     const name     = document.getElementById('regNameInput').value.trim();
     const phone    = document.getElementById('regPhoneInput').value.trim();
     const regPin   = document.getElementById('regPinInput').value.trim();
+    const eventPin = document.getElementById('regEventPinInput')?.value.trim() || '';
+
+    if (eventRequiresAccessPin(event_id) && !eventPin) {
+      regErrEl.textContent = 'Event ini dikunci. Masukkan PIN Akses Event dari panitia.';
+      document.getElementById('regEventPinInput')?.focus();
+      btnSubmitReg.disabled = false;
+      btnSubmitReg.textContent = 'Daftar & Langsung Masuk →';
+      return;
+    }
 
     try {
       const res = await fetch('/api/auth/rider/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id, role, bib, name, phone, pin: regPin })
+        body: JSON.stringify({ event_id, role, bib, name, phone, pin: regPin, event_pin: eventPin || undefined })
       });
       const data = await res.json();
 

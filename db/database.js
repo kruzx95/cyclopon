@@ -22,6 +22,7 @@ db.exec(`
     date       TEXT NOT NULL,
     gpx_path   TEXT,
     active     INTEGER DEFAULT 1,
+    access_pin TEXT,
     created_at TEXT DEFAULT (datetime('now'))
   );
 
@@ -134,6 +135,9 @@ try { db.exec("ALTER TABLE riders ADD COLUMN token TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE riders ADD COLUMN role TEXT DEFAULT 'rider';"); } catch (e) {}
 try { db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_riders_token ON riders(token);"); } catch (e) {}
 
+// ── Migrations for events table (access PIN) ──
+try { db.exec("ALTER TABLE events ADD COLUMN access_pin TEXT;"); } catch (e) {}
+
 // ── Migrations for events table (Virtual COT) ──
 try { db.exec("ALTER TABLE events ADD COLUMN cot_start_time TEXT;"); } catch (e) {}
 try { db.exec("ALTER TABLE events ADD COLUMN cot_start_ms INTEGER;"); } catch (e) {}
@@ -165,6 +169,7 @@ module.exports = {
   getEventById:   db.prepare('SELECT * FROM events WHERE id = ?'),
   createEvent:    db.prepare('INSERT INTO events (name, date) VALUES (@name, @date)'),
   updateEvent:    db.prepare('UPDATE events SET name=@name, date=@date, active=@active WHERE id=@id'),
+  updateEventAccessPin: db.prepare('UPDATE events SET access_pin=? WHERE id=?'),
   updateEventCot: db.prepare('UPDATE events SET cot_start_time=@cot_start_time, cot_start_ms=@cot_start_ms, cot_pace=@cot_pace, cot_mode=@cot_mode WHERE id=@id'),
   updateEventGpx: db.prepare('UPDATE events SET gpx_path=? WHERE id=?'),
   deleteEvent:    db.prepare('DELETE FROM events WHERE id = ?'),
@@ -202,6 +207,7 @@ module.exports = {
   getAlertsByEvent:  db.prepare('SELECT a.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM alerts a LEFT JOIN riders r ON a.rider_id = r.id WHERE a.event_id = ? ORDER BY a.created_at DESC'),
   getActiveAlertsByEvent: db.prepare('SELECT a.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color FROM alerts a LEFT JOIN riders r ON a.rider_id = r.id WHERE a.event_id = ? AND a.resolved = 0 ORDER BY a.created_at DESC'),
   getAllActiveAlerts:     db.prepare('SELECT a.*, e.name as event_name, r.bib as rider_bib, r.name as rider_name, r.phone as rider_phone, r.color as rider_color FROM alerts a LEFT JOIN events e ON a.event_id = e.id LEFT JOIN riders r ON a.rider_id = r.id WHERE a.resolved = 0 ORDER BY a.created_at DESC'),
+  getRecentAlerts:        db.prepare('SELECT a.*, e.name as event_name, r.bib as rider_bib, r.name as rider_name, r.phone as rider_phone, r.color as rider_color FROM alerts a LEFT JOIN events e ON a.event_id = e.id LEFT JOIN riders r ON a.rider_id = r.id ORDER BY a.created_at DESC, a.id DESC LIMIT ?'),
   resolveAlert:           db.prepare('UPDATE alerts SET resolved = 1 WHERE id = ?'),
 
   // Checkpoints

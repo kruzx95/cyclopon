@@ -60,7 +60,7 @@ Hasil pengujian menunjukkan arsitektur CycloPon berjalan secara efisien dan **si
 
 ### 4.4. Pipeline Keamanan & Darurat SOS
 - Endpoint `POST /api/events/:id/alerts` merespon dalam **43.83 ms**.
-- Pengiriman notifikasi eksternal (Telegram / Webhook) berjalan asinkron (*non-blocking*) menggunakan `setImmediate`, sehingga jika server Telegram lambat, aplikasi tidak mengalami *freeze*.
+- Peringatan SOS disiarkan secara real-time melalui WebSocket ke dashboard admin dan Live Map.
 
 ### 4.5. Keamanan Edge & Anti-Spam
 - Header sensitif `X-Powered-By` disembunyikan secara sempurna.
@@ -104,7 +104,6 @@ Berdasarkan hasil uji diagnostik beban di atas, berikut adalah matriks ukuran (*
    Pastikan berkas `.env` di VPS terisi dengan aman:
    - `ADMIN_PASSWORD` (Ganti dengan kata sandi acak yang kuat)
    - `JWT_SECRET` (String acak 64 karakter)
-   - `TELEGRAM_BOT_TOKEN` & `TELEGRAM_CHAT_ID` (Untuk peringatan SOS panitia)
    - `TRACCAR_HOST` (URL upstream Traccar GPS server)
 
 ---

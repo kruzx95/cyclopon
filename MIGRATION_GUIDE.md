@@ -121,7 +121,7 @@ Kembali ke terminal VPS baru (Sumopod):
    ls -la .env
    cat .env
    ```
-   *(Pastikan variabel seperti `DOMAIN`, `ADMIN_PASSWORD`, `TELEGRAM_BOT_TOKEN`, dan `SESSION_SECRET` sudah terisi persis seperti di server lama).*
+   *(Pastikan variabel seperti `DOMAIN`, `ADMIN_PASSWORD`, dan `SESSION_SECRET` sudah terisi persis seperti di server lama).*
 
 4. **Nyalakan seluruh sistem CycloPon di VPS Baru:**
    ```bash

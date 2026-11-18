@@ -482,9 +482,24 @@ async function renderRiderCockpit() {
         </div>
 
         <div style="margin-top:12px;margin-bottom:16px">
-          <label style="font-size:12px;font-weight:700;color:var(--cockpit-text);display:block;margin-bottom:6px">Catatan Lokasi:</label>
-          <input type="text" id="cockpitSosMsgInput" placeholder="Contoh: Pinggir warung KM 82"
+          <label style="font-size:12px;font-weight:700;color:var(--cockpit-text);display:block;margin-bottom:6px">
+            Apa yang sedang Anda alami? <span style="font-weight:600;color:var(--cockpit-muted)">(opsional)</span>
+          </label>
+          <div class="sos-reason-chips" id="cockpitSosReasonChips">
+            <button type="button" class="sos-reason-chip" data-reason="Pingsan">Pingsan</button>
+            <button type="button" class="sos-reason-chip" data-reason="Patah tulang">Patah tulang</button>
+            <button type="button" class="sos-reason-chip" data-reason="Dehidrasi">Dehidrasi</button>
+            <button type="button" class="sos-reason-chip" data-reason="Sesak napas">Sesak napas</button>
+            <button type="button" class="sos-reason-chip" data-reason="Luka / berdarah">Luka / berdarah</button>
+            <button type="button" class="sos-reason-chip" data-reason="Ban bocor">Ban bocor</button>
+            <button type="button" class="sos-reason-chip" data-reason="Rantai putus">Rantai putus</button>
+            <button type="button" class="sos-reason-chip" data-reason="Tidak bisa lanjut">Tidak bisa lanjut</button>
+          </div>
+          <input type="text" id="cockpitSosMsgInput" placeholder="Contoh: Pingsan, sesak napas, lutut berdarah"
                  style="width:100%;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px">
+          <small style="display:block;margin-top:6px;font-size:10.5px;color:var(--cockpit-muted)">
+            Boleh dikosongkan. Panitia tetap menerima jenis situasi dan lokasi GPS Anda.
+          </small>
         </div>
 
         <div style="display:flex;gap:10px">
@@ -1589,6 +1604,11 @@ async function renderRiderCockpit() {
     });
   });
 
+  initSosReasonChips(
+    document.getElementById('cockpitSosReasonChips'),
+    document.getElementById('cockpitSosMsgInput')
+  );
+
   btnConfirmSos.addEventListener('click', async () => {
     const note = document.getElementById('cockpitSosMsgInput').value.trim();
     btnConfirmSos.disabled = true;
@@ -1599,7 +1619,7 @@ async function renderRiderCockpit() {
       type: selectedSosType,
       lat: currentLat || (routeCoords[0] ? routeCoords[0][0] : null),
       lng: currentLng || (routeCoords[0] ? routeCoords[0][1] : null),
-      message: note || `Sinyal SOS dari Cockpit Rider #${rider.bib}`
+      message: note
     };
 
     try {
@@ -1610,7 +1630,8 @@ async function renderRiderCockpit() {
       });
 
       if (res.ok) {
-        showToast('🚨 Sinyal SOS Darurat Berhasil Dikirim ke Panitia!', 'success');
+        const sentLabel = sosTypeLabel(selectedSosType);
+        showToast(`🚨 SOS terkirim: ${sentLabel}${note ? ` — ${note}` : ''}`, 'success');
         closeSos();
       } else {
         const errJson = await res.json().catch(() => ({}));

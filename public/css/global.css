@@ -2354,6 +2354,54 @@ label {
   color: #DC2626;
 }
 
+/* Quick-select reasons for "what is happening" */
+.sos-reason-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sos-reason-chip {
+  padding: 5px 10px;
+  border-radius: 100px;
+  border: 1.5px solid #E5E7EB;
+  background: #F9FAFB;
+  color: #374151;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.sos-reason-chip:hover {
+  border-color: #F87171;
+  background: #FEF2F2;
+  color: #B91C1C;
+}
+
+.sos-reason-chip.active {
+  border-color: #EF4444;
+  background: #FEE2E2;
+  color: #B91C1C;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.18);
+}
+
+body.cockpit-active .sos-reason-chip {
+  background: #1A231C;
+  border-color: #2D3A30;
+  color: #E5E7EB;
+}
+
+body.cockpit-active .sos-reason-chip:hover,
+body.cockpit-active .sos-reason-chip.active {
+  background: #2D1515;
+  border-color: #EF4444;
+  color: #FCA5A5;
+}
+
 /* Cockpit HUD Dark / Night Mode Overrides */
 body.cockpit-active .sos-modal-content {
   background: #111713;

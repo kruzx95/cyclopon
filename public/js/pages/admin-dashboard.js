@@ -47,17 +47,21 @@ function adminSidebar(activeKey) {
         <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
           <span>📊</span> Dashboard
         </a>
+        <a href="/admin/sos" data-link class="${activeKey === 'sos' ? 'active' : ''}" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px">🚨 Pusat SOS</span>
+          <span class="sidebar-sos-badge" style="display:none">0 SOS</span>
+        </a>
         <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
           <span>📑</span> Laporan &amp; Riwayat Event
-        </a>
-        <a href="/admin/notifications" data-link class="${activeKey === 'notifications' ? 'active' : ''}">
-          <span>📢</span> Notifikasi Panitia
         </a>
         <a href="/" data-link>
           <span>🏠</span> Beranda
         </a>
       </nav>
       <div class="admin-drawer-footer">
+        <button onclick="AdminSosMonitor.requestNotificationPermission()" class="admin-drawer-logout btn-sos-notif" style="margin-bottom:8px">
+          🔔 Aktifkan Notifikasi SOS
+        </button>
         <button onclick="logoutAdmin()" class="admin-drawer-logout">🚪 Keluar (Logout)</button>
       </div>
     </div>
@@ -82,20 +86,22 @@ function adminSidebar(activeKey) {
         </div>
       </div>
       <nav class="sidebar-nav">
-        <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}" style="justify-content:space-between">
+        <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
           <span style="display:flex;align-items:center;gap:8px">📊 Dashboard</span>
+        </a>
+        <a href="/admin/sos" data-link class="${activeKey === 'sos' ? 'active' : ''}" style="justify-content:space-between">
+          <span style="display:flex;align-items:center;gap:8px">🚨 Pusat SOS</span>
           <span class="sidebar-sos-badge" style="display:none">0 SOS</span>
         </a>
         <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
           <span style="display:flex;align-items:center;gap:8px">📑 Laporan &amp; Riwayat Event</span>
         </a>
-        <a href="/admin/notifications" data-link class="${activeKey === 'notifications' ? 'active' : ''}" style="justify-content:space-between">
-          <span style="display:flex;align-items:center;gap:8px">📢 Notifikasi Panitia</span>
-          <span class="sidebar-sos-badge" style="display:none">0 SOS</span>
-        </a>
         <a href="/" data-link>🏠 &nbsp;Beranda</a>
       </nav>
       <div class="sidebar-footer">
+        <button onclick="AdminSosMonitor.requestNotificationPermission()" class="btn-logout btn-sos-notif" style="margin-bottom:8px;background:#FEF2F2;color:#B91C1C;border-color:#FCA5A5" aria-label="Aktifkan notifikasi SOS">
+          🔔 Aktifkan Notifikasi SOS
+        </button>
         <button onclick="logoutAdmin()" class="btn-logout" aria-label="Keluar dari akun admin">
           🚪 Keluar (Logout)
         </button>
@@ -115,6 +121,26 @@ const AdminSosMonitor = {
   sirenTimer: null,
   isSirenPlaying: false,
   knownAlertIds: new Set(),
+  subscribers: new Set(),
+
+  subscribe(callback) {
+    if (typeof callback !== 'function') return () => {};
+    this.subscribers.add(callback);
+    try {
+      callback(this.activeAlerts, this.isMuted);
+    } catch {}
+    return () => this.subscribers.delete(callback);
+  },
+
+  notifySubscribers() {
+    this.subscribers.forEach(cb => {
+      try {
+        cb(this.activeAlerts, this.isMuted);
+      } catch (e) {
+        console.warn('[AdminSosMonitor] subscriber error:', e);
+      }
+    });
+  },
 
   init() {
     if (!sessionStorage.getItem('adminUser')) {
@@ -124,6 +150,7 @@ const AdminSosMonitor = {
 
     // Refresh immediately in case we changed routes
     this.updateBadges(this.activeAlerts.length);
+    this.updateNotificationButtons();
     if (this.activeAlerts.length > 0) {
       this.renderBanner(this.activeAlerts);
       this.renderDashboardCard(this.activeAlerts);
@@ -199,10 +226,20 @@ const AdminSosMonitor = {
       this.renderDashboardCard(alerts);
 
       if (freshAlerts.length > 0) {
-        freshAlerts.forEach(a => {
-          const riderLabel = a.rider_name ? `Rider #${a.rider_bib} (${a.rider_name})` : `Rider #${a.rider_bib || '?'}`;
-          this.notifyDesktop(`🚨 SOS RACE CONTROL: ${riderLabel}`, `${a.event_name}: ${a.message || a.type}`);
-        });
+        const first = freshAlerts[0];
+        const firstLabel = first.rider_name
+          ? `#${first.rider_bib || '?'} ${first.rider_name}`
+          : `#${first.rider_bib || '?'}`;
+        const extra = freshAlerts.length > 1 ? ` (+${freshAlerts.length - 1} SOS lain)` : '';
+        const summary = `${firstLabel} — ${first.event_name || 'Event'}: ${sosTypeLabel(first.type)} — ${sosDisplayMessage(first)}${extra}`;
+
+        this.notifyDesktop(
+          freshAlerts.length > 1 ? `🚨 ${freshAlerts.length} SOS RACE CONTROL` : `🚨 SOS RACE CONTROL: ${firstLabel}`,
+          summary
+        );
+
+        // Always surface an in-app toast, even when browser notifications are blocked.
+        showToast(`🚨 SOS BARU: ${summary}`, 'error');
 
         if (!this.isMuted) {
           this.startSiren();
@@ -216,6 +253,8 @@ const AdminSosMonitor = {
       this.renderDashboardCard([]);
       this.knownAlertIds.clear();
     }
+
+    this.notifySubscribers();
   },
 
   updateBadges(count) {
@@ -230,7 +269,67 @@ const AdminSosMonitor = {
     });
   },
 
+  updateNotificationButtons() {
+    const supported = typeof window !== 'undefined' && 'Notification' in window;
+    const granted = supported && Notification.permission === 'granted';
+
+    document.querySelectorAll('.btn-sos-notif').forEach(btn => {
+      if (!supported) {
+        btn.textContent = '🔕 Notifikasi tidak didukung';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+      } else if (granted) {
+        btn.textContent = '🔔 Notifikasi SOS Aktif';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+      } else {
+        btn.textContent = '🔔 Aktifkan Notifikasi SOS';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    });
+  },
+
+  async requestNotificationPermission() {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      showToast('Browser ini tidak mendukung notifikasi.', 'error');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      this.updateNotificationButtons();
+      showToast('Notifikasi SOS sudah aktif di perangkat ini.', 'success');
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      showToast('Notifikasi diblokir browser. Aktifkan lewat ikon gembok/pengaturan situs.', 'error');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      this.updateNotificationButtons();
+      if (permission === 'granted') {
+        showToast('Notifikasi SOS berhasil diaktifkan!', 'success');
+        this.notifyDesktop(
+          '✅ Notifikasi SOS Aktif',
+          'Admin akan menerima pemberitahuan saat rider menekan tombol SOS.'
+        );
+      } else {
+        showToast('Izin notifikasi tidak diberikan.', 'error');
+      }
+    } catch (e) {
+      showToast('Gagal meminta izin notifikasi: ' + e.message, 'error');
+    }
+  },
+
   renderBanner(alerts) {
+    // The dedicated SOS console already lists every incident, so skip the global bar there.
+    if (typeof window !== 'undefined' && window.location.pathname === '/admin/sos') {
+      this.hideBanner();
+      return;
+    }
     const mainContent = document.querySelector('.admin-content');
     if (!mainContent) return;
 
@@ -248,13 +347,14 @@ const AdminSosMonitor = {
     const riderDisplay = latest.rider_name
       ? `BIB #${latest.rider_bib || '-'} &bull; ${escapeHtml(latest.rider_name)}`
       : `BIB #${latest.rider_bib || 'Rider'}`;
-    const alertMsg = escapeHtml(latest.message || latest.type || 'Panggilan Darurat');
+    const typeLabel = escapeHtml(sosTypeLabel(latest.type));
+    const alertMsg = escapeHtml(sosDisplayMessage(latest));
     const extraCount = alerts.length > 1 ? ` (+${alerts.length - 1} SOS lainnya)` : '';
 
     let waBtn = '';
     if (latest.rider_phone) {
       const cleanPhone = latest.rider_phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
-      const waText = encodeURIComponent(`Halo ${latest.rider_name || 'Rider'}, kami Panitia Race Control ${latest.event_name} menerima sinyal darurat SOS Anda (${latest.message || latest.type}). Apakah Anda memerlukan evakuasi/medis?`);
+      const waText = encodeURIComponent(`Halo ${latest.rider_name || 'Rider'}, kami Panitia Race Control ${latest.event_name} menerima sinyal SOS Anda (${sosTypeLabel(latest.type)}: ${sosDisplayMessage(latest)}). Apakah Anda membutuhkan bantuan evakuasi/medis?`);
       waBtn = `
         <a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" rel="noopener" class="btn-sos-action" style="background:#25D366;color:#FFFFFF">
           💬 WA Rider
@@ -271,7 +371,7 @@ const AdminSosMonitor = {
         <span class="sos-bar-badge">🚨 SOS RACE CONTROL</span>
         <div class="sos-bar-text">
           <strong>${riderDisplay} (${escapeHtml(latest.event_name)})</strong>:
-          <span>${alertMsg}${extraCount}</span>
+          <span>${typeLabel} · ${alertMsg}${extraCount}</span>
         </div>
       </div>
       <div class="sos-bar-actions">
@@ -334,7 +434,7 @@ const AdminSosMonitor = {
             let waBtn = '';
             if (a.rider_phone) {
               const cleanPhone = a.rider_phone.replace(/[^0-9]/g, '').replace(/^0/, '62');
-              const waText = encodeURIComponent(`Halo ${a.rider_name || 'Rider'}, kami Panitia Race Control ${a.event_name} menerima sinyal SOS Anda (${a.message || a.type}).`);
+              const waText = encodeURIComponent(`Halo ${a.rider_name || 'Rider'}, kami Panitia Race Control ${a.event_name} menerima sinyal SOS Anda (${sosTypeLabel(a.type)}: ${sosDisplayMessage(a)}).`);
               waBtn = `<a href="https://wa.me/${cleanPhone}?text=${waText}" target="_blank" rel="noopener" class="btn btn-outline" style="padding:6px 12px;font-size:12px;color:#25D366;border-color:rgba(37,211,102,0.4)">💬 WA Rider</a>`;
             }
             return `
@@ -344,17 +444,17 @@ const AdminSosMonitor = {
                     <span style="font-weight:900;color:var(--color-red);font-size:14px">${rBib}</span>
                     <strong style="color:var(--text-primary);font-size:14px">${rName}</strong>
                     <span style="background:rgba(239,68,68,0.12);color:var(--color-red);font-weight:800;font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid rgba(239,68,68,0.25)">
-                      ${escapeHtml(a.type || 'SOS')}
+                      ${escapeHtml(sosTypeLabel(a.type))}
                     </span>
                     <span style="font-size:12px;color:var(--text-secondary)">· Event: <b>${escapeHtml(a.event_name)}</b></span>
                   </div>
                   <div style="font-size:13px;color:var(--text-primary);margin-bottom:6px">
-                    <strong>Pesan:</strong> ${escapeHtml(a.message || '-')}
+                    <strong>Kondisi:</strong> ${escapeHtml(sosDisplayMessage(a))}
                   </div>
                   <div style="font-size:11px;color:var(--text-secondary);display:flex;gap:12px;flex-wrap:wrap">
                     <span>📞 Telp: ${phone}</span>
                     <span>📍 GPS: ${a.latitude ? a.latitude.toFixed(5) : '-'}, ${a.longitude ? a.longitude.toFixed(5) : '-'}</span>
-                    <span>⏰ Waktu: ${a.created_at ? new Date(a.created_at).toLocaleTimeString('id-ID') : '-'}</span>
+                    <span>⏰ Waktu: ${formatSosTime(a.created_at)} WIB</span>
                   </div>
                 </div>
                 <div class="dashboard-sos-actions">
@@ -380,7 +480,8 @@ const AdminSosMonitor = {
       const data = await res.json();
       if (res.ok && data.success) {
         showToast('Peringatan SOS berhasil diselesaikan.', 'success');
-        this.poll();
+        await this.poll();
+        this.notifySubscribers();
       } else {
         showToast(data.error || 'Gagal menyelesaikan SOS', 'error');
       }
@@ -404,6 +505,7 @@ const AdminSosMonitor = {
       this.renderBanner(this.activeAlerts);
       this.renderDashboardCard(this.activeAlerts);
     }
+    this.notifySubscribers();
   },
 
   startSiren() {
@@ -490,17 +592,38 @@ const AdminSosMonitor = {
     }, 3000);
   },
 
-  notifyDesktop(title, body) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(title, {
-          body,
-          icon: '/icons/icon-192.png',
-          tag: 'cyclopon-sos-alert',
-          requireInteraction: true
-        });
-      } catch {}
-    }
+  async notifyDesktop(title, body, url = '/admin/sos') {
+    if (typeof window === 'undefined' || !('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const options = {
+      body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      tag: 'cyclopon-sos-alert',
+      renotify: true,
+      requireInteraction: true,
+      data: { url }
+    };
+
+    // Prefer the service worker so clicking the notification can focus/open the admin panel.
+    try {
+      if (navigator.serviceWorker) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration && typeof registration.showNotification === 'function') {
+          await registration.showNotification(title, options);
+          return;
+        }
+      }
+    } catch {}
+
+    try {
+      const notification = new Notification(title, options);
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = url;
+        notification.close();
+      };
+    } catch {}
   }
 };
 window.AdminSosMonitor = AdminSosMonitor;
@@ -1397,6 +1520,10 @@ async function renderAdminDashboard() {
             <div class="event-meta-row">
               <span>📍 Lintasan:</span>
               <strong style="color:${ev.gpx_path ? '#047857' : '#D97706'}">${ev.gpx_path ? '✅ GPX Terpasang' : '⚠️ Belum Ada GPX'}</strong>
+            </div>
+            <div class="event-meta-row">
+              <span>🔐 Akses Rider:</span>
+              <strong style="color:${ev.access_pin_required ? '#B91C1C' : '#047857'}">${ev.access_pin_required ? 'PIN Aktif (dibatasi)' : 'Terbuka'}</strong>
             </div>
           </div>
         </div>

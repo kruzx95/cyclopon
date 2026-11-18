@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
+const { sanitizeEvent } = require('../lib/event-access');
 const virtualCot = require('../lib/virtual-cot');
 
 /**
@@ -194,7 +195,7 @@ function calculateEventResults(eventId) {
     virtual_dnf: results.filter(r => r.dnf_reason === 'VIRTUAL_COT').length
   };
 
-  return { event, results, summary };
+  return { event: sanitizeEvent(event), results, summary };
 }
 
 // ── GET /api/events/:id/results ──

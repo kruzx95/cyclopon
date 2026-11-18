@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v62';
+const CACHE_NAME = 'cyclopon-v66';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -26,7 +26,7 @@ const SHELL_ASSETS = [
   '/js/pages/event-results.js',
   '/js/pages/event-activity.js',
   '/js/pages/admin-dashboard.js',
-  '/js/pages/admin-notifications.js',
+  '/js/pages/admin-sos.js',
   '/js/pages/admin-event.js',
   '/img/traccar-guide/traccar-settings-full.png',
   '/img/traccar-guide/traccar-continuous-tracking.png',
@@ -63,6 +63,26 @@ self.addEventListener('activate', event => {
       ))
       .then(() => self.clients.claim())
   );
+});
+
+// Notification click — focus an existing admin tab or open the dashboard
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url || '/admin/sos';
+
+  event.waitUntil((async () => {
+    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windowClients) {
+      try {
+        const clientUrl = new URL(client.url);
+        if (clientUrl.pathname.startsWith('/admin')) {
+          await client.focus();
+          return;
+        }
+      } catch {}
+    }
+    await self.clients.openWindow(targetUrl);
+  })());
 });
 
 // Fetch strategy

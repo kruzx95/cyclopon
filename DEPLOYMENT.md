@@ -107,13 +107,6 @@ TRACCAR_HOST=http://traccar:8082
 TRACCAR_USER=admin
 TRACCAR_PASS=admin
 SESSION_SECRET=buat_kombinasi_acak_yang_panjang_disini
-
-# Notifikasi Eksternal Panitia (Opsional)
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRstuVWXyz
-TELEGRAM_CHAT_ID=-1001234567890
-WEBHOOK_URL=https://webhook.site/your-uuid
-NOTIF_SOS_ENABLED=true
-NOTIF_COT_ENABLED=true
 ```
 
 ### Langkah 3: Jalankan Layanan dengan Docker Compose
@@ -150,10 +143,6 @@ ADMIN_PASSWORD=GantiPasswordKuatAdminCycloPon2026!
 SESSION_SECRET=kunci_rahasia_acak_minimal_32_karakter_aman_sekali
 TRACCAR_USER=admin
 TRACCAR_PASS=GantiPasswordKuatTraccar2026!
-
-# Notifikasi Telegram Panitia
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRstuVWXyz
-TELEGRAM_CHAT_ID=-1001234567890
 ```
 
 ### Langkah 3: Jalankan Stack Produksi

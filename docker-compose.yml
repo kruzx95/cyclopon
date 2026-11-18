@@ -16,11 +16,6 @@ services:
       - TRACCAR_USER=${TRACCAR_USER:-admin}
       - TRACCAR_PASS=${TRACCAR_PASS:-admin}
       - SESSION_SECRET=${SESSION_SECRET:-cyclopon_production_secret_key_change_me}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
-      - WEBHOOK_URL=${WEBHOOK_URL:-}
-      - NOTIF_SOS_ENABLED=${NOTIF_SOS_ENABLED:-true}
-      - NOTIF_COT_ENABLED=${NOTIF_COT_ENABLED:-true}
     volumes:
       - cyclopon_data:/app/data
       - cyclopon_gpx:/app/public/gpx

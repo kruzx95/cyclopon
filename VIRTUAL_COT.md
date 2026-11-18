@@ -25,7 +25,7 @@ ditentukan admin, dengan **kecepatan konstan** (km/jam).
   vonis** dan menandai rider sebagai `STALE` — bukan DNF.
 - COT manual per checkpoint yang sudah ada **tetap dipertahankan** dan berjalan
   sejajar dengan Virtual COT.
-- Tidak ada notifikasi eksternal (Telegram/Webhook) untuk DNF Virtual COT.
+- Tidak ada notifikasi eksternal untuk DNF Virtual COT.
 
 ```
 Rute GPX:  START ━━●━━━●━━━━━━━●━━━━━━━━ FINISH

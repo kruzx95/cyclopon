@@ -1,7 +1,6 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
-const notifications = require('../lib/notifications');
 const { requireAdminAuth } = require('../lib/admin-auth');
 
 let wsBroadcastFn = null;
@@ -39,16 +38,46 @@ function sosRateLimiter(req, res, next) {
   next();
 }
 
+// Friendly Indonesian labels & fallback descriptions per SOS situation type.
+const SOS_TYPE_DEFAULTS = {
+  MEDICAL:    'Rider mengalami cedera atau masalah medis dan membutuhkan bantuan segera.',
+  CRASH:      'Rider mengalami tabrakan atau jatuh dan membutuhkan bantuan segera.',
+  MECHANICAL: 'Rider mengalami kerusakan sepeda dan membutuhkan bantuan mekanik.',
+  EVACUATION: 'Rider meminta evakuasi dan tidak dapat melanjutkan perjalanan.'
+};
+
+function normalizeAlertType(type) {
+  const key = String(type == null ? '' : type).trim().toUpperCase();
+  return key || 'SOS';
+}
+
+function normalizeAlertMessage(type, message) {
+  const meta = SOS_TYPE_DEFAULTS[normalizeAlertType(type)] || 'Rider mengirim sinyal darurat dan membutuhkan bantuan.';
+  const raw = typeof message === 'string' ? message.trim() : '';
+  if (!raw) return meta;
+
+  // Older rider clients sent generic fallback text that says nothing about the condition.
+  const isGeneric = /^sinyal sos dari cockpit rider/i.test(raw) ||
+                    /^bantuan darurat(\s*\(|\s+dari)/i.test(raw);
+  if (isGeneric) return meta;
+
+  return raw.slice(0, 1000);
+}
+
 // POST /api/events/:id/alerts — create a new alert (SOS, crash, etc.)
 router.post('/events/:id/alerts', sosRateLimiter, (req, res) => {
   const event_id = Number(req.params.id);
-  const { rider_id, type, message } = req.body;
+  const { rider_id } = req.body;
+  const rawType = req.body.type;
   let latitude = (req.body.latitude != null ? req.body.latitude : req.body.lat);
   let longitude = (req.body.longitude != null ? req.body.longitude : req.body.lng);
 
-  if (!type) {
+  if (!rawType || !String(rawType).trim()) {
     return res.status(400).json({ error: 'type alert wajib diisi' });
   }
+
+  const type = normalizeAlertType(rawType);
+  const message = normalizeAlertMessage(type, req.body.message);
 
   // Verify rider_id exists for this event to prevent FOREIGN KEY violation
   let validRiderId = null;
@@ -104,17 +133,6 @@ router.post('/events/:id/alerts', sosRateLimiter, (req, res) => {
         console.warn('[Alerts] Gagal broadcast WebSocket SOS:', wsErr.message);
       }
     }
-
-    // Asynchronously dispatch external notifications (non-blocking)
-    setImmediate(async () => {
-      try {
-        const event = db.getEventById.get(event_id);
-        const rider = validRiderId ? db.getRiderById.get(validRiderId) : null;
-        await notifications.dispatchSosNotification({ event, rider, alert: created });
-      } catch (err) {
-        console.warn('[Alerts] Gagal mengirim notifikasi SOS:', err.message);
-      }
-    });
   } catch (err) {
     res.status(500).json({ error: 'Gagal membuat alert: ' + err.message });
   }
@@ -136,6 +154,18 @@ router.get('/events/:id/alerts', (req, res) => {
 router.get('/admin/alerts/active', requireAdminAuth, (req, res) => {
   try {
     const alerts = db.getAllActiveAlerts.all();
+    res.json(alerts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/alerts/history — recent SOS alerts (active + resolved) for admin console
+router.get('/admin/alerts/history', requireAdminAuth, (req, res) => {
+  try {
+    const rawLimit = Number(req.query.limit);
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.trunc(rawLimit), 1), 200) : 50;
+    const alerts = db.getRecentAlerts.all(limit);
     res.json(alerts);
   } catch (err) {
     res.status(500).json({ error: err.message });

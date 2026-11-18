@@ -442,7 +442,7 @@ async function renderAdminEventReports(params = {}) {
 
       if (sosAlert) {
         statusKey = 'sos';
-        statusText = `🚨 SOS: ${sosAlert.type || 'Darurat'}`;
+        statusText = `🚨 SOS: ${sosTypeMeta(sosAlert.type).label}`;
         statusBadge = '🚨';
         statusClass = 'status-sos';
       } else if (lastPoint) {
@@ -962,7 +962,7 @@ async function renderAdminEventReports(params = {}) {
             <div style="font-size:11px;color:#6B7280;text-transform:capitalize">${escapeHtml(rider.role || 'Peserta')}</div>
           </td>
           <td>
-            <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-size:11px;font-weight:800;background:${pillBg};color:${pillColor}">
+            <span ${sosAlert ? `title="${escapeHtml(sosDisplayMessage(sosAlert))}"` : ''} style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-size:11px;font-weight:800;background:${pillBg};color:${pillColor}">
               <span>${statusBadge}</span> <span>${statusText}</span>
             </span>
           </td>
@@ -1181,6 +1181,11 @@ async function renderAdminEventReports(params = {}) {
         reportReplayTimer = null;
       }
     });
+  }
+
+  // Initialize global SOS monitor so notifications keep working on this page
+  if (window.AdminSosMonitor) {
+    window.AdminSosMonitor.init();
   }
 
   // 17. Start initial load

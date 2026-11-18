@@ -303,9 +303,24 @@ function renderRiderSetup() {
         </div>
 
         <div style="margin-top:12px;margin-bottom:16px">
-          <label style="font-size:12px;font-weight:700;color:var(--text-primary);display:block;margin-bottom:6px">Catatan Tambahan (Opsional):</label>
-          <input type="text" id="sosMessageInput" placeholder="Contoh: Turunan setelah jembatan KM 45"
+          <label style="font-size:12px;font-weight:700;color:var(--text-primary);display:block;margin-bottom:6px">
+            Apa yang sedang Anda alami? <span style="font-weight:600;color:var(--text-secondary)">(opsional)</span>
+          </label>
+          <div class="sos-reason-chips" id="setupSosReasonChips">
+            <button type="button" class="sos-reason-chip" data-reason="Pingsan">Pingsan</button>
+            <button type="button" class="sos-reason-chip" data-reason="Patah tulang">Patah tulang</button>
+            <button type="button" class="sos-reason-chip" data-reason="Dehidrasi">Dehidrasi</button>
+            <button type="button" class="sos-reason-chip" data-reason="Sesak napas">Sesak napas</button>
+            <button type="button" class="sos-reason-chip" data-reason="Luka / berdarah">Luka / berdarah</button>
+            <button type="button" class="sos-reason-chip" data-reason="Ban bocor">Ban bocor</button>
+            <button type="button" class="sos-reason-chip" data-reason="Rantai putus">Rantai putus</button>
+            <button type="button" class="sos-reason-chip" data-reason="Tidak bisa lanjut">Tidak bisa lanjut</button>
+          </div>
+          <input type="text" id="sosMessageInput" placeholder="Contoh: Pingsan, sesak napas, lutut berdarah"
                  style="width:100%;padding:10px 12px;background:#FFFFFF;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px">
+          <small style="display:block;margin-top:6px;font-size:10.5px;color:var(--text-secondary)">
+            Boleh dikosongkan. Panitia tetap menerima jenis situasi dan lokasi GPS Anda.
+          </small>
         </div>
 
         <div style="display:flex;gap:10px">
@@ -465,6 +480,11 @@ function renderRiderSetup() {
     });
   });
 
+  initSosReasonChips(
+    document.getElementById('setupSosReasonChips'),
+    document.getElementById('sosMessageInput')
+  );
+
   btnSubmitSos.addEventListener('click', async () => {
     btnSubmitSos.disabled = true;
     btnSubmitSos.textContent = '⏳ Mengirim Sinyal GPS...';
@@ -509,7 +529,7 @@ function renderRiderSetup() {
           type: selectedType,
           latitude: lat,
           longitude: lng,
-          message: message || `Bantuan darurat (${selectedType}) dari rider #${rider.bib}`
+          message: message
         })
       });
 
@@ -519,7 +539,8 @@ function renderRiderSetup() {
       }
 
       closeSosModal();
-      showToast('🚨 Sinyal SOS Darurat berhasil dikirim ke panitia!', 'success');
+      const sentLabel = sosTypeLabel(selectedType);
+      showToast(`🚨 SOS terkirim: ${sentLabel}${message ? ` — ${message}` : ''}`, 'success');
 
       btnOpenSos.innerHTML = '<span>✅</span><span>SINYAL SOS AKTIF (PANITIA TERNOTIFIKASI)</span>';
       btnOpenSos.style.background = '#10B981';

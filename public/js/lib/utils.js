@@ -35,6 +35,125 @@ function escapeHtml(str) {
 }
 
 /**
+ * SOS type metadata: friendly Indonesian labels and fallback descriptions.
+ */
+const SOS_TYPE_META = {
+  MEDICAL: {
+    icon: '🚑',
+    label: 'Medis / Cedera',
+    defaultMessage: 'Rider mengalami cedera atau masalah medis dan membutuhkan bantuan segera.'
+  },
+  CRASH: {
+    icon: '💥',
+    label: 'Tabrakan / Jatuh',
+    defaultMessage: 'Rider mengalami tabrakan atau jatuh dan membutuhkan bantuan segera.'
+  },
+  MECHANICAL: {
+    icon: '🚲',
+    label: 'Kerusakan Sepeda',
+    defaultMessage: 'Rider mengalami kerusakan sepeda dan membutuhkan bantuan mekanik.'
+  },
+  EVACUATION: {
+    icon: '⚠️',
+    label: 'Evakuasi / DNF',
+    defaultMessage: 'Rider meminta evakuasi dan tidak dapat melanjutkan perjalanan.'
+  }
+};
+
+/**
+ * Resolve metadata for an SOS alert type.
+ * @param {string} type
+ * @returns {{icon: string, label: string, defaultMessage: string}}
+ */
+function sosTypeMeta(type) {
+  const key = String(type == null ? '' : type).trim().toUpperCase();
+  return SOS_TYPE_META[key] || {
+    icon: '🚨',
+    label: key || 'Darurat',
+    defaultMessage: 'Rider mengirim sinyal darurat dan membutuhkan bantuan.'
+  };
+}
+
+/**
+ * Friendly label with icon, e.g. "💥 Tabrakan / Jatuh".
+ * @param {string} type
+ */
+function sosTypeLabel(type) {
+  const meta = sosTypeMeta(type);
+  return `${meta.icon} ${meta.label}`;
+}
+
+/**
+ * Human-readable SOS description. Falls back to a type-specific
+ * explanation when the rider left the note empty or used a generic message.
+ * @param {{type?: string, message?: string}} alert
+ */
+function sosDisplayMessage(alert) {
+  const meta = sosTypeMeta(alert && alert.type);
+  const raw = alert && alert.message != null ? String(alert.message).trim() : '';
+
+  const isGeneric = !raw ||
+    /^sinyal sos dari cockpit rider/i.test(raw) ||
+    /^bantuan darurat(\s*\(|\s+dari)/i.test(raw) ||
+    raw === '-';
+
+  return isGeneric ? meta.defaultMessage : raw;
+}
+
+/**
+ * Format a SQLite/UTC timestamp as local Indonesian time (WIB).
+ * @param {string} value
+ * @param {boolean} [withDate=false]
+ */
+function formatSosTime(value, withDate = false) {
+  if (!value) return '-';
+  const raw = String(value).trim();
+  if (!raw) return '-';
+  const iso = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  const withZone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`;
+  const date = new Date(withZone);
+  if (Number.isNaN(date.getTime())) return '-';
+  try {
+    return date.toLocaleString('id-ID', withDate
+      ? { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }
+      : { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return date.toLocaleString('id-ID');
+  }
+}
+
+/**
+ * Wire quick-reason chips to an SOS note input. Chips toggle comma-separated reasons.
+ * @param {HTMLElement|null} root
+ * @param {HTMLInputElement|null} input
+ */
+function initSosReasonChips(root, input) {
+  if (!root || !input) return;
+  root.addEventListener('click', (event) => {
+    const chip = event.target.closest('.sos-reason-chip');
+    if (!chip) return;
+    event.preventDefault();
+
+    const reason = (chip.dataset.reason || chip.textContent || '').trim();
+    if (!reason) return;
+
+    const parts = input.value.split(',').map(p => p.trim()).filter(Boolean);
+    const index = parts.findIndex(p => p.toLowerCase() === reason.toLowerCase());
+
+    if (index >= 0) {
+      parts.splice(index, 1);
+      chip.classList.remove('active');
+    } else {
+      parts.push(reason);
+      chip.classList.add('active');
+    }
+
+    input.value = parts.join(', ');
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+}
+
+/**
  * Load a CSS file once (idempotent)
  * @param {string} href
  */
@@ -213,6 +332,12 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     showToast,
     escapeHtml,
+    SOS_TYPE_META,
+    sosTypeMeta,
+    sosTypeLabel,
+    sosDisplayMessage,
+    formatSosTime,
+    initSosReasonChips,
     loadCss,
     loadScript,
     loadScripts,

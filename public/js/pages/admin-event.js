@@ -13,14 +13,14 @@ async function renderAdminEvent(params) {
   const isNew   = eventId === 'new';
   const app     = document.getElementById('app');
 
-  let event       = { name: '', date: new Date().toISOString().slice(0,10), gpx_path: null, active: 1, cot_mode: 'off' };
+  let event       = { name: '', date: new Date().toISOString().slice(0,10), gpx_path: null, active: 1, cot_mode: 'off', access_pin: '' };
   let riders      = [];
   let checkpoints = [];
 
   if (!isNew) {
     try {
       const [evRes, rRes, cpRes] = await Promise.all([
-        fetch(`/api/events/${eventId}`, { credentials: 'include' }),
+        fetch(`/api/events/admin/${eventId}`, { credentials: 'include' }),
         fetch(`/api/admin/riders/events/${eventId}`, { credentials: 'include' }),
         fetch(`/api/events/${eventId}/checkpoints`, { credentials: 'include' })
       ]);
@@ -58,7 +58,14 @@ async function renderAdminEvent(params) {
               <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EVENT ATTRIBUTES</span>
               <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">Detail Event</h2>
             </div>
-            ${!isNew ? `<span class="badge ${event.active ? 'badge-active' : 'badge-finished'}">${event.active ? '● EVENT AKTIF' : 'EVENT SELESAI'}</span>` : ''}
+            ${!isNew ? `
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="badge ${event.active ? 'badge-active' : 'badge-finished'}">${event.active ? '● EVENT AKTIF' : 'EVENT SELESAI'}</span>
+                ${event.access_pin
+                  ? '<span class="badge badge-medic">🔒 AKSES DIBATASI</span>'
+                  : '<span class="badge badge-active">🔓 AKSES TERBUKA</span>'}
+              </div>
+            ` : ''}
           </div>
           <form id="eventForm">
             <div class="form-row">
@@ -109,6 +116,28 @@ async function renderAdminEvent(params) {
               </div>
               <p style="color:#6B7280;font-size:12px;margin:8px 0 0">
                 Kosongkan jam/kecepatan untuk menonaktifkan. Mode <strong>Uji</strong> hanya menghitung kandidat DNF tanpa mencatat apa pun.
+              </p>
+            </div>
+
+            <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px dashed #E5E7EB">
+              <label style="display:flex;align-items:center;gap:8px">
+                🔐 PIN Akses Event — Batasi Rider Uji Coba
+              </label>
+              <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-top:6px">
+                <input class="input" id="evAccessPin" inputmode="numeric" autocomplete="off" maxlength="8"
+                       value="${escapeHtml(event.access_pin || '')}"
+                       placeholder="Kosongkan untuk akses terbuka"
+                       style="flex:1;min-width:180px;font-family:ui-monospace,monospace;font-weight:800;letter-spacing:0.12em">
+                <button class="btn btn-outline" type="button" id="btnGenerateEventPin" style="padding:10px 14px;font-size:12.5px" title="Buat PIN acak 6 digit">
+                  🎲 Acak
+                </button>
+                <button class="btn btn-outline" type="button" id="btnClearEventPin" style="padding:10px 14px;font-size:12.5px" title="Hapus PIN dan buka akses untuk semua rider">
+                  🔓 Buka Akses
+                </button>
+              </div>
+              <p style="color:#6B7280;font-size:12px;margin:8px 0 0">
+                Jika diisi (4-8 digit), rider wajib memasukkan PIN ini saat <strong>login BIB + PIN</strong> atau <strong>daftar mandiri</strong>.
+                Kosongkan untuk membuka akses ke semua rider. Link Magic Link dari admin tetap dapat digunakan tanpa PIN.
               </p>
             </div>
 
@@ -333,7 +362,8 @@ async function renderAdminEvent(params) {
       active: activeEl ? Number(activeEl.value) : 1,
       cot_start_time: document.getElementById('evCotStart')?.value || null,
       cot_pace:       document.getElementById('evCotPace')?.value || null,
-      cot_mode:       document.getElementById('evCotMode')?.value || 'off'
+      cot_mode:       document.getElementById('evCotMode')?.value || 'off',
+      access_pin:     document.getElementById('evAccessPin')?.value.trim() || null
     };
 
     const url    = isNew ? '/api/events/admin' : `/api/events/admin/${eventId}`;
@@ -375,6 +405,22 @@ async function renderAdminEvent(params) {
       btn.textContent = isNew ? 'Buat Event' : 'Simpan Perubahan';
       btn.disabled = false;
     }
+  });
+
+  // ── Event access PIN helpers ──
+  document.getElementById('btnGenerateEventPin')?.addEventListener('click', () => {
+    const pinInput = document.getElementById('evAccessPin');
+    if (!pinInput) return;
+    pinInput.value = String(Math.floor(100000 + Math.random() * 900000));
+    pinInput.focus();
+    pinInput.select?.();
+  });
+
+  document.getElementById('btnClearEventPin')?.addEventListener('click', () => {
+    const pinInput = document.getElementById('evAccessPin');
+    if (!pinInput) return;
+    pinInput.value = '';
+    if (!isNew) showToast('PIN dikosongkan. Klik "Simpan Perubahan" untuk membuka akses.', 'success');
   });
 
   if (isNew) return;

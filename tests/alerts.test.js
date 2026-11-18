@@ -128,6 +128,60 @@ test('Alerts API & Database', async (t) => {
     assert.equal(data.alert.longitude, 112.7688);
   });
 
+  await t.test('POST /api/events/:id/alerts fills a descriptive default message when the rider leaves a note empty', async () => {
+    const { eventId, riderId } = t.context;
+
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/alerts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rider_id: riderId,
+        type: 'crash',
+        latitude: -7.25,
+        longitude: 112.76,
+        message: '   '
+      })
+    });
+
+    assert.equal(res.status, 201);
+    const data = await res.json();
+    assert.equal(data.alert.type, 'CRASH', 'Type must be normalized to uppercase');
+    assert.match(data.alert.message, /tabrakan atau jatuh/i);
+  });
+
+  await t.test('POST /api/events/:id/alerts replaces legacy generic messages with a condition description', async () => {
+    const { eventId, riderId } = t.context;
+
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/alerts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rider_id: riderId,
+        type: 'MEDICAL',
+        message: 'Sinyal SOS dari Cockpit Rider #999'
+      })
+    });
+
+    assert.equal(res.status, 201);
+    const data = await res.json();
+    assert.match(data.alert.message, /cedera atau masalah medis/i);
+  });
+
+  await t.test('GET /api/admin/alerts/history returns recent alerts with status and rider details', async () => {
+    const res = await fetch(`${baseUrl}/api/admin/alerts/history?limit=10`);
+    assert.equal(res.status, 200);
+    const alerts = await res.json();
+    assert.ok(Array.isArray(alerts));
+    assert.ok(alerts.length > 0);
+    assert.ok(alerts.length <= 10, 'History must respect the limit parameter');
+
+    const entry = alerts.find(a => a.id === t.context.alertId);
+    assert.ok(entry, 'Resolved alert must appear in history');
+    assert.equal(entry.resolved, 1);
+    assert.equal(entry.rider_bib, '999');
+    assert.equal(entry.rider_name, 'Safety Test Rider');
+  });
+
   await t.test('teardown', async () => {
     const { eventId } = t.context;
     db.db.prepare('DELETE FROM events WHERE id = ?').run(eventId);

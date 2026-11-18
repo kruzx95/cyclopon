@@ -5,6 +5,7 @@ const path    = require('path');
 const fs      = require('fs');
 const db      = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
+const { sanitizeEvent, normalizeAccessPin } = require('../lib/event-access');
 const virtualCot = require('../lib/virtual-cot');
 
 const gpxDir = path.join(__dirname, '..', 'public', 'gpx');
@@ -188,7 +189,7 @@ function buildCotPreview(eventId, cotFields) {
 // GET /api/events — list all events
 router.get('/', (_req, res) => {
   const events = db.getAllEvents.all().map(ev => ({
-    ...ev,
+    ...sanitizeEvent(ev),
     distance_km: getEventDistanceKm(ev)
   }));
   res.json(events);
@@ -199,7 +200,7 @@ router.get('/:id', (req, res) => {
   const event = db.getEventById.get(req.params.id);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
   res.json({
-    ...event,
+    ...sanitizeEvent(event),
     distance_km: getEventDistanceKm(event)
   });
 });
@@ -288,6 +289,16 @@ router.get('/:id/gpx/download', (req, res) => {
 
 // ── Admin routes ──────────────────────────────────────────────
 
+// GET /api/events/admin/:id — full event detail including the access PIN
+router.get('/admin/:id', requireAdminAuth, (req, res) => {
+  const event = db.getEventById.get(req.params.id);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+  res.json({
+    ...event,
+    distance_km: getEventDistanceKm(event)
+  });
+});
+
 // POST /api/events/admin — create new event
 router.post('/admin', requireAdminAuth, (req, res, next) => {
   try {
@@ -295,9 +306,11 @@ router.post('/admin', requireAdminAuth, (req, res, next) => {
     if (!name || !date) return res.status(400).json({ error: 'name dan date wajib diisi' });
 
     const cot = normalizeCotInput(req.body, { date });
+    const accessPin = normalizeAccessPin((req.body || {}).access_pin);
     const result = db.createEvent.run({ name, date });
     const eventId = Number(result.lastInsertRowid);
     db.updateEventCot.run({ id: eventId, ...cot });
+    db.updateEventAccessPin.run(accessPin, eventId);
     virtualCot.invalidateEvaluation(eventId);
 
     res.status(201).json(db.getEventById.get(eventId));
@@ -315,6 +328,9 @@ router.put('/admin/:id', requireAdminAuth, (req, res, next) => {
     const body = req.body || {};
     const nextDate = body.date ?? event.date;
     const cot = normalizeCotInput(body, { ...event, date: nextDate });
+    const accessPin = Object.prototype.hasOwnProperty.call(body, 'access_pin')
+      ? normalizeAccessPin(body.access_pin)
+      : (event.access_pin || null);
 
     // Guard: activating `live` for the first time may not silently DNF a large share of the field
     const becomingLive = cot.cot_mode === 'live' && event.cot_mode !== 'live';
@@ -339,6 +355,7 @@ router.put('/admin/:id', requireAdminAuth, (req, res, next) => {
       active: body.active ?? event.active
     });
     db.updateEventCot.run({ id: event.id, ...cot });
+    db.updateEventAccessPin.run(accessPin, event.id);
     virtualCot.invalidateEvaluation(event.id);
 
     res.json(db.getEventById.get(event.id));

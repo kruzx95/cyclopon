@@ -744,6 +744,304 @@
   flex-wrap: wrap;
 }
 
+/* ── Dedicated SOS Console Page ── */
+.sos-page-subtitle {
+  color: #6B7280;
+  font-size: 12.5px;
+  margin: 4px 0 0;
+  max-width: 620px;
+  line-height: 1.5;
+}
+.sos-console-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sos-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.sos-stat-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+.sos-stat-card.is-alert {
+  border-color: #FCA5A5;
+  background: #FFF5F5;
+}
+.sos-stat-lbl {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 900;
+  color: #6B7280;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.sos-stat-card.is-alert .sos-stat-lbl {
+  color: #B91C1C;
+}
+.sos-stat-val {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0D1117;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.sos-stat-card.is-alert .sos-stat-val {
+  color: #DC2626;
+}
+.sos-stat-sub {
+  font-size: 11px;
+  color: #6B7280;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.sos-console-section {
+  margin-bottom: 26px;
+}
+.sos-console-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.sos-console-section-head h2 {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0D1117;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+.sos-console-hint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #6B7280;
+}
+.sos-console-search {
+  flex: 1;
+  min-width: 220px;
+  max-width: 340px;
+  padding: 8px 12px;
+  border: 1.5px solid #D1D5DB;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: #0D1117;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+.sos-console-search:focus {
+  outline: none;
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+.sos-console-item {
+  background: #FFFFFF;
+  border: 1.5px solid #FCA5A5;
+  border-left: 5px solid #DC2626;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.05);
+}
+.sos-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.sos-item-type {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+.sos-item-bib {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 900;
+  color: #DC2626;
+}
+.sos-item-name {
+  font-size: 14px;
+  color: #0D1117;
+}
+.sos-item-event {
+  font-size: 11.5px;
+  color: #4B5563;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.sos-item-time {
+  margin-left: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #B91C1C;
+  white-space: nowrap;
+}
+.sos-item-clock {
+  color: #6B7280;
+  font-weight: 600;
+}
+.sos-item-message {
+  font-size: 13px;
+  color: #0D1117;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.sos-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: #6B7280;
+  margin-bottom: 12px;
+}
+.sos-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px dashed #FEE2E2;
+}
+.btn-sos-action.wa {
+  background: #25D366;
+  color: #FFFFFF;
+}
+.btn-sos-action.wa:hover {
+  background: #1DA851;
+}
+.btn-sos-action.gps {
+  background: #F3F4F6;
+  color: #0D1117;
+  border: 1px solid #E5E7EB;
+}
+.btn-sos-action.gps:hover {
+  background: #E5E7EB;
+}
+.sos-empty-state {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #FFFFFF;
+  border: 1.5px dashed #D1D5DB;
+  border-radius: 10px;
+  padding: 22px 20px;
+}
+.sos-empty-state.is-compact {
+  padding: 16px;
+}
+.sos-empty-icon {
+  font-size: 30px;
+  line-height: 1;
+}
+.sos-empty-state h3 {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #0D1117;
+  margin: 0 0 4px;
+}
+.sos-empty-state p {
+  font-size: 12px;
+  color: #6B7280;
+  margin: 0;
+  line-height: 1.5;
+}
+.sos-history-list {
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sos-history-row {
+  display: grid;
+  grid-template-columns: 100px 58px minmax(120px, 1.2fr) minmax(120px, 1.4fr) minmax(110px, auto) minmax(150px, auto) 64px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px dashed #E5E7EB;
+  font-size: 12px;
+  color: #0D1117;
+}
+.sos-history-row:last-child {
+  border-bottom: none;
+}
+.sos-history-status {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  font-weight: 900;
+  padding: 3px 7px;
+  border-radius: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+.sos-history-status.is-resolved {
+  background: #ECFDF5;
+  color: #047857;
+  border: 1px solid #A7F3D0;
+}
+.sos-history-status.is-active {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+}
+.sos-history-bib {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 900;
+  color: #DC2626;
+}
+.sos-history-name,
+.sos-history-event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sos-history-event {
+  color: #4B5563;
+}
+.sos-history-type {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #6B7280;
+}
+.sos-history-time {
+  font-size: 11px;
+  color: #6B7280;
+  white-space: nowrap;
+}
+.sos-history-link {
+  font-size: 11px;
+  font-weight: 800;
+  color: #DC2626;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.sos-history-link:hover {
+  text-decoration: underline;
+}
+
 /* ── Professional Data Tables (Commisaire / Race Control Matrix) ── */
 .table-responsive-wrapper {
   width: 100%;
@@ -1710,3 +2008,58 @@
 
 
 
+/* ── SOS Console — Tablet & Mobile ── */
+@media (max-width: 900px) {
+  .sos-history-row {
+    grid-template-columns: 88px 52px 1fr auto;
+    row-gap: 6px;
+  }
+  .sos-history-event,
+  .sos-history-type {
+    display: none;
+  }
+  .sos-history-time {
+    grid-column: 3 / 4;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 640px) {
+  .sos-console-toolbar {
+    width: 100%;
+  }
+  .sos-console-toolbar .btn {
+    flex: 1;
+    min-width: 140px;
+    justify-content: center;
+  }
+  .sos-item-time {
+    margin-left: 0;
+    width: 100%;
+  }
+  .sos-item-clock {
+    display: none;
+  }
+  .sos-item-actions .btn-sos-action,
+  .sos-item-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .sos-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sos-stat-val {
+    font-size: 20px;
+  }
+  .sos-history-row {
+    grid-template-columns: 1fr auto;
+    padding: 10px 12px;
+  }
+  .sos-history-bib,
+  .sos-history-name {
+    grid-column: auto;
+  }
+  .sos-history-time {
+    grid-column: 1 / -1;
+  }
+}
