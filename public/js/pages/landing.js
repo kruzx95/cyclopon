@@ -61,7 +61,7 @@ function renderLanding() {
                 <span>MASUK SEBAGAI RIDER</span>
                 <span class="cta-arrow-icon">→</span>
               </button>
-              <button id="btnWatchMap" class="btn-hero-secondary">
+              <button id="btnWatchMap" class="btn-hero-secondary" disabled>
                 <span class="cta-pulse-dot"></span>
                 <span>PANTAU LIVE MAP</span>
               </button>
@@ -259,19 +259,21 @@ function renderLanding() {
 
   document.getElementById('btnRider').addEventListener('click', () => Router.navigate('/rider'));
 
-  let firstEventId = null;
+  let firstEvent = null;
   document.getElementById('btnWatchMap').addEventListener('click', () => {
-    if (firstEventId) {
-      Router.navigate(`/watch/${firstEventId}`);
-    } else {
-      Router.navigate('/watch/1');
+    const ev = firstEvent || { id: 1 };
+    if (ev.access_pin_required && typeof promptEventAccess === 'function') {
+      promptEventAccess(ev, () => Router.navigate(`/watch/${ev.id}`));
+      return;
     }
+    Router.navigate(`/watch/${ev.id}`);
   });
 
   // Fetch active events for direct access
   fetch('/api/events')
     .then(r => r.json())
     .then(events => {
+      document.getElementById('btnWatchMap').disabled = false;
       const streamEl = document.getElementById('dossierPelotonList');
       if (!Array.isArray(events) || !events.length) {
         if (streamEl) {
@@ -286,7 +288,7 @@ function renderLanding() {
 
       const active = events.filter(e => e.active);
       const targetEvents = active.length ? active : events.slice(0, 1);
-      firstEventId = targetEvents[0].id;
+      firstEvent = targetEvents[0];
 
       // Update right-column hero dossier card with real event info
       const topEvent = targetEvents[0];
