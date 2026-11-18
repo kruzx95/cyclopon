@@ -92,3 +92,6 @@ Thumbs.db
 
 # Local Deployment Cheatsheet / Personal Notes
 DEPLOY_COMMANDS.md
+
+# Local OpenCode skills (copied from Claude-BugHunter)
+.opencode/
