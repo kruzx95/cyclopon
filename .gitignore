@@ -95,3 +95,6 @@ DEPLOY_COMMANDS.md
 
 # Local OpenCode skills (copied from Claude-BugHunter)
 .opencode/
+
+# OpenCode config (contains API key reference)
+opencode.json
