@@ -245,6 +245,23 @@ test('Event Access PIN — locked events for trial riders', async (t) => {
     assert.ok([200, 404].includes(correctPin.status), `Unexpected status ${correctPin.status}`);
   });
 
+  await t.test('GET /api/events/:id/gpx/download allows registered rider via token or PIN', async () => {
+    const noAuth = await fetch(`${baseUrl}/api/events/${eventId}/gpx/download`);
+    assert.equal(noAuth.status, 403);
+
+    const wrongToken = await fetch(`${baseUrl}/api/events/${eventId}/gpx/download?token=invalid_token`);
+    assert.equal(wrongToken.status, 403);
+
+    const rider = db.getRiderById.get(riderId);
+    const withToken = await fetch(`${baseUrl}/api/events/${eventId}/gpx/download?token=${rider.token}`);
+    assert.equal(withToken.status, 404);
+
+    const withHeader = await fetch(`${baseUrl}/api/events/${eventId}/gpx/download`, {
+      headers: { 'x-rider-token': rider.token }
+    });
+    assert.equal(withHeader.status, 404);
+  });
+
   await t.test('verify-pin throttles repeated wrong PIN guesses', async () => {
     let lastRes;
     for (let i = 0; i < 10; i++) {

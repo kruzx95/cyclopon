@@ -123,9 +123,6 @@ async function renderEventResults(params) {
             </div>
 
             <div class="results-actions">
-              <button type="button" id="btnDownloadGpx" class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Unduh File GPX Rute">
-                📍 &nbsp;Unduh GPX
-              </button>
               <button type="button" id="btnDownloadCsv" class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Ekspor Data Hasil Klasifikasi ke File CSV">
                 📥 &nbsp;Unduh CSV
               </button>
@@ -410,17 +407,6 @@ async function renderEventResults(params) {
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       }
 
-      const btnDownloadGpx = document.getElementById('btnDownloadGpx');
-      if (btnDownloadGpx) {
-        btnDownloadGpx.addEventListener('click', async () => {
-          try {
-            await downloadProtected(`/api/events/${event.id}/gpx/download`, `event-${event.id}-route.gpx`);
-            if (typeof showToast === 'function') showToast('File GPX berhasil diunduh!', 'success');
-          } catch (err) {
-            if (typeof showToast === 'function') showToast(err.message, 'error');
-          }
-        });
-      }
 
       const btnDownloadCsv = document.getElementById('btnDownloadCsv');
       if (btnDownloadCsv) {

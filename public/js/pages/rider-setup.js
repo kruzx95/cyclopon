@@ -21,9 +21,12 @@ function renderRiderSetup() {
   if (event && event.access_pin && !sessionStorage.getItem('event_pin_' + event.id)) {
     sessionStorage.setItem('event_pin_' + event.id, event.access_pin);
   }
-  // A locked event still guards its GPX file; anchors cannot send headers, so
-  // the saved PIN travels as a query parameter instead.
+  // A locked event guards its GPX file; riders access it via their setup PIN or token
   const setupPin = event ? (sessionStorage.getItem('event_pin_' + event.id) || '') : '';
+  const gpxParams = new URLSearchParams();
+  if (setupPin) gpxParams.set('pin', setupPin);
+  if (rider && rider.token) gpxParams.set('token', rider.token);
+  const gpxDownloadHref = `/api/events/${event.id}/gpx/download${gpxParams.toString() ? '?' + gpxParams.toString() : ''}`;
   const hostClean = traccar.serverUrl.replace(/^https?:\/\//, '').split(':')[0];
   const osmandEndpointUrl = traccar.osmandUrl || `${window.location.origin}/api/osmand`;
   const osmandUrl = `http://${hostClean}:${traccar.osmandPort}`;
@@ -243,7 +246,7 @@ function renderRiderSetup() {
                 Unduh file GPX rute event untuk disinkronkan ke bike computer (Garmin, Wahoo, Hammerhead).
               </p>
             </div>
-            <a href="/api/events/${event.id}/gpx/download${setupPin ? `?pin=${encodeURIComponent(setupPin)}` : ''}" download class="btn-hub-secondary">
+            <a href="${gpxDownloadHref}" download class="btn-hub-secondary">
               📥 Unduh GPX Rute
             </a>
           </div>

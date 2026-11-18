@@ -508,12 +508,6 @@ function renderLanding() {
             <a href="/events/${ev.id}" data-link class="btn-gpx-chip btn-card-action-roster" data-event-id="${ev.id}" style="color:#0D1117;border-color:#0D1117;background:#FFFFFF;font-weight:800" title="Lihat Aktivitas & Roster Peserta (Kuyy Style)">
               <span>👥 DAFTAR &amp; ROSTER</span>
             </a>
-            ${ev.gpx_path ? `
-              <a href="/api/events/${ev.id}/gpx/download${(sessionStorage.getItem('event_pin_' + ev.id) || '') ? `?pin=${encodeURIComponent(sessionStorage.getItem('event_pin_' + ev.id))}` : ''}" download class="btn-gpx-chip" title="Unduh File GPX Resmi">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>GPX DOSSIER</span>
-              </a>
-            ` : ''}
             <a href="/watch/${ev.id}" data-link class="btn-watch-action btn-card-action-radar" data-event-id="${ev.id}" title="Buka Live Map Penonton">
               <span>BUKA RADAR</span>
               <svg class="btn-arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>

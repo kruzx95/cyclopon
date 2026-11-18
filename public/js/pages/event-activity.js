@@ -315,12 +315,6 @@ async function renderEventActivity(params) {
                   <h3 style="font-size:18px;font-weight:900;margin:0 0 4px;color:#0D1117;letter-spacing:-0.02em">Pos Kontrol &amp; Cut-Off Time (COT)</h3>
                   <p style="font-size:13px;color:#4B5563;margin:0">Pantau batas waktu kedatangan resmi (COT) di setiap checkpoint rute balap.</p>
                 </div>
-                ${event.gpx_path ? `
-                  <a href="/api/events/${event.id}/gpx/download${savedPin ? `?pin=${encodeURIComponent(savedPin)}` : ''}" download class="btn-gpx-chip" title="Unduh File GPX Resmi">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    <span>UNDUH GPX RESMI</span>
-                  </a>
-                ` : ''}
               </div>
 
               ${checkpoints.length ? `

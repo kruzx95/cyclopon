@@ -165,7 +165,10 @@ async function renderAdminEvent(params) {
             ${event.gpx_path ? '<span class="badge badge-active">TERPASANG</span>' : '<span class="badge badge-medic">BELUM ADA GPX</span>'}
           </div>
           ${event.gpx_path
-            ? `<p style="color:#047857;font-size:13px;font-weight:700;margin-bottom:14px">✅ GPX sudah di-upload: <code style="background:#F3F4F6;padding:2px 8px;border-radius:4px;color:#0D1117;border:1px solid #E5E7EB">${event.gpx_path}</code></p>`
+            ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+                <span style="color:#047857;font-size:13px;font-weight:700">✅ GPX sudah di-upload: <code style="background:#F3F4F6;padding:2px 8px;border-radius:4px;color:#0D1117;border:1px solid #E5E7EB">${event.gpx_path}</code></span>
+                <a href="/api/events/${event.id}/gpx/download" download class="btn btn-outline" style="font-size:12px;padding:4px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:5px">📥 Unduh GPX</a>
+              </div>`
             : `<p style="color:#D97706;font-size:13px;font-weight:700;margin-bottom:14px">⚠️ Belum ada file GPX. Upload rute agar tampil di Live Map.</p>`
           }
           <label class="gpx-drop-zone" for="gpxFileInput">
