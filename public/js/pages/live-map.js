@@ -429,17 +429,44 @@ async function renderLiveMap(params) {
       strip.style.display = 'none';
       return;
     }
+
+    // Adaptive sizing class based on sponsor count
+    strip.classList.remove('sponsors-1', 'sponsors-2', 'sponsors-3', 'sponsors-many');
+    if (sponsors.length === 1) strip.classList.add('sponsors-1');
+    else if (sponsors.length === 2) strip.classList.add('sponsors-2');
+    else if (sponsors.length === 3) strip.classList.add('sponsors-3');
+    else strip.classList.add('sponsors-many');
+
     logos.innerHTML = sponsors.map(s => {
       const name = escapeHtml(s.name || 'Sponsor');
       const logoPath = escapeHtml(s.logo_path || '');
       const rawLink = s.link ? String(s.link).trim() : '';
       const safeLink = rawLink && /^https?:\/\//i.test(rawLink) ? escapeHtml(rawLink) : '';
-      const logo = `<img class="sponsor-logo" src="${logoPath}" alt="${name}" title="${name}" loading="lazy">`;
+      const logo = `<img class="sponsor-logo" src="${logoPath}" alt="${name}" title="${name}" loading="lazy" onload="if(this.naturalWidth&&this.naturalHeight){this.classList.add(this.naturalWidth/this.naturalHeight>2.2?'logo-wide':'logo-square')}">`;
       return safeLink
         ? `<a class="sponsor-link" href="${safeLink}" target="_blank" rel="noopener noreferrer" title="${name} — Klik untuk kunjungi tautan">${logo}</a>`
         : `<span class="sponsor-link" title="${name}">${logo}</span>`;
     }).join('');
     strip.style.display = 'flex';
+    requestAnimationFrame(updateSponsorPosition);
+  }
+
+  function updateSponsorPosition() {
+    const strip = document.getElementById('sponsorStrip');
+    const drawer = document.getElementById('elevationDrawer');
+    if (!strip) return;
+    if (window.innerWidth <= 768) {
+      strip.style.bottom = '';
+      return;
+    }
+
+    const isElevOpen = drawer && !drawer.classList.contains('collapsed');
+    if (isElevOpen) {
+      const drawerHeight = drawer.offsetHeight || 270;
+      strip.style.bottom = `${drawerHeight + 22}px`;
+    } else {
+      strip.style.bottom = '24px';
+    }
   }
 
   function eventFetch(url, options = {}) {
@@ -676,6 +703,7 @@ async function renderLiveMap(params) {
       const isCollapsed = mapViewport.classList.contains('sidebar-collapsed');
       btnMobileOpenSidebar.style.display = (isCollapsed && window.innerWidth <= 768) ? 'inline-flex' : 'none';
     }
+    updateSponsorPosition();
   });
 
   let polylineBounds = null;
@@ -721,10 +749,16 @@ async function renderLiveMap(params) {
     if (isVisible && gpxData) {
       setTimeout(redrawElevationChart, 50);
     }
+    updateSponsorPosition();
   }
 
   if (btnToggleElevation) btnToggleElevation.addEventListener('click', () => toggleElevation());
   if (btnCloseElevation) btnCloseElevation.addEventListener('click', () => toggleElevation(false));
+
+  if (window.ResizeObserver && elevationDrawer) {
+    const drawerObserver = new ResizeObserver(() => updateSponsorPosition());
+    drawerObserver.observe(elevationDrawer);
+  }
 
   const btnToggleClimbsDrawer = document.getElementById('btnToggleClimbsDrawer');
   const climbListPanel = document.getElementById('climbListPanel');
