@@ -87,13 +87,13 @@ router.post('/rider', (req, res) => {
   }
 
   // Event-level access PIN: keeps the event locked for invited trial riders only.
-  if (isAccessPinRequired(event) && !verifyAccessPin(event, event_pin)) {
-    recordFailure();
-    return res.status(401).json({
-      error: event_pin
-        ? 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
-        : 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
-    });
+  if (isAccessPinRequired(event)) {
+    if (!event_pin || !verifyAccessPin(event, event_pin)) {
+      recordFailure();
+      return res.status(401).json({
+        error: 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
+      });
+    }
   }
 
   // Clear any failed attempts on success
@@ -182,12 +182,12 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
     return res.status(404).json({ error: 'Event tidak ditemukan' });
   }
 
-  if (isAccessPinRequired(event) && !verifyAccessPin(event, event_pin)) {
-    return res.status(403).json({
-      error: event_pin
-        ? 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
-        : 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
-    });
+  if (isAccessPinRequired(event)) {
+    if (!event_pin || !verifyAccessPin(event, event_pin)) {
+      return res.status(403).json({
+        error: 'Event ini terkunci. Masukkan PIN Akses Event dari panitia.'
+      });
+    }
   }
 
   const existing = db.getRidersByEvent.all(Number(event_id));
