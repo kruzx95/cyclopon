@@ -1,0 +1,16 @@
+{
+  "provider": {
+    "hematoken": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "hemat",
+      "options": {
+        "baseURL": "https://api.hemattoken.id/v1",
+        "apiKey": "ht-5GfaNXVn-aAxuhY2mUNJKCvANzdBgdkbLRZ912oJbUM"
+      },
+      "models": {
+        "blenger/claude-haiku-5.5": {},
+        "blenger/deepseek-v4.1-flash": {}
+      }
+    }
+  }
+}
