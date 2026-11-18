@@ -205,8 +205,55 @@ router.get('/:id', (req, res) => {
   });
 });
 
+// ── Protected event routes (require event access PIN if configured) ─────────
+
+/**
+ * Middleware to check if user has access to a PIN-protected event.
+ * Bypasses check for admins. For public access, requires ?pin=XXXX query param.
+ */
+function requireEventAccess(req, res, next) {
+  const eventId = req.params.id || req.params.eventId;
+  if (!eventId) return res.status(400).json({ error: 'Event ID wajib disertakan' });
+
+  const event = db.getEventById.get(eventId);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  // If event has no access PIN, allow public access
+  if (!isAccessPinRequired(event)) {
+    req.event = event;
+    return next();
+  }
+
+  // Check admin auth (admins bypass event PIN)
+  const adminToken = req.cookies?.cyclopon_admin || 
+                     req.headers['authorization']?.replace(/^Bearer\s+/i, '') ||
+                     req.headers['x-admin-token'];
+  if (adminToken) {
+    const { verifyAdminSession } = require('../lib/admin-auth');
+    if (verifyAdminSession(adminToken)) {
+      req.event = event;
+      return next();
+    }
+  }
+
+  // Check query parameter for event PIN (e.g., ?pin=1234)
+  const queryPin = req.query.pin || req.query.event_pin;
+  if (queryPin && verifyAccessPin(event, queryPin)) {
+    req.event = event;
+    return next();
+  }
+
+  // Deny access
+  return res.status(403).json({
+    error: 'Event ini memerlukan PIN akses. Tambahkan ?pin=XXXX di URL.',
+    access_pin_required: true,
+    event_id: eventId
+  });
+}
+
 // GET /api/events/:id/riders — public rider list (no PIN)
-router.get('/:id/riders', (req, res) => {
+// Protected by event access PIN if configured
+router.get('/:id/riders', requireEventAccess, (req, res) => {
   const riders = db.getRidersByEvent.all(req.params.id).map(r => ({
     id: r.id, bib: r.bib, name: r.name,
     role: r.role || 'rider',
@@ -217,8 +264,9 @@ router.get('/:id/riders', (req, res) => {
 });
 
 // GET /api/events/:id/virtual-cot — live marker + DNF evaluation (public)
-router.get('/:id/virtual-cot', (req, res) => {
-  const event = db.getEventById.get(req.params.id);
+// Protected by event access PIN if configured
+router.get('/:id/virtual-cot', requireEventAccess, (req, res) => {
+  const event = req.event || db.getEventById.get(req.params.id);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
   res.json(virtualCot.buildStatus(event));
 });
@@ -268,8 +316,9 @@ router.post('/:id/virtual-cot/void/:riderId', requireAdminAuth, (req, res) => {
 });
 
 // GET /api/events/:id/gpx/download — download GPX file for bike computers
-router.get('/:id/gpx/download', (req, res) => {
-  const event = db.getEventById.get(req.params.id);
+// Protected by event access PIN if configured
+router.get('/:id/gpx/download', requireEventAccess, (req, res) => {
+  const event = req.event || db.getEventById.get(req.params.id);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
 
   const targetPath = path.join(gpxDir, `${event.id}.gpx`);

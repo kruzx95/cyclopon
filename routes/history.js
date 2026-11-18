@@ -2,9 +2,51 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
+const { isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
+
+/**
+ * Middleware to check event access PIN for protected events.
+ * Used for history/replay data, positions, etc.
+ */
+function requireEventAccessForHistory(req, res, next) {
+  const eventId = req.params.id;
+  if (!eventId) return res.status(400).json({ error: 'Event ID wajib disertakan' });
+
+  const event = db.getEventById.get(eventId);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  // If event has no access PIN, allow public access
+  if (!isAccessPinRequired(event)) {
+    return next();
+  }
+
+  // Check admin auth (admins bypass event PIN)
+  const adminToken = req.cookies?.cyclopon_admin || 
+                     req.headers['authorization']?.replace(/^Bearer\s+/i, '') ||
+                     req.headers['x-admin-token'];
+  if (adminToken) {
+    const { verifyAdminSession } = require('../lib/admin-auth');
+    if (verifyAdminSession(adminToken)) {
+      return next();
+    }
+  }
+
+  // Check query parameter for event PIN
+  const queryPin = req.query.pin || req.query.event_pin;
+  if (queryPin && verifyAccessPin(event, queryPin)) {
+    return next();
+  }
+
+  // Deny access
+  return res.status(403).json({
+    error: 'Event ini memerlukan PIN akses. Tambahkan ?pin=XXXX di URL.',
+    access_pin_required: true,
+    event_id: eventId
+  });
+}
 
 // GET /api/events/:id/positions/latest — Fetch the single latest position per rider (ultra-fast for live map sync)
-router.get('/events/:id/positions/latest', (req, res) => {
+router.get('/events/:id/positions/latest', requireEventAccessForHistory, (req, res) => {
   const eventId = Number(req.params.id);
   const event = db.getEventById.get(eventId);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
@@ -29,7 +71,7 @@ router.get('/events/:id/positions/latest', (req, res) => {
 });
 
 // GET /api/events/:id/history/meta — Fetch history metadata (min/max time, count, riders)
-router.get('/events/:id/history/meta', (req, res) => {
+router.get('/events/:id/history/meta', requireEventAccessForHistory, (req, res) => {
   const eventId = Number(req.params.id);
   const event = db.getEventById.get(eventId);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
@@ -51,7 +93,7 @@ router.get('/events/:id/history/meta', (req, res) => {
 });
 
 // GET /api/events/:id/history — Fetch historical telemetry for replay
-router.get('/events/:id/history', (req, res) => {
+router.get('/events/:id/history', requireEventAccessForHistory, (req, res) => {
   const eventId = Number(req.params.id);
   const event = db.getEventById.get(eventId);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });

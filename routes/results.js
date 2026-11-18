@@ -1,8 +1,48 @@
 const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
-const { sanitizeEvent } = require('../lib/event-access');
+const { sanitizeEvent, isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
 const virtualCot = require('../lib/virtual-cot');
+
+/**
+ * Middleware to check event access PIN for protected events.
+ */
+function requireEventAccessForResults(req, res, next) {
+  const eventId = req.params.id;
+  if (!eventId) return res.status(400).json({ error: 'Event ID wajib disertakan' });
+
+  const event = db.getEventById.get(eventId);
+  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+  // If event has no access PIN, allow public access
+  if (!isAccessPinRequired(event)) {
+    return next();
+  }
+
+  // Check admin auth (admins bypass event PIN)
+  const adminToken = req.cookies?.cyclopon_admin || 
+                     req.headers['authorization']?.replace(/^Bearer\s+/i, '') ||
+                     req.headers['x-admin-token'];
+  if (adminToken) {
+    const { verifyAdminSession } = require('../lib/admin-auth');
+    if (verifyAdminSession(adminToken)) {
+      return next();
+    }
+  }
+
+  // Check query parameter for event PIN
+  const queryPin = req.query.pin || req.query.event_pin;
+  if (queryPin && verifyAccessPin(event, queryPin)) {
+    return next();
+  }
+
+  // Deny access
+  return res.status(403).json({
+    error: 'Event ini memerlukan PIN akses. Tambahkan ?pin=XXXX di URL.',
+    access_pin_required: true,
+    event_id: eventId
+  });
+}
 
 /**
  * Helper to compute seconds difference between ISO timestamp or HH:MM:SS strings
