@@ -346,7 +346,7 @@ function promptEventAccess(event, onSuccess, options = {}) {
 
   const eventId = Number(event.id);
   const savedPin = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('event_pin_' + eventId) : null;
-  if (savedPin) {
+  if (savedPin && !options.forcePrompt) {
     if (typeof onSuccess === 'function') onSuccess(savedPin);
     return;
   }

@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok && data.success) {
         sessionStorage.setItem('riderConfig', JSON.stringify(data));
         localStorage.setItem('riderConfig', JSON.stringify(data));
+        if (data.event && data.event.access_pin) {
+          sessionStorage.setItem('event_pin_' + data.event.id, data.event.access_pin);
+        }
         showToast(`Selamat datang, ${data.rider.name}!`, 'success');
         Router.navigate('/rider/setup');
       } else {

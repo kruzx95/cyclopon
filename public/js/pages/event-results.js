@@ -18,11 +18,58 @@ async function renderEventResults(params) {
     </div>
   `;
 
-  try {
-    const res = await fetch(`/api/events/${eventId}/results`);
-    if (!res.ok) throw new Error('Event tidak ditemukan');
+  let accessPin = sessionStorage.getItem('event_pin_' + eventId) || '';
+  let eventInfo = null;
 
-    const data = await res.json();
+  function requestEventPin() {
+    return new Promise((resolve, reject) => {
+      if (typeof promptEventAccess !== 'function') {
+        reject(new Error('Event ini memerlukan PIN akses.'));
+        return;
+      }
+      promptEventAccess(eventInfo, (pin) => {
+        accessPin = pin || '';
+        resolve();
+      }, {
+        targetName: eventInfo && eventInfo.name,
+        onCancel: () => reject(new Error('Akses event dibatalkan.'))
+      });
+    });
+  }
+
+  async function fetchResults() {
+    const detailRes = await fetch(`/api/events/${eventId}`);
+    if (!detailRes.ok) throw new Error('Event tidak ditemukan');
+    eventInfo = await detailRes.json();
+
+    if (eventInfo.access_pin_required && !accessPin) {
+      await requestEventPin();
+    }
+
+    const requestResults = () => fetch(`/api/events/${eventId}/results`, {
+      headers: accessPin ? { 'x-event-pin': accessPin } : {}
+    });
+
+    let res = await requestResults();
+
+    if (res.status === 403 || res.status === 429) {
+      const err = await res.clone().json().catch(() => ({}));
+      if (res.status === 429) {
+        throw new Error(err.error || 'Terlalu banyak percobaan PIN akses. Coba lagi beberapa menit lagi.');
+      }
+      // Saved PIN may be stale; ask again before giving up.
+      sessionStorage.removeItem('event_pin_' + eventId);
+      accessPin = '';
+      await requestEventPin();
+      res = await requestResults();
+    }
+
+    if (!res.ok) throw new Error('Event tidak ditemukan');
+    return res.json();
+  }
+
+  try {
+    const data = await fetchResults();
     const { event, results, summary } = data;
 
     const finisherRate = summary.total_riders > 0
@@ -76,12 +123,12 @@ async function renderEventResults(params) {
             </div>
 
             <div class="results-actions">
-              <a href="/api/events/${event.id}/gpx/download" download class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Unduh File GPX Rute">
+              <button type="button" id="btnDownloadGpx" class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Unduh File GPX Rute">
                 📍 &nbsp;Unduh GPX
-              </a>
-              <a href="/api/events/${event.id}/export/csv" download class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Ekspor Data Hasil Klasifikasi ke File CSV">
+              </button>
+              <button type="button" id="btnDownloadCsv" class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Ekspor Data Hasil Klasifikasi ke File CSV">
                 📥 &nbsp;Unduh CSV
-              </a>
+              </button>
               <a href="/watch/${event.id}" data-link class="btn btn-primary" style="font-size:13px;padding:9px 18px" title="Buka Pantauan Live Map">
                 🗺️ &nbsp;Live Map
               </a>
@@ -254,15 +301,15 @@ async function renderEventResults(params) {
                                 ${r.splits.map((s, sIdx) => `
                                   <div class="split-item ${s.status === 'OVER_COT' ? 'over-cot' : 'cleared'}">
                                     <div class="split-item-badge">CP ${sIdx + 1}</div>
-                                    <div class="split-item-name">${s.checkpoint_name || 'Pos Kontrol'}</div>
+                                    <div class="split-item-name">${escapeHtml(s.checkpoint_name || 'Pos Kontrol')}</div>
                                     <div class="split-item-km">${s.checkpoint_km ? s.checkpoint_km + ' KM' : '-- KM'}</div>
                                     <div class="split-item-time">
                                       <span class="lbl">Tiba:</span>
-                                      <span class="val">${s.arrival_time || '--:--'}</span>
+                                      <span class="val">${escapeHtml(s.arrival_time || '--:--')}</span>
                                     </div>
                                     <div class="split-item-cot">
                                       <span class="lbl">Batas COT:</span>
-                                      <span class="val">${s.checkpoint_cot || '--:--'}</span>
+                                      <span class="val">${escapeHtml(s.checkpoint_cot || '--:--')}</span>
                                     </div>
                                     <div class="split-item-status">
                                       ${s.status === 'OVER_COT' ? '⚠️ MELEBIHI COT' : '✓ LOLOS COT'}
@@ -336,6 +383,54 @@ async function renderEventResults(params) {
           renderView();
           const newEl = document.getElementById('resultsSearchInput');
           if (newEl) newEl.focus();
+        });
+      }
+
+      // ── Protected downloads (PIN travels in a header, not the URL) ──
+      async function downloadProtected(url, fallbackName) {
+        const res = await fetch(url, {
+          headers: accessPin ? { 'x-event-pin': accessPin } : {}
+        });
+        if (!res.ok) {
+          const err = await res.clone().json().catch(() => ({}));
+          throw new Error(err.error || `Gagal mengunduh berkas (HTTP ${res.status}).`);
+        }
+
+        const disposition = res.headers.get('content-disposition') || '';
+        const match = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+        const fileName = match ? decodeURIComponent(match[1]) : fallbackName;
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      }
+
+      const btnDownloadGpx = document.getElementById('btnDownloadGpx');
+      if (btnDownloadGpx) {
+        btnDownloadGpx.addEventListener('click', async () => {
+          try {
+            await downloadProtected(`/api/events/${event.id}/gpx/download`, `event-${event.id}-route.gpx`);
+            if (typeof showToast === 'function') showToast('File GPX berhasil diunduh!', 'success');
+          } catch (err) {
+            if (typeof showToast === 'function') showToast(err.message, 'error');
+          }
+        });
+      }
+
+      const btnDownloadCsv = document.getElementById('btnDownloadCsv');
+      if (btnDownloadCsv) {
+        btnDownloadCsv.addEventListener('click', async () => {
+          try {
+            await downloadProtected(`/api/events/${event.id}/export/csv`, `cyclopon-event-${event.id}-results.csv`);
+            if (typeof showToast === 'function') showToast('File CSV berhasil diunduh!', 'success');
+          } catch (err) {
+            if (typeof showToast === 'function') showToast(err.message, 'error');
+          }
         });
       }
 
@@ -457,8 +552,8 @@ async function renderEventResults(params) {
                       <div class="cert-stamp-badge ${s.status === 'OVER_COT' ? 'over-cot' : ''}">
                         <div class="stamp-check">${s.status === 'OVER_COT' ? '⚠️' : '✓'}</div>
                         <div class="stamp-info">
-                          <div class="stamp-name">${s.checkpoint_name || 'CP'}</div>
-                          <div class="stamp-time">${s.checkpoint_km ? s.checkpoint_km + ' KM · ' : ''}${s.arrival_time}</div>
+                          <div class="stamp-name">${escapeHtml(s.checkpoint_name || 'CP')}</div>
+                          <div class="stamp-time">${escapeHtml(s.checkpoint_km ? s.checkpoint_km + ' KM · ' : '')}${escapeHtml(s.arrival_time)}</div>
                         </div>
                       </div>
                     `).join('')}
@@ -470,7 +565,7 @@ async function renderEventResults(params) {
               <div class="cert-footer-row">
                 <div class="cert-signature-box">
                   <div class="cert-sign-title">Tanggal Pelaksanaan:</div>
-                  <div class="cert-sign-name">${event.date}</div>
+                  <div class="cert-sign-name">${escapeHtml(event.date)}</div>
                 </div>
 
                 <div class="cert-verification-stamp ${isFinisher ? 'finisher' : ''}">
@@ -629,18 +724,23 @@ async function renderEventResults(params) {
         if (e.target === modal) modal.style.display = 'none';
       });
 
-      // Close on Escape key
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && modal.style.display === 'flex') {
-          modal.style.display = 'none';
-        }
-      });
-
       if (btnPrint) {
         btnPrint.addEventListener('click', () => {
           window.print();
         });
       }
+    }
+
+    // Escape closes the certificate modal. Register once (not per render) and
+    // clean up when the route unmounts.
+    function handleResultsKeydown(e) {
+      if (e.key !== 'Escape') return;
+      const modal = document.getElementById('certModalOverlay');
+      if (modal && modal.style.display === 'flex') modal.style.display = 'none';
+    }
+    document.addEventListener('keydown', handleResultsKeydown);
+    if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
+      Router.onUnmount(() => document.removeEventListener('keydown', handleResultsKeydown));
     }
 
     renderView();

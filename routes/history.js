@@ -1,49 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
-const { requireAdminAuth } = require('../lib/admin-auth');
-const { isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
+const { requireAdminAuth, safeStringCompare } = require('../lib/admin-auth');
+const { requireEventAccess } = require('../lib/event-access');
 
 /**
  * Middleware to check event access PIN for protected events.
  * Used for history/replay data, positions, etc.
  */
-function requireEventAccessForHistory(req, res, next) {
-  const eventId = req.params.id;
-  if (!eventId) return res.status(400).json({ error: 'Event ID wajib disertakan' });
-
-  const event = db.getEventById.get(eventId);
-  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
-
-  // If event has no access PIN, allow public access
-  if (!isAccessPinRequired(event)) {
-    return next();
-  }
-
-  // Check admin auth (admins bypass event PIN)
-  const adminToken = req.cookies?.cyclopon_admin || 
-                     req.headers['authorization']?.replace(/^Bearer\s+/i, '') ||
-                     req.headers['x-admin-token'];
-  if (adminToken) {
-    const { verifyAdminSession } = require('../lib/admin-auth');
-    if (verifyAdminSession(adminToken)) {
-      return next();
-    }
-  }
-
-  // Check query parameter or header for event PIN
-  const queryPin = req.query.pin || req.query.event_pin || req.headers['x-event-pin'];
-  if (queryPin && verifyAccessPin(event, queryPin)) {
-    return next();
-  }
-
-  // Deny access
-  return res.status(403).json({
-    error: 'Event ini memerlukan PIN akses. Tambahkan ?pin=XXXX di URL.',
-    access_pin_required: true,
-    event_id: eventId
-  });
-}
+const requireEventAccessForHistory = requireEventAccess();
 
 // GET /api/events/:id/positions/latest — Fetch the single latest position per rider (ultra-fast for live map sync)
 router.get('/events/:id/positions/latest', requireEventAccessForHistory, (req, res) => {
@@ -136,11 +101,12 @@ router.get('/events/:id/history', requireEventAccessForHistory, (req, res) => {
 });
 
 // POST /api/events/:id/history — Log single or batch telemetry points
-router.post('/events/:id/history', (req, res) => {
+router.post('/events/:id/history', requireEventAccessForHistory, (req, res) => {
   const eventId = Number(req.params.id);
   const event = db.getEventById.get(eventId);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
 
+  const isSingle = !Array.isArray(req.body.positions);
   let positions = [];
   if (Array.isArray(req.body.positions)) {
     positions = req.body.positions;
@@ -155,7 +121,29 @@ router.post('/events/:id/history', (req, res) => {
     return res.status(400).json({ error: 'Ukuran batch melebihi batas maksimal (300 titik)' });
   }
 
+  const headerRiderToken = req.headers && req.headers['x-rider-token'];
+
+  // For single-position submissions, validate the rider immediately to return explicit errors
+  if (isSingle) {
+    const singlePos = positions[0];
+    const riderId = Number(singlePos.rider_id);
+    if (!Number.isInteger(riderId) || riderId <= 0) {
+      return res.status(400).json({ error: 'rider_id tidak valid' });
+    }
+    const rider = db.getRiderById.get(riderId);
+    if (!rider || rider.event_id !== eventId) {
+      return res.status(400).json({ error: 'Rider tidak valid untuk event ini' });
+    }
+    const token = headerRiderToken || singlePos.token;
+    if (token && rider.token && !safeStringCompare(String(token).trim(), String(rider.token).trim())) {
+      return res.status(401).json({ error: 'Token rider tidak valid' });
+    }
+  }
+
   try {
+    const validPositions = [];
+    const riderCache = new Map();
+
     const insertTx = db.db.transaction((items) => {
       let count = 0;
       for (const pos of items) {
@@ -165,9 +153,27 @@ router.post('/events/:id/history', (req, res) => {
           continue; // Skip invalid coordinates safely
         }
 
+        const riderId = Number(pos.rider_id);
+        if (!Number.isInteger(riderId) || riderId <= 0) continue;
+
+        let rider = riderCache.get(riderId);
+        if (rider === undefined) {
+          rider = db.getRiderById.get(riderId) || null;
+          riderCache.set(riderId, rider);
+        }
+
+        // Rider must exist and belong to this event
+        if (!rider || rider.event_id !== eventId) continue;
+
+        // If rider token was provided, verify it
+        const token = headerRiderToken || pos.token;
+        if (token && rider.token && !safeStringCompare(String(token).trim(), String(rider.token).trim())) {
+          continue;
+        }
+
         db.recordPositionHistory.run({
           event_id: eventId,
-          rider_id: Number(pos.rider_id),
+          rider_id: riderId,
           latitude: lat,
           longitude: lon,
           speed: Number(pos.speed || 0),
@@ -175,6 +181,7 @@ router.post('/events/:id/history', (req, res) => {
           recorded_at: pos.recorded_at || new Date().toISOString()
         });
         count++;
+        validPositions.push({ pos, rider });
       }
       return count;
     });
@@ -183,9 +190,8 @@ router.post('/events/:id/history', (req, res) => {
 
     try {
       const { broadcastToClients } = require('../lib/traccar-ws-proxy');
-      if (typeof broadcastToClients === 'function') {
-        const wsPositions = positions.map(pos => {
-          const r = db.getRiderById.get(Number(pos.rider_id));
+      if (typeof broadcastToClients === 'function' && validPositions.length > 0) {
+        const wsPositions = validPositions.map(({ pos, rider: r }) => {
           const devId = (r && r.traccar_device_id) ? r.traccar_device_id : (r && r.bib ? (Number(r.bib) || pos.rider_id) : pos.rider_id);
           const rawBatt = pos.battery != null ? pos.battery : (pos.attributes && pos.attributes.batteryLevel != null ? pos.attributes.batteryLevel : (pos.batteryLevel != null ? pos.batteryLevel : null));
           const attributes = {};
@@ -195,6 +201,7 @@ router.post('/events/:id/history', (req, res) => {
           return {
             deviceId: devId,
             rider_id: Number(pos.rider_id),
+            event_id: r ? r.event_id : eventId,
             latitude: Number(pos.latitude),
             longitude: Number(pos.longitude),
             speed: Number(pos.speed || 0),

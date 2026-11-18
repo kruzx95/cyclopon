@@ -144,6 +144,11 @@ async function runDiagnosticTrial() {
     color: '#00E5FF'
   });
   const trialRider1Id = Number(rider1Res.lastInsertRowid);
+  // The WS proxy only forwards devices that are mapped to the event being
+  // watched (unmapped devices would leak across events), so the diagnostic
+  // fan-out must use a device owned by this trial event.
+  const trialDeviceId = 900000 + trialEventId;
+  db.db.prepare('UPDATE riders SET traccar_device_id = ? WHERE id = ?').run(trialDeviceId, trialRider1Id);
 
   const rider2Res = db.createRider.run({
     event_id: trialEventId,
@@ -243,7 +248,7 @@ async function runDiagnosticTrial() {
   const wsLatencies = [];
 
   for (let i = 0; i < CONCURRENT_WS_VIEWERS; i++) {
-    const ws = new WebSocket(`ws://127.0.0.1:${appPort}/traccar-ws`);
+    const ws = new WebSocket(`ws://127.0.0.1:${appPort}/traccar-ws?event_id=${trialEventId}`);
     wsClients.push(ws);
     ws.on('message', (raw) => {
       try {
@@ -284,7 +289,7 @@ async function runDiagnosticTrial() {
           _trialRound: round,
           _t: performance.now(),
           positions: [
-            { deviceId: 101, latitude: -6.9 + round * 0.001, longitude: 107.6, speed: 28.0 }
+            { deviceId: trialDeviceId, latitude: -6.9 + round * 0.001, longitude: 107.6, speed: 28.0 }
           ]
         })
       );
@@ -494,7 +499,7 @@ async function runDiagnosticTrial() {
   // ════════════════════════════════════════════════════════════════
   // Generate Markdown Report (Single LATEST_REPORT.md)
   // ════════════════════════════════════════════════════════════════
-  const latestFilePath = path.join(reportsDir, 'LATEST_REPORT.md');
+  const latestFilePath = process.env.TEST_REPORT_OUTPUT || path.join(reportsDir, 'LATEST_REPORT.md');
 
   const reportMarkdown = `# 📊 Laporan Diagnostik Kesiapan Produksi VPS — CycloPon Live Tracker
 

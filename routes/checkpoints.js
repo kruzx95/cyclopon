@@ -2,6 +2,18 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
+const { requireEventAccess } = require('../lib/event-access');
+
+const requireEventAccessForEvent = requireEventAccess();
+// Unknown rider ids resolve to no event; pass through so the handler answers
+// with the real payload (empty splits) instead of a misleading 400.
+const requireEventAccessForRider = requireEventAccess({
+  resolveEventId: (req) => {
+    const rider = db.getRiderById.get(Number(req.params.id));
+    return rider ? rider.event_id : null;
+  },
+  passThroughWhenUnresolved: true
+});
 
 // ── Checkpoints Management ──
 
@@ -30,7 +42,7 @@ router.post('/events/:id/checkpoints', requireAdminAuth, (req, res) => {
 });
 
 // GET /api/events/:id/checkpoints — list all checkpoints for event
-router.get('/events/:id/checkpoints', (req, res) => {
+router.get('/events/:id/checkpoints', requireEventAccessForEvent, (req, res) => {
   const event_id = Number(req.params.id);
   const cps = db.getCheckpointsByEvent.all(event_id);
   res.json(cps);
@@ -70,14 +82,14 @@ router.post('/events/:id/splits', requireAdminAuth, (req, res) => {
 });
 
 // GET /api/events/:id/splits — list all splits for an event
-router.get('/events/:id/splits', (req, res) => {
+router.get('/events/:id/splits', requireEventAccessForEvent, (req, res) => {
   const event_id = Number(req.params.id);
   const splits = db.getSplitsByEvent.all(event_id);
   res.json(splits);
 });
 
 // GET /api/riders/:id/splits — list splits for a specific rider
-router.get('/riders/:id/splits', (req, res) => {
+router.get('/riders/:id/splits', requireEventAccessForRider, (req, res) => {
   const rider_id = Number(req.params.id);
   const splits = db.getSplitsByRider.all(rider_id);
   res.json(splits);

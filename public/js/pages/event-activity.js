@@ -45,12 +45,12 @@ async function renderEventActivity(params) {
   let isRosterLocked = false;
 
   try {
-    const ridersUrl = `/api/events/${eventId}/riders` + (savedPin ? `?pin=${encodeURIComponent(savedPin)}` : '');
+    const ridersUrl = `/api/events/${eventId}/riders`;
     const ridersHeaders = savedPin ? { 'x-event-pin': savedPin } : {};
     const [evRes, rRes, cpRes] = await Promise.all([
       fetch(`/api/events/${eventId}`),
       fetch(ridersUrl, { headers: ridersHeaders }),
-      fetch(`/api/events/${eventId}/checkpoints`).catch(() => ({ ok: false }))
+      fetch(`/api/events/${eventId}/checkpoints`, { headers: ridersHeaders }).catch(() => ({ ok: false }))
     ]);
 
     if (!evRes.ok) {
@@ -124,7 +124,7 @@ async function renderEventActivity(params) {
             <a href="/" data-link class="btn-gpx-chip activity-btn-beranda" title="Kembali ke Beranda">
               <span>← BERANDA</span>
             </a>
-            <a href="/watch/${event.id}${savedPin ? `?pin=${encodeURIComponent(savedPin)}` : ''}" data-link class="btn-watch-action activity-btn-radar" title="Buka Live Radar GPS">
+            <a href="/watch/${event.id}" data-link class="btn-watch-action activity-btn-radar" title="Buka Live Radar GPS">
               <span>BUKA RADAR</span>
               <span class="btn-arrow-icon">↗</span>
             </a>
@@ -316,7 +316,7 @@ async function renderEventActivity(params) {
                   <p style="font-size:13px;color:#4B5563;margin:0">Pantau batas waktu kedatangan resmi (COT) di setiap checkpoint rute balap.</p>
                 </div>
                 ${event.gpx_path ? `
-                  <a href="/api/events/${event.id}/gpx/download" download class="btn-gpx-chip" title="Unduh File GPX Resmi">
+                  <a href="/api/events/${event.id}/gpx/download${savedPin ? `?pin=${encodeURIComponent(savedPin)}` : ''}" download class="btn-gpx-chip" title="Unduh File GPX Resmi">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     <span>UNDUH GPX RESMI</span>
                   </a>
@@ -679,8 +679,8 @@ async function renderEventActivity(params) {
       if (typeof promptEventAccess === 'function') {
         promptEventAccess(event, (pin) => {
           sessionStorage.setItem('event_pin_' + eventId, pin);
-          Router.navigate(`/events/${eventId}?pin=${encodeURIComponent(pin)}`, true);
-        });
+          Router.navigate(`/events/${eventId}`, true);
+        }, { forcePrompt: true });
       }
     });
   }
@@ -748,7 +748,10 @@ async function renderEventActivity(params) {
   // ── Lightweight polling every 15s for live real-time roster updates ──
   const pollTimer = setInterval(async () => {
     try {
-      const res = await fetch(`/api/events/${eventId}/riders`);
+      const currentPin = savedPin || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('event_pin_' + eventId) : '') || '';
+      const res = await fetch(`/api/events/${eventId}/riders`, {
+        headers: currentPin ? { 'x-event-pin': currentPin } : {}
+      });
       if (res.ok) {
         const updated = await res.json();
         if (Array.isArray(updated) && updated.length !== riders.length) {

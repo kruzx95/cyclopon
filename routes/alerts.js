@@ -2,6 +2,9 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
+const { requireEventAccess } = require('../lib/event-access');
+
+const requireEventAccessForAlerts = requireEventAccess();
 
 let wsBroadcastFn = null;
 try {
@@ -65,7 +68,7 @@ function normalizeAlertMessage(type, message) {
 }
 
 // POST /api/events/:id/alerts — create a new alert (SOS, crash, etc.)
-router.post('/events/:id/alerts', sosRateLimiter, (req, res) => {
+router.post('/events/:id/alerts', sosRateLimiter, requireEventAccessForAlerts, (req, res) => {
   const event_id = Number(req.params.id);
   const { rider_id } = req.body;
   const rawType = req.body.type;
@@ -139,7 +142,7 @@ router.post('/events/:id/alerts', sosRateLimiter, (req, res) => {
 });
 
 // GET /api/events/:id/alerts — fetch alerts for event (filter with ?active=1)
-router.get('/events/:id/alerts', (req, res) => {
+router.get('/events/:id/alerts', requireEventAccessForAlerts, (req, res) => {
   const event_id = Number(req.params.id);
   const activeOnly = req.query.active === '1' || req.query.active === 'true';
 

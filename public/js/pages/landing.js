@@ -317,7 +317,7 @@ function renderLanding() {
               e.stopPropagation();
               if (typeof promptEventAccess === 'function') {
                 promptEventAccess(topEvent, (pin) => {
-                  Router.navigate(`/watch/${topEvent.id}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                  Router.navigate(`/watch/${topEvent.id}`);
                 });
               } else {
                 Router.navigate(`/watch/${topEvent.id}`);
@@ -340,7 +340,7 @@ function renderLanding() {
               e.stopPropagation();
               if (typeof promptEventAccess === 'function') {
                 promptEventAccess(topEvent, (pin) => {
-                  Router.navigate(`/events/${topEvent.id}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                  Router.navigate(`/events/${topEvent.id}`);
                 });
               }
             }
@@ -359,7 +359,7 @@ function renderLanding() {
               e.stopPropagation();
               if (typeof promptEventAccess === 'function') {
                 promptEventAccess(topEvent, (pin) => {
-                  Router.navigate(`/events/${topEvent.id}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                  Router.navigate(`/events/${topEvent.id}`);
                 });
               }
             }
@@ -373,19 +373,22 @@ function renderLanding() {
       }
 
       // Fetch accurate count of riders, checkpoints, and GPX distance for the featured event
+      const featuredPin = sessionStorage.getItem('event_pin_' + topEvent.id) || '';
+      const featuredHeaders = featuredPin ? { 'x-event-pin': featuredPin } : {};
       Promise.all([
-        fetch(`/api/events/${topEvent.id}/riders`).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(`/api/events/${topEvent.id}/checkpoints`).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`/api/events/${topEvent.id}/riders`, { headers: featuredHeaders }).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`/api/events/${topEvent.id}/checkpoints`, { headers: featuredHeaders }).then(r => r.ok ? r.json() : []).catch(() => []),
         (topEvent.distance_km == null || Number(topEvent.distance_km) <= 0) && topEvent.gpx_path
-          ? fetch(topEvent.gpx_path).then(r => r.ok ? r.text() : '').catch(() => '')
+          ? fetch(`/api/events/${topEvent.id}/gpx/download`, { headers: featuredHeaders }).then(r => r.ok ? r.text() : '').catch(() => '')
           : Promise.resolve('')
       ]).then(([riders, cps, gpxText]) => {
         const ridersEl = document.getElementById('dossierRiders');
         const cpsEl = document.getElementById('dossierCps');
         const pelotonStatus = document.getElementById('dossierPelotonStatus');
-        if (ridersEl) ridersEl.textContent = Array.isArray(riders) ? riders.length : 0;
+        const ridersTotal = Array.isArray(riders) && riders.length ? riders.length : (topEvent.rider_count || 0);
+        if (ridersEl) ridersEl.textContent = ridersTotal;
         if (cpsEl) cpsEl.textContent = Array.isArray(cps) ? cps.length : 0;
-        if (pelotonStatus) pelotonStatus.textContent = Array.isArray(riders) && riders.length ? 'ONLINE' : 'STANDBY';
+        if (pelotonStatus) pelotonStatus.textContent = ridersTotal > 0 ? 'ONLINE' : 'STANDBY';
 
         // Calculate and display accurate total distance
         let finalDistance = Number(topEvent.distance_km || 0);
@@ -506,7 +509,7 @@ function renderLanding() {
               <span>👥 DAFTAR &amp; ROSTER</span>
             </a>
             ${ev.gpx_path ? `
-              <a href="/api/events/${ev.id}/gpx/download" download class="btn-gpx-chip" title="Unduh File GPX Resmi">
+              <a href="/api/events/${ev.id}/gpx/download${(sessionStorage.getItem('event_pin_' + ev.id) || '') ? `?pin=${encodeURIComponent(sessionStorage.getItem('event_pin_' + ev.id))}` : ''}" download class="btn-gpx-chip" title="Unduh File GPX Resmi">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span>GPX DOSSIER</span>
               </a>
@@ -532,7 +535,7 @@ function renderLanding() {
               e.stopPropagation();
               if (typeof promptEventAccess === 'function') {
                 promptEventAccess(evObj, (pin) => {
-                  Router.navigate(`/events/${evId}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                  Router.navigate(`/events/${evId}`);
                 });
               } else {
                 Router.navigate(`/events/${evId}`);
@@ -549,7 +552,7 @@ function renderLanding() {
               e.stopPropagation();
               if (typeof promptEventAccess === 'function') {
                 promptEventAccess(evObj, (pin) => {
-                  Router.navigate(`/watch/${evId}${pin ? `?pin=${encodeURIComponent(pin)}` : ''}`);
+                  Router.navigate(`/watch/${evId}`);
                 });
               } else {
                 Router.navigate(`/watch/${evId}`);

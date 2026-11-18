@@ -69,6 +69,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/admin/sos';
+  const destination = new URL(targetUrl, self.location.origin).href;
 
   event.waitUntil((async () => {
     const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
@@ -76,12 +77,18 @@ self.addEventListener('notificationclick', event => {
       try {
         const clientUrl = new URL(client.url);
         if (clientUrl.pathname.startsWith('/admin')) {
+          // Bring the admin console to the foreground and show the alert page
+          // the notification points at, instead of just focusing whatever tab
+          // happened to be open.
+          if ('navigate' in client && client.url !== destination) {
+            await client.navigate(destination);
+          }
           await client.focus();
           return;
         }
       } catch {}
     }
-    await self.clients.openWindow(targetUrl);
+    await self.clients.openWindow(destination);
   })());
 });
 
@@ -106,13 +113,18 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // GPX files — network-first, cache fallback
+  // GPX files — network-first, cache fallback (only cache authorized responses)
   if (url.pathname.startsWith('/gpx/')) {
     event.respondWith(
       fetch(request)
         .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, clone));
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(request, clone)).catch(() => {});
+          } else {
+            // Never keep a 403 (locked event) response around as a cached route.
+            caches.open(CACHE_NAME).then(c => c.delete(request)).catch(() => {});
+          }
           return res;
         })
         .catch(() => caches.match(request))

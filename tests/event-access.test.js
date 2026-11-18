@@ -9,6 +9,7 @@ test('Event Access PIN — locked events for trial riders', async (t) => {
   let baseUrl;
   let eventId;
   let riderToken;
+  let riderId;
 
   await t.test('setup server, event and rider', async () => {
     const evResult = db.createEvent.run({
@@ -25,6 +26,7 @@ test('Event Access PIN — locked events for trial riders', async (t) => {
       color: '#00E5FF'
     });
     riderToken = db.getRiderById.get(Number(riderResult.lastInsertRowid)).token;
+    riderId = Number(riderResult.lastInsertRowid);
 
     await new Promise((resolve) => {
       server = http.createServer(app);
@@ -133,6 +135,136 @@ test('Event Access PIN — locked events for trial riders', async (t) => {
     assert.equal(headerRes.status, 200);
     const headerRiders = await headerRes.json();
     assert.ok(Array.isArray(headerRiders));
+  });
+
+  await t.test('GET /api/events/:id/results and CSV export require the event PIN', async () => {
+    const forbiddenResults = await fetch(`${baseUrl}/api/events/${eventId}/results`);
+    assert.equal(forbiddenResults.status, 403);
+    const forbiddenJson = await forbiddenResults.json();
+    assert.equal(forbiddenJson.access_pin_required, true);
+
+    const allowedResults = await fetch(`${baseUrl}/api/events/${eventId}/results`, {
+      headers: { 'x-event-pin': '654321' }
+    });
+    assert.equal(allowedResults.status, 200);
+    const results = await allowedResults.json();
+    assert.equal(results.event.access_pin, undefined);
+    assert.equal(results.event.access_pin_required, true);
+
+    const forbiddenCsv = await fetch(`${baseUrl}/api/events/${eventId}/export/csv`);
+    assert.equal(forbiddenCsv.status, 403);
+
+    const allowedCsv = await fetch(`${baseUrl}/api/events/${eventId}/export/csv`, {
+      headers: { 'x-event-pin': '654321' }
+    });
+    assert.equal(allowedCsv.status, 200);
+    assert.match(allowedCsv.headers.get('content-type') || '', /text\/csv/i);
+  });
+
+  await t.test('SOS alerts and telemetry ingestion require the event PIN', async () => {
+    const alertsNoPin = await fetch(`${baseUrl}/api/events/${eventId}/alerts`);
+    assert.equal(alertsNoPin.status, 403);
+
+    const alertsWithPin = await fetch(`${baseUrl}/api/events/${eventId}/alerts`, {
+      headers: { 'x-event-pin': '654321' }
+    });
+    assert.equal(alertsWithPin.status, 200);
+
+    const alertPayload = {
+      rider_id: riderId,
+      type: 'MEDICAL',
+      latitude: -6.9,
+      longitude: 107.6,
+      message: 'Butuh bantuan medis'
+    };
+
+    const sosNoPin = await fetch(`${baseUrl}/api/events/${eventId}/alerts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(alertPayload)
+    });
+    assert.equal(sosNoPin.status, 403);
+
+    const sosWithPin = await fetch(`${baseUrl}/api/events/${eventId}/alerts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-event-pin': '654321' },
+      body: JSON.stringify(alertPayload)
+    });
+    assert.equal(sosWithPin.status, 201);
+
+    const historyPayload = {
+      positions: [{
+        rider_id: riderId,
+        latitude: -6.9,
+        longitude: 107.6,
+        speed: 20,
+        recorded_at: new Date().toISOString()
+      }]
+    };
+
+    const historyNoPin = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(historyPayload)
+    });
+    assert.equal(historyNoPin.status, 403);
+
+    const historyWithPin = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-event-pin': '654321' },
+      body: JSON.stringify(historyPayload)
+    });
+    assert.equal(historyWithPin.status, 201);
+  });
+
+  await t.test('checkpoint and split data require the event PIN', async () => {
+    for (const path of [
+      `/api/events/${eventId}/checkpoints`,
+      `/api/events/${eventId}/splits`,
+      `/api/riders/${riderId}/splits`
+    ]) {
+      const noPin = await fetch(`${baseUrl}${path}`);
+      assert.equal(noPin.status, 403, `${path} should require the event PIN`);
+
+      const withPin = await fetch(`${baseUrl}${path}`, {
+        headers: { 'x-event-pin': '654321' }
+      });
+      assert.equal(withPin.status, 200, `${path} should work with the event PIN`);
+    }
+  });
+
+  await t.test('static /gpx/:id.gpx cannot bypass the event PIN', async () => {
+    const noPin = await fetch(`${baseUrl}/gpx/${eventId}.gpx`);
+    assert.equal(noPin.status, 403);
+
+    const wrongPin = await fetch(`${baseUrl}/gpx/${eventId}.gpx?pin=000000`);
+    assert.equal(wrongPin.status, 403);
+
+    // Correct PIN reaches the static handler (200 when the GPX exists, 404 otherwise).
+    const correctPin = await fetch(`${baseUrl}/gpx/${eventId}.gpx?pin=654321`);
+    assert.ok([200, 404].includes(correctPin.status), `Unexpected status ${correctPin.status}`);
+  });
+
+  await t.test('verify-pin throttles repeated wrong PIN guesses', async () => {
+    let lastRes;
+    for (let i = 0; i < 10; i++) {
+      lastRes = await fetch(`${baseUrl}/api/events/${eventId}/verify-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: '000000' })
+      });
+    }
+
+    assert.equal(lastRes.status, 429);
+    assert.ok(Number(lastRes.headers.get('retry-after')) > 0);
+
+    // The correct PIN is still accepted and clears the throttle counter.
+    const correctRes = await fetch(`${baseUrl}/api/events/${eventId}/verify-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: '654321' })
+    });
+    assert.equal(correctRes.status, 200);
   });
 
   await t.test('admin Magic Link still works without the event PIN', async () => {

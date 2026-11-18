@@ -452,6 +452,7 @@ async function renderLoginForm() {
       if (res.ok) {
         sessionStorage.setItem('riderConfig', JSON.stringify(data));
         localStorage.setItem('riderConfig', JSON.stringify(data));
+        if (eventPin) sessionStorage.setItem('event_pin_' + eventId, eventPin);
         showToast(`Selamat datang, ${data.rider.name}!`, 'success');
         Router.navigate('/rider/setup');
       } else {
@@ -598,6 +599,7 @@ async function renderLoginForm() {
       if (res.ok && data.success) {
         sessionStorage.setItem('riderConfig', JSON.stringify(data));
         localStorage.setItem('riderConfig', JSON.stringify(data));
+        if (eventPin) sessionStorage.setItem('event_pin_' + event_id, eventPin);
         showToast(`Pendaftaran berhasil! Selamat datang, ${data.rider.name}.`, 'success');
         closeRegModal();
         Router.navigate('/rider/setup');

@@ -5,7 +5,7 @@ const path    = require('path');
 const fs      = require('fs');
 const db      = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
-const { sanitizeEvent, normalizeAccessPin, isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
+const { sanitizeEvent, normalizeAccessPin, requireEventAccess: buildEventAccessGuard, isAccessPinRequired, verifyAccessPin, getClientIp, isThrottled, recordFailedAttempt, clearFailedAttempts, getThrottleRetryAfterSeconds } = require('../lib/event-access');
 const virtualCot = require('../lib/virtual-cot');
 
 const gpxDir = path.join(__dirname, '..', 'public', 'gpx');
@@ -188,10 +188,19 @@ function buildCotPreview(eventId, cotFields) {
 
 // GET /api/events — list all events
 router.get('/', (_req, res) => {
-  const events = db.getAllEvents.all().map(ev => ({
-    ...sanitizeEvent(ev),
-    distance_km: getEventDistanceKm(ev)
-  }));
+  const countStmt = db.db.prepare('SELECT COUNT(*) as c FROM riders WHERE event_id = ?');
+  const events = db.getAllEvents.all().map(ev => {
+    let riderCount = 0;
+    try {
+      const row = countStmt.get(ev.id);
+      if (row) riderCount = Number(row.c) || 0;
+    } catch {}
+    return {
+      ...sanitizeEvent(ev),
+      distance_km: getEventDistanceKm(ev),
+      rider_count: riderCount
+    };
+  });
   res.json(events);
 });
 
@@ -199,9 +208,15 @@ router.get('/', (_req, res) => {
 router.get('/:id', (req, res) => {
   const event = db.getEventById.get(req.params.id);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+  let riderCount = 0;
+  try {
+    const row = db.db.prepare('SELECT COUNT(*) as c FROM riders WHERE event_id = ?').get(event.id);
+    if (row) riderCount = Number(row.c) || 0;
+  } catch {}
   res.json({
     ...sanitizeEvent(event),
-    distance_km: getEventDistanceKm(event)
+    distance_km: getEventDistanceKm(event),
+    rider_count: riderCount
   });
 });
 
@@ -209,47 +224,10 @@ router.get('/:id', (req, res) => {
 
 /**
  * Middleware to check if user has access to a PIN-protected event.
- * Bypasses check for admins. For public access, requires ?pin=XXXX query param.
+ * Bypasses check for admins. For public access, accepts ?pin=XXXX (legacy
+ * links) or the `x-event-pin` header. Shared with results/history/GPX guards.
  */
-function requireEventAccess(req, res, next) {
-  const eventId = req.params.id || req.params.eventId;
-  if (!eventId) return res.status(400).json({ error: 'Event ID wajib disertakan' });
-
-  const event = db.getEventById.get(eventId);
-  if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
-
-  // If event has no access PIN, allow public access
-  if (!isAccessPinRequired(event)) {
-    req.event = event;
-    return next();
-  }
-
-  // Check admin auth (admins bypass event PIN)
-  const adminToken = req.cookies?.cyclopon_admin || 
-                     req.headers['authorization']?.replace(/^Bearer\s+/i, '') ||
-                     req.headers['x-admin-token'];
-  if (adminToken) {
-    const { verifyAdminSession } = require('../lib/admin-auth');
-    if (verifyAdminSession(adminToken)) {
-      req.event = event;
-      return next();
-    }
-  }
-
-  // Check query parameter or header for event PIN (e.g., ?pin=1234 or header x-event-pin)
-  const queryPin = req.query.pin || req.query.event_pin || req.headers['x-event-pin'];
-  if (queryPin && verifyAccessPin(event, queryPin)) {
-    req.event = event;
-    return next();
-  }
-
-  // Deny access
-  return res.status(403).json({
-    error: 'Event ini memerlukan PIN akses. Tambahkan ?pin=XXXX di URL.',
-    access_pin_required: true,
-    event_id: eventId
-  });
-}
+const requireEventAccess = buildEventAccessGuard();
 
 // POST /api/events/:id/verify-pin — verify event access PIN for riders / viewers
 router.post('/:id/verify-pin', (req, res) => {
@@ -262,15 +240,29 @@ router.post('/:id/verify-pin', (req, res) => {
     return res.json({ success: true, access_pin_required: false });
   }
 
+  const ip = getClientIp(req);
   const { pin } = req.body || {};
-  if (!pin || !verifyAccessPin(event, pin)) {
-    return res.status(401).json({
+
+  // A correct PIN is always accepted, so a throttled spectator who finally
+  // receives the right PIN is not locked out for the rest of the window.
+  if (pin && verifyAccessPin(event, pin)) {
+    clearFailedAttempts(ip, event.id);
+    return res.json({ success: true, access_pin_required: true });
+  }
+
+  recordFailedAttempt(ip, event.id);
+  if (isThrottled(ip, event.id)) {
+    res.set('Retry-After', String(getThrottleRetryAfterSeconds(ip, event.id)));
+    return res.status(429).json({
       success: false,
-      error: 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
+      error: 'Terlalu banyak percobaan PIN akses. Coba lagi beberapa menit lagi.'
     });
   }
 
-  res.json({ success: true, access_pin_required: true });
+  return res.status(401).json({
+    success: false,
+    error: 'PIN Akses Event salah. Periksa kembali PIN dari panitia.'
+  });
 });
 
 // GET /api/events/:id/riders — public rider list (no PIN)
@@ -293,19 +285,30 @@ router.get('/:id/virtual-cot', requireEventAccess, (req, res) => {
   res.json(virtualCot.buildStatus(event));
 });
 
-// GET /api/events/:id/virtual-cot/preview — dry-run candidates (admin)
-router.get('/:id/virtual-cot/preview', requireAdminAuth, (req, res) => {
+// GET & POST /api/events/:id/virtual-cot/preview — dry-run candidates (admin)
+function handleCotPreview(req, res) {
   const event = db.getEventById.get(req.params.id);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
 
-  const preview = buildCotPreview(event.id, {});
+  // Normalise first so cot_start_ms is recomputed from cot_start_time; a raw
+  // body would keep the stale epoch and place the marker at the wrong km.
+  let cotFields;
+  try {
+    cotFields = normalizeCotInput(req.body, event);
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+
+  const preview = buildCotPreview(event.id, cotFields);
   res.json({
     event_id: event.id,
-    mode: event.cot_mode || 'off',
+    mode: cotFields.cot_mode || event.cot_mode || 'off',
     ...preview,
     ledger: virtualCot.getDnfLedger(event.id)
   });
-});
+}
+router.get('/:id/virtual-cot/preview', requireAdminAuth, handleCotPreview);
+router.post('/:id/virtual-cot/preview', requireAdminAuth, handleCotPreview);
 
 // GET /api/events/:id/virtual-cot/dnf — DNF ledger (admin)
 router.get('/:id/virtual-cot/dnf', requireAdminAuth, (req, res) => {

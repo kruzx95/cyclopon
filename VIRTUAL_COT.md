@@ -125,8 +125,8 @@ CREATE INDEX IF NOT EXISTS idx_virtual_dnf_event_status ON virtual_dnf(event_id,
 - `PUT /api/events/admin/:id` juga menerima field tersebut (untuk edit).
 - Semua response event (`GET /api/events`, `GET /api/events/:id`) menyertakan
   field tersebut.
-- Endpoint admin baru: `POST /api/events/:id/virtual-cot/preview` (hitung
-  kandidat DNF tanpa menulis) dan `POST /api/events/:id/virtual-cot/void/:riderId`
+- Endpoint admin baru: `GET` & `POST /api/events/:id/virtual-cot/preview` (hitung
+  kandidat DNF tanpa menulis; POST menerima prospective cot fields pada body) dan `POST /api/events/:id/virtual-cot/void/:riderId`
   (harus menyertakan `reason`).
 
 ### 4.2 Helper kalkulasi posisi marker
@@ -164,7 +164,7 @@ Response (contoh):
   "last_telemetry_age_sec": 42,
   "dnf_count": 3,
   "evaluation": {                 // null bila tidak ada evaluasi pada request ini
-    "state": "ok",               // ok | deferred | dry_run | throttled
+    "state": "ok",               // ok | deferred | dry_run (evaluasi dicache in-memory 15-30 detik)
     "reason": null,              // data_gap | cooldown | ...
     "candidates": 0
   }

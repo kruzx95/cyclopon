@@ -226,6 +226,30 @@ test('Telemetry History Logger & API', async (t) => {
     assert.equal(data.inserted, 1); // Only the 1 valid point was recorded
   });
 
+  await t.test('POST /api/events/:id/history rejects telemetry for riders not in event', async () => {
+    const { eventId } = t.context;
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rider_id: 999999, latitude: -6.9, longitude: 107.6, speed: 20 })
+    });
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.ok(data.error.includes('Rider tidak valid'));
+  });
+
+  await t.test('POST /api/events/:id/history rejects telemetry with mismatched rider token', async () => {
+    const { eventId, rider1Id } = t.context;
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-rider-token': 'wrong-token-123' },
+      body: JSON.stringify({ rider_id: rider1Id, latitude: -6.9, longitude: 107.6, speed: 20 })
+    });
+    assert.equal(res.status, 401);
+    const data = await res.json();
+    assert.ok(data.error.includes('Token'));
+  });
+
   await t.test('DELETE /api/events/:id/history clears all position points', async () => {
     const { eventId } = t.context;
     const res = await fetch(`${baseUrl}/api/events/${eventId}/history`, {

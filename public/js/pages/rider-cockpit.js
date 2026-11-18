@@ -159,6 +159,9 @@ async function renderRiderCockpit() {
   }
 
   const { rider, event } = config;
+  if (event && event.access_pin && !sessionStorage.getItem('event_pin_' + event.id)) {
+    sessionStorage.setItem('event_pin_' + event.id, event.access_pin);
+  }
 
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -641,9 +644,11 @@ async function renderRiderCockpit() {
 
   // ── 4. Fetch Event & Checkpoints & GPX ──
   try {
+    const cockpitEventPin = sessionStorage.getItem('event_pin_' + event.id) || '';
+    const cockpitEventHeaders = cockpitEventPin ? { 'x-event-pin': cockpitEventPin } : {};
     const [eventRes, cpRes] = await Promise.all([
       fetch(`/api/events/${event.id}`).then(r => r.json()).catch(() => null),
-      fetch(`/api/events/${event.id}/checkpoints`).then(r => r.json()).catch(() => [])
+      fetch(`/api/events/${event.id}/checkpoints`, { headers: cockpitEventHeaders }).then(r => r.json()).catch(() => [])
     ]);
 
     if (cpRes && Array.isArray(cpRes)) {
@@ -652,7 +657,12 @@ async function renderRiderCockpit() {
 
     if (eventRes && eventRes.gpx_path) {
       try {
-        const gpxText = await fetch(eventRes.gpx_path).then(r => r.text());
+        const savedPin = sessionStorage.getItem('event_pin_' + event.id) || '';
+        const gpxRes = await fetch(eventRes.gpx_path, {
+          headers: savedPin ? { 'x-event-pin': savedPin } : {}
+        });
+        if (!gpxRes.ok) throw new Error(`HTTP ${gpxRes.status}`);
+        const gpxText = await gpxRes.text();
         const parsed = parseGpxData(gpxText);
         routeCoords = parsed.coords || [];
         gpxPoints = parsed.points || [];
@@ -1192,7 +1202,10 @@ async function renderRiderCockpit() {
   async function refreshCotStatus() {
     if (!cockpitActive) return;
     try {
-      const res = await fetch(`/api/events/${event.id}/virtual-cot`);
+      const savedPin = sessionStorage.getItem('event_pin_' + event.id) || '';
+      const res = await fetch(`/api/events/${event.id}/virtual-cot`, {
+        headers: savedPin ? { 'x-event-pin': savedPin } : {}
+      });
       if (!res.ok) return;
       cotStatusCache = await res.json();
       renderCotWidget(lastCoveredKm);
@@ -1210,7 +1223,9 @@ async function renderRiderCockpit() {
     }
 
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    cockpitWs = new WebSocket(`${proto}//${window.location.host}/traccar-ws?event_id=${event.id}`);
+    const cockpitPin = sessionStorage.getItem('event_pin_' + event.id) || '';
+    const cockpitWsQuery = `event_id=${event.id}${cockpitPin ? `&pin=${encodeURIComponent(cockpitPin)}` : ''}`;
+    cockpitWs = new WebSocket(`${proto}//${window.location.host}/traccar-ws?${cockpitWsQuery}`);
 
     cockpitWs.onopen = () => {
       if (!cockpitActive) return;
@@ -1305,9 +1320,14 @@ async function renderRiderCockpit() {
             ? { positions: [...offlineTelemetryQueue, point] }
             : point;
 
+          const historyPin = sessionStorage.getItem('event_pin_' + event.id) || '';
           fetch(`/api/events/${event.id}/history`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(historyPin ? { 'x-event-pin': historyPin } : {}),
+              ...(rider && rider.token ? { 'x-rider-token': rider.token } : {})
+            },
             body: JSON.stringify(payload)
           }).then(res => {
             if (res.ok) {
@@ -1623,9 +1643,13 @@ async function renderRiderCockpit() {
     };
 
     try {
+      const sosPin = sessionStorage.getItem('event_pin_' + event.id) || '';
       const res = await fetch(`/api/events/${event.id}/alerts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(sosPin ? { 'x-event-pin': sosPin } : {})
+        },
         body: JSON.stringify(payload)
       });
 

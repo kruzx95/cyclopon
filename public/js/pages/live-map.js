@@ -412,16 +412,14 @@ async function renderLiveMap(params) {
   if (queryPin) {
     sessionStorage.setItem('event_pin_' + eventId, queryPin);
   }
+  let isLiveMapMounted = true;
   let savedPin = sessionStorage.getItem('event_pin_' + eventId) || '';
 
   function eventFetch(url, options = {}) {
     const pin = savedPin || sessionStorage.getItem('event_pin_' + eventId) || '';
     if (!pin) return fetch(url, options);
-    const hasQuery = url.includes('?');
-    const separator = hasQuery ? '&' : '?';
-    const targetUrl = url.includes('pin=') ? url : `${url}${separator}pin=${encodeURIComponent(pin)}`;
     const headers = { ...(options.headers || {}), 'x-event-pin': pin };
-    return fetch(targetUrl, { ...options, headers });
+    return fetch(url, { ...options, headers });
   }
 
   // ── Fetch event + riders + checkpoints + splits ──
@@ -432,8 +430,8 @@ async function renderLiveMap(params) {
     const [evRes, rRes, cpRes, spRes] = await Promise.all([
       fetch(`/api/events/${eventId}`),
       eventFetch(`/api/events/${eventId}/riders`),
-      fetch(`/api/events/${eventId}/checkpoints`),
-      fetch(`/api/events/${eventId}/splits`)
+      eventFetch(`/api/events/${eventId}/checkpoints`),
+      eventFetch(`/api/events/${eventId}/splits`)
     ]);
     if (!evRes.ok) {
       if (evRes.status === 404) throw new Error('Event tidak ditemukan.');
@@ -446,8 +444,9 @@ async function renderLiveMap(params) {
       if (typeof promptEventAccess === 'function') {
         promptEventAccess(event, (pin) => {
           sessionStorage.setItem('event_pin_' + eventId, pin);
-          Router.navigate(`/watch/${eventId}?pin=${encodeURIComponent(pin)}`, true);
+          Router.navigate(`/watch/${eventId}`, true);
         }, {
+          forcePrompt: true,
           onCancel: () => Router.navigate('/')
         });
         return;
@@ -1192,6 +1191,17 @@ async function renderLiveMap(params) {
   // ── Virtual COT: moving cut-off marker ─────────────────────────
   let cotMarker = null;
   let cotTimer = null;
+  function stopCotTimer() {
+    if (cotTimer) {
+      clearInterval(cotTimer);
+      cotTimer = null;
+    }
+    if (cotMarker && map) {
+      try { map.removeLayer(cotMarker); } catch (e) {}
+      cotMarker = null;
+    }
+    window.removeEventListener('beforeunload', stopCotTimer);
+  }
   let cotDnfRiderIds = new Set();
   const cotBannerEl = document.getElementById('cotBanner');
   const cotBannerTextEl = document.getElementById('cotBannerText');
@@ -1233,14 +1243,17 @@ async function renderLiveMap(params) {
   }
 
   async function refreshVirtualCot() {
+    if (!isLiveMapMounted) return;
     try {
       const res = await eventFetch(`/api/events/${eventId}/virtual-cot`);
-      if (!res.ok) return;
+      if (!isLiveMapMounted || !res.ok) return;
       const data = await res.json();
+      if (!isLiveMapMounted) return;
 
       if (!data.enabled || data.latitude == null) {
         if (cotMarker) { map.removeLayer(cotMarker); cotMarker = null; }
         if (cotBannerEl) cotBannerEl.style.display = 'none';
+        applyCotDnfVisuals((data.dnf_riders || []).map(r => r.rider_id));
         return;
       }
 
@@ -1286,7 +1299,7 @@ async function renderLiveMap(params) {
 
   refreshVirtualCot();
   cotTimer = setInterval(refreshVirtualCot, 8000);
-  window.addEventListener('beforeunload', () => { if (cotTimer) clearInterval(cotTimer); });
+  window.addEventListener('beforeunload', stopCotTimer);
 
   // ── Checkpoint Markers & Cut-Off Time (COT) Engine ──
   const cpMarkers = [];
@@ -1505,7 +1518,7 @@ async function renderLiveMap(params) {
   // ── Load GPX route & Komoot Stats ──
   if (event.gpx_path) {
     try {
-      const gpxText = await fetch(event.gpx_path).then(r => r.text());
+      const gpxText = await eventFetch(event.gpx_path).then(r => r.text());
       gpxData       = parseGpxData(gpxText);
       routeCoords   = gpxData.coords;
       routeKm       = gpxData.stats.totalKm;
@@ -2617,7 +2630,7 @@ async function renderLiveMap(params) {
   async function checkActiveAlerts() {
     if (isReplayActive) return;
     try {
-      const res = await fetch(`/api/events/${eventId}/alerts?active=1`);
+      const res = await eventFetch(`/api/events/${eventId}/alerts?active=1`);
       if (!res.ok) return;
       currentAlerts = await res.json();
 
@@ -3739,7 +3752,7 @@ async function renderLiveMap(params) {
   let liveWs = null;
   let liveWsReconnectTimer = null;
   let liveWsBackoffMs = 2000;
-  let isLiveMapMounted = true;
+  isLiveMapMounted = true;
   let historyPollInterval = null;
 
   if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
@@ -3766,6 +3779,7 @@ async function renderLiveMap(params) {
         try { liveWs.close(); } catch (e) {}
         liveWs = null;
       }
+      stopCotTimer();
     });
   }
 
@@ -3777,7 +3791,9 @@ async function renderLiveMap(params) {
     }
 
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws    = new WebSocket(`${proto}//${window.location.host}/traccar-ws?event_id=${eventId}`);
+    const wsPin = sessionStorage.getItem('event_pin_' + eventId) || '';
+    const wsQuery = `event_id=${eventId}${wsPin ? `&pin=${encodeURIComponent(wsPin)}` : ''}`;
+    const ws    = new WebSocket(`${proto}//${window.location.host}/traccar-ws?${wsQuery}`);
     liveWs      = ws;
     const dot   = document.getElementById('liveDot');
     const statusText = document.getElementById('liveStatusText');

@@ -1,11 +1,15 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
 const app = require('../server');
 
 test('Admin Reports API Suite', async (t) => {
   let server;
   let baseUrl;
+  const latestFile = path.join(__dirname, '..', 'reports', 'LATEST_REPORT.md');
+  const originalReportContent = fs.existsSync(latestFile) ? fs.readFileSync(latestFile, 'utf8') : null;
 
   await t.test('setup server on dynamic port', async () => {
     await new Promise((resolve) => {
@@ -61,6 +65,9 @@ test('Admin Reports API Suite', async (t) => {
   });
 
   await t.test('teardown', async () => {
+    if (originalReportContent !== null) {
+      try { fs.writeFileSync(latestFile, originalReportContent, 'utf8'); } catch (e) {}
+    }
     await new Promise((resolve) => server.close(resolve));
   });
 });

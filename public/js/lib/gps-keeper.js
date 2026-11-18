@@ -150,9 +150,14 @@ const GpsKeeper = (() => {
     await flushOfflineQueue();
 
     try {
+      const pin = sessionStorage.getItem('event_pin_' + currentEvent.id) || '';
       const res = await fetch(`/api/events/${currentEvent.id}/history`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(pin ? { 'x-event-pin': pin } : {}),
+          ...(currentRider && currentRider.token ? { 'x-rider-token': currentRider.token } : {})
+        },
         body: JSON.stringify(pos)
       });
 
@@ -200,9 +205,14 @@ const GpsKeeper = (() => {
 
     try {
       const batch = [...offlineQueue];
+      const pin = sessionStorage.getItem('event_pin_' + currentEvent.id) || '';
       const res = await fetch(`/api/events/${currentEvent.id}/history`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(pin ? { 'x-event-pin': pin } : {}),
+          ...(currentRider && currentRider.token ? { 'x-rider-token': currentRider.token } : {})
+        },
         body: JSON.stringify({ positions: batch })
       });
 

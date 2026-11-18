@@ -79,7 +79,7 @@ test('Production Security Hardening & Headers', async (t) => {
   await t.test('rate limits rapid SOS emergency alerts flooding', async () => {
     let hitSosRateLimit = false;
     for (let i = 0; i < 8; i++) {
-      const res = await fetch(`${baseUrl}/api/events/21/alerts`, {
+      const res = await fetch(`${baseUrl}/api/events/${testEventId}/alerts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rider_id: 1, type: 'SOS', message: 'Test Flood' })

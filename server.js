@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const compression = require('compression');
 const db = require('./db/database');
 const { enqueuePageView } = require('./lib/traffic-queue');
+const { requireEventAccess } = require('./lib/event-access');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,19 @@ app.use(compression({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Route files under /gpx/<eventId>.gpx are event data: guard them before the
+// generic static handler so a locked event cannot be bypassed by hitting the
+// raw file URL. Only `<digits>.gpx` is intercepted; everything else falls
+// through to normal static/404 handling.
+app.use('/gpx', requireEventAccess({
+  passThroughWhenUnresolved: true,
+  resolveEventId: (req) => {
+    const match = /^\/(\d+)\.gpx$/i.exec(req.path);
+    return match ? match[1] : null;
+  }
+}), express.static(path.join(__dirname, 'public', 'gpx')));
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Lightweight Page Views & Traffic Tracker Middleware (Buffered In-Memory)

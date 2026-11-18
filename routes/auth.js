@@ -103,7 +103,7 @@ router.post('/rider', (req, res) => {
 
   res.json({
     success: true,
-    rider:  { id: rider.id, bib: rider.bib, name: rider.name, role: rider.role || 'rider', phone: rider.phone, color: rider.color, traccar_device_id: rider.traccar_device_id },
+    rider:  { id: rider.id, bib: rider.bib, name: rider.name, role: rider.role || 'rider', phone: rider.phone, color: rider.color, traccar_device_id: rider.traccar_device_id, token: rider.token },
     event:  { id: event.id, name: event.name, date: event.date },
     traccar: getPublicTraccarConfig(req, rider)
   });
@@ -138,9 +138,10 @@ router.get('/token/:token', (req, res) => {
       role: rider.role || 'rider',
       phone: rider.phone,
       color: rider.color,
-      traccar_device_id: rider.traccar_device_id
+      traccar_device_id: rider.traccar_device_id,
+      token: rider.token
     },
-    event: { id: event.id, name: event.name, date: event.date },
+    event: { id: event.id, name: event.name, date: event.date, access_pin: event.access_pin || undefined },
     traccar: getPublicTraccarConfig(req, rider)
   });
 });
@@ -249,7 +250,7 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
         token: newRider.token,
         pin: newRider.pin
       },
-      event: { id: event.id, name: event.name, date: event.date },
+      event: { id: event.id, name: event.name, date: event.date, access_pin: event.access_pin || undefined },
       traccar: getPublicTraccarConfig(req, newRider)
     });
   } catch (err) {

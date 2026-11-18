@@ -84,7 +84,7 @@ async function runBenchmark() {
 
   // Connect WS_CONCURRENCY clients
   for (let i = 0; i < WS_CONCURRENCY; i++) {
-    const ws = new WebSocket(`ws://127.0.0.1:${appPort}/traccar-ws`);
+    const ws = new WebSocket(`ws://127.0.0.1:${appPort}/traccar-ws?event_id=${eventId}`);
     clients.push(ws);
     ws.on('message', (data) => {
       totalMessagesReceived++;

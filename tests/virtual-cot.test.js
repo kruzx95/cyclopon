@@ -236,6 +236,32 @@ test('Virtual COT — marker, evaluation guards, DNF ledger & endpoints', async 
     assert.equal(virtualCot.getDnfLedger(eventId).length, 0);
   });
 
+  await t.test('inactive events reject evaluation and record no DNF (respects event.active gate)', () => {
+    const eventId = createEvent({ cot_start_ms: nowMs - 6 * 60 * 1000 });
+    db.db.prepare('UPDATE events SET active = 0 WHERE id = ?').run(eventId);
+    const riderId = addRider(eventId, 'INACT-01');
+    addPosition(eventId, riderId, 0.1, nowMs - 20 * 1000);
+
+    const result = virtualCot.evaluateVirtualCot(eventId, { nowMs });
+    assert.equal(result.state, 'off');
+    assert.equal(result.reason, 'event_inactive');
+    assert.equal(result.candidates.length, 0);
+    assert.equal(virtualCot.getDnfLedger(eventId).length, 0);
+  });
+
+  await t.test('marker without route coordinates defers evaluation without recording DNF', () => {
+    const eventId = createEvent({ cot_start_ms: nowMs - 6 * 60 * 1000, gpx: false });
+    db.db.prepare('INSERT INTO checkpoints (event_id, name, km_distance) VALUES (?, ?, ?)').run(eventId, 'CP1', 50);
+    const riderId = addRider(eventId, 'NOGPX-01');
+    addPosition(eventId, riderId, 0.1, nowMs - 20 * 1000);
+
+    const result = virtualCot.evaluateVirtualCot(eventId, { nowMs });
+    assert.equal(result.state, 'deferred');
+    assert.equal(result.reason, 'no_coordinates');
+    assert.equal(result.candidates.length, 0);
+    assert.equal(virtualCot.getDnfLedger(eventId).length, 0);
+  });
+
   await t.test('voiding a DNF removes it from results and blocks re-evaluation', () => {
     const eventId = createEvent({ cot_start_ms: nowMs - 6 * 60 * 1000 });
     const riderId = addRider(eventId, 'H1');
@@ -358,6 +384,15 @@ test('Virtual COT — marker, evaluation guards, DNF ledger & endpoints', async 
     const preview = await previewRes.json();
     assert.equal(preview.candidates.length, 1);
     assert.equal(preview.ledger.length, 0);
+
+    const postPreviewRes = await fetch(`${baseUrl}/api/events/${eventId}/virtual-cot/preview`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cot_pace: 35 })
+    });
+    assert.equal(postPreviewRes.status, 200);
+    const postPreview = await postPreviewRes.json();
+    assert.equal(postPreview.marker.pace, 35);
 
     const evalRes = await fetch(`${baseUrl}/api/events/${eventId}/virtual-cot`);
     assert.equal((await evalRes.json()).dnf_count, 1);

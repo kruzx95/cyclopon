@@ -8,6 +8,7 @@ test('Automated Diagnostic Trial & VPS Test Report Generator', async (t) => {
   const scriptPath = path.join(__dirname, '..', 'scripts', 'generate-test-report.js');
   const reportsDir = path.join(__dirname, '..', 'reports');
   const latestReportPath = path.join(reportsDir, 'LATEST_REPORT.md');
+  const tmpReportPath = path.join(reportsDir, `.tmp_test_report_${Date.now()}.md`);
   const packageJsonPath = path.join(__dirname, '..', 'package.json');
 
   await t.test('generate-test-report.js script exists', () => {
@@ -23,7 +24,8 @@ test('Automated Diagnostic Trial & VPS Test Report Generator', async (t) => {
   await t.test('executes generate-test-report.js and verifies exit code 0', () => {
     const output = execSync('node scripts/generate-test-report.js', {
       cwd: path.join(__dirname, '..'),
-      encoding: 'utf8'
+      encoding: 'utf8',
+      env: { ...process.env, TEST_REPORT_OUTPUT: tmpReportPath }
     });
     assert.ok(output.includes('HASIL DIAGNOSTIK KESIAPAN VPS'), 'Terminal output should contain final verdict');
     assert.ok(output.includes('Laporan Tersimpan'), 'Terminal output should specify report save path');
@@ -32,8 +34,9 @@ test('Automated Diagnostic Trial & VPS Test Report Generator', async (t) => {
   await t.test('verifies reports directory and LATEST_REPORT.md structure', () => {
     assert.ok(fs.existsSync(reportsDir), 'reports/ directory should exist');
     assert.ok(fs.existsSync(latestReportPath), 'reports/LATEST_REPORT.md should exist');
+    assert.ok(fs.existsSync(tmpReportPath), 'temporary report should have been generated');
 
-    const content = fs.readFileSync(latestReportPath, 'utf8');
+    const content = fs.readFileSync(tmpReportPath, 'utf8');
     assert.ok(content.includes('# 📊 Laporan Diagnostik Kesiapan Produksi VPS'), 'Should contain title');
     assert.ok(content.includes('## 1. Ringkasan Eksekutif (Executive Summary)'), 'Should contain executive summary');
     assert.ok(content.includes('## 2. Profil Lingkungan & Sistem (System Profile)'), 'Should contain system profile');
@@ -42,5 +45,7 @@ test('Automated Diagnostic Trial & VPS Test Report Generator', async (t) => {
     assert.ok(content.includes('Batch Ingestion Speed'), 'Should contain ingestion benchmark');
     assert.ok(content.includes('WebSocket Fan-Out'), 'Should contain WebSocket benchmark');
     assert.ok(content.includes('Race Engine & COT'), 'Should contain Race engine benchmark');
+
+    try { fs.unlinkSync(tmpReportPath); } catch (e) {}
   });
 });
