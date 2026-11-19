@@ -11,7 +11,7 @@ function renderGuide() {
   const traccarServerUrl = `${window.location.origin}/api/osmand`;
 
   app.innerHTML = `
-    <div class="landing-page-wrapper">
+    <div class="landing-page-wrapper guide-page">
       <!-- ── Pro Editorial Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
@@ -23,7 +23,7 @@ function renderGuide() {
         </a>
 
         <div class="nav-actions-group">
-          <a href="/guide" data-link class="btn-guide-nav active" title="Panduan Lengkap Pengguna & Pesepeda" aria-label="Panduan pengguna">
+          <a href="/guide" data-link class="btn-guide-nav active" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
@@ -44,52 +44,80 @@ function renderGuide() {
       </nav>
 
       <!-- ── Guide Main Container ── -->
-      <main class="landing-hero fade-in" style="padding-top:24px">
-        <!-- Breadcrumb / Header Title -->
-        <div style="margin-bottom:24px">
-          <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">
-            <a href="/" data-link style="color:var(--text-secondary);text-decoration:none">Beranda</a>
-            <span>/</span>
-            <span style="color:#1C3E24">Panduan Pengguna</span>
+      <main class="landing-hero fade-in guide-hero" style="padding-top:24px">
+        <!-- Hero / Header Title -->
+        <div class="guide-hero-inner">
+          <div class="guide-breadcrumb">
+            <a href="/" data-link>Beranda</a>
+            <span aria-hidden="true">/</span>
+            <span>Panduan Pengguna</span>
           </div>
-          <h1 style="font-size:28px;font-weight:900;letter-spacing:-0.03em;color:#0D1117;margin:0 0 8px 0">
-            Pusat Panduan &amp; Operasional CycloPon
-          </h1>
-          <p style="font-size:14px;color:var(--text-secondary);margin:0;line-height:1.6;max-width:820px">
-            Petunjuk lengkap pendaftaran event sepeda jarak jauh, konfigurasi aplikasi Traccar Client (interval 10s/30s), pemantauan pergerakan marker pesepeda secara real-time di Live Map, hingga penggunaan Rider Cockpit.
+          <span class="guide-hero-kicker">// PUSAT DOKUMENTASI OPERASIONAL</span>
+          <h1 class="guide-hero-title">Panduan CycloPon<br><span>untuk Rider &amp; Panitia</span></h1>
+          <p class="guide-hero-lead">
+            Petunjuk lengkap pendaftaran event, konfigurasi Traccar Client (interval 10s/30s),
+            pemantauan Live Map real-time, hingga Rider Cockpit — ringkas dan bisa diikuti langsung saat hari-H.
           </p>
+          <div class="guide-hero-meta">
+            <span class="guide-meta-chip"><strong>5</strong> bab panduan</span>
+            <span class="guide-meta-chip">⚡ Live tracking</span>
+            <span class="guide-meta-chip">📲 Traccar Client</span>
+            <span class="guide-meta-chip">🚴 Cockpit HUD</span>
+            <span class="guide-meta-chip">❓ FAQ &amp; Solusi</span>
+          </div>
+
+          <!-- Hero Search Box for Instant Topic Lookup -->
+          <div class="guide-search-box">
+            <svg class="guide-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="search" id="guideSearchInput" class="guide-search-input" placeholder="Cari topik panduan (misal: interval, izin baterai, bib, blank spot, cockpit, cot, alarm)..." autocomplete="off" aria-label="Cari panduan">
+            <button type="button" id="guideSearchClear" class="guide-search-clear" aria-label="Bersihkan pencarian" style="display:none">✕</button>
+          </div>
+          <div id="guideSearchFeedback" class="guide-search-feedback" role="status" aria-live="polite" style="display:none"></div>
         </div>
 
         <!-- ── Quick Guide Jump Switcher ── -->
-        <div class="guide-nav-bar" id="guideNavBar" style="margin-bottom:24px">
+        <div class="guide-nav-bar" id="guideNavBar">
+          <div class="guide-nav-progress" aria-hidden="true"><span id="guideNavProgress"></span></div>
           <div class="guide-nav-label">
             <span class="guide-mono-tag" style="margin-bottom:0">// PILIH BAB PANDUAN</span>
           </div>
-          <div class="guide-nav-pills">
+          <div class="guide-nav-pills" id="guideNavPills">
             <a href="#trackingFlowSection" class="guide-nav-pill-btn active" id="pillNavTracking">
-              <span>⚡ 1. Alur Pelacakan &amp; Interval</span>
+              <span class="guide-pill-index">01</span>
+              <span class="guide-pill-label">Alur Pelacakan</span>
             </a>
             <a href="#traccarGuideSection" class="guide-nav-pill-btn" id="pillNavTraccar">
-              <span>📲 2. Setup GPS Traccar Client</span>
+              <span class="guide-pill-index">02</span>
+              <span class="guide-pill-label">Setup Traccar</span>
             </a>
             <a href="#rosterGuideSection" class="guide-nav-pill-btn" id="pillNavRoster">
-              <span>👥 3. Pendaftaran &amp; Roster</span>
+              <span class="guide-pill-index">03</span>
+              <span class="guide-pill-label">Pendaftaran &amp; Roster</span>
             </a>
             <a href="#cockpitGuideSection" class="guide-nav-pill-btn" id="pillNavCockpit">
-              <span>🚴 4. Rider Cockpit &amp; Kantong</span>
+              <span class="guide-pill-index">04</span>
+              <span class="guide-pill-label">Rider Cockpit</span>
+            </a>
+            <a href="#faqGuideSection" class="guide-nav-pill-btn" id="pillNavFaq">
+              <span class="guide-pill-index">05</span>
+              <span class="guide-pill-label">FAQ &amp; Solusi</span>
             </a>
           </div>
         </div>
 
         <!-- ══════════════════════════════════════════════════════════════════════════════
-             BAB 1: ALUR PELACAKAN LIVE TRACKING & INTERVAL MARKER (NEW AUDITED GUIDE)
+             BAB 1: ALUR PELACAKAN LIVE TRACKING & INTERVAL MARKER
              ══════════════════════════════════════════════════════════════════════════════ -->
         <section class="landing-guide-section" id="trackingFlowSection" style="margin-top:0">
           <div class="landing-guide-header">
             <div class="guide-tag-wrap">
               <span class="guide-mono-tag">// ARSITEKTUR &amp; ALUR OPERASIONAL · REAL-TIME TELEMETRY</span>
               <h2 class="guide-main-title">
-                <span class="guide-phone-icon">⚡</span> Alur Pelacakan Real-Time &amp; Interval Pergerakan Marker
+                <span class="guide-chapter-num">01</span>
+                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">⚡</span> Alur Pelacakan Real-Time &amp; Interval Pergerakan Marker</span>
               </h2>
               <p class="guide-subtitle">
                 Memahami bagaimana koordinat GPS dari smartphone rider dikirim, diproses oleh server, dan langsung menggerakkan marker pesepeda di Live Map sesuai interval yang ditentukan (10 detik atau 30 detik).
@@ -103,41 +131,41 @@ function renderGuide() {
             </div>
           </div>
 
-          <!-- Diagram Alur Transmisi -->
-          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:20px;margin-bottom:24px">
-            <div style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#1C3E24;letter-spacing:0.06em;margin-bottom:12px">
-              // PIPELINE TRANSMISI KOORDINAT GPS (END-TO-END)
+          <!-- Diagram Alur Transmisi GPS Scoped Classes -->
+          <div class="guide-pipeline-box">
+            <div class="guide-pipeline-kicker">
+              // PIPELINE TRANSMISI KOORDINAT GPS (END-TO-END TELEMETRY)
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px">
-              <div style="background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:14px">
-                <div style="font-size:20px;margin-bottom:6px">📱 1. Smartphone Rider</div>
-                <div style="font-size:13px;font-weight:700;color:#0D1117">Traccar Client / Cockpit</div>
-                <div style="font-size:11.5px;color:#64748B;margin-top:4px;line-height:1.5">
-                  Mengunci satelit GPS dan memancarkan koordinat via protokol OsmAnd HTTP port <code>5055</code> setiap <strong>10s</strong> atau <strong>30s</strong>.
+            <div class="guide-pipeline-grid">
+              <div class="guide-pipeline-item">
+                <span class="guide-pipeline-badge">1</span>
+                <div class="guide-pipeline-title">📱 Smartphone Rider</div>
+                <div class="guide-pipeline-desc">
+                  Mengunci satelit GPS via <strong>Traccar Client</strong> atau <strong>Cockpit</strong>, memancarkan koordinat via OsmAnd HTTP port <code>5055</code> setiap <strong>10s</strong> atau <strong>30s</strong>.
                 </div>
               </div>
 
-              <div style="background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:14px">
-                <div style="font-size:20px;margin-bottom:6px">🛡️ 2. Server CycloPon</div>
-                <div style="font-size:13px;font-weight:700;color:#0D1117">WebSocket Proxy &amp; DB</div>
-                <div style="font-size:11.5px;color:#64748B;margin-top:4px;line-height:1.5">
-                  Mencocokkan Device ID dengan nomor BIB rider, menghitung jarak tempuh &amp; status COT, lalu menulis riwayat telemetri.
+              <div class="guide-pipeline-item">
+                <span class="guide-pipeline-badge">2</span>
+                <div class="guide-pipeline-title">🛡️ Server CycloPon</div>
+                <div class="guide-pipeline-desc">
+                  Mencocokkan Device ID dengan nomor BIB rider, menghitung jarak tempuh &amp; status COT, lalu mencatat telemetri ke database SQLite WAL.
                 </div>
               </div>
 
-              <div style="background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:14px">
-                <div style="font-size:20px;margin-bottom:6px">📡 3. Broadcast Real-Time</div>
-                <div style="font-size:13px;font-weight:700;color:#0D1117">Push WebSocket Stream</div>
-                <div style="font-size:11.5px;color:#64748B;margin-top:4px;line-height:1.5">
-                  Data langsung disalurkan ke seluruh browser penonton secara instan tanpa perlu refresh halaman.
+              <div class="guide-pipeline-item">
+                <span class="guide-pipeline-badge">3</span>
+                <div class="guide-pipeline-title">📡 Broadcast Real-Time</div>
+                <div class="guide-pipeline-desc">
+                  Data disalurkan serentak via WebSocket Fan-Out Stream ke ribuan browser penonton &amp; panitia tanpa perlu me-refresh halaman.
                 </div>
               </div>
 
-              <div style="background:#FFFFFF;border:1px solid #10B981;border-radius:8px;padding:14px;background:#F0FDF4">
-                <div style="font-size:20px;margin-bottom:6px">🚴 4. Live Map Penonton</div>
-                <div style="font-size:13px;font-weight:700;color:#166534">Marker Bergerak Mulus</div>
-                <div style="font-size:11.5px;color:#15803D;margin-top:4px;line-height:1.5">
-                  Marker berpindah posisi mengikuti interval dengan transisi animasi lunak (CSS sliding animation).
+              <div class="guide-pipeline-item active-node">
+                <span class="guide-pipeline-badge">4</span>
+                <div class="guide-pipeline-title">🚴 Live Map Penonton</div>
+                <div class="guide-pipeline-desc">
+                  Marker berpindah posisi mengikuti interval secara mulus berkat transisi interpolasi animasi lunak (CSS sliding animation).
                 </div>
               </div>
             </div>
@@ -198,6 +226,19 @@ function renderGuide() {
                 <li>Bisa juga langsung membuka tautan personal: <code>/watch/{eventId}?bib={nomorBIB}</code>.</li>
               </ul>
             </div>
+
+            <div class="guide-step-card">
+              <div class="step-card-num">POIN PENTING 5</div>
+              <div class="step-card-title">Marker Sweeper &amp; Virtual Cut-Off Time (COT)</div>
+              <p class="step-card-desc">
+                Live Map dilengkapi marker pemandu batas waktu Cut-Off Time:
+              </p>
+              <ul class="step-checklist">
+                <li><strong>Broom Wagon Virtual:</strong> Marker mobil sweeper melaju di rute GPX sesuai batas waktu resmi finish.</li>
+                <li><strong>Zona Aman:</strong> Jika marker sepeda Anda berada di <em>depan</em> marker Virtual COT, Anda berada dalam zona aman dan tidak berisiko diskualifikasi DNF.</li>
+                <li><strong>Estimasi WIB:</strong> Posisi virtual COT dihitung presisi berdasarkan waktu WIB dan kecepatan rata-rata minimal event.</li>
+              </ul>
+            </div>
           </div>
         </section>
 
@@ -209,7 +250,8 @@ function renderGuide() {
             <div class="guide-tag-wrap">
               <span class="guide-mono-tag">// PANDUAN APLIKASI · PESEPEDA (RIDER)</span>
               <h2 class="guide-main-title">
-                <span class="guide-phone-icon">📲</span> Cara Menghubungkan GPS Smartphone (Traccar Client)
+                <span class="guide-chapter-num">02</span>
+                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">📲</span> Cara Menghubungkan GPS Smartphone (Traccar Client)</span>
               </h2>
               <p class="guide-subtitle">
                 Pesepeda cukup menggunakan aplikasi gratis <strong>Traccar Client</strong> resmi.
@@ -429,7 +471,7 @@ function renderGuide() {
                   <div class="guide-callout-text">
                     <div class="guide-callout-title">Tips Tambahan: Nonaktifkan Optimalisasi Baterai</div>
                     <div style="color:#475569;line-height:1.5">
-                      Agar aplikasi tidak dihentikan paksa oleh fitur *Doze Mode* ponsel saat gowes berjam-jam:
+                      Agar aplikasi tidak dihentikan paksa oleh fitur <em>Doze Mode</em> ponsel saat gowes berjam-jam:
                       <br>Buka <em>Setelan Ponsel &gt; Aplikasi &gt; Traccar Client &gt; Baterai</em> &gt; Ubah menjadi <strong>"Tidak Dibatasi" (Unrestricted)</strong>.
                     </div>
                   </div>
@@ -447,7 +489,8 @@ function renderGuide() {
             <div class="guide-tag-wrap">
               <span class="guide-mono-tag">// PANDUAN RESMI · REGISTRASI &amp; DIREKTORI ROSTER</span>
               <h2 class="guide-main-title">
-                <span class="guide-phone-icon">📋</span> Panduan Pendaftaran Event &amp; Manajemen Roster
+                <span class="guide-chapter-num">03</span>
+                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">📋</span> Panduan Pendaftaran Event &amp; Manajemen Roster</span>
               </h2>
               <p class="guide-subtitle">
                 Ikuti 4 langkah mudah untuk bergabung ke event sepeda jarak jauh, mendapatkan Nomor BIB resmi &amp; Tiket Pass Digital ber-QR Code instan, serta memantau direktori peleton peserta.
@@ -489,7 +532,7 @@ function renderGuide() {
                 <li><strong>Nama Lengkap:</strong> Ditampilkan di Leaderboard &amp; Live Radar.</li>
                 <li><strong>Nomor WhatsApp:</strong> Verifikasi &amp; 4 digit terakhir otomatis jadi PIN login.</li>
                 <li><strong>Kategori / Peran:</strong>
-                  <div class="sub-switches" style="flex-wrap:wrap">
+                  <div class="sub-switches" style="flex-wrap:wrap;margin-top:4px">
                     <span class="switch-badge" style="background:#E0F2FE;color:#0369A1">🚴 Rider</span>
                     <span class="switch-badge" style="background:#FEF3C7;color:#92400E">🧹 Sweeper</span>
                     <span class="switch-badge" style="background:#F3E8FF;color:#6B21A8">🏍️ Marshall</span>
@@ -507,16 +550,16 @@ function renderGuide() {
               <p class="step-card-desc">
                 Setelah formulir dikirim, sistem otomatis menerbitkan <strong>Tiket Pass Digital</strong> resmi:
               </p>
-              <div style="background:#0D1117;border-radius:8px;padding:12px 14px;color:#FFFFFF;margin-bottom:10px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                  <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#94A3B8;letter-spacing:0.06em">DIGITAL PASS // OFFICIAL TICKET</span>
+              <!-- Sleek Scoped Ticket Preview -->
+              <div class="guide-mini-ticket">
+                <div class="guide-mini-ticket-top">
+                  <span class="guide-mini-ticket-kicker">DIGITAL PASS // OFFICIAL TICKET</span>
                   <span style="font-size:14px">🎟️</span>
                 </div>
-                <div style="font-family:ui-monospace,monospace;font-size:20px;font-weight:900;color:#00E5FF;letter-spacing:-0.02em">
-                  #BIB-001
-                </div>
-                <div style="font-size:11.5px;color:#CBD5E1;margin-top:2px">
-                  PIN Keamanan: <strong style="color:#FFFFFF;font-family:ui-monospace,monospace">1234</strong> · Status: <span style="color:#4ADE80;font-weight:700">TERKONFIRMASI ✓</span>
+                <div class="guide-mini-ticket-bib">#BIB-001</div>
+                <div class="guide-mini-ticket-meta">
+                  <span>PIN Keamanan: <strong>1234</strong></span>
+                  <span class="guide-ticket-status">✓ TERKONFIRMASI</span>
                 </div>
               </div>
               <p class="step-card-desc" style="margin:0 0 6px">
@@ -573,7 +616,8 @@ function renderGuide() {
             <div class="guide-tag-wrap">
               <span class="guide-mono-tag">// IN-BROWSER HUD · SPEEDOMETER &amp; POCKET TRACKER</span>
               <h2 class="guide-main-title">
-                <span class="guide-phone-icon">🚴</span> Rider Cockpit HUD &amp; Mode Kantong Jersey
+                <span class="guide-chapter-num">04</span>
+                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">🚴</span> Rider Cockpit HUD &amp; Mode Kantong Jersey</span>
               </h2>
               <p class="guide-subtitle">
                 Solusi pelacakan GPS langsung dari browser tanpa perlu menginstal aplikasi pihak ketiga.
@@ -596,8 +640,8 @@ function renderGuide() {
               </p>
               <ul class="step-checklist">
                 <li>Buka menu <strong>/rider/cockpit</strong>.</li>
-                <li>Aktifkan <strong>💡 Layar ON (Wake Lock)</strong> agar layar tidak mati atau terkunci otomatis.</li>
-                <li>Nikmati tampilan speedometer besar, estimasi Cut-Off Time checkpoint berikutnya, elevasi tanjakan (ClimbPro), dan peringatan suara deviasi rute.</li>
+                <li>Aktifkan <strong>💡 Layar ON (Wake Lock)</strong> agar layar tidak mati atau terkunci otomatis selama bersepeda.</li>
+                <li>Nikmati tampilan speedometer digital besar, estimasi jarak ke checkpoint berikutnya, dan visualisasi rute peta.</li>
               </ul>
             </div>
 
@@ -612,6 +656,122 @@ function renderGuide() {
                 <li>Sistem memutar loop audio sunyi berspesialisasi latar belakang yang menjaga browser tetap aktif mengirim titik GPS saat layar HP dimatikan.</li>
                 <li>Data posisi otomatis disimpan sementara (offline queue) saat melewati daerah tanpa sinyal seluler.</li>
               </ul>
+            </div>
+
+            <div class="guide-step-card">
+              <div class="step-card-num">FITUR 3</div>
+              <div class="step-card-title">Peringatan Suara Deviasi Rute (Off-Route Alarm)</div>
+              <p class="step-card-desc">
+                Sistem peringatan cerdas navigasi sepeda:
+              </p>
+              <ul class="step-checklist">
+                <li>Mendeteksi otomatis jika rider menyimpang &gt;50 meter dari jalur resmi GPX event.</li>
+                <li>Memutar alarm nada stereo dan menampilkan banner peringatan oranye deviasi jalur.</li>
+                <li>Rider dapat membisukan (mute) sementara suara alarm, dan sistem otomatis pulih tenang begitu rider kembali ke jalur resmi.</li>
+              </ul>
+            </div>
+
+            <div class="guide-step-card alert-step">
+              <div class="step-card-num">FITUR 4</div>
+              <div class="step-card-title">Tombol Darurat SOS &amp; Koordinasi Medis/Sweeper</div>
+              <p class="step-card-desc">
+                Fasilitas keselamatan gowes jarak jauh:
+              </p>
+              <ul class="step-checklist">
+                <li>Tombol SOS darurat satu sentuhan langsung di Cockpit untuk melaporkan kecelakaan, masalah teknis/mekanikal, atau kelelahan fisik.</li>
+                <li>Mengirim koordinat GPS presisi terkini secara instan ke layar komando panitia, ambulans medis, dan tim marshall.</li>
+                <li>Menghubungkan tombol panggilan cepat WhatsApp panitia darurat.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════════════════════
+             BAB 5: TANYA JAWAB & KENDALA UMUM (FAQ / TROUBLESHOOTING)
+             ══════════════════════════════════════════════════════════════════════════════ -->
+        <section class="landing-guide-section" id="faqGuideSection">
+          <div class="landing-guide-header">
+            <div class="guide-tag-wrap">
+              <span class="guide-mono-tag">// BANTUAN OPERASIONAL &amp; SOLUSI CEPAT</span>
+              <h2 class="guide-main-title">
+                <span class="guide-chapter-num">05</span>
+                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">❓</span> Tanya Jawab &amp; Kendala Umum (FAQ)</span>
+              </h2>
+              <p class="guide-subtitle">
+                Pertanyaan yang paling sering diajukan oleh pesepeda dan panitia lapangan beserta solusi langkah demi langkah.
+              </p>
+            </div>
+          </div>
+
+          <div class="guide-faq-grid">
+            <div class="guide-faq-card">
+              <div class="guide-faq-q">
+                <span class="guide-faq-q-icon">⚠️</span>
+                <span>Marker saya tidak bergerak atau membeku di Live Map, apa solusinya?</span>
+              </div>
+              <p class="guide-faq-a">
+                <strong>1.</strong> Buka aplikasi Traccar Client, pastikan saklar <em>Continuous tracking</em> dalam kondisi <strong>ON</strong> (bertuliskan <code>Service started</code>).<br>
+                <strong>2.</strong> Buka pengaturan izin lokasi di Android, wajib ubah menjadi <strong>"Allow all the time"</strong> (Izinkan sepanjang waktu), bukan "Only while using the app".<br>
+                <strong>3.</strong> Pastikan nomor pada <em>Device identifier</em> sama persis dengan nomor BIB yang terdaftar (contoh: <code>BIB-001</code> atau <code>001</code>).<br>
+                <strong>4.</strong> Matikan mode hemat daya ekstrem (Battery Saver/Doze Mode) untuk Traccar Client.
+              </p>
+            </div>
+
+            <div class="guide-faq-card">
+              <div class="guide-faq-q">
+                <span class="guide-faq-q-icon">🔋</span>
+                <span>Bagaimana cara menghemat baterai HP untuk gowes ultra (200km–1200km)?</span>
+              </div>
+              <p class="guide-faq-a">
+                <strong>1.</strong> Di menu <em>Settings</em> Traccar Client, atur <strong>Interval</strong> ke <code>30</code> detik (menghemat baterai hingga 70% dibanding interval 10 detik).<br>
+                <strong>2.</strong> Matikan layar HP sepenuhnya dan simpan ponsel di saku belakang jersey.<br>
+                <strong>3.</strong> Turunkan tingkat kecerahan layar jika menggunakan Cockpit di mount stang sepeda.<br>
+                <strong>4.</strong> Siapkan powerbank kecil (5.000–10.000 mAh) di top-tube bag untuk pengisian daya saat melintasi pos kontrol checkpoint.
+              </p>
+            </div>
+
+            <div class="guide-faq-card">
+              <div class="guide-faq-q">
+                <span class="guide-faq-q-icon">🚴</span>
+                <span>Apakah bisa memakai Traccar Client bersamaan dengan Garmin / Wahoo / Strava?</span>
+              </div>
+              <p class="guide-faq-a">
+                <strong>Ya, 100% kompatibel dan sangat dianjurkan!</strong><br>
+                Satelit GPS pada smartphone bekerja secara pasif di latar belakang dan tidak mengganggu sinkronisasi Bluetooth sensor kecepatan/cadence/heart rate ke bike computer Garmin, Wahoo, Bryton, maupun aplikasi Strava.
+              </p>
+            </div>
+
+            <div class="guide-faq-card">
+              <div class="guide-faq-q">
+                <span class="guide-faq-q-icon">📶</span>
+                <span>Bagaimana jika melewati daerah blank spot tanpa sinyal internet?</span>
+              </div>
+              <p class="guide-faq-a">
+                Jangan khawatir! Aktifkan opsi <strong>Offline buffering: ON</strong> di menu Settings Traccar Client atau gunakan fitur Mode Kantong Jersey di Rider Cockpit.<br>
+                Seluruh titik koordinat rute Anda akan disimpan rapi di memori lokal ponsel dan langsung terkirim serentak ke server begitu Anda kembali mendapatkan sinyal seluler.
+              </p>
+            </div>
+
+            <div class="guide-faq-card">
+              <div class="guide-faq-q">
+                <span class="guide-faq-q-icon">🧹</span>
+                <span>Apa itu marker Sweeper / Virtual COT di Live Map?</span>
+              </div>
+              <p class="guide-faq-a">
+                Marker <strong>Virtual COT (Cut-Off Time)</strong> adalah sweeper virtual yang melaju di jalur resmi GPX mengikuti kecepatan rata-rata minimal batas waktu finish event.<br>
+                Jika marker sepeda Anda berada di <em>depan</em> marker sweeper virtual, posisi Anda berada di zona aman. Jika tertinggal di belakang sweeper, waspadai risiko terkena batas waktu diskualifikasi DNF.
+              </p>
+            </div>
+
+            <div class="guide-faq-card">
+              <div class="guide-faq-q">
+                <span class="guide-faq-q-icon">🔄</span>
+                <span>Kapan harus memilih Traccar Client vs Rider Cockpit Web?</span>
+              </div>
+              <p class="guide-faq-a">
+                Gunakan <strong>Traccar Client (Aplikasi Resmi)</strong> jika smartphone Anda ingin disimpan di saku jersey sepanjang hari (paling hemat daya dan sangat stabil di background).<br>
+                Gunakan <strong>Rider Cockpit (Browser Web)</strong> jika ponsel dipasang di mount stang/handlebar dan Anda butuh speedometer besar, profil tanjakan elevasi, serta alarm suara deviasi rute.
+              </p>
             </div>
           </div>
         </section>
@@ -639,6 +799,9 @@ function renderGuide() {
           <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
         </div>
       </footer>
+
+      <!-- ── Back to top ── -->
+      <button id="guideBackToTop" class="guide-back-to-top" type="button" aria-label="Kembali ke atas" title="Kembali ke atas">↑</button>
     </div>
   `;
 
@@ -651,7 +814,9 @@ function renderGuide() {
         await navigator.clipboard.writeText(traccarServerUrl);
         if (copyText) copyText.textContent = 'Tersalin ✓';
         btnCopy.classList.add('copied');
-        showToast('Server URL berhasil disalin!', 'success');
+        if (typeof showToast === 'function') {
+          showToast('Server URL berhasil disalin!', 'success');
+        }
         setTimeout(() => {
           if (copyText) copyText.textContent = 'Salin URL';
           btnCopy.classList.remove('copied');
@@ -707,12 +872,13 @@ function renderGuide() {
     }
   });
 
-  // ── Smooth Scroll Navigation Pills ──
+  // ── Smooth Scroll Navigation Pills (5 Chapters) ──
   const pills = [
     { id: 'pillNavTracking', target: 'trackingFlowSection' },
     { id: 'pillNavTraccar', target: 'traccarGuideSection' },
     { id: 'pillNavRoster', target: 'rosterGuideSection' },
-    { id: 'pillNavCockpit', target: 'cockpitGuideSection' }
+    { id: 'pillNavCockpit', target: 'cockpitGuideSection' },
+    { id: 'pillNavFaq', target: 'faqGuideSection' }
   ];
 
   pills.forEach(p => {
@@ -729,6 +895,125 @@ function renderGuide() {
       });
     }
   });
+
+  // ── Reading progress, scroll-spy & back-to-top ──
+  const progressBar = document.getElementById('guideNavProgress');
+  const backToTop = document.getElementById('guideBackToTop');
+  const navPills = document.getElementById('guideNavPills');
+  const chapters = pills
+    .map(p => ({ pill: document.getElementById(p.id), section: document.getElementById(p.target) }))
+    .filter(item => item.pill && item.section);
+  let activePillId = 'pillNavTracking';
+  let scrollTicking = false;
+
+  function centerActivePill(pill) {
+    if (!navPills || navPills.scrollWidth <= navPills.clientWidth) return;
+    const pillRect = pill.getBoundingClientRect();
+    const barRect = navPills.getBoundingClientRect();
+    const delta = (pillRect.left - barRect.left) - (barRect.width - pillRect.width) / 2;
+    navPills.scrollTo({ left: navPills.scrollLeft + delta, behavior: 'smooth' });
+  }
+
+  function updateGuideScrollState() {
+    scrollTicking = false;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+
+    if (progressBar) {
+      const pct = Math.min(100, Math.max(0, (scrollY / maxScroll) * 100));
+      progressBar.style.width = `${pct}%`;
+    }
+    if (backToTop) backToTop.classList.toggle('visible', scrollY > 560);
+
+    const probe = scrollY + window.innerHeight * 0.32;
+    let current = chapters[0];
+    for (const item of chapters) {
+      const top = item.section.getBoundingClientRect().top + scrollY;
+      if (top <= probe) current = item;
+    }
+    // Last chapter is short: keep it active once the page bottom is reached.
+    if (scrollY >= maxScroll - 4) current = chapters[chapters.length - 1];
+
+    if (current && current.pill.id !== activePillId) {
+      activePillId = current.pill.id;
+      chapters.forEach(item => item.pill.classList.toggle('active', item.pill.id === activePillId));
+      if (window.innerWidth <= 768) centerActivePill(current.pill);
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(updateGuideScrollState);
+  }, { passive: true });
+  updateGuideScrollState();
+
+  if (backToTop) {
+    backToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // ── Live Search & Instant Topic Filter ──
+  const searchInput = document.getElementById('guideSearchInput');
+  const searchClear = document.getElementById('guideSearchClear');
+  const searchFeedback = document.getElementById('guideSearchFeedback');
+  const searchableCards = Array.from(document.querySelectorAll(
+    '.guide-step-card, .guide-visual-card, .guide-faq-card, .guide-pipeline-item'
+  ));
+
+  function executeGuideSearch() {
+    const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+    if (!query) {
+      if (searchClear) searchClear.style.display = 'none';
+      if (searchFeedback) searchFeedback.style.display = 'none';
+      searchableCards.forEach(card => {
+        card.classList.remove('guide-search-dimmed', 'guide-search-highlight');
+      });
+      return;
+    }
+
+    if (searchClear) searchClear.style.display = 'flex';
+    let matchCount = 0;
+
+    searchableCards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      const isMatch = text.includes(query);
+      if (isMatch) {
+        matchCount++;
+        card.classList.remove('guide-search-dimmed');
+        card.classList.add('guide-search-highlight');
+      } else {
+        card.classList.remove('guide-search-highlight');
+        card.classList.add('guide-search-dimmed');
+      }
+    });
+
+    if (searchFeedback) {
+      searchFeedback.style.display = 'block';
+      if (matchCount > 0) {
+        searchFeedback.textContent = `✓ Ditemukan ${matchCount} topik yang cocok dengan "${query}"`;
+        searchFeedback.style.color = '#166534';
+      } else {
+        searchFeedback.textContent = `Tidak ada topik yang cocok dengan "${query}". Coba kata kunci lain (misal: bib, traccar, cot, cockpit).`;
+        searchFeedback.style.color = '#DC2626';
+      }
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', executeGuideSearch);
+  }
+
+  if (searchClear) {
+    searchClear.addEventListener('click', () => {
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      executeGuideSearch();
+    });
+  }
 
   // Dynamic active event check for roster link
   fetch('/api/events')

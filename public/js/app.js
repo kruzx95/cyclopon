@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Official Guide & Documentation Page ──
   Router.register('/guide', async () => {
-    await loadPageDeps(['/js/pages/guide.js?v=64']);
+    await loadPageDeps(['/js/pages/guide.js?v=71']);
     renderGuide();
   });
 
