@@ -1,5 +1,5 @@
 async function renderLiveMap(params) {
-  loadCss('/css/map.css');
+  loadCss('/css/map.css?v=70');
 
   const eventId  = params.eventId;
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -236,9 +236,9 @@ async function renderLiveMap(params) {
           </div>
 
           <!-- ── Sponsor Logo Strip (di atas Leaderboard) ── -->
-          <div id="sponsorStrip" class="sponsor-strip" style="display:none">
-            <span class="sponsor-strip-label" id="sponsorStripLabel">Didukung oleh</span>
-            <div class="sponsor-strip-logos" id="sponsorStripLogos"></div>
+          <div id="supporterStrip" class="supporter-strip" style="display:none">
+            <span class="supporter-strip-label" id="supporterStripLabel">Didukung oleh</span>
+            <div class="supporter-strip-logos" id="supporterStripLogos"></div>
           </div>
 
           <!-- ── Time Machine Replay Control Bar ── -->
@@ -422,8 +422,8 @@ async function renderLiveMap(params) {
   let savedPin = sessionStorage.getItem('event_pin_' + eventId) || '';
 
   function renderSponsorStrip(sponsors) {
-    const strip  = document.getElementById('sponsorStrip');
-    const logos  = document.getElementById('sponsorStripLogos');
+    const strip  = document.getElementById('supporterStrip');
+    const logos  = document.getElementById('supporterStripLogos');
     if (!strip || !logos) return;
     if (!sponsors || !sponsors.length) {
       strip.style.display = 'none';
@@ -431,19 +431,19 @@ async function renderLiveMap(params) {
     }
 
     // Adaptive sizing class based on sponsor count
-    strip.classList.remove('sponsors-1', 'sponsors-2', 'sponsors-3', 'sponsors-many');
-    strip.classList.toggle('sponsor-strip--plain', event?.sponsor_strip_bg === 'transparent');
-    const stripLabel = document.getElementById('sponsorStripLabel');
+    strip.classList.remove('supporters-1', 'supporters-2', 'supporters-3', 'supporters-many');
+    strip.classList.toggle('supporter-strip--plain', event?.sponsor_strip_bg === 'transparent');
+    const stripLabel = document.getElementById('supporterStripLabel');
     if (stripLabel) {
       const text = event?.sponsor_strip_label ?? 'Didukung oleh';
       stripLabel.textContent = text;
       stripLabel.style.display = text ? '' : 'none';
       stripLabel.style.color = event?.sponsor_strip_label_color || '#64748B';
     }
-    if (sponsors.length === 1) strip.classList.add('sponsors-1');
-    else if (sponsors.length === 2) strip.classList.add('sponsors-2');
-    else if (sponsors.length === 3) strip.classList.add('sponsors-3');
-    else strip.classList.add('sponsors-many');
+    if (sponsors.length === 1) strip.classList.add('supporters-1');
+    else if (sponsors.length === 2) strip.classList.add('supporters-2');
+    else if (sponsors.length === 3) strip.classList.add('supporters-3');
+    else strip.classList.add('supporters-many');
 
     logos.innerHTML = sponsors.map(s => {
       const name = escapeHtml(s.name || 'Sponsor');
@@ -454,17 +454,17 @@ async function renderLiveMap(params) {
       const sizeStyle = Number.isFinite(customSize) && customSize >= 16 && customSize <= 200
         ? ` style="height:${customSize}px;max-width:${customSize * 4}px"`
         : '';
-      const logo = `<img class="sponsor-logo"${sizeStyle} src="${logoPath}" alt="${name}" title="${name}" loading="eager" decoding="async" onload="if(this.naturalWidth&&this.naturalHeight){this.classList.add(this.naturalWidth/this.naturalHeight>2.2?'logo-wide':'logo-square')}">`;
+      const logo = `<img class="supporter-logo"${sizeStyle} src="${logoPath}" alt="${name}" title="${name}" loading="eager" decoding="async" onload="if(this.naturalWidth&&this.naturalHeight){this.classList.add(this.naturalWidth/this.naturalHeight>2.2?'logo-wide':'logo-square')}">`;
       return safeLink
-        ? `<a class="sponsor-link" href="${safeLink}" target="_blank" rel="noopener noreferrer" title="${name} — Klik untuk kunjungi tautan">${logo}</a>`
-        : `<span class="sponsor-link" title="${name}">${logo}</span>`;
+        ? `<a class="supporter-link" href="${safeLink}" target="_blank" rel="noopener noreferrer" title="${name} — Klik untuk kunjungi tautan">${logo}</a>`
+        : `<span class="supporter-link" title="${name}">${logo}</span>`;
     }).join('');
     strip.style.display = 'flex';
     requestAnimationFrame(updateSponsorPosition);
   }
 
   function updateSponsorPosition() {
-    const strip = document.getElementById('sponsorStrip');
+    const strip = document.getElementById('supporterStrip');
     const drawer = document.getElementById('elevationDrawer');
     if (!strip) return;
     if (window.innerWidth <= 768) {
@@ -676,10 +676,12 @@ async function renderLiveMap(params) {
 
   function setSidebarCollapsed(collapsed) {
     mapViewport.classList.toggle('sidebar-collapsed', collapsed);
+    mapViewport.classList.toggle('sidebar-open', !collapsed);
     if (btnToggleSidebar) btnToggleSidebar.classList.toggle('active', !collapsed);
     if (btnMobileOpenSidebar) {
       btnMobileOpenSidebar.style.display = (collapsed && window.innerWidth <= 768) ? 'inline-flex' : 'none';
     }
+    updateSponsorPosition();
     setTimeout(() => {
       map.invalidateSize();
       redrawElevationChart();

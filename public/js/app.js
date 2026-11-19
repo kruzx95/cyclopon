@@ -83,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js'],
-      ['/css/map.css']
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=70'],
+      ['/css/map.css?v=70']
     );
     renderLiveMap(params);
   });

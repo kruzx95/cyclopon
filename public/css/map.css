@@ -1199,7 +1199,7 @@
 
 /* Tablet: logo sponsor satu baris, tinggi kotak seragam agar sejajar */
 @media (min-width: 769px) and (max-width: 1024px) {
-  .sponsor-strip-logos {
+  .supporter-strip-logos {
     flex-wrap: nowrap;
   }
 }
@@ -1211,7 +1211,7 @@
 }
 
 /* ── Sponsor Logo Strip (floating, bottom-center) ── */
-.sponsor-strip {
+.supporter-strip {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -1233,7 +1233,7 @@
   transition: bottom 0.25s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
-.sponsor-strip.sponsor-strip--plain {
+.supporter-strip.supporter-strip--plain {
   background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -1241,7 +1241,7 @@
   box-shadow: none;
 }
 
-.sponsor-strip-label {
+.supporter-strip-label {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -1251,7 +1251,7 @@
   line-height: 1;
 }
 
-.sponsor-strip-logos {
+.supporter-strip-logos {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1260,7 +1260,7 @@
   max-width: 100%;
 }
 
-.sponsor-link {
+.supporter-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1276,12 +1276,12 @@
   transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
 }
 
-.sponsor-link:hover {
+.supporter-link:hover {
   transform: scale(1.08);
   opacity: 0.85;
 }
 
-.sponsor-logo {
+.supporter-logo {
   display: block;
   height: 42px;
   width: auto;
@@ -1297,29 +1297,29 @@
 }
 
 /* Sizing adaptif berdasarkan bentuk/rasio logo */
-.sponsor-logo.logo-square {
+.supporter-logo.logo-square {
   height: 44px;
   max-width: 60px;
 }
 
-.sponsor-logo.logo-wide {
+.supporter-logo.logo-wide {
   height: 28px;
   max-width: 180px;
 }
 
 /* ── Desktop Placement (min-width: 769px) ── */
 @media (min-width: 769px) {
-  .sponsor-strip {
+  .supporter-strip {
     bottom: 295px; /* di atas elevation drawer yang sedang terbuka (~270px) */
   }
-  .map-container:not(.elev-open) .sponsor-strip {
+  .map-container:not(.elev-open) .supporter-strip {
     bottom: 24px; /* drawer tertutup: turun ke bawah dekat kontrol */
   }
-  .sponsor-logo.logo-square {
+  .supporter-logo.logo-square {
     height: 48px;
     max-width: 75px;
   }
-  .sponsor-logo.logo-wide {
+  .supporter-logo.logo-wide {
     height: 32px;
     max-width: 210px;
   }
@@ -1327,9 +1327,9 @@
 
 /* ── Mobile Placement & Sizing (max-width: 768px) ── */
 @media (max-width: 768px) {
-  .map-container .sponsor-strip,
-  .map-container:not(.elev-open) .sponsor-strip,
-  .sponsor-strip {
+  .map-container .supporter-strip,
+  .map-container:not(.elev-open) .supporter-strip,
+  .supporter-strip {
     /* Wajib berada di atas floating toggle Leaderboard (+14px clearance) */
     bottom: calc(max(24px, calc(16px + env(safe-area-inset-bottom, 0px))) + 58px) !important;
     padding: 6px 14px 7px 14px;
@@ -1338,43 +1338,43 @@
     max-width: min(92%, 360px);
   }
 
-  .sponsor-strip-label {
+  .supporter-strip-label {
     font-size: 8.5px;
     letter-spacing: 0.08em;
   }
 
-  .sponsor-strip-logos {
+  .supporter-strip-logos {
     gap: 10px;
   }
 
-  .sponsor-link {
+  .supporter-link {
     padding: 0 2px;
     height: 42px;
   }
 
   /* Ukuran mobile: tajam, jelas, dan proporsional */
-  .sponsor-logo {
+  .supporter-logo {
     height: 36px;
     max-width: 140px;
   }
 
-  .sponsor-logo.logo-square {
+  .supporter-logo.logo-square {
     height: 38px;
     max-width: 52px;
   }
 
-  .sponsor-logo.logo-wide {
+  .supporter-logo.logo-wide {
     height: 25px;
     max-width: 160px;
   }
 
   /* Jika drawer elevasi mobile dibuka */
-  .map-container.elev-open .sponsor-strip {
+  .map-container.elev-open .supporter-strip {
     bottom: 215px !important;
   }
 
-  /* Sembunyikan strip jika sheet leaderboard mobile dibuka penuh */
-  .map-viewport:not(.sidebar-collapsed) .sponsor-strip {
+  /* Sembunyikan strip hanya jika sheet leaderboard mobile dibuka penuh */
+  .map-viewport.sidebar-open .supporter-strip {
     display: none !important;
   }
 }
