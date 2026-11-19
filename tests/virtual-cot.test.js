@@ -26,9 +26,10 @@ function roundTripGpx(eventId, maxLon = 0.03) {
 }
 
 function createEvent(overrides = {}) {
+  const todayWib = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10);
   const result = db.createEvent.run({
     name: overrides.name || `Virtual COT Test ${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    date: overrides.date || '2026-11-18'
+    date: overrides.date || todayWib
   });
   const eventId = Number(result.lastInsertRowid);
   createdEventIds.push(eventId);

@@ -454,7 +454,7 @@ async function renderLiveMap(params) {
       const sizeStyle = Number.isFinite(customSize) && customSize >= 16 && customSize <= 200
         ? ` style="height:${customSize}px;max-width:${customSize * 4}px"`
         : '';
-      const logo = `<img class="sponsor-logo"${sizeStyle} src="${logoPath}" alt="${name}" title="${name}" loading="lazy" onload="if(this.naturalWidth&&this.naturalHeight){this.classList.add(this.naturalWidth/this.naturalHeight>2.2?'logo-wide':'logo-square')}">`;
+      const logo = `<img class="sponsor-logo"${sizeStyle} src="${logoPath}" alt="${name}" title="${name}" loading="eager" decoding="async" onload="if(this.naturalWidth&&this.naturalHeight){this.classList.add(this.naturalWidth/this.naturalHeight>2.2?'logo-wide':'logo-square')}">`;
       return safeLink
         ? `<a class="sponsor-link" href="${safeLink}" target="_blank" rel="noopener noreferrer" title="${name} — Klik untuk kunjungi tautan">${logo}</a>`
         : `<span class="sponsor-link" title="${name}">${logo}</span>`;

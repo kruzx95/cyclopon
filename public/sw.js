@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v68';
+const CACHE_NAME = 'cyclopon-v69';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -143,6 +143,22 @@ self.addEventListener('fetch', event => {
           return res;
         });
       })
+    );
+    return;
+  }
+
+  // Uploaded media (sponsor logos, rider avatars) — network-first, never fallback to index.html
+  if (url.pathname.startsWith('/uploads/')) {
+    event.respondWith(
+      fetch(request)
+        .then(res => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(request, clone)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
