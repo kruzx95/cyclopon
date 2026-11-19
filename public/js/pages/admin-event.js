@@ -113,32 +113,39 @@ async function renderAdminEvent(params) {
             ` : ''}
 
             <div class="form-group" style="margin-top:16px;padding-top:16px;border-top:1px dashed #E5E7EB">
-              <label style="display:flex;align-items:center;gap:8px">
+              <label style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
                 ⏱️ Virtual COT — Garis Potong Bergerak
               </label>
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:6px">
-                <div>
-                  <label for="evCotStart" style="font-size:11px;color:#6B7280">Jam Mulai (WIB)</label>
-                  <input class="input" type="time" id="evCotStart" value="${event.cot_start_time || ''}">
+              <div style="padding:12px;background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px">
+                  <div>
+                    <label for="evCotStart" style="margin-bottom:5px">Jam Mulai (WIB)</label>
+                    <input class="input" type="time" id="evCotStart" value="${event.cot_start_time || ''}" style="height:42px">
+                  </div>
+                  <div>
+                    <label for="evCotPace" style="margin-bottom:5px">Kecepatan (km/jam)</label>
+                    <input class="input" type="number" min="1" step="0.1" id="evCotPace" value="${event.cot_pace || ''}" placeholder="20" style="height:42px">
+                  </div>
+                  <div>
+                    <label for="evCotMode" style="margin-bottom:5px">Mode</label>
+                    <select class="input" id="evCotMode" style="height:42px">
+                      <option value="off" ${(event.cot_mode || 'off') === 'off' ? 'selected' : ''}>Nonaktif</option>
+                      <option value="dry_run" ${event.cot_mode === 'dry_run' ? 'selected' : ''}>Uji (dry run)</option>
+                      <option value="live" ${event.cot_mode === 'live' ? 'selected' : ''}>Aktif (live)</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label for="evCotPace" style="font-size:11px;color:#6B7280">Kecepatan (km/jam)</label>
-                  <input class="input" type="number" min="1" step="0.1" id="evCotPace" value="${event.cot_pace || ''}" placeholder="20">
-                </div>
-                <div>
-                  <label for="evCotMode" style="font-size:11px;color:#6B7280">Mode</label>
-                  <select class="input" id="evCotMode">
-                    <option value="off" ${(event.cot_mode || 'off') === 'off' ? 'selected' : ''}>Nonaktif</option>
-                    <option value="dry_run" ${event.cot_mode === 'dry_run' ? 'selected' : ''}>Uji (dry run)</option>
-                    <option value="live" ${event.cot_mode === 'live' ? 'selected' : ''}>Aktif (live)</option>
-                  </select>
-                </div>
-                <div>
-                  <label for="evCotEndPreview" style="font-size:11px;color:#6B7280">Estimasi Jam Berakhir (WIB)</label>
-                  <input class="input" id="evCotEndPreview" value="${formatCotEndTime(event.cot_start_time, event.cot_pace, event.distance_km)}" readonly tabindex="-1" style="background:#F9FAFB;cursor:default">
+                <div id="evCotEndPreview" role="status" aria-live="polite"
+                     title="Dihitung dari jam mulai + (panjang rute ÷ kecepatan)"
+                     style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;height:42px;padding:0 14px;border:1.5px dashed #CBD5E1;border-radius:8px;background:#FFFFFF;transition:background 0.15s ease,border-color 0.15s ease">
+                  <span style="display:inline-flex;align-items:center;gap:7px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280">
+                    <span aria-hidden="true" style="font-size:13px;opacity:0.85">🕒</span>
+                    Estimasi Jam Berakhir
+                  </span>
+                  <span id="evCotEndPreviewText" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;font-weight:900;letter-spacing:0.01em;color:#94A3B8">—</span>
                 </div>
               </div>
-              <p style="color:#6B7280;font-size:12px;margin:8px 0 0">
+              <p style="color:#6B7280;font-size:12px;line-height:1.5;margin:8px 0 0">
                 Kosongkan jam/kecepatan untuk menonaktifkan. Mode <strong>Uji</strong> hanya menghitung kandidat DNF tanpa mencatat apa pun.
                 Jam berakhir COT dihitung otomatis: <strong>jam mulai + (panjang rute ÷ kecepatan)</strong> dan tampil di kartu status COT di bawah.
               </p>
@@ -514,17 +521,28 @@ async function renderAdminEvent(params) {
 
   // ── Live COT finish estimate (start time + route ÷ pace) ──
   const updateCotEndPreview = () => {
-    const el = document.getElementById('evCotEndPreview');
-    if (!el) return;
-    el.value = formatCotEndTime(
+    const box = document.getElementById('evCotEndPreview');
+    const text = document.getElementById('evCotEndPreviewText');
+    if (!box || !text) return;
+    const value = formatCotEndTime(
       document.getElementById('evCotStart')?.value,
       document.getElementById('evCotPace')?.value,
       event.distance_km
     );
+    const known = value && value !== '—';
+    text.textContent = value || '—';
+    text.style.color = known ? '#047857' : '#94A3B8';
+    box.style.background = known ? '#F0FDF4' : '#FFFFFF';
+    box.style.borderColor = known ? '#86EFAC' : '#CBD5E1';
+    box.style.borderStyle = known ? 'solid' : 'dashed';
+    box.title = known
+      ? `Estimasi COT mencapai finish pukul ${value}`
+      : 'Isi jam mulai, kecepatan, dan rute GPX untuk menghitung estimasi';
   };
   ['evCotStart', 'evCotPace'].forEach(id =>
     document.getElementById(id)?.addEventListener('input', updateCotEndPreview)
   );
+  updateCotEndPreview();
 
   // ── Event access PIN helpers ──
   document.getElementById('btnGenerateEventPin')?.addEventListener('click', () => {
