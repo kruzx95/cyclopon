@@ -96,6 +96,34 @@ test('Virtual COT — marker, evaluation guards, DNF ledger & endpoints', async 
     // Crossing midnight must stay purely arithmetic
     const late = virtualCot.wibToEpochMs('2026-11-18', '23:30');
     assert.equal(new Date(late).toISOString(), '2026-11-18T16:30:00.000Z');
+
+    // Round-trip: epoch back to WIB wall clock
+    assert.equal(virtualCot.epochMsToWibTime(ms), '05:00');
+    assert.equal(virtualCot.epochMsToWibTime(late), '23:30');
+  });
+
+  await t.test('marker exposes the estimated WIB finish time', () => {
+    const startMs = virtualCot.wibToEpochMs('2026-11-18', '05:00');
+    const eventId = createEvent({ cot_start_ms: startMs, cot_pace: 20, cot_mode: 'dry_run' });
+    const marker = virtualCot.computeMarker(db.getEventById.get(eventId), startMs);
+
+    assert.match(String(marker.endTime), /^\d{2}:\d{2}$/);
+    assert.equal(marker.endTime, virtualCot.epochMsToWibTime(marker.endMs));
+    assert.ok(marker.endMs > startMs);
+
+    // Duration must equal route length / pace (within rounding of the route cache)
+    const durationHours = (marker.endMs - startMs) / 3600000;
+    assert.ok(Math.abs(durationHours - marker.routeLengthKm / 20) < 0.01, `duration=${durationHours}h`);
+  });
+
+  await t.test('unconfigured marker has no finish estimate', () => {
+    const eventId = createEvent({ gpx: false });
+    db.updateEventCot.run({ id: eventId, cot_start_time: null, cot_start_ms: null, cot_pace: null, cot_mode: 'off' });
+    const marker = virtualCot.computeMarker(db.getEventById.get(eventId), Date.now());
+
+    assert.equal(marker.status, 'DISABLED');
+    assert.equal(marker.endMs, null);
+    assert.equal(marker.endTime, null);
   });
 
   await t.test('marker is NOT_STARTED before its start time', () => {

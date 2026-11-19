@@ -1171,13 +1171,13 @@ async function renderRiderCockpit() {
     }
 
     if (data.status === 'NOT_STARTED') {
-      if (titleEl) titleEl.textContent = `Virtual COT · mulai ${data.start_time || '—'} WIB${paceStr}`;
+      if (titleEl) titleEl.textContent = `Virtual COT · mulai ${data.start_time || '—'} WIB · selesai ±${data.end_time || '—'} WIB${paceStr}`;
       setPill('BELUM MULAI', 'warning');
       return;
     }
 
     if (data.status === 'FINISHED') {
-      if (titleEl) titleEl.textContent = 'Virtual COT — sudah finish';
+      if (titleEl) titleEl.textContent = `Virtual COT — selesai ±${data.end_time || '—'} WIB`;
       setPill('SELESAI', 'safe');
       return;
     }

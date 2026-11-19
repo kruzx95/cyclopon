@@ -34,6 +34,23 @@ async function renderAdminEvent(params) {
     } catch { Router.navigate('/admin/dashboard'); return; }
   }
 
+  /**
+   * Estimated COT finish clock: start time + (route km / pace) in WIB.
+   * Returns '—' until a start time, pace, and route length are all known.
+   */
+  function formatCotEndTime(start, pace, routeKm) {
+    const match = /^(\d{1,2}):(\d{2})/.exec(String(start || '').trim());
+    const speed = Number(pace);
+    const km = Number(routeKm);
+    if (!match || !(speed > 0) || !(km > 0)) return '—';
+    const startMinutes = Number(match[1]) * 60 + Number(match[2]);
+    const totalMinutes = startMinutes + (km / speed) * 60;
+    const dayMinutes = ((Math.floor(totalMinutes) % 1440) + 1440) % 1440;
+    const hh = String(Math.floor(dayMinutes / 60)).padStart(2, '0');
+    const mm = String(dayMinutes % 60).padStart(2, '0');
+    return `${hh}:${mm} WIB`;
+  }
+
   app.innerHTML = `
     <div class="admin-layout">
       ${adminSidebar('')}
@@ -116,9 +133,14 @@ async function renderAdminEvent(params) {
                     <option value="live" ${event.cot_mode === 'live' ? 'selected' : ''}>Aktif (live)</option>
                   </select>
                 </div>
+                <div>
+                  <label for="evCotEndPreview" style="font-size:11px;color:#6B7280">Estimasi Jam Berakhir (WIB)</label>
+                  <input class="input" id="evCotEndPreview" value="${formatCotEndTime(event.cot_start_time, event.cot_pace, event.distance_km)}" readonly tabindex="-1" style="background:#F9FAFB;cursor:default">
+                </div>
               </div>
               <p style="color:#6B7280;font-size:12px;margin:8px 0 0">
                 Kosongkan jam/kecepatan untuk menonaktifkan. Mode <strong>Uji</strong> hanya menghitung kandidat DNF tanpa mencatat apa pun.
+                Jam berakhir COT dihitung otomatis: <strong>jam mulai + (panjang rute ÷ kecepatan)</strong> dan tampil di kartu status COT di bawah.
               </p>
             </div>
 
@@ -490,6 +512,20 @@ async function renderAdminEvent(params) {
     }
   });
 
+  // ── Live COT finish estimate (start time + route ÷ pace) ──
+  const updateCotEndPreview = () => {
+    const el = document.getElementById('evCotEndPreview');
+    if (!el) return;
+    el.value = formatCotEndTime(
+      document.getElementById('evCotStart')?.value,
+      document.getElementById('evCotPace')?.value,
+      event.distance_km
+    );
+  };
+  ['evCotStart', 'evCotPace'].forEach(id =>
+    document.getElementById(id)?.addEventListener('input', updateCotEndPreview)
+  );
+
   // ── Event access PIN helpers ──
   document.getElementById('btnGenerateEventPin')?.addEventListener('click', () => {
     const pinInput = document.getElementById('evAccessPin');
@@ -593,6 +629,7 @@ async function renderAdminEvent(params) {
         ${cotStatCard('STATUS MARKER', statusLabel, statusColor)}
         ${cotStatCard('POSISI MARKER', `${Number(marker.distanceKm || 0).toFixed(1)} km`)}
         ${cotStatCard('KECEPATAN', `${marker.pace ? marker.pace : '—'} km/jam`)}
+        ${cotStatCard('EST. SELESAI', marker.endTime ? `${marker.endTime} WIB` : '—')}
         ${cotStatCard('PANJANG RUTE', `${Number(marker.routeLengthKm || 0).toFixed(1)} km`)}
         ${cotStatCard('DNF AKTIF', activeDnf.length, activeDnf.length > 0 ? '#B91C1C' : '#047857')}
       </div>

@@ -1353,6 +1353,7 @@ async function renderLiveMap(params) {
         <div style="font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;color:#991B1B;letter-spacing:0.06em">⏱️ COT VIRTUAL</div>
         <div style="font-weight:900;font-size:15px;color:#0D1117;margin-top:2px">km ${Number(data.distance_km || 0).toFixed(1)}</div>
         <div style="font-size:12px;color:#4B5563;margin-top:2px">${data.pace ? `${data.pace} km/jam` : '—'} · ${cotStatusLabel(data.status)}</div>
+        <div style="font-size:12px;color:#4B5563;margin-top:2px">Mulai ${data.start_time || '—'} WIB · Selesai ±${data.end_time || '—'} WIB</div>
         <div style="font-size:11px;color:#6B7280;margin-top:4px">Rute ${Number(data.route_length_km || 0).toFixed(1)} km · ${data.dnf_count || 0} rider DNF</div>
       `;
       cotMarker.bindPopup(popup, { autoPan: false, closeButton: true, offset: [0, -12], maxWidth: 260 });
@@ -1361,9 +1362,9 @@ async function renderLiveMap(params) {
       if (data.evaluation && data.evaluation.state === 'deferred') {
         bannerMsg = '⚠️ Penilaian DNF ditunda — telemetri rider belum segar';
       } else if (data.status === 'NOT_STARTED') {
-        bannerMsg = `⏱️ COT Virtual mulai ${data.start_time || '—'} WIB · ${data.pace} km/jam`;
+        bannerMsg = `⏱️ COT Virtual mulai ${data.start_time || '—'} WIB · selesai ±${data.end_time || '—'} WIB · ${data.pace} km/jam`;
       } else if (data.status === 'FINISHED') {
-        bannerMsg = '⏱️ COT Virtual sudah mencapai garis finish';
+        bannerMsg = `⏱️ COT Virtual selesai ±${data.end_time || '—'} WIB — sudah mencapai garis finish`;
       }
 
       if (cotBannerEl && cotBannerTextEl) {

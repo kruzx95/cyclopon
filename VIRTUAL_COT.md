@@ -1,6 +1,6 @@
 # ⏱️ Virtual COT — Garis Potong Bergerak
 
-> **Status desain**: Rev 2 — **sudah diimplementasikan** (DB, backend, API, UI, 22 test lulus)
+> **Status desain**: Rev 2 — **sudah diimplementasikan** (DB, backend, API, UI, 26 test lulus)
 > **Tanggal**: 17 November 2026 · **Revisi terakhir**: 18 November 2026
 >
 > **Riwayat revisi**
@@ -137,6 +137,8 @@ Fungsi baru (diekstrak/dipakai ulang dari logika GPX yang sudah ada di file ini)
 jarak_marker(t) = cot_pace × ((now_epoch − cot_start_ms) / 3600000)  [jam]
 ```
 
+- Perkiraan jam berakhir: `cot_start_ms + (panjang_rute / cot_pace) × 3600000`,
+  diekspos sebagai `end_ms` (epoch) dan `end_time` (`HH:MM` WIB) di marker/status.
 - Konversi **jarak → koordinat** (lat/lng) dengan menelusuri titik-titik GPX
   (`<trkpt>/<rtept>`) dan jarak kumulatif haversine — reuse `haversineDistance()`.
 - Marker **berhenti (clamp)** di titik finish ketika jarak ≥ panjang rute.
@@ -155,6 +157,8 @@ Response (contoh):
   "enabled": true,
   "mode": "live",
   "start_time": "05:00",
+  "end_time": "15:30",           // estimasi WIB saat marker mencapai finish
+  "end_ms": 1795062508200,
   "pace": 20.0,
   "status": "MOVING",            // MOVING | NOT_STARTED | FINISHED
   "distance_km": 45.3,
