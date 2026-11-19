@@ -118,6 +118,7 @@ db.exec(`
     logo_path  TEXT NOT NULL,
     link       TEXT,
     sort_order INTEGER DEFAULT 0,
+    sponsor_logo_size INTEGER,
     created_at TEXT DEFAULT (datetime('now'))
   );
   CREATE INDEX IF NOT EXISTS idx_sponsors_event ON sponsors(event_id);
@@ -154,6 +155,10 @@ try { db.exec("ALTER TABLE events ADD COLUMN cot_start_time TEXT;"); } catch (e)
 try { db.exec("ALTER TABLE events ADD COLUMN cot_start_ms INTEGER;"); } catch (e) {}
 try { db.exec("ALTER TABLE events ADD COLUMN cot_pace REAL;"); } catch (e) {}
 try { db.exec("ALTER TABLE events ADD COLUMN cot_mode TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE sponsors ADD COLUMN sponsor_logo_size INTEGER;"); } catch (e) {}
+try { db.exec("ALTER TABLE events ADD COLUMN sponsor_strip_bg TEXT DEFAULT 'white';"); } catch (e) {}
+try { db.exec("ALTER TABLE events ADD COLUMN sponsor_strip_label TEXT DEFAULT 'Didukung oleh';"); } catch (e) {}
+try { db.exec("ALTER TABLE events ADD COLUMN sponsor_strip_label_color TEXT DEFAULT '#64748B';"); } catch (e) {}
 
 // Populate tokens for any existing riders that lack tokens
 try {
@@ -179,7 +184,7 @@ module.exports = {
   getAllEvents:    db.prepare('SELECT * FROM events ORDER BY created_at DESC'),
   getEventById:   db.prepare('SELECT * FROM events WHERE id = ?'),
   createEvent:    db.prepare('INSERT INTO events (name, date) VALUES (@name, @date)'),
-  updateEvent:    db.prepare('UPDATE events SET name=@name, date=@date, active=@active WHERE id=@id'),
+  updateEvent:    db.prepare('UPDATE events SET name=@name, date=@date, active=@active, sponsor_strip_bg=@sponsor_strip_bg, sponsor_strip_label=@sponsor_strip_label, sponsor_strip_label_color=@sponsor_strip_label_color WHERE id=@id'),
   updateEventAccessPin: db.prepare('UPDATE events SET access_pin=? WHERE id=?'),
   updateEventCot: db.prepare('UPDATE events SET cot_start_time=@cot_start_time, cot_start_ms=@cot_start_ms, cot_pace=@cot_pace, cot_mode=@cot_mode WHERE id=@id'),
   updateEventGpx: db.prepare('UPDATE events SET gpx_path=? WHERE id=?'),
@@ -262,9 +267,11 @@ module.exports = {
   voidVirtualDnf: db.prepare("UPDATE virtual_dnf SET status='VOID', voided_at=datetime('now'), void_reason=@reason WHERE event_id=@event_id AND rider_id=@rider_id AND status='ACTIVE'"),
 
   // Sponsors (Live Map Logo Strip)
-  getSponsorsByEvent: db.prepare('SELECT id, name, logo_path, link, sort_order FROM sponsors WHERE event_id = ? ORDER BY sort_order ASC, id ASC'),
+  getSponsorsByEvent: db.prepare('SELECT id, name, logo_path, link, sort_order, sponsor_logo_size FROM sponsors WHERE event_id = ? ORDER BY sort_order ASC, id ASC'),
   getSponsorById:     db.prepare('SELECT * FROM sponsors WHERE id = ?'),
-  createSponsor:      db.prepare('INSERT INTO sponsors (event_id, name, logo_path, link, sort_order) VALUES (@event_id, @name, @logo_path, @link, @sort_order)'),
+  createSponsor:      db.prepare('INSERT INTO sponsors (event_id, name, logo_path, link, sort_order, sponsor_logo_size) VALUES (@event_id, @name, @logo_path, @link, @sort_order, @sponsor_logo_size)'),
+  updateSponsorOrder: db.prepare('UPDATE sponsors SET sort_order = ? WHERE id = ?'),
+  updateSponsorSize:  db.prepare('UPDATE sponsors SET sponsor_logo_size = ? WHERE id = ?'),
   deleteSponsor:      db.prepare('DELETE FROM sponsors WHERE id = ?'),
 
   // System Settings (Notifications, etc.)

@@ -459,11 +459,24 @@ router.put('/admin/:id', requireAdminAuth, (req, res, next) => {
       }
     }
 
+    const sponsorStripBg = body.sponsor_strip_bg ?? event.sponsor_strip_bg ?? 'white';
+    if (!['white', 'transparent'].includes(sponsorStripBg)) {
+      return res.status(400).json({ error: 'sponsor_strip_bg harus white atau transparent' });
+    }
+    const sponsorStripLabel = String(body.sponsor_strip_label ?? event.sponsor_strip_label ?? 'Didukung oleh').trim().slice(0, 40);
+    const sponsorStripLabelColor = body.sponsor_strip_label_color ?? event.sponsor_strip_label_color ?? '#64748B';
+    if (!/^#[0-9a-fA-F]{6}$/.test(sponsorStripLabelColor)) {
+      return res.status(400).json({ error: 'sponsor_strip_label_color harus format #RRGGBB' });
+    }
+
     db.updateEvent.run({
       id:     event.id,
       name:   body.name ?? event.name,
       date:   nextDate,
-      active: body.active ?? event.active
+      active: body.active ?? event.active,
+      sponsor_strip_bg: sponsorStripBg,
+      sponsor_strip_label: sponsorStripLabel,
+      sponsor_strip_label_color: sponsorStripLabelColor
     });
     db.updateEventCot.run({ id: event.id, ...cot });
     db.updateEventAccessPin.run(accessPin, event.id);
@@ -542,7 +555,7 @@ router.post('/admin/:id/sponsors', requireAdminAuth, (req, res) => {
     const event = db.getEventById.get(eventId);
     if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
 
-    const { name, link, sort_order, logo_path } = req.body || {};
+    const { name, link, sort_order, logo_path, sponsor_logo_size } = req.body || {};
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Nama sponsor wajib diisi' });
     }
@@ -558,18 +571,49 @@ router.post('/admin/:id/sponsors', requireAdminAuth, (req, res) => {
 
     const cleanLink = sanitizeSponsorLink(link);
     const order = Number.isFinite(Number(sort_order)) ? Number(sort_order) : 0;
+    const size = Number(sponsor_logo_size);
+    const logoSize = Number.isFinite(size) && size >= 16 && size <= 200 ? Math.round(size) : null;
 
     const result = db.createSponsor.run({
       event_id: eventId,
       name: name.trim(),
       logo_path: resolvedLogo,
       link: cleanLink,
-      sort_order: order
+      sort_order: order,
+      sponsor_logo_size: logoSize
     });
 
     const newSponsor = db.getSponsorById.get(result.lastInsertRowid);
     res.status(201).json({ success: true, sponsor: newSponsor });
   });
+});
+
+// PATCH /api/events/admin/sponsors/:id — update sponsor sort order
+router.patch('/admin/sponsors/:id', requireAdminAuth, (req, res) => {
+  const sponsor = db.getSponsorById.get(req.params.id);
+  if (!sponsor) return res.status(404).json({ error: 'Sponsor tidak ditemukan' });
+
+  const order = Number(req.body?.sort_order);
+  if (!Number.isFinite(order) || order < 0) {
+    return res.status(400).json({ error: 'Urutan harus berupa angka >= 0' });
+  }
+
+  db.updateSponsorOrder.run(Math.floor(order), sponsor.id);
+  res.json({ success: true, sponsor: db.getSponsorById.get(sponsor.id) });
+});
+
+// PATCH /api/events/admin/sponsors/:id/size — update sponsor logo size
+router.patch('/admin/sponsors/:id/size', requireAdminAuth, (req, res) => {
+  const sponsor = db.getSponsorById.get(req.params.id);
+  if (!sponsor) return res.status(404).json({ error: 'Sponsor tidak ditemukan' });
+
+  const size = Number(req.body?.size);
+  if (!Number.isFinite(size) || size < 16 || size > 200) {
+    return res.status(400).json({ error: 'Ukuran logo harus angka 16-200 (piksel)' });
+  }
+
+  db.updateSponsorSize.run(Math.round(size), sponsor.id);
+  res.json({ success: true, sponsor: db.getSponsorById.get(sponsor.id) });
 });
 
 // DELETE /api/events/admin/sponsors/:id — delete sponsor

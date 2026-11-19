@@ -241,6 +241,13 @@
 }
 
 /* ── Floating Map Action Controls (Google Maps / Strava Style) ── */
+.map-fab-btn.btn-back-admin-fab {
+  text-decoration: none;
+  color: #0D1117;
+  font-size: 19px;
+  font-weight: 800;
+}
+
 .map-floating-stack {
   position: absolute;
   top: 16px;
@@ -1190,6 +1197,13 @@
   }
 }
 
+/* Tablet: logo sponsor satu baris, tinggi kotak seragam agar sejajar */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sponsor-strip-logos {
+    flex-wrap: nowrap;
+  }
+}
+
 /* Mobile buttons default hidden on desktop */
 .btn-mobile-sidebar-close,
 .btn-mobile-sidebar-float {
@@ -1219,6 +1233,14 @@
   transition: bottom 0.25s ease, opacity 0.2s ease, transform 0.2s ease;
 }
 
+.sponsor-strip.sponsor-strip--plain {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .sponsor-strip-label {
   font-size: 9px;
   font-weight: 800;
@@ -1245,6 +1267,7 @@
   line-height: 0;
   cursor: pointer;
   text-decoration: none;
+  height: 52px;
   background: transparent !important;
   border: none !important;
   outline: none !important;
@@ -1326,6 +1349,7 @@
 
   .sponsor-link {
     padding: 0 2px;
+    height: 42px;
   }
 
   /* Ukuran mobile: tajam, jelas, dan proporsional */
@@ -1426,10 +1450,12 @@
     min-width: 0;
     overflow: hidden;
     flex: 1;
+    justify-content: center;
   }
 
   .header-event-title {
     max-width: 100%;
+    text-align: center;
     font-size: 13px;
     font-weight: 800;
     white-space: nowrap;

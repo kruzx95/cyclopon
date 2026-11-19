@@ -121,6 +121,34 @@ test('Sponsors & Partner Logos Suite', async (t) => {
     t.context.sponsor3Id = data3.sponsor.id;
   });
 
+  await t.test('PATCH /api/events/admin/sponsors/:id/size updates logo size', async () => {
+    const { eventId } = t.context;
+    const auth = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` };
+
+    const createRes = await fetch(`${baseUrl}/api/events/admin/${eventId}/sponsors`, {
+      method: 'POST', headers: auth,
+      body: JSON.stringify({ name: 'SizeTest', logo_path: '/img.png', sort_order: 9, sponsor_logo_size: 60 })
+    });
+    const created = (await createRes.json()).sponsor;
+    assert.equal(created.sponsor_logo_size, 60);
+
+    const res = await fetch(`${baseUrl}/api/events/admin/sponsors/${created.id}/size`, {
+      method: 'PATCH', headers: auth, body: JSON.stringify({ size: 80 })
+    });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).sponsor.sponsor_logo_size, 80);
+
+    const bad = await fetch(`${baseUrl}/api/events/admin/sponsors/${created.id}/size`, {
+      method: 'PATCH', headers: auth, body: JSON.stringify({ size: 500 })
+    });
+    assert.equal(bad.status, 400);
+
+    // cleanup so later count assertions stay valid
+    await fetch(`${baseUrl}/api/events/admin/sponsors/${created.id}`, {
+      method: 'DELETE', headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+  });
+
   await t.test('GET /api/events/:id/sponsors returns all sponsors sorted by sort_order', async () => {
     const { eventId } = t.context;
     const res = await fetch(`${baseUrl}/api/events/${eventId}/sponsors`);

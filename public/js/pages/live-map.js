@@ -78,14 +78,13 @@ async function renderLiveMap(params) {
             <span class="logo-text">CYCLOPON</span>
           </a>
           <span class="header-meta-tag">// LIVE MATRIX</span>
-          ${isAdmin ? `
-            <span class="badge badge-admin-mode" style="background:#0D1117;color:#FFF;border:1.5px solid #0D1117;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:900;letter-spacing:0.06em;font-family:monospace">🛡️ PANITIA</span>
-            <a href="/admin/events/${eventId}" data-link class="btn-back-admin" style="color:var(--text-secondary);text-decoration:none;font-size:11px;font-weight:700">← Dashboard</a>
-          ` : ''}
           <div class="event-info-cluster">
             <h1 class="header-event-title" id="eventBadge">Memuat Event...</h1>
             <span class="header-event-stats" id="eventStats">Menghitung...</span>
           </div>
+          ${isAdmin ? `
+            <span class="badge badge-admin-mode" style="background:#0D1117;color:#FFF;border:1.5px solid #0D1117;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:900;letter-spacing:0.06em;font-family:monospace">🛡️ PANITIA</span>
+          ` : ''}
         </div>
 
         <div class="header-right">
@@ -233,11 +232,12 @@ async function renderLiveMap(params) {
             <button class="map-fab-btn ${isMobile ? '' : 'active'}" id="btnToggleElevation" title="Buka / Tutup Profil Elevasi" aria-label="Toggle Elevasi">
               ${ICONS.elevation}
             </button>
+            ${isAdmin ? `<a href="/admin/events/${eventId}" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard"><span class="fab-icon" aria-hidden="true">←</span></a>` : ''}
           </div>
 
           <!-- ── Sponsor Logo Strip (di atas Leaderboard) ── -->
           <div id="sponsorStrip" class="sponsor-strip" style="display:none">
-            <span class="sponsor-strip-label">Didukung oleh</span>
+            <span class="sponsor-strip-label" id="sponsorStripLabel">Didukung oleh</span>
             <div class="sponsor-strip-logos" id="sponsorStripLogos"></div>
           </div>
 
@@ -432,6 +432,14 @@ async function renderLiveMap(params) {
 
     // Adaptive sizing class based on sponsor count
     strip.classList.remove('sponsors-1', 'sponsors-2', 'sponsors-3', 'sponsors-many');
+    strip.classList.toggle('sponsor-strip--plain', event?.sponsor_strip_bg === 'transparent');
+    const stripLabel = document.getElementById('sponsorStripLabel');
+    if (stripLabel) {
+      const text = event?.sponsor_strip_label ?? 'Didukung oleh';
+      stripLabel.textContent = text;
+      stripLabel.style.display = text ? '' : 'none';
+      stripLabel.style.color = event?.sponsor_strip_label_color || '#64748B';
+    }
     if (sponsors.length === 1) strip.classList.add('sponsors-1');
     else if (sponsors.length === 2) strip.classList.add('sponsors-2');
     else if (sponsors.length === 3) strip.classList.add('sponsors-3');
@@ -442,7 +450,11 @@ async function renderLiveMap(params) {
       const logoPath = escapeHtml(s.logo_path || '');
       const rawLink = s.link ? String(s.link).trim() : '';
       const safeLink = rawLink && /^https?:\/\//i.test(rawLink) ? escapeHtml(rawLink) : '';
-      const logo = `<img class="sponsor-logo" src="${logoPath}" alt="${name}" title="${name}" loading="lazy" onload="if(this.naturalWidth&&this.naturalHeight){this.classList.add(this.naturalWidth/this.naturalHeight>2.2?'logo-wide':'logo-square')}">`;
+      const customSize = Number(s.sponsor_logo_size);
+      const sizeStyle = Number.isFinite(customSize) && customSize >= 16 && customSize <= 200
+        ? ` style="height:${customSize}px;max-width:${customSize * 4}px"`
+        : '';
+      const logo = `<img class="sponsor-logo"${sizeStyle} src="${logoPath}" alt="${name}" title="${name}" loading="lazy" onload="if(this.naturalWidth&&this.naturalHeight){this.classList.add(this.naturalWidth/this.naturalHeight>2.2?'logo-wide':'logo-square')}">`;
       return safeLink
         ? `<a class="sponsor-link" href="${safeLink}" target="_blank" rel="noopener noreferrer" title="${name} — Klik untuk kunjungi tautan">${logo}</a>`
         : `<span class="sponsor-link" title="${name}">${logo}</span>`;
