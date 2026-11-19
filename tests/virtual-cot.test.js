@@ -465,6 +465,118 @@ test('Virtual COT — marker, evaluation guards, DNF ledger & endpoints', async 
     assert.equal(body.summary.virtual_dnf, 1);
   });
 
+  await t.test('resetVirtualCot helper restarts now and clears recorded DNFs', () => {
+    const eventId = createEvent({ cot_start_ms: nowMs - 10 * 60 * 1000 });
+    const riderId = addRider(eventId, 'R-RESET-1');
+    addPosition(eventId, riderId, 0.2, nowMs - 30 * 1000);
+
+    // Trigger evaluation so rider is recorded as DNF
+    virtualCot.evaluateVirtualCot(eventId, { nowMs });
+    assert.equal(db.getActiveVirtualDnfByEvent.all(eventId).length, 1);
+
+    // Execute resetVirtualCot with restart_now
+    const result = virtualCot.resetVirtualCot(eventId, { action: 'restart_now', nowMs });
+    assert.equal(result.clearedCount, 1);
+    assert.equal(db.getActiveVirtualDnfByEvent.all(eventId).length, 0);
+    // start_ms is truncated to the WIB minute so it matches start_time exactly
+    assert.equal(result.status.start_ms % 60000, 0);
+    assert.ok(result.status.distance_km >= 0 && result.status.distance_km < 0.5,
+      `marker harus dekat KM 0, dapat ${result.status.distance_km}`);
+    assert.equal(result.status.dnf_count, 0);
+  });
+
+  await t.test('resetVirtualCot rejects unknown actions and invalid modes', () => {
+    const eventId = createEvent({ cot_start_ms: Date.now() - 60 * 1000 });
+
+    assert.throws(
+      () => virtualCot.resetVirtualCot(eventId, { action: 'nope' }),
+      (err) => err.status === 400
+    );
+    assert.throws(
+      () => virtualCot.resetVirtualCot(eventId, { action: 'stop', mode: 'garbage' }),
+      (err) => err.status === 400
+    );
+    assert.throws(
+      () => virtualCot.resetVirtualCot(eventId, { action: 'set_time', startTime: '99:99' }),
+      (err) => err.status === 400
+    );
+    // `clear_only` was removed: without a config change the next evaluation
+    // would immediately re-insert every DNF row, making the action a no-op.
+    assert.throws(
+      () => virtualCot.resetVirtualCot(eventId, { action: 'clear_only' }),
+      (err) => err.status === 400
+    );
+
+    // Failed validation must not touch the stored configuration
+    const event = db.getEventById.get(eventId);
+    assert.equal(event.cot_mode, 'live');
+  });
+
+  await t.test('resetVirtualCot activates live when restarting an off session', () => {
+    const eventId = createEvent({ cot_start_ms: Date.now() - 60 * 1000, cot_mode: 'off' });
+    const result = virtualCot.resetVirtualCot(eventId, { action: 'restart_now' });
+
+    assert.equal(result.event.cot_mode, 'live');
+    assert.equal(result.status.mode, 'live');
+    assert.equal(result.status.status, 'MOVING');
+  });
+
+  await t.test('resetVirtualCot stop keeps the config but reports mode off', () => {
+    const eventId = createEvent({ cot_start_ms: Date.now() - 60 * 1000, cot_mode: 'live' });
+
+    const result = virtualCot.resetVirtualCot(eventId, { action: 'stop' });
+    assert.equal(result.status.mode, 'off');
+    // Start time/pace stay stored so a later restart can reuse them.
+    assert.ok(Number.isFinite(result.status.start_ms));
+    assert.ok(result.status.pace > 0);
+  });
+
+  await t.test('POST /api/events/:id/virtual-cot/reset resets session and clears DNF ledger via API', async () => {
+    const testNow = Date.now();
+    const eventId = createEvent({ cot_start_ms: testNow - 6 * 60 * 1000 });
+    const riderId = addRider(eventId, 'R-RESET-2');
+    addPosition(eventId, riderId, 0.1, testNow - 20 * 1000);
+
+    // Trigger evaluation via results endpoint
+    await fetch(`${baseUrl}/api/events/${eventId}/results`);
+    const beforeDnf = db.getActiveVirtualDnfByEvent.all(eventId);
+    assert.equal(beforeDnf.length, 1);
+
+    // Call reset endpoint
+    const res = await fetch(`${baseUrl}/api/events/${eventId}/virtual-cot/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'restart_now' })
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.success, true);
+    assert.equal(body.cleared_dnf_count, 1);
+    assert.equal(body.cot.dnf_count, 0);
+
+    // Verify DB ledger is cleared
+    const afterDnf = db.getActiveVirtualDnfByEvent.all(eventId);
+    assert.equal(afterDnf.length, 0);
+
+    // Call stop action
+    const stopRes = await fetch(`${baseUrl}/api/events/${eventId}/virtual-cot/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'stop' })
+    });
+    assert.equal(stopRes.status, 200);
+    const stopBody = await stopRes.json();
+    assert.equal(stopBody.cot.mode, 'off');
+
+    // Invalid action must be rejected with 400 instead of silently clearing DNFs
+    const badRes = await fetch(`${baseUrl}/api/events/${eventId}/virtual-cot/reset`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'nope' })
+    });
+    assert.equal(badRes.status, 400);
+  });
+
   await t.test('cleanup', () => {
     for (const id of createdEventIds) {
       try { db.deleteEvent.run(id); } catch (e) {}

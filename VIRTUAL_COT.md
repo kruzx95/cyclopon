@@ -8,6 +8,8 @@
 > - **Rev 2** (18 Nov): menambahkan pengaman agar posisi rider yang **basi**
 >   tidak menghasilkan vonis DNF — gerbang kesegaran data, margin jarak, deteksi
 >   gap telemetri, mode `dry_run`, dan pembatalan DNF oleh admin (§4.4 & §8.5).
+> - **Rev 3** (19 Nov): fitur **Reset Sesi Virtual COT** — mulai ulang sekarang
+>   (KM 0.0), stop/nonaktifkan, dan pembersihan massal status DNF uji coba.
 
 ---
 
@@ -110,7 +112,8 @@ CREATE INDEX IF NOT EXISTS idx_virtual_dnf_event_status ON virtual_dnf(event_id,
 
 - `status = 'VOID'` dipakai saat admin membatalkan DNF; baris **tidak dihapus**
   agar riwayat keputusan tetap tersimpan dan rider tersebut tidak dinilai ulang
-  otomatis oleh evaluator.
+  otomatis oleh evaluator. Pengecualian: reset sesi (§4.1) hanya menghapus baris
+  aktif; baris `VOID` tetap dipertahankan sebagai jejak audit.
 - `rider_km` & `last_seen_at` adalah **jejak audit**: membuktikan kapan dan dari
   posisi mana DNF dijatuhkan (krusial saat ada sengketa hasil).
 
@@ -127,7 +130,24 @@ CREATE INDEX IF NOT EXISTS idx_virtual_dnf_event_status ON virtual_dnf(event_id,
   field tersebut.
 - Endpoint admin baru: `GET` & `POST /api/events/:id/virtual-cot/preview` (hitung
   kandidat DNF tanpa menulis; POST menerima prospective cot fields pada body) dan `POST /api/events/:id/virtual-cot/void/:riderId`
-  (harus menyertakan `reason`).
+  (harus menyertakan `reason`), serta `POST /api/events/:id/virtual-cot/reset` (reset marker ke KM 0 sekarang atau stop, sekaligus membersihkan seluruh rekaman DNF Virtual COT untuk event tersebut).
+
+  Body `reset` menerima `action`:
+
+  - `restart_now` (default): geser `cot_start_ms` ke menit berjalan (WIB), samakan
+    `cot_start_time` dengan menit tersebut, dan aktifkan mode `live` bila sebelumnya `off`.
+  - `stop`: set `cot_mode = off` (marker langsung hilang dari peta publik).
+  - `set_time`: butuh `start_time` berformat `HH:MM` yang valid untuk tanggal event.
+
+  Action atau `mode` di luar daftar yang diizinkan ditolak dengan `400`. Reset
+  menghapus baris `virtual_dnf` milik event yang **tidak** berstatus `VOID`.
+  Baris `VOID` tetap dipertahankan sebagai jejak audit.
+
+  Catatan: respons reset langsung menjalankan evaluasi ulang. Pada `restart_now`
+  marker berada di KM 0 sehingga ledger tetap kosong, tetapi pada `set_time` yang
+  menempatkan marker di depan rider, rider tersebut akan langsung tercatat DNF
+  lagi sesuai konfigurasi baru. Tidak ada aksi "bersihkan ledger saja", karena
+  evaluator berikutnya akan mengisi ulang DNF secara deterministik.
 
 ### 4.2 Helper kalkulasi posisi marker
 

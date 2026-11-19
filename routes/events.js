@@ -134,7 +134,7 @@ function getEventDistanceKm(event) {
 }
 
 // ── Virtual COT helpers ───────────────────────────────────────
-const COT_MODES = ['off', 'dry_run', 'live'];
+const COT_MODES = virtualCot.COT_MODES;
 
 function hasBodyField(body, key) {
   return Object.prototype.hasOwnProperty.call(body || {}, key);
@@ -375,6 +375,36 @@ router.post('/:id/virtual-cot/void/:riderId', requireAdminAuth, (req, res) => {
   if (!ok) return res.status(409).json({ error: 'Gagal membatalkan DNF' });
 
   res.json({ success: true, ledger: virtualCot.getDnfLedger(event.id) });
+});
+
+// POST /api/events/:id/virtual-cot/reset — reset Virtual COT session (admin)
+router.post('/:id/virtual-cot/reset', requireAdminAuth, (req, res, next) => {
+  try {
+    const event = db.getEventById.get(req.params.id);
+    if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
+
+    const body = req.body || {};
+    const action = body.action || 'restart_now';
+    const result = virtualCot.resetVirtualCot(event.id, {
+      action,
+      startTime: body.start_time,
+      mode: body.mode
+    });
+
+    res.json({
+      success: true,
+      message: 'Virtual COT berhasil di-reset',
+      action,
+      cleared_dnf_count: result.clearedCount,
+      event: sanitizeEvent(result.event),
+      cot: result.status
+    });
+  } catch (err) {
+    if (err.status && err.status < 500) {
+      return res.status(err.status).json({ error: err.message });
+    }
+    next(err);
+  }
 });
 
 // GET /api/events/:id/gpx/download — download GPX file for bike computers

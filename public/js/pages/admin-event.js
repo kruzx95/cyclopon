@@ -224,7 +224,10 @@ async function renderAdminEvent(params) {
                 Marker bergerak menyusuri rute. Rider dengan posisi segar di belakang marker dicatat DNF.
               </p>
             </div>
-            <button class="btn btn-outline" id="btnCotRefresh" style="font-size:12.5px;padding:7px 14px">↻ Muat Ulang</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-outline" id="btnCotRefresh" style="font-size:12.5px;padding:7px 14px">↻ Muat Ulang</button>
+              <button class="btn btn-outline" id="btnCotReset" style="font-size:12.5px;padding:7px 14px;color:#B91C1C;border-color:#FCA5A5" title="Reset posisi marker dan hapus seluruh status DNF Virtual COT">🔄 Reset Sesi COT</button>
+            </div>
           </div>
           <div id="cotMonitor">
             <p style="color:#6B7280;font-size:13px">Memuat status COT…</p>
@@ -684,6 +687,122 @@ async function renderAdminEvent(params) {
   }
 
   if (btnCotRefresh) btnCotRefresh.addEventListener('click', refreshCotMonitor);
+
+  function showCotResetModal() {
+    const existing = document.getElementById('cotResetModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'cotResetModal';
+    modal.className = 'qr-modal-overlay';
+    modal.innerHTML = `
+      <div class="qr-modal-card" style="max-width:480px;max-height:90vh;overflow-y:auto">
+        <div class="qr-modal-header" style="background:#0D1117;display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">🔄</span>
+            <h3 style="margin:0;font-size:15px;font-weight:800;color:#FFFFFF">Reset Sesi Virtual COT</h3>
+          </div>
+          <button class="qr-modal-close" id="btnCloseCotReset" title="Tutup" style="background:none;border:none;color:#9CA3AF;font-size:18px;cursor:pointer">✕</button>
+        </div>
+        <div style="padding:20px">
+          <p style="font-size:13px;color:#374151;margin:0 0 16px 0;line-height:1.5">
+            Pilih tindakan reset untuk sesi Virtual COT pada event ini. Seluruh catatan DNF Virtual COT akan <strong>dihapus bersih</strong> sehingga status rider kembali aktif (putih).
+          </p>
+
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+            <div style="padding:14px;border:1.5px solid #FCA5A5;background:#FEF2F2;border-radius:10px">
+              <div style="font-weight:800;font-size:13px;color:#991B1B;margin-bottom:4px">🚀 Mulai Ulang Sekarang (KM 0.0)</div>
+              <p style="font-size:12px;color:#7F1D1D;margin:0 0 10px 0;line-height:1.4">
+                Menggeser jam mulai COT ke waktu saat ini (WIB), mengembalikan marker ke awal rute (KM 0.0), dan membersihkan seluruh DNF Virtual COT. Jika COT sedang nonaktif, mode akan otomatis diaktifkan ke live.
+              </p>
+              <button class="btn btn-primary" id="btnExecCotRestartNow" style="width:100%;font-size:12px;padding:8px 12px;background:#DC2626;border-color:#DC2626">
+                Mulai Ulang dari KM 0 Sekarang
+              </button>
+            </div>
+
+            <div style="padding:14px;border:1.5px solid #E5E7EB;background:#F9FAFB;border-radius:10px">
+              <div style="font-weight:800;font-size:13px;color:#374151;margin-bottom:4px">⏹️ Matikan COT & Hapus DNF</div>
+              <p style="font-size:12px;color:#6B7280;margin:0 0 10px 0;line-height:1.4">
+                Menonaktifkan mode COT (off), menyembunyikan marker dari peta, dan membersihkan seluruh catatan DNF Virtual COT.
+              </p>
+              <button class="btn btn-outline" id="btnExecCotStop" style="width:100%;font-size:12px;padding:8px 12px">
+                Matikan COT & Bersihkan
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-outline" id="btnCancelCotReset" style="font-size:12px;padding:6px 14px">Batal</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Reset Sesi Virtual COT');
+
+    const closeModal = () => {
+      document.removeEventListener('keydown', onKeydown);
+      modal.remove();
+    };
+    function onKeydown(e) {
+      if (e.key === 'Escape') closeModal();
+    }
+    document.addEventListener('keydown', onKeydown);
+
+    modal.querySelector('#btnCloseCotReset').addEventListener('click', closeModal);
+    modal.querySelector('#btnCancelCotReset').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    async function executeReset(action) {
+      const confirmText = action === 'restart_now'
+        ? 'Mulai ulang Virtual COT dari KM 0 pada menit ini? Semua catatan DNF uji coba akan dibersihkan.'
+        : 'Matikan Virtual COT dan bersihkan semua catatan DNF?';
+
+      if (!confirm(confirmText)) return;
+
+      try {
+        const res = await fetch(`/api/events/${eventId}/virtual-cot/reset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showToast(data.error || 'Gagal mereset Virtual COT', 'error');
+          return;
+        }
+
+        closeModal();
+        showToast(`Virtual COT berhasil di-reset (${data.cleared_dnf_count} DNF dibersihkan).`, 'success');
+
+        if (data.cot) {
+          const evCotStart = document.getElementById('evCotStart');
+          const evCotMode = document.getElementById('evCotMode');
+          if (evCotStart && data.cot.start_time) evCotStart.value = data.cot.start_time;
+          if (evCotMode && data.cot.mode) evCotMode.value = data.cot.mode;
+          updateCotEndPreview();
+        }
+
+        await refreshCotMonitor();
+      } catch (err) {
+        showToast('Terjadi kesalahan saat mereset Virtual COT', 'error');
+      }
+    }
+
+    modal.querySelector('#btnExecCotRestartNow').addEventListener('click', () => executeReset('restart_now'));
+    modal.querySelector('#btnExecCotStop').addEventListener('click', () => executeReset('stop'));
+  }
+
+  const btnCotReset = document.getElementById('btnCotReset');
+  if (btnCotReset) {
+    btnCotReset.addEventListener('click', showCotResetModal);
+  }
 
   if (cotMonitor) {
     cotMonitor.addEventListener('click', async (e) => {

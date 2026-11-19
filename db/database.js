@@ -265,6 +265,7 @@ module.exports = {
   getActiveVirtualDnfByEvent: db.prepare("SELECT v.*, r.bib, r.name, r.color FROM virtual_dnf v JOIN riders r ON r.id = v.rider_id WHERE v.event_id = ? AND v.status = 'ACTIVE' ORDER BY v.id ASC"),
   getVirtualDnfByRider: db.prepare('SELECT * FROM virtual_dnf WHERE rider_id = ?'),
   voidVirtualDnf: db.prepare("UPDATE virtual_dnf SET status='VOID', voided_at=datetime('now'), void_reason=@reason WHERE event_id=@event_id AND rider_id=@rider_id AND status='ACTIVE'"),
+  clearVirtualDnfByEvent: db.prepare("DELETE FROM virtual_dnf WHERE event_id = ? AND status != 'VOID'"),
 
   // Sponsors (Live Map Logo Strip)
   getSponsorsByEvent: db.prepare('SELECT id, name, logo_path, link, sort_order, sponsor_logo_size FROM sponsors WHERE event_id = ? ORDER BY sort_order ASC, id ASC'),

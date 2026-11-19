@@ -1304,26 +1304,35 @@ async function renderLiveMap(params) {
   }
 
   function applyCotDnfVisuals(ids) {
-    cotDnfRiderIds.forEach(id => {
-      const m = markerById[id];
-      if (m && m._icon) {
-        m._icon.style.filter = '';
-        m._icon.style.opacity = '';
-        m._icon.removeAttribute('title');
-      }
-    });
-
     const next = new Set(ids || []);
-    cotDnfRiderIds = next;
 
-    next.forEach(id => {
+    function refreshMarkerIcon(id) {
       const m = markerById[id];
-      if (m && m._icon) {
-        m._icon.style.filter = 'grayscale(1)';
-        m._icon.style.opacity = '0.55';
-        m._icon.title = 'DNF · Tertinggal COT Virtual';
-      }
+      const rider = riderById[id];
+      if (!m || !rider) return;
+
+      // progressById (keyed by rider.id) is where the last fix time lives.
+      // telemetryById has no lastTime, so reading it here made every rider
+      // look Offline right after the DNF flag was cleared.
+      const prog = progressById[rider.id] || {};
+      const telem = telemetryById[rider.id] || {};
+      const st = getRiderStatus(prog.lastTime || null);
+
+      m._iconKey = null;
+      m.setIcon(createRiderIcon(rider, !!telem.isOffRoute, st, next.has(id)));
+    }
+
+    // 1. Restore riders that are NO LONGER DNF
+    cotDnfRiderIds.forEach(id => {
+      if (!next.has(id)) refreshMarkerIcon(id);
     });
+
+    // 2. Apply visuals only to riders that are NEWLY DNF
+    next.forEach(id => {
+      if (!cotDnfRiderIds.has(id)) refreshMarkerIcon(id);
+    });
+
+    cotDnfRiderIds = next;
   }
 
   async function refreshVirtualCot() {
@@ -1334,7 +1343,9 @@ async function renderLiveMap(params) {
       const data = await res.json();
       if (!isLiveMapMounted) return;
 
-      if (!data.enabled || data.latitude == null) {
+      // mode === 'off' means the admin disabled the session: the marker must
+      // disappear even though the start time/pace are still stored.
+      if (!data.enabled || data.mode === 'off' || data.latitude == null) {
         if (cotMarker) { map.removeLayer(cotMarker); cotMarker = null; }
         if (cotBannerEl) cotBannerEl.style.display = 'none';
         applyCotDnfVisuals((data.dnf_riders || []).map(r => r.rider_id));
@@ -1355,6 +1366,13 @@ async function renderLiveMap(params) {
         <div style="font-size:12px;color:#4B5563;margin-top:2px">${data.pace ? `${data.pace} km/jam` : '—'} · ${cotStatusLabel(data.status)}</div>
         <div style="font-size:12px;color:#4B5563;margin-top:2px">Mulai ${data.start_time || '—'} WIB · Selesai ±${data.end_time || '—'} WIB</div>
         <div style="font-size:11px;color:#6B7280;margin-top:4px">Rute ${Number(data.route_length_km || 0).toFixed(1)} km · ${data.dnf_count || 0} rider DNF</div>
+        ${isAdmin ? `
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #E5E7EB">
+            <button class="btn btn-outline btn-quick-reset-cot" style="font-size:11px;padding:5px 10px;color:#B91C1C;border-color:#FCA5A5;background:#FEF2F2;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;border-radius:6px">
+              🔄 Reset Sesi COT
+            </button>
+          </div>
+        ` : ''}
       `;
       cotMarker.bindPopup(popup, { autoPan: false, closeButton: true, offset: [0, -12], maxWidth: 260 });
 
@@ -1385,6 +1403,47 @@ async function renderLiveMap(params) {
   refreshVirtualCot();
   cotTimer = setInterval(refreshVirtualCot, 8000);
   window.addEventListener('beforeunload', stopCotTimer);
+
+  if (isAdmin) {
+    const mapContainer = map.getContainer();
+    mapContainer.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btn-quick-reset-cot');
+      if (!btn) return;
+
+      const confirmMsg = 'Reset Virtual COT untuk event ini?\n\n' +
+        '• Marker kembali ke awal rute (KM 0.0) pada menit berjalan (WIB)\n' +
+        '• Jam mulai diperbarui ke menit saat ini\n' +
+        '• Mode COT diaktifkan ke live bila sebelumnya nonaktif\n' +
+        '• Semua catatan DNF Virtual COT akan dihapus bersih (rider diputihkan kembali)\n\n' +
+        'Lanjutkan reset sekarang?';
+      if (!confirm(confirmMsg)) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Mereset…';
+
+      try {
+        const res = await fetch(`/api/events/${eventId}/virtual-cot/reset`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'restart_now' }),
+          credentials: 'include'
+        });
+        const result = await res.json();
+        if (!res.ok) {
+          alert(result.error || 'Gagal mereset Virtual COT');
+          btn.disabled = false;
+          btn.textContent = '🔄 Reset Sesi COT';
+          return;
+        }
+        if (cotMarker) cotMarker.closePopup();
+        await refreshVirtualCot();
+      } catch (err) {
+        alert('Gagal mereset Virtual COT');
+        btn.disabled = false;
+        btn.textContent = '🔄 Reset Sesi COT';
+      }
+    });
+  }
 
   // ── Checkpoint Markers & Cut-Off Time (COT) Engine ──
   const cpMarkers = [];
@@ -1518,16 +1577,25 @@ async function renderLiveMap(params) {
     return { label, color, isRole: false };
   }
 
-  function createRiderIcon(rider, isOffRoute, status = null) {
+  function createRiderIcon(rider, isOffRoute, status = null, isCotDnf = false) {
     const meta = getRiderMarkerMeta(rider || {});
     const isOffline = status && (status.text === 'Offline' || status.text === 'Blank Spot');
     const isIdle = status && status.text === 'Idle';
 
-    const baseColor = isOffRoute ? '#EF4444' : (isOffline ? '#94A3B8' : meta.color);
-    const markerOpacity = isOffline ? '0.42' : (isIdle ? '0.75' : '1.0');
+    const baseColor = isOffRoute ? '#EF4444' : (isCotDnf ? '#6B7280' : (isOffline ? '#94A3B8' : meta.color));
+    const markerOpacity = isCotDnf ? '0.55' : (isOffline ? '0.42' : (isIdle ? '0.75' : '1.0'));
+    const markerFilter = isCotDnf ? 'grayscale(100%)' : (isOffline ? 'grayscale(45%)' : 'none');
 
     let statusTag = '';
-    if (isOffRoute) {
+    if (isCotDnf) {
+      statusTag = `<div style="
+          position:absolute;top:-36px;left:50%;transform:translateX(-50%);
+          background:rgba(185,28,28,0.92);color:#FFFFFF;font-size:8px;font-weight:800;
+          padding:1px 6px;border-radius:100px;white-space:nowrap;
+          box-shadow:0 2px 6px rgba(185,28,28,0.4);
+          pointer-events:none;z-index:10;
+        ">⏱️ DNF COT</div>`;
+    } else if (isOffRoute) {
       statusTag = `<div style="
           position:absolute;top:-36px;left:50%;transform:translateX(-50%);
           background:#EF4444;color:#FFFFFF;font-size:9px;font-weight:900;
@@ -1556,25 +1624,27 @@ async function renderLiveMap(params) {
 
     return L.divIcon({
       html: `
-        <div style="position:relative;width:20px;height:20px;opacity:${markerOpacity};filter:${isOffline ? 'grayscale(45%)' : 'none'}">
+        <div style="position:relative;width:20px;height:20px"${isCotDnf ? ' title="DNF · Tertinggal COT Virtual"' : ''}>
+          <div style="width:20px;height:20px;opacity:${markerOpacity};filter:${markerFilter}">
+            <div style="
+              width:14px;height:14px;border-radius:50%;
+              background:${baseColor};
+              border:2.5px solid rgba(255,255,255,0.95);
+              box-shadow:0 0 10px ${baseColor}80,0 2px 5px rgba(0,0,0,0.6);
+              position:absolute;top:3px;left:3px;
+            "></div>
+            <div style="
+              position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+              background:rgba(8,10,15,0.92);
+              color:${baseColor};font-size:10px;font-weight:800;
+              padding:1px 7px;border-radius:100px;white-space:nowrap;
+              border:1px solid ${baseColor}70;
+              box-shadow:0 2px 8px rgba(0,0,0,0.4);
+              letter-spacing:0.02em;
+              pointer-events:none;
+            ">${meta.label}</div>
+          </div>
           ${statusTag}
-          <div style="
-            width:14px;height:14px;border-radius:50%;
-            background:${baseColor};
-            border:2.5px solid rgba(255,255,255,0.95);
-            box-shadow:0 0 10px ${baseColor}80,0 2px 5px rgba(0,0,0,0.6);
-            position:absolute;top:3px;left:3px;
-          "></div>
-          <div style="
-            position:absolute;top:-20px;left:50%;transform:translateX(-50%);
-            background:rgba(8,10,15,0.92);
-            color:${baseColor};font-size:10px;font-weight:800;
-            padding:1px 7px;border-radius:100px;white-space:nowrap;
-            border:1px solid ${baseColor}70;
-            box-shadow:0 2px 8px rgba(0,0,0,0.4);
-            letter-spacing:0.02em;
-            pointer-events:none;
-          ">${meta.label}</div>
         </div>
       `,
       className: 'rider-marker-pin', iconSize: [20, 20], iconAnchor: [10, 10]
@@ -2044,9 +2114,10 @@ async function renderLiveMap(params) {
 
     // Smoothly update existing marker or create once
     let marker = markerById[canonicalId] || (rider.traccar_device_id && markerById[rider.traccar_device_id]);
-    const updatedIcon = createRiderIcon(rider, telem.isOffRoute, status);
+    const isCotDnf = cotDnfRiderIds.has(canonicalId) || (rider.traccar_device_id && cotDnfRiderIds.has(rider.traccar_device_id));
+    const updatedIcon = createRiderIcon(rider, telem.isOffRoute, status, isCotDnf);
     const meta = getRiderMarkerMeta(rider || {});
-    const iconKey = `${meta.label}_${meta.color}_${telem.isOffRoute ? 1 : 0}_${status ? status.text : ''}`;
+    const iconKey = `${meta.label}_${meta.color}_${telem.isOffRoute ? 1 : 0}_${status ? status.text : ''}_${isCotDnf ? 1 : 0}`;
 
     if (marker && (clusterGroup.hasLayer(marker) || map.hasLayer(marker))) {
       marker.setLatLng(latlng);
