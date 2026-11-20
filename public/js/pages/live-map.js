@@ -119,7 +119,8 @@ async function renderLiveMap(params) {
         <div class="h2h-modal" id="h2hModalContent"></div>
       </div>
 
-      <!-- ── Replay Video Export Modal ── -->
+      <!-- ── Replay Video Export Modal (Admin Only) ── -->
+      ${isAdmin ? `
       <div id="modalExportReplay" class="modal-backdrop" style="display:none">
         <div class="modal-card export-replay-modal">
           <div class="modal-header" style="padding:16px 20px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between">
@@ -174,6 +175,7 @@ async function renderLiveMap(params) {
           </div>
         </div>
       </div>
+      ` : ''}
 
       <!-- ── Viewport Grid (Map + Sidebar) ── -->
       <div class="map-viewport" id="mapViewport">
@@ -249,11 +251,13 @@ async function renderLiveMap(params) {
               ${ICONS.elevation}
             </button>
 
-            <!-- Time Machine Replay Toggle FAB (Mobile) -->
+            ${isAdmin ? `
+            <!-- Time Machine Replay Toggle FAB (Admin Only) -->
             <button class="map-fab-btn btn-fab-replay" id="btnFabReplay" title="Buka Replay Time Machine" aria-label="Toggle Replay">
               <span class="fab-icon" aria-hidden="true">⏪</span>
             </button>
-            ${isAdmin ? `<a href="/admin/events/${eventId}" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard"><span class="fab-icon" aria-hidden="true">←</span></a>` : ''}
+            <a href="/admin/events/${eventId}" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard"><span class="fab-icon" aria-hidden="true">←</span></a>
+            ` : ''}
           </div>
 
           <!-- ── Sponsor Logo Strip (di atas Leaderboard) ── -->
@@ -262,7 +266,8 @@ async function renderLiveMap(params) {
             <div class="supporter-strip-logos" id="supporterStripLogos"></div>
           </div>
 
-          <!-- ── Time Machine Replay Control Bar ── -->
+          ${isAdmin ? `
+          <!-- ── Time Machine Replay Control Bar (Admin Only) ── -->
           <div id="replayControlBar" class="replay-control-bar" style="display:none">
             <div class="replay-bar-inner">
               <button id="btnReplayPlay" class="replay-play-btn" title="Play / Pause Replay" aria-label="Play / Pause">⏸</button>
@@ -286,12 +291,13 @@ async function renderLiveMap(params) {
             </div>
           </div>
 
-          <!-- ── Floating Replay Recording Indicator ── -->
+          <!-- ── Floating Replay Recording Indicator (Admin Only) ── -->
           <div id="replayRecordingBar" class="replay-recording-floating-bar" style="display:none">
             <span class="recording-pulse-dot"></span>
             <span class="recording-label">MEREKAM VIDEO... (<span id="recordingTimer">00:00</span>)</span>
             <button id="btnStopRecordingNow" class="btn-stop-record">■ Selesai &amp; Unduh</button>
           </div>
+          ` : ''}
 
           <!-- Floating button to reopen sidebar on mobile when collapsed -->
           <button id="btnMobileOpenSidebar" class="btn-mobile-sidebar-float" style="display:none" title="Buka Leaderboard">
@@ -3430,6 +3436,7 @@ async function renderLiveMap(params) {
   }
 
   async function startReplay() {
+    if (!isAdmin) return; // Strict guard: replay is restricted to admin
     if (isReplayActive) return;
 
     showToast('Memuat rekaman telemetri event...', 'info');
