@@ -157,12 +157,46 @@
   color: #64748B;
 }
 
+/* ── Modern Form Field Controls & Prefix Icons ── */
+.reg-field-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.reg-field-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 15px;
+  pointer-events: none;
+  z-index: 2;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.reg-select-chevron {
+  position: absolute;
+  right: 14px;
+  pointer-events: none;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
 .form-input-reg,
 .form-select-reg {
   width: 100%;
-  padding: 10px 14px;
-  border: 1.5px solid #0D1117;
-  border-radius: 8px;
+  height: 46px;
+  padding: 0 14px 0 42px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 9px;
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 600;
@@ -170,13 +204,37 @@
   background: #FFFFFF;
   box-sizing: border-box;
   outline: none;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.form-select-reg {
+  padding-right: 38px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+.form-input-reg:hover,
+.form-select-reg:hover {
+  border-color: #94A3B8;
 }
 
 .form-input-reg:focus,
 .form-select-reg:focus {
   border-color: #1C3E24;
-  box-shadow: 0 0 0 3px rgba(28, 62, 36, 0.15);
+  box-shadow: 0 0 0 3px rgba(28, 62, 36, 0.12);
+  background: #FFFFFF;
+}
+
+.reg-field-wrap:focus-within .reg-select-chevron {
+  color: #1C3E24;
+}
+
+.form-input-reg::placeholder {
+  color: #94A3B8;
+  font-weight: 400;
 }
 
 .privacy-notice {
@@ -508,26 +566,38 @@
 .roster-search-box {
   position: relative;
   min-width: 240px;
+  display: flex;
+  align-items: center;
 }
 
 .roster-search-input {
   width: 100%;
-  padding: 7px 12px 7px 30px;
-  border: 1.5px solid #0D1117;
-  border-radius: 6px;
-  font-size: 12px;
+  height: 38px;
+  padding: 0 12px 0 34px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
   outline: none;
   box-sizing: border-box;
+  background: #FFFFFF;
+  transition: all 0.15s ease;
+}
+
+.roster-search-input:hover {
+  border-color: #94A3B8;
+}
+
+.roster-search-input:focus {
+  border-color: #1C3E24;
+  box-shadow: 0 0 0 3px rgba(28, 62, 36, 0.12);
 }
 
 .roster-search-icon {
   position: absolute;
-  left: 9px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 11px;
+  left: 11px;
+  font-size: 13px;
   color: #64748B;
   pointer-events: none;
 }

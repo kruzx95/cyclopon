@@ -132,9 +132,17 @@ async function renderRegisterPage(params) {
               <label class="form-label-reg" for="regEventSelect">
                 Pilih Event <span class="req">*</span>
               </label>
-              <select id="regEventSelect" class="form-select-reg" required>
-                <option value="">Memuat daftar event...</option>
-              </select>
+              <div class="reg-field-wrap">
+                <span class="reg-field-icon">🏁</span>
+                <select id="regEventSelect" class="form-select-reg" required>
+                  <option value="">Memuat daftar event...</option>
+                </select>
+                <span class="reg-select-chevron">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </div>
             </div>
 
             <!-- Rider Name -->
@@ -143,7 +151,10 @@ async function renderRegisterPage(params) {
                 Nama Lengkap Peserta <span class="req">*</span>
                 <span class="hint">(Sesuai KTP / Nama Panggilan Komunitas)</span>
               </label>
-              <input type="text" id="regName" class="form-input-reg" placeholder="Contoh: Budi Santoso" required maxlength="60">
+              <div class="reg-field-wrap">
+                <span class="reg-field-icon">👤</span>
+                <input type="text" id="regName" class="form-input-reg" placeholder="Contoh: Budi Santoso" required maxlength="60">
+              </div>
             </div>
 
             <!-- WhatsApp Phone -->
@@ -152,7 +163,10 @@ async function renderRegisterPage(params) {
                 Nomor WhatsApp / HP <span class="req">*</span>
                 <span class="hint">(Untuk konfirmasi panitia &amp; 4-digit PIN)</span>
               </label>
-              <input type="tel" id="regPhone" class="form-input-reg" placeholder="Contoh: 081234567890" required pattern="[0-9+ -]{9,16}">
+              <div class="reg-field-wrap">
+                <span class="reg-field-icon">📱</span>
+                <input type="tel" id="regPhone" class="form-input-reg" placeholder="Contoh: 081234567890" required pattern="[0-9+ -]{9,16}">
+              </div>
             </div>
 
             <!-- Optional Role Selection -->
@@ -160,12 +174,20 @@ async function renderRegisterPage(params) {
               <label class="form-label-reg" for="regRole">
                 Kategori Keikutsertaan
               </label>
-              <select id="regRole" class="form-select-reg">
-                <option value="rider" selected>🚴 Peserta Balap / Touring (Rider)</option>
-                <option value="sweeper">🧹 Official Sweeper (Penyapu Belakang)</option>
-                <option value="marshall">🛡️ Race Marshall (Petugas Lintasan)</option>
-                <option value="medic">🚑 Tim Medis / Evakuasi</option>
-              </select>
+              <div class="reg-field-wrap">
+                <span class="reg-field-icon">🚴</span>
+                <select id="regRole" class="form-select-reg">
+                  <option value="rider" selected>Peserta Balap / Touring (Rider)</option>
+                  <option value="sweeper">🧹 Official Sweeper (Penyapu Belakang)</option>
+                  <option value="marshall">🛡️ Race Marshall (Petugas Lintasan)</option>
+                  <option value="medic">🚑 Tim Medis / Evakuasi</option>
+                </select>
+                <span class="reg-select-chevron">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </span>
+              </div>
             </div>
 
             <!-- Privacy Guarantee Banner -->
