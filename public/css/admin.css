@@ -1245,6 +1245,114 @@ input[type="time"].input {
   animation: fadeIn 0.15s ease;
 }
 
+/* ── Sponsor Strip Configuration Bar ── */
+.sponsor-strip-config-bar {
+  background: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ── Header Action Groups ── */
+.rider-header-actions,
+.page-header-actions,
+.cot-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sponsor-strip-config-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sponsor-strip-config-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #475569;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sponsor-strip-config-sub {
+  font-size: 11.5px;
+  color: #64748B;
+}
+
+.sponsor-strip-config-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sponsor-config-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sponsor-config-field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.sponsor-config-field select.input {
+  width: auto;
+  min-width: 140px;
+  min-height: 36px;
+  height: 36px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  background-color: #FFFFFF;
+}
+
+.sponsor-config-field-text {
+  flex: 1;
+}
+
+.sponsor-text-color-combo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sponsor-text-color-combo input.input {
+  width: 160px;
+  min-height: 36px;
+  height: 36px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  background-color: #FFFFFF;
+}
+
+.sponsor-text-color-combo input[type="color"] {
+  width: 36px;
+  min-height: 36px;
+  height: 36px;
+  padding: 2px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 6px;
+  background: #FFFFFF;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
 /* ── Mobile Admin Layout & Drawer ── */
 @media (min-width: 769px) {
   .admin-mobile-topbar,
@@ -1353,6 +1461,96 @@ input[type="time"].input {
   .dashboard-sos-actions .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  /* ── Header Actions Responsive ── */
+  .page-header-actions,
+  .cot-header-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .page-header-actions .btn,
+  .cot-header-actions .btn {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .rider-header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .rider-header-actions .btn {
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .rider-header-actions .btn-add-rider {
+    grid-column: 1 / -1;
+    order: 1;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 800;
+  }
+  .rider-header-actions .btn-import-rider {
+    order: 2;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .rider-header-actions .btn-template-rider {
+    order: 3;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .rider-header-actions .btn-print-qrs {
+    grid-column: 1 / -1;
+    order: 4;
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+
+  /* ── Sponsor Strip Mobile Responsive ── */
+  .sponsor-strip-config-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
+  }
+  .sponsor-strip-config-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+  .sponsor-config-field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 100%;
+  }
+  .sponsor-config-field select.input {
+    width: 100%;
+    min-height: 40px;
+    height: 40px;
+  }
+  .sponsor-text-color-combo {
+    width: 100%;
+  }
+  .sponsor-text-color-combo input.input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    height: 40px;
+  }
+  .sponsor-text-color-combo input[type="color"] {
+    min-height: 40px;
+    height: 40px;
+    width: 44px;
   }
 }
 

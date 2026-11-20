@@ -9,26 +9,36 @@ async function renderRegisterPage(params) {
 
   app.innerHTML = `
     <div class="register-page">
-      <!-- Navbar -->
-      <header class="register-navbar">
-        <a href="/" data-link class="register-brand">
-          <img src="/icons/logo-emblem.svg" alt="CycloPon" width="28" height="28">
-          <span class="register-brand-title">CYCLOPON</span>
-          <span class="register-brand-tag">// DAFTAR</span>
+      <!-- ── Pro Editorial Top Navigation Bar ── -->
+      <nav class="landing-nav">
+        <a href="/" data-link class="brand-title">
+          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="brand-logo-emblem" width="32" height="32">
+          <div class="brand-name-group">
+            <span class="brand-name">CYCLOPON</span>
+            <span class="brand-spec-label">// PENDAFTARAN PESERTA</span>
+          </div>
         </a>
-        <div class="register-nav-actions">
-          <a href="/guide" data-link class="btn-guide-nav" title="Panduan Pengguna">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+
+        <div class="nav-actions-group">
+          <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
               <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
             </svg>
             <span class="nav-label-full">PANDUAN</span>
           </a>
-          <a href="/login" data-link class="btn-guide-nav" style="border-color:#0D1117;color:#0D1117" title="Login Peserta">
-            <span>LOGIN RIDER</span>
+
+          <a href="/login" data-link class="btn-login-nav" title="Login Cockpit Rider" aria-label="Login rider">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+              <polyline points="10 17 15 12 10 7"></polyline>
+              <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+            <span class="nav-label-full">LOGIN RIDER</span>
+            <span class="nav-label-short">LOGIN</span>
           </a>
         </div>
-      </header>
+      </nav>
 
       <div class="register-container">
         <!-- Hero Section -->
@@ -42,80 +52,179 @@ async function renderRegisterPage(params) {
 
         <!-- Success Result Card (Hidden by default) -->
         <div id="regSuccessCard" class="reg-success-card" style="display:none">
-          <div class="success-header-badge">✓ PENDAFTARAN RESMI BERHASIL</div>
-          
-          <div class="ticket-grid">
-            <div>
-              <div class="ticket-bib-big" id="resBibBig">#---</div>
-              <div class="ticket-name-big" id="resNameBig">Nama Rider</div>
-              <div class="ticket-event-label" id="resEventLabel">Nama Event</div>
+          <div class="reg-success-banner">
+            <div class="success-header-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              PENDAFTARAN RESMI BERHASIL
             </div>
-            <div style="text-align:right">
-              <div style="font-size:11px;font-weight:700;color:#64748B">PIN AKSES COCKPIT</div>
-              <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:900;color:#0D1117" id="resPinBig">----</div>
-              <div style="font-size:10px;color:#64748B;margin-top:2px">4 digit terakhir no. WA</div>
+            <h2 class="reg-success-title">Selamat Bergabung di Lintasan!</h2>
+            <p class="reg-success-subtitle">Simpan BIB Anda dan hubungkan GPS Traccar Client di ponsel agar posisi langsung muncul di Live Map publik.</p>
+          </div>
+          
+          <!-- Official Race Bib Ticket Pass -->
+          <div class="ticket-pass">
+            <div class="ticket-pass-header">
+              <div class="ticket-event-tag">
+                <span class="ticket-event-icon">🏁</span>
+                <span class="ticket-event-label" id="resEventLabel">Nama Event</span>
+              </div>
+              <span class="ticket-role-badge rider" id="resRoleBadge">PESERTA</span>
+            </div>
+
+            <div class="ticket-pass-body">
+              <div class="ticket-rider-info">
+                <span class="ticket-bib-label">NOMOR DADA RESMI (BIB)</span>
+                <div class="ticket-bib-big" id="resBibBig">#---</div>
+                <div class="ticket-name-big" id="resNameBig">Nama Rider</div>
+              </div>
+
+              <div class="ticket-pin-card">
+                <div class="ticket-pin-head">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  <span>PIN AKSES COCKPIT</span>
+                </div>
+                <div class="ticket-pin-val" id="resPinBig">----</div>
+                <div class="ticket-pin-hint">4 digit terakhir nomor WA</div>
+              </div>
+            </div>
+
+            <div class="ticket-pass-footer">
+              <span class="ticket-watermark">CYCLOPON OFFICIAL TELEMETRY ACCREDITED</span>
+              <span class="ticket-status-pill">✓ STATUS TERVERIFIKASI</span>
             </div>
           </div>
 
           <!-- Traccar Auto-Setup Hub -->
           <div class="traccar-setup-box">
-            <div class="traccar-setup-title">
-              <span>📱</span> Hubungkan GPS Traccar Client Ponsel
-            </div>
-            <div class="traccar-setup-desc">
-              Pilih salah satu metode cepat di bawah ini untuk mengisi pengaturan Traccar tanpa mengetik manual:
+            <div class="traccar-setup-header">
+              <div class="traccar-setup-icon">📱</div>
+              <div>
+                <div class="traccar-setup-title">Hubungkan GPS Traccar Client Ponsel</div>
+                <div class="traccar-setup-desc">
+                  Pilih salah satu metode cepat di bawah untuk mengisi konfigurasi Traccar tanpa mengetik manual:
+                </div>
+              </div>
             </div>
 
             <!-- Interval Selector -->
-            <div class="interval-select-group">
-              <span class="interval-label">Interval GPS:</span>
-              <button type="button" class="interval-pill-btn active" data-interval="10">⚡ 10s (Balap / Standar)</button>
-              <button type="button" class="interval-pill-btn" data-interval="15">🚴 15s (Touring)</button>
-              <button type="button" class="interval-pill-btn" data-interval="30">🔋 30s (Ultra / Hemat Baterai)</button>
-            </div>
-
-            <!-- Option 1: 1-Click Launch Traccar -->
-            <a id="btnTraccarDeepLink" href="#" class="btn-launch-traccar" target="_blank" rel="noopener noreferrer">
-              <span>⚡</span> Buka &amp; Setting Otomatis di Traccar Client
-            </a>
-
-            <!-- Option 2: Scan QR Barcode -->
-            <div class="qr-scan-box">
-              <div class="qr-code-graphic" id="traccarQrGraphic">
-                <!-- SVG QR will be rendered here -->
+            <div class="interval-section">
+              <div class="interval-header">
+                <span class="interval-label">INTERVAL PENGIRIMAN GPS</span>
+                <span class="interval-rec-tag">Disarankan: 10s</span>
               </div>
-              <div class="qr-instructions">
-                <strong>Opsi Scan Kamera Traccar:</strong><br>
-                Buka aplikasi <strong>Traccar Client</strong> di ponsel Anda → Ketuk menu <strong>Settings</strong> → Ketuk <strong>ikon Barcode/QR</strong> di pojok kanan atas → Arahkan kamera ke kode di samping.
+              <div class="interval-grid">
+                <button type="button" class="interval-pill-btn active" data-interval="10">
+                  <span class="interval-btn-sec">⚡ 10 Detik</span>
+                  <span class="interval-btn-desc">Balap / Standar</span>
+                </button>
+                <button type="button" class="interval-pill-btn" data-interval="15">
+                  <span class="interval-btn-sec">🚴 15 Detik</span>
+                  <span class="interval-btn-desc">Touring</span>
+                </button>
+                <button type="button" class="interval-pill-btn" data-interval="30">
+                  <span class="interval-btn-sec">🔋 30 Detik</span>
+                  <span class="interval-btn-desc">Hemat Baterai</span>
+                </button>
               </div>
             </div>
 
-            <!-- Option 3: Manual Copy Fallback -->
-            <div class="manual-param-list">
-              <div class="param-copy-chip">
-                <div>
-                  <div class="param-label">Server URL</div>
-                  <div class="param-value" id="valServerUrl">https://...</div>
-                </div>
-                <button type="button" class="btn-copy-chip" id="btnCopyServerUrl">Salin</button>
+            <!-- Method 1: 1-Click Launch Traccar -->
+            <div class="setup-method-block">
+              <div class="setup-method-label">
+                <span class="method-step-num">1</span> METODE TERCEPAT (1-KLIK)
               </div>
-              <div class="param-copy-chip">
-                <div>
-                  <div class="param-label">Device Identifier</div>
-                  <div class="param-value" id="valDeviceIdentifier">---</div>
+              <a id="btnTraccarDeepLink" href="#" class="btn-launch-traccar" target="_blank" rel="noopener noreferrer">
+                <span class="btn-launch-icon">⚡</span>
+                <div class="btn-launch-text">
+                  <div class="btn-launch-main">Buka &amp; Setting Otomatis di Traccar Client</div>
+                  <div class="btn-launch-sub">Langsung membuka aplikasi &amp; mengonfigurasi Server URL + Device ID</div>
                 </div>
-                <button type="button" class="btn-copy-chip" id="btnCopyDeviceId">Salin</button>
+              </a>
+            </div>
+
+            <!-- Method 2: Scan QR Barcode -->
+            <div class="setup-method-block">
+              <div class="setup-method-label">
+                <span class="method-step-num">2</span> ATAU SCAN QR DARI APLIKASI TRACCAR
+              </div>
+              <div class="qr-scan-card">
+                <div class="qr-code-graphic" id="traccarQrGraphic">
+                  <!-- SVG QR will be rendered here -->
+                </div>
+                <div class="qr-instructions">
+                  <div class="qr-step-item">
+                    <span class="qr-step-badge">1</span>
+                    <span>Buka aplikasi <strong>Traccar Client</strong> di ponsel Anda.</span>
+                  </div>
+                  <div class="qr-step-item">
+                    <span class="qr-step-badge">2</span>
+                    <span>Buka menu <strong>Settings</strong> → ketuk ikon <strong>QR / Barcode</strong> di kanan atas.</span>
+                  </div>
+                  <div class="qr-step-item">
+                    <span class="qr-step-badge">3</span>
+                    <span>Arahkan kamera ke QR Code di samping. Pengaturan otomatis terisi!</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Method 3: Manual Copy Fallback -->
+            <div class="setup-method-block" style="margin-bottom:0">
+              <div class="setup-method-label">
+                <span class="method-step-num">3</span> ATAU SALIN PARAMETER MANUAL
+              </div>
+              <div class="manual-param-list">
+                <div class="param-copy-chip">
+                  <div class="param-info-col">
+                    <div class="param-label">SERVER URL</div>
+                    <div class="param-value" id="valServerUrl">https://...</div>
+                  </div>
+                  <button type="button" class="btn-copy-chip" id="btnCopyServerUrl" title="Salin URL">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Salin
+                  </button>
+                </div>
+                <div class="param-copy-chip">
+                  <div class="param-info-col">
+                    <div class="param-label">DEVICE IDENTIFIER (BIB)</div>
+                    <div class="param-value" id="valDeviceIdentifier">---</div>
+                  </div>
+                  <button type="button" class="btn-copy-chip" id="btnCopyDeviceId" title="Salin BIB">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Salin
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Actions -->
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <a id="btnGoLiveMap" href="#" data-link class="btn-submit-reg" style="flex:1;background:#0D1117;text-decoration:none">
-              🗺️ Buka Peta Live Event
+          <div class="reg-success-actions">
+            <a id="btnGoLiveMap" href="#" data-link class="btn-action-map">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                <line x1="8" y1="2" x2="8" y2="18"></line>
+                <line x1="16" y1="6" x2="16" y2="22"></line>
+              </svg>
+              Buka Peta Live Event
             </a>
-            <button type="button" id="btnRegisterAnother" class="btn-submit-reg" style="flex:1;background:#FFFFFF;color:#0D1117;border-color:#0D1117;box-shadow:none">
-              + Daftarkan Rider Lain
+            <button type="button" id="btnRegisterAnother" class="btn-action-another">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              Daftarkan Rider Lain
             </button>
           </div>
         </div>
@@ -240,6 +349,32 @@ async function renderRegisterPage(params) {
           </div>
         </div>
       </div>
+
+      <!-- ── Pro Editorial Footer (Identical with Beranda) ── -->
+      <footer class="landing-footer">
+        <div class="footer-inner">
+          <div class="footer-left">
+            <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="footer-logo" width="30" height="30">
+              <div class="footer-brand-info">
+                <span class="footer-brand-title">CYCLOPON</span>
+                <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+              </div>
+            </a>
+          </div>
+
+          <div class="footer-right">
+            <div class="footer-meta-row">
+              <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
+              <span class="footer-dot">·</span>
+              <span class="footer-author">ENGINEERED BY RUSHAMIDIWINATA</span>
+            </div>
+            <div class="footer-copy">
+              <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   `;
 
@@ -281,8 +416,10 @@ async function renderRegisterPage(params) {
       const qr = qrcode(0, 'M');
       qr.addData(text);
       qr.make();
-      return qr.createSvgTag({ cellSize: 3, margin: 2, scalable: true });
-    } catch {
+      // qrcode-generator expects positional arguments: (cellSize, margin)
+      return qr.createSvgTag(4, 4);
+    } catch (err) {
+      console.error('[QR] Failed to generate SVG:', err);
       return '<div style="padding:10px;font-size:11px;color:#DC2626">Gagal membuat QR</div>';
     }
   }
@@ -476,6 +613,14 @@ async function renderRegisterPage(params) {
       document.getElementById('resNameBig').textContent = data.rider.name;
       document.getElementById('resEventLabel').textContent = data.event?.name || 'Event CycloPon';
       document.getElementById('resPinBig').textContent = data.rider.pin || '1234';
+
+      const roleBadge = document.getElementById('resRoleBadge');
+      if (roleBadge) {
+        const rRole = (data.rider.role || 'rider').toLowerCase();
+        const roleNames = { rider: 'PESERTA', sweeper: 'SWEEPER', marshall: 'MARSHALL', medic: 'MEDIS' };
+        roleBadge.textContent = roleNames[rRole] || 'PESERTA';
+        roleBadge.className = `ticket-role-badge ${rRole}`;
+      }
 
       const btnGoMap = document.getElementById('btnGoLiveMap');
       if (btnGoMap) {

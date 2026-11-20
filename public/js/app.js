@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Official Guide & Documentation Page ──
   Router.register('/guide', async () => {
-    await loadPageDeps(['/js/pages/guide.js?v=71']);
+    await loadPageDeps(['/js/pages/guide.js?v=77']);
     renderGuide();
   });
 
@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Public Event Registration ──
   Router.register('/register', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js'],
-      ['/css/register.css']
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=81'],
+      ['/css/register.css?v=81']
     );
     renderRegisterPage(params);
   });
@@ -94,8 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=70'],
-      ['/css/map.css?v=70']
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=80'],
+      ['/css/map.css?v=80']
     );
     renderLiveMap(params);
   });
@@ -165,8 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js', '/js/pages/admin-event.js'],
-      ['/css/admin.css']
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js', '/js/pages/admin-event.js?v=79'],
+      ['/css/admin.css?v=79']
     );
     renderAdminEvent(params);
   });

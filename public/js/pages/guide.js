@@ -798,16 +798,29 @@ function renderGuide() {
         </div>
       </div>
 
-      <!-- ── Footer ── -->
+      <!-- ── Pro Editorial Footer (Identical with Beranda) ── -->
       <footer class="landing-footer">
-        <div class="footer-left">
-          <span class="footer-brand">CYCLOPON PRO</span>
-          <span class="footer-sep">·</span>
-          <span class="footer-copy">© 2026 CYCLOPON. HAK CIPTA DILINDUNGI.</span>
-        </div>
-        <div class="footer-right">
-          <a href="/" data-link style="color:var(--text-secondary);text-decoration:none;margin-right:16px;font-size:12px;font-weight:700">← Kembali ke Beranda</a>
-          <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
+        <div class="footer-inner">
+          <div class="footer-left">
+            <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="footer-logo" width="30" height="30">
+              <div class="footer-brand-info">
+                <span class="footer-brand-title">CYCLOPON</span>
+                <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+              </div>
+            </a>
+          </div>
+
+          <div class="footer-right">
+            <div class="footer-meta-row">
+              <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
+              <span class="footer-dot">·</span>
+              <span class="footer-author">ENGINEERED BY RUSHAMIDIWINATA</span>
+            </div>
+            <div class="footer-copy">
+              <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
+            </div>
+          </div>
         </div>
       </footer>
 

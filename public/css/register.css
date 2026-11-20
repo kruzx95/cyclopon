@@ -5,68 +5,27 @@
 
 .register-page {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: #F8FAFC;
   background-image: 
     radial-gradient(#CBD5E1 0.75px, transparent 0.75px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, #F8FAFC 100%);
   background-size: 20px 20px, 100% 100%;
   color: #0D1117;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding-bottom: 60px;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding-bottom: 0;
 }
 
-/* ── Top Navigation Bar ── */
-.register-navbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1.5px solid #0D1117;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
 
-.register-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #0D1117;
-}
-
-.register-brand-title {
-  font-size: 16px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-}
-
-.register-brand-tag {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 800;
-  color: #1C3E24;
-  letter-spacing: 0.05em;
-  background: #E8F5E9;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid #A5D6A7;
-}
-
-.register-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
 /* ── Hero Container ── */
 .register-container {
+  flex: 1 0 auto;
   max-width: 860px;
+  width: 100%;
   margin: 0 auto;
-  padding: 32px 18px 0;
+  padding: 32px 18px 48px;
 }
 
 .register-hero {
@@ -78,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 11px;
   font-weight: 800;
   color: #1C3E24;
@@ -91,6 +50,7 @@
 }
 
 .register-hero-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 28px;
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -104,6 +64,7 @@
 }
 
 .register-hero-desc {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 14px;
   color: #475569;
   max-width: 580px;
@@ -122,6 +83,7 @@
 }
 
 .form-section-title {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 16px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -140,6 +102,7 @@
 
 .form-label-reg {
   display: block;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 12px;
   font-weight: 800;
   color: #0D1117;
@@ -197,9 +160,10 @@
   padding: 0 14px 0 42px;
   border: 1.5px solid #CBD5E1;
   border-radius: 9px;
-  font-family: inherit;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 13.5px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: #0D1117;
   background: #FFFFFF;
   box-sizing: border-box;
@@ -234,6 +198,7 @@
 
 .form-input-reg::placeholder {
   color: #94A3B8;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 400;
 }
 
@@ -246,6 +211,7 @@
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 20px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 12px;
   color: #475569;
   line-height: 1.4;
@@ -258,9 +224,9 @@
   color: #FFFFFF;
   border: 2px solid #0D1117;
   border-radius: 10px;
-  font-family: inherit;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
   box-shadow: 3px 3px 0px #0D1117;
@@ -291,12 +257,16 @@
 /* ── Success Modal / Setup Hub ── */
 .reg-success-card {
   background: #FFFFFF;
-  border: 2px solid #0D1117;
-  border-radius: 14px;
-  box-shadow: 6px 6px 0px #0D1117;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
   padding: 24px;
   margin-bottom: 36px;
   animation: fadeInDown 0.25s ease-out;
+}
+
+.reg-success-banner {
+  margin-bottom: 20px;
 }
 
 .success-header-badge {
@@ -305,29 +275,107 @@
   gap: 6px;
   background: #DCFCE7;
   color: #166534;
-  border: 1.5px solid #166534;
+  border: 1px solid #86EFAC;
   padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
   font-weight: 800;
-  margin-bottom: 12px;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
 }
 
-.ticket-grid {
+.reg-success-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0D1117;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+}
+
+.reg-success-subtitle {
+  font-size: 13px;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ── Official Race Bib Ticket Pass ── */
+.ticket-pass {
+  background: #FFFFFF;
+  border: 1.5px solid #0D1117;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.ticket-pass-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0D1117;
+  color: #FFFFFF;
+  padding: 10px 16px;
+  gap: 10px;
+}
+
+.ticket-event-tag {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.ticket-event-icon {
+  font-size: 13px;
+}
+
+.ticket-event-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #F8FAFC;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticket-role-badge {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #FFE600;
+  color: #0D1117;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.ticket-role-badge.sweeper { background: #FFEDD5; color: #C2410C; }
+.ticket-role-badge.marshall { background: #DBEAFE; color: #1D4ED8; }
+.ticket-role-badge.medic { background: #FEE2E2; color: #B91C1C; }
+
+.ticket-pass-body {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 20px;
-  background: #F8FAFC;
-  border: 1.5px solid #0D1117;
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin-bottom: 24px;
   align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  background: #F8FAFC;
+}
+
+.ticket-bib-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #64748B;
+  display: block;
+  margin-bottom: 2px;
 }
 
 .ticket-bib-big {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 36px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 38px;
   font-weight: 900;
   color: #0D1117;
   letter-spacing: -0.02em;
@@ -335,143 +383,345 @@
 }
 
 .ticket-name-big {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 800;
   color: #1E293B;
-  margin-top: 4px;
+  margin-top: 6px;
+  line-height: 1.25;
 }
 
-.ticket-event-label {
-  font-size: 12px;
+.ticket-pin-card {
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 12px 18px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-width: 140px;
+}
+
+.ticket-pin-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748B;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ticket-pin-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 26px;
+  font-weight: 900;
+  color: #0D1117;
+  letter-spacing: 4px;
+  margin: 3px 0 2px;
+  line-height: 1.1;
+}
+
+.ticket-pin-hint {
+  font-size: 9.5px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+
+.ticket-pass-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #F1F5F9;
+  border-top: 1.5px dashed #CBD5E1;
+  font-size: 9.5px;
   font-weight: 700;
   color: #64748B;
-  margin-top: 2px;
+  letter-spacing: 0.05em;
+}
+
+.ticket-watermark {
+  text-transform: uppercase;
+}
+
+.ticket-status-pill {
+  color: #15803D;
+  font-weight: 800;
 }
 
 /* ── Traccar Setup Section ── */
 .traccar-setup-box {
-  background: #F0FDF4;
-  border: 1.5px solid #16A34A;
-  border-radius: 12px;
+  background: #F8FCF9;
+  border: 1.5px solid #86EFAC;
+  border-radius: 14px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+}
+
+.traccar-setup-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.traccar-setup-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #DCFCE7;
+  border: 1px solid #86EFAC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .traccar-setup-title {
   font-size: 15px;
   font-weight: 900;
   color: #166534;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .traccar-setup-desc {
   font-size: 12.5px;
   color: #15803D;
-  margin-bottom: 16px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
-/* Interval Pill Group */
-.interval-select-group {
+/* Interval Section */
+.interval-section {
+  background: #FFFFFF;
+  border: 1px solid #BBF7D0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+
+.interval-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .interval-label {
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 800;
   color: #166534;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.interval-rec-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #15803D;
+  background: #DCFCE7;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.interval-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
 }
 
 .interval-pill-btn {
-  padding: 5px 12px;
-  border-radius: 6px;
-  border: 1.5px solid #16A34A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1.5px solid #CBD5E1;
   background: #FFFFFF;
-  color: #166534;
-  font-size: 11px;
-  font-weight: 800;
   cursor: pointer;
   transition: all 0.15s ease;
+  text-align: center;
+}
+
+.interval-btn-sec {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.interval-btn-desc {
+  font-size: 9.5px;
+  color: #64748B;
+  font-weight: 600;
+  margin-top: 1px;
 }
 
 .interval-pill-btn.active {
-  background: #16A34A;
+  background: #166534;
+  border-color: #166534;
+  box-shadow: 0 2px 6px rgba(22, 101, 52, 0.25);
+}
+
+.interval-pill-btn.active .interval-btn-sec {
   color: #FFFFFF;
+}
+
+.interval-pill-btn.active .interval-btn-desc {
+  color: #BBF7D0;
+}
+
+.interval-pill-btn:hover:not(.active) {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+}
+
+/* Method Blocks */
+.setup-method-block {
+  margin-bottom: 18px;
+}
+
+.setup-method-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #166534;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.method-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #166534;
+  color: #FFFFFF;
+  font-size: 9.5px;
+  font-weight: 900;
 }
 
 /* 1-Click Launch Button */
 .btn-launch-traccar {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   padding: 13px 18px;
-  background: #15803D;
+  background: linear-gradient(135deg, #166534 0%, #15803D 100%);
   color: #FFFFFF;
-  border: 2px solid #0D1117;
+  border: none;
   border-radius: 10px;
-  font-size: 13.5px;
-  font-weight: 900;
   text-decoration: none;
-  box-shadow: 3px 3px 0px #0D1117;
+  box-shadow: 0 4px 12px rgba(22, 101, 52, 0.25);
   cursor: pointer;
   box-sizing: border-box;
-  transition: all 0.15s ease;
-  margin-bottom: 16px;
+  transition: all 0.18s ease;
+  text-align: left;
 }
 
 .btn-launch-traccar:hover {
-  background: #166534;
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px #0D1117;
+  background: linear-gradient(135deg, #14532D 0%, #166534 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(22, 101, 52, 0.32);
   color: #FFFFFF;
 }
 
+.btn-launch-traccar:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(22, 101, 52, 0.2);
+}
+
+.btn-launch-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.btn-launch-main {
+  font-size: 13.5px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.btn-launch-sub {
+  font-size: 11px;
+  opacity: 0.92;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
 /* QR Code Section */
-.qr-scan-box {
+.qr-scan-card {
   background: #FFFFFF;
   border: 1.5px solid #CBD5E1;
   border-radius: 10px;
   padding: 16px;
-  display: flex;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
   align-items: center;
-  gap: 18px;
-  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .qr-code-graphic {
-  width: 110px;
-  height: 110px;
-  flex-shrink: 0;
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+  padding: 6px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #E2E8F0;
-  border-radius: 6px;
-  padding: 4px;
+  background: #FFFFFF;
+  flex-shrink: 0;
 }
 
 .qr-code-graphic svg {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
 .qr-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qr-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   font-size: 12px;
   color: #334155;
   line-height: 1.45;
 }
 
-.qr-instructions strong {
+.qr-step-item strong {
   color: #0D1117;
+}
+
+.qr-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  font-size: 10px;
+  font-weight: 800;
+  color: #475569;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 /* Copy Param Badges */
@@ -479,30 +729,42 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 12px;
 }
 
 .param-copy-chip {
   background: #FFFFFF;
-  border: 1px solid #CBD5E1;
-  border-radius: 6px;
-  padding: 6px 10px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.param-copy-chip:hover {
+  border-color: #94A3B8;
+}
+
+.param-info-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .param-label {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
   color: #64748B;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  margin-bottom: 2px;
 }
 
 .param-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
   font-weight: 800;
   color: #0D1117;
   overflow: hidden;
@@ -511,18 +773,76 @@
 }
 
 .btn-copy-chip {
-  background: #F1F5F9;
-  border: 1px solid #CBD5E1;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
   font-weight: 700;
+  color: #334155;
   cursor: pointer;
   flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
 .btn-copy-chip:hover {
-  background: #E2E8F0;
+  background: #1C3E24;
+  color: #FFFFFF;
+  border-color: #1C3E24;
+}
+
+/* Success Actions */
+.reg-success-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn-action-map {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  background: #0D1117;
+  color: #FFFFFF;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 6px rgba(13, 17, 23, 0.2);
+}
+
+.btn-action-map:hover {
+  background: #1E293B;
+  transform: translateY(-1px);
+  color: #FFFFFF;
+}
+
+.btn-action-another {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 18px;
+  background: #FFFFFF;
+  color: #0D1117;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-another:hover {
+  background: #F8FAFC;
+  border-color: #0D1117;
+  transform: translateY(-1px);
 }
 
 /* ── Public Roster Section ── */
@@ -554,7 +874,7 @@
 }
 
 .roster-count-badge {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 800;
   background: #1C3E24;
@@ -638,7 +958,7 @@
 }
 
 .roster-bib-pill {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11.5px;
   font-weight: 900;
   padding: 3px 8px;
@@ -677,15 +997,46 @@
   .register-hero-title {
     font-size: 22px;
   }
-  .ticket-grid {
+  .ticket-pass-body {
     grid-template-columns: 1fr;
     text-align: center;
+    gap: 14px;
+    padding: 16px 14px;
   }
-  .qr-scan-box {
+  .ticket-pin-card {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 14px;
+  }
+  .ticket-pass-footer {
     flex-direction: column;
+    gap: 4px;
     text-align: center;
+    padding: 8px 12px;
+  }
+  .interval-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .interval-pill-btn {
+    padding: 7px 4px;
+  }
+  .interval-btn-sec {
+    font-size: 11px;
+  }
+  .interval-btn-desc {
+    font-size: 8.5px;
+  }
+  .qr-scan-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 14px;
+    padding: 14px;
   }
   .manual-param-list {
+    grid-template-columns: 1fr;
+  }
+  .reg-success-actions {
     grid-template-columns: 1fr;
   }
   .roster-search-box {

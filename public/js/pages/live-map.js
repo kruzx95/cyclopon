@@ -232,6 +232,11 @@ async function renderLiveMap(params) {
             <button class="map-fab-btn ${isMobile ? '' : 'active'}" id="btnToggleElevation" title="Buka / Tutup Profil Elevasi" aria-label="Toggle Elevasi">
               ${ICONS.elevation}
             </button>
+
+            <!-- Time Machine Replay Toggle FAB (Mobile) -->
+            <button class="map-fab-btn btn-fab-replay" id="btnFabReplay" title="Buka Replay Time Machine" aria-label="Toggle Replay">
+              <span class="fab-icon" aria-hidden="true">⏪</span>
+            </button>
             ${isAdmin ? `<a href="/admin/events/${eventId}" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard"><span class="fab-icon" aria-hidden="true">←</span></a>` : ''}
           </div>
 
@@ -1275,6 +1280,7 @@ async function renderLiveMap(params) {
   // ── Virtual COT: moving cut-off marker ─────────────────────────
   let cotMarker = null;
   let cotTimer = null;
+  let cotConfig = null;
   function stopCotTimer() {
     if (cotTimer) {
       clearInterval(cotTimer);
@@ -1346,6 +1352,8 @@ async function renderLiveMap(params) {
       if (!isLiveMapMounted || !res.ok) return;
       const data = await res.json();
       if (!isLiveMapMounted) return;
+
+      cotConfig = data;
 
       // mode === 'off' means the admin disabled the session: the marker must
       // disappear even though the start time/pace are still stored.
@@ -3086,6 +3094,91 @@ async function renderLiveMap(params) {
     return frames;
   }
 
+  // ── Virtual COT Replay Coordinate Interpolation ──
+  let routeCumulativeKm = null;
+  function getPointAtRouteKm(coords, targetKm) {
+    if (!coords || !coords.length) return null;
+    if (targetKm <= 0) return coords[0];
+
+    if (!routeCumulativeKm || routeCumulativeKm.length !== coords.length) {
+      routeCumulativeKm = [0];
+      let acc = 0;
+      for (let i = 1; i < coords.length; i++) {
+        const d = typeof haversineKm === 'function'
+          ? haversineKm(coords[i - 1][0], coords[i - 1][1], coords[i][0], coords[i][1])
+          : 0;
+        acc += d;
+        routeCumulativeKm.push(acc);
+      }
+    }
+
+    const total = routeCumulativeKm[routeCumulativeKm.length - 1];
+    if (targetKm >= total) return coords[coords.length - 1];
+
+    let low = 0;
+    let high = routeCumulativeKm.length - 1;
+    while (low + 1 < high) {
+      const mid = (low + high) >> 1;
+      if (routeCumulativeKm[mid] <= targetKm) low = mid;
+      else high = mid;
+    }
+
+    const a = coords[low];
+    const b = coords[high];
+    const segSpan = routeCumulativeKm[high] - routeCumulativeKm[low];
+    const ratio = segSpan > 0 ? (targetKm - routeCumulativeKm[low]) / segSpan : 0;
+    return [
+      a[0] + (b[0] - a[0]) * ratio,
+      a[1] + (b[1] - a[1]) * ratio
+    ];
+  }
+
+  function updateReplayCot(targetTimeMs) {
+    if (!cotConfig || !cotConfig.enabled || cotConfig.mode === 'off' || !routeCoords || !routeCoords.length || !cotConfig.start_ms || !cotConfig.pace) {
+      if (cotMarker && map) {
+        try { map.removeLayer(cotMarker); } catch (e) {}
+        cotMarker = null;
+      }
+      return 0;
+    }
+
+    const elapsedHours = (targetTimeMs - cotConfig.start_ms) / 3600000;
+    const totalRouteLength = cotConfig.route_length_km || routeKm || 0;
+
+    let cotDistanceKm = 0;
+    let cotStatus = 'NOT_STARTED';
+
+    if (elapsedHours < 0) {
+      cotDistanceKm = 0;
+      cotStatus = 'NOT_STARTED';
+    } else if (totalRouteLength > 0 && elapsedHours * cotConfig.pace >= totalRouteLength) {
+      cotDistanceKm = totalRouteLength;
+      cotStatus = 'FINISHED';
+    } else {
+      cotDistanceKm = elapsedHours * cotConfig.pace;
+      cotStatus = 'MOVING';
+    }
+
+    const latlng = getPointAtRouteKm(routeCoords, cotDistanceKm);
+    if (!latlng) return cotDistanceKm;
+
+    if (!cotMarker) {
+      cotMarker = L.marker(latlng, { icon: cotDivIcon(), zIndexOffset: 1600 }).addTo(map);
+    } else {
+      cotMarker.setLatLng(latlng);
+    }
+
+    const statusLabel = cotStatus === 'MOVING' ? 'BERGERAK' : (cotStatus === 'NOT_STARTED' ? 'BELUM MULAI' : 'SELESAI');
+    const popupContent = `
+      <div style="font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;color:#991B1B;letter-spacing:0.06em">⏱️ COT VIRTUAL (REPLAY)</div>
+      <div style="font-weight:900;font-size:15px;color:#0D1117;margin-top:2px">km ${cotDistanceKm.toFixed(1)}</div>
+      <div style="font-size:12px;color:#4B5563;margin-top:2px">${cotConfig.pace} km/jam · ${statusLabel}</div>
+      <div style="font-size:11px;color:#6B7280;margin-top:4px">Waktu Replay: ${new Date(targetTimeMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} WIB</div>
+    `;
+    cotMarker.bindPopup(popupContent);
+    return cotDistanceKm;
+  }
+
   function applyReplayFrame(targetIdx) {
     if (targetIdx < 0 || targetIdx >= replayFrames.length) return;
     replayFrameIndex = targetIdx;
@@ -3173,6 +3266,26 @@ async function renderLiveMap(params) {
       });
     });
 
+    // Update Virtual COT position & dynamic DNF state during replay
+    const replayCotKm = updateReplayCot(targetTimeMs);
+    if (cotConfig && cotConfig.enabled && cotConfig.mode !== 'off' && cotConfig.start_ms && cotConfig.pace) {
+      const elapsedHours = (targetTimeMs - cotConfig.start_ms) / 3600000;
+      if (elapsedHours > 0 && replayCotKm > 0) {
+        const dnfIds = [];
+        Object.values(latestPerRider).forEach(pt => {
+          const r = riders.find(item => item.id === pt.rider_id);
+          if (r && (!r.role || r.role === 'rider')) {
+            if (pt.distance_km != null && pt.distance_km < (replayCotKm - 1.0)) {
+              dnfIds.push(pt.rider_id);
+            }
+          }
+        });
+        applyCotDnfVisuals(dnfIds);
+      } else {
+        applyCotDnfVisuals([]);
+      }
+    }
+
     replayFrameIndex = targetIdx;
     const frameDate = new Date(replayFrames[targetIdx].timeMs);
     const clockEl = document.getElementById('replayClock');
@@ -3255,6 +3368,21 @@ async function renderLiveMap(params) {
     if (liveWs) {
       try { liveWs.close(); } catch (e) {}
       liveWs = null;
+    }
+    if (cotTimer) {
+      clearInterval(cotTimer);
+      cotTimer = null;
+    }
+
+    const btnMobileSidebar = document.getElementById('btnMobileOpenSidebar');
+    if (btnMobileSidebar) btnMobileSidebar.style.display = 'none';
+
+    // Ensure Virtual COT config is cached for replay interpolation
+    if (!cotConfig) {
+      try {
+        const cotRes = await eventFetch(`/api/events/${eventId}/virtual-cot`);
+        if (cotRes.ok) cotConfig = await cotRes.json();
+      } catch (e) {}
     }
 
     const dot = document.getElementById('liveDot');
@@ -3360,6 +3488,14 @@ async function renderLiveMap(params) {
     if (historyPollInterval) clearInterval(historyPollInterval);
     historyPollInterval = setInterval(triggerFallbackPositionSync, 5000);
     connectWs();
+
+    // Restore live Virtual COT timer & marker
+    refreshVirtualCot();
+    if (!cotTimer) {
+      cotTimer = setInterval(refreshVirtualCot, 8000);
+    }
+    const btnMobileSidebar = document.getElementById('btnMobileOpenSidebar');
+    if (isMobile && btnMobileSidebar) btnMobileSidebar.style.display = 'inline-flex';
 
     if (isFinished) {
       showToast('🏁 Replay selesai — kembali ke Live Tracking', 'info');

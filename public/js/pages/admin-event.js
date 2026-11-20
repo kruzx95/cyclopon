@@ -64,7 +64,7 @@ async function renderAdminEvent(params) {
             </div>
           </div>
           ${!isNew ? `
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="page-header-actions">
               <a class="btn btn-outline" style="font-size:12.5px;padding:7px 14px" href="/events/${eventId}/results" target="_blank">🏆 Hasil &amp; Brevet</a>
               <a class="btn btn-primary" style="font-size:12.5px;padding:7px 14px" href="/watch/${eventId}?admin=1" target="_blank">🗺️ Live Map</a>
             </div>
@@ -224,7 +224,7 @@ async function renderAdminEvent(params) {
                 Marker bergerak menyusuri rute. Rider dengan posisi segar di belakang marker dicatat DNF.
               </p>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div class="cot-header-actions">
               <button class="btn btn-outline" id="btnCotRefresh" style="font-size:12.5px;padding:7px 14px">↻ Muat Ulang</button>
               <button class="btn btn-outline" id="btnCotReset" style="font-size:12.5px;padding:7px 14px;color:#B91C1C;border-color:#FCA5A5" title="Reset posisi marker dan hapus seluruh status DNF Virtual COT">🔄 Reset Sesi COT</button>
             </div>
@@ -277,19 +277,33 @@ async function renderAdminEvent(params) {
               </h2>
               <p style="color:#6B7280;font-size:12px;margin-top:2px;margin-bottom:0">Logo sponsor yang melayang di bagian bawah Live Map publik dan dapat diklik menuju website masing-masing</p>
             </div>
-            <div style="display:flex;align-items:center;gap:8px">
-              <label for="sponsorStripBg" style="font-size:12px;color:#6B7280;margin:0">Latar:</label>
-              <select class="input" id="sponsorStripBg" style="width:auto;padding:6px 10px;font-size:12.5px">
-                <option value="white" ${(event.sponsor_strip_bg || 'white') === 'white' ? 'selected' : ''}>Background putih</option>
-                <option value="transparent" ${event.sponsor_strip_bg === 'transparent' ? 'selected' : ''}>Tanpa background</option>
-              </select>
-              <label for="sponsorStripLabel" style="font-size:12px;color:#6B7280;margin:0">Teks:</label>
-              <input class="input" id="sponsorStripLabel" maxlength="40" value="${escapeHtml(event.sponsor_strip_label ?? 'Didukung oleh')}" placeholder="kosong = sembunyikan" style="width:180px;padding:6px 10px;font-size:12.5px">
-              <input type="color" id="sponsorStripLabelColor" value="${event.sponsor_strip_label_color || '#64748B'}" title="Warna teks" style="width:38px;height:32px;padding:2px;border:1px solid #E5E7EB;border-radius:6px;background:#fff;cursor:pointer">
-            </div>
             <button class="btn btn-primary" style="font-size:12.5px;padding:7px 14px" id="btnShowAddSponsor">
               + Tambah Sponsor
             </button>
+          </div>
+
+          <!-- Sponsor Strip Display Settings -->
+          <div class="sponsor-strip-config-bar">
+            <div class="sponsor-strip-config-desc">
+              <span class="sponsor-strip-config-tag">⚙️ TAMPILAN DI LIVE MAP</span>
+              <span class="sponsor-strip-config-sub">Atur tampilan bilah sponsor yang melayang:</span>
+            </div>
+            <div class="sponsor-strip-config-controls">
+              <div class="sponsor-config-field">
+                <label for="sponsorStripBg">Latar:</label>
+                <select class="input" id="sponsorStripBg">
+                  <option value="white" ${(event.sponsor_strip_bg || 'white') === 'white' ? 'selected' : ''}>Background Putih</option>
+                  <option value="transparent" ${event.sponsor_strip_bg === 'transparent' ? 'selected' : ''}>Tanpa Background (Transparan)</option>
+                </select>
+              </div>
+              <div class="sponsor-config-field sponsor-config-field-text">
+                <label for="sponsorStripLabel">Teks Label:</label>
+                <div class="sponsor-text-color-combo">
+                  <input class="input" id="sponsorStripLabel" maxlength="40" value="${escapeHtml(event.sponsor_strip_label ?? 'Didukung oleh')}" placeholder="kosong = sembunyikan">
+                  <input type="color" id="sponsorStripLabelColor" value="${event.sponsor_strip_label_color || '#64748B'}" title="Pilih warna teks">
+                </div>
+              </div>
+            </div>
           </div>
 
           <div id="addSponsorContainer" style="display:none;margin-bottom:16px;background:#F9FAFB;padding:16px;border:1px solid #E5E7EB;border-radius:8px">
@@ -313,11 +327,13 @@ async function renderAdminEvent(params) {
                   <label for="sponsorLogoPath">Atau Path / URL Logo Gambar</label>
                   <input class="input" id="sponsorLogoPath" placeholder="/uploads/sponsors/sdnlycc.jpeg">
                 </div>
-                <div class="form-group" style="max-width:120px">
-                  <label for="sponsorSort">Urutan</label>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="sponsorSort">Urutan Tampil</label>
                   <input class="input" type="number" id="sponsorSort" value="${sponsors.length + 1}">
                 </div>
-                <div class="form-group" style="max-width:140px">
+                <div class="form-group">
                   <label for="sponsorSize">Ukuran Logo (px, kosong = auto)</label>
                   <input class="input" type="number" id="sponsorSize" min="16" max="200" placeholder="auto">
                 </div>
@@ -356,17 +372,17 @@ async function renderAdminEvent(params) {
                 Kelola peserta, sweeper, marshall rute, tim medis, nomor BIB, PIN akses, dan Magic Link 1-klik
               </p>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-outline" style="font-size:12px;padding:7px 12px;font-weight:700" id="btnPrintAllQrs" title="Cetak Kartu BIB / QR Code semua peserta untuk event ini">
+            <div class="rider-header-actions">
+              <button class="btn btn-outline btn-print-qrs" style="font-size:12px;padding:7px 12px;font-weight:700" id="btnPrintAllQrs" title="Cetak Kartu BIB / QR Code semua peserta untuk event ini">
                 🖨️ Cetak Semua QR (Batch BIB)
               </button>
-              <a class="btn btn-outline" style="font-size:12px;padding:7px 12px" href="/api/admin/riders/events/${eventId}/template" download="template_riders_cyclopon.csv" title="Unduh contoh template Excel/CSV">
+              <a class="btn btn-outline btn-template-rider" style="font-size:12px;padding:7px 12px" href="/api/admin/riders/events/${eventId}/template" download="template_riders_cyclopon.csv" title="Unduh contoh template Excel/CSV">
                 📥 Template CSV
               </a>
-              <button class="btn btn-outline" style="font-size:12px;padding:7px 12px" id="btnShowImportRider" title="Impor data peserta massal dari file atau teks CSV">
+              <button class="btn btn-outline btn-import-rider" style="font-size:12px;padding:7px 12px" id="btnShowImportRider" title="Impor data peserta massal dari file atau teks CSV">
                 📁 Import CSV
               </button>
-              <button class="btn btn-primary" style="font-size:12px;padding:7px 14px" id="btnShowAddRider">
+              <button class="btn btn-primary btn-add-rider" style="font-size:12px;padding:7px 14px" id="btnShowAddRider">
                 + Tambah Manual
               </button>
             </div>

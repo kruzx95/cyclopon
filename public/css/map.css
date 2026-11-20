@@ -2428,11 +2428,31 @@
   color: #FFF;
 }
 
+/* ── Replay FAB (Mobile Floating Controls) ── */
+.btn-fab-replay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-fab-replay.active {
+  background: #00E5FF !important;
+  color: #0D1117 !important;
+  border-color: #0D1117 !important;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.6) !important;
+}
+@media (min-width: 769px) {
+  .btn-fab-replay {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .replay-control-bar {
     bottom: 8px;
-    padding: 10px 12px;
+    padding: 8px 12px;
     width: calc(100% - 16px);
+    max-width: 480px;
+    z-index: 1050;
   }
   .replay-bar-inner {
     gap: 8px;
@@ -2442,27 +2462,40 @@
     order: 1;
     width: 100%;
     flex: 1 1 100%;
+    margin: 0;
   }
   .replay-play-btn {
     order: 2;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     font-size: 14px;
   }
   .replay-time-display {
     order: 3;
     min-width: auto;
   }
+  .replay-badge {
+    display: none;
+  }
   .replay-clock {
-    font-size: 13px;
+    font-size: 13.5px;
+    font-weight: 800;
   }
   .replay-speed-group {
     order: 4;
     margin-left: auto;
+    gap: 3px;
+  }
+  .replay-speed-btn {
+    padding: 4px 7px;
+    font-size: 11px;
+  }
+  .replay-export-btn {
+    display: none !important;
   }
   .replay-exit-btn {
     order: 5;
-    padding: 4px 10px;
+    padding: 5px 10px;
     font-size: 11px;
   }
 }
