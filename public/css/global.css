@@ -373,21 +373,40 @@ label {
   display: none;
 }
 
-.btn-guide-nav {
+.btn-guide-nav,
+.btn-register-nav,
+.btn-admin-nav {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  justify-content: center;
+  height: 36px;
+  line-height: 1;
+  box-sizing: border-box;
   border-radius: 8px;
-  background: #FFFFFF;
-  color: #0D1117;
-  border: 1.5px solid #CBD5E1;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-decoration: none;
   white-space: nowrap;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-guide-nav svg,
+.btn-register-nav svg,
+.btn-admin-nav svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.btn-guide-nav {
+  gap: 6px;
+  padding: 0 14px;
+  background: #FFFFFF;
+  color: #0D1117;
+  border: 1.5px solid #CBD5E1;
   box-shadow: 0 1px 3px rgba(13, 17, 23, 0.05);
 }
 
@@ -405,57 +424,48 @@ label {
 }
 
 .btn-register-nav {
-  display: inline-flex;
-  align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 0 14px;
   background: #1C3E24;
   color: #FFFFFF;
   border: 1.5px solid #1C3E24;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s ease;
   box-shadow: 0 2px 8px rgba(28, 62, 36, 0.2);
 }
+
 .btn-register-nav:hover {
   background: #255230;
   border-color: #255230;
   color: #FFFFFF;
   transform: translateY(-1px);
 }
+
 .btn-register-nav .nav-label-short {
   display: none;
 }
 
 .btn-admin-nav {
-  display: inline-flex;
-  align-items: center;
   gap: 7px;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 0 16px;
   background: #0D1117;
   color: #FFFFFF;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s ease;
+  border: 1.5px solid #0D1117;
   box-shadow: 0 2px 8px rgba(13, 17, 23, 0.15);
 }
+
 .btn-admin-nav:hover {
   background: #1C3E24;
+  border-color: #1C3E24;
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(28, 62, 36, 0.25);
 }
+
 .admin-nav-arrow {
   font-size: 13px;
+  line-height: 1;
+  display: inline-block;
   transition: transform 0.2s ease;
 }
+
 .btn-admin-nav:hover .admin-nav-arrow {
   transform: translate(2px, -2px);
 }
@@ -1568,86 +1578,44 @@ label {
     display: none;
   }
   .nav-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-guide-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #FFFFFF;
-  color: #0D1117;
-  border: 1.5px solid #CBD5E1;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(13, 17, 23, 0.05);
-}
-
-.btn-guide-nav:hover {
-  background: #F8FAFC;
-  border-color: #1C3E24;
-  color: #1C3E24;
-  transform: translateY(-1px);
-}
-
-.btn-guide-nav.active {
-  background: #1C3E24;
-  color: #FFFFFF;
-  border-color: #1C3E24;
-}
-
-.btn-register-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #1C3E24;
-  color: #FFFFFF;
-  border: 1.5px solid #1C3E24;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(28, 62, 36, 0.2);
-}
-.btn-register-nav:hover {
-  background: #255230;
-  border-color: #255230;
-  color: #FFFFFF;
-  transform: translateY(-1px);
-}
-.btn-register-nav .nav-label-short {
-  display: none;
-}
-
-.btn-admin-nav {
-    padding: 6px 12px;
-    font-size: 11px;
-    height: 34px;
-    border-radius: 6px;
-    gap: 5px;
-    white-space: nowrap;
-    flex-shrink: 0;
-    line-height: 1;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    gap: 8px;
   }
+
+  .btn-guide-nav,
+  .btn-register-nav,
+  .btn-admin-nav {
+    height: 34px;
+    font-size: 11px;
+    border-radius: 6px;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+
+  .btn-guide-nav {
+    padding: 0 10px;
+    gap: 5px;
+  }
+
+  .btn-register-nav {
+    padding: 0 10px;
+    gap: 5px;
+  }
+
+  .btn-admin-nav {
+    padding: 0 12px;
+    gap: 5px;
+  }
+
+  .btn-guide-nav svg,
+  .btn-register-nav svg,
   .btn-admin-nav svg {
     width: 12px;
     height: 12px;
     flex-shrink: 0;
   }
+
   .admin-nav-arrow {
     font-size: 11px;
   }
@@ -1665,79 +1633,27 @@ label {
       height: 24px;
     }
     .nav-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-guide-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #FFFFFF;
-  color: #0D1117;
-  border: 1.5px solid #CBD5E1;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(13, 17, 23, 0.05);
-}
-
-.btn-guide-nav:hover {
-  background: #F8FAFC;
-  border-color: #1C3E24;
-  color: #1C3E24;
-  transform: translateY(-1px);
-}
-
-.btn-guide-nav.active {
-  background: #1C3E24;
-  color: #FFFFFF;
-  border-color: #1C3E24;
-}
-
-.btn-register-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: #1C3E24;
-  color: #FFFFFF;
-  border: 1.5px solid #1C3E24;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(28, 62, 36, 0.2);
-}
-.btn-register-nav:hover {
-  background: #255230;
-  border-color: #255230;
-  color: #FFFFFF;
-  transform: translateY(-1px);
-}
-.btn-register-nav .nav-label-short {
-  display: none;
-}
-
-.btn-admin-nav {
-      padding: 5px 9px;
-      font-size: 10.5px;
-      height: 32px;
-      gap: 4px;
+      gap: 6px;
     }
+    .btn-guide-nav,
+    .btn-register-nav,
+    .btn-admin-nav {
+      height: 32px;
+      font-size: 10.5px;
+      padding: 0 8px;
+      gap: 4px;
+      border-radius: 6px;
+    }
+    .btn-guide-nav svg,
+    .btn-register-nav svg,
     .btn-admin-nav svg {
       width: 11px;
       height: 11px;
     }
+    .admin-nav-arrow {
+      font-size: 10px;
+    }
+  }
   }
 
   .landing-hero {
@@ -2323,28 +2239,21 @@ label {
   .landing-nav .brand-name {
     font-size: 16px;
   }
+  .btn-guide-nav,
+  .btn-register-nav,
+  .btn-admin-nav {
+    height: 34px;
+    padding: 0 10px;
+    gap: 5px;
+    font-size: 10.5px;
+    line-height: 1;
+    box-sizing: border-box;
+  }
   .btn-guide-nav {
-    padding: 8px 10px;
     gap: 0;
   }
-  .btn-guide-nav .nav-label-full {
-    display: none;
-  }
-  .btn-register-nav {
-    padding: 7px 10px;
-    height: 34px;
-    gap: 5px;
-    font-size: 10.5px;
-  }
-  .btn-register-nav .nav-label-full {
-    display: none;
-  }
-  .btn-admin-nav {
-    padding: 7px 10px;
-    height: 34px;
-    gap: 5px;
-    font-size: 10.5px;
-  }
+  .btn-guide-nav .nav-label-full,
+  .btn-register-nav .nav-label-full,
   .btn-admin-nav .nav-label-full {
     display: none;
   }
