@@ -489,6 +489,46 @@ function getCurrentClimbStatus(distKm, climbs) {
   return { activeClimb: null, isUpcoming: false, distRemainingKm: 0, elevRemainingM: 0 };
 }
 
+/**
+ * Extract exact interpolated lat/lng coordinates for every whole kilometer along the route.
+ * @param {Array<{lat: number, lng: number, distKm: number}>} points
+ * @param {number} totalKm
+ * @returns {Array<{km: number, lat: number, lng: number}>}
+ */
+function extractKilometerMilestones(points, totalKm) {
+  if (!points || points.length < 2 || !totalKm || totalKm < 1) return [];
+  const milestones = [];
+  const maxKm = Math.floor(totalKm);
+  let ptIdx = 0;
+
+  for (let km = 1; km <= maxKm; km++) {
+    while (ptIdx < points.length - 1 && points[ptIdx + 1].distKm < km) {
+      ptIdx++;
+    }
+    if (ptIdx >= points.length - 1) break;
+
+    const p0 = points[ptIdx];
+    const p1 = points[ptIdx + 1];
+    const span = p1.distKm - p0.distKm;
+    let lat = p0.lat;
+    let lng = p0.lng;
+
+    if (span > 0.000001) {
+      const ratio = Math.max(0, Math.min(1, (km - p0.distKm) / span));
+      lat = p0.lat + ratio * (p1.lat - p0.lat);
+      lng = p0.lng + ratio * (p1.lng - p0.lng);
+    }
+
+    milestones.push({
+      km,
+      lat: Math.round(lat * 1e6) / 1e6,
+      lng: Math.round(lng * 1e6) / 1e6
+    });
+  }
+
+  return milestones;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     haversineKm,
@@ -500,6 +540,7 @@ if (typeof module !== 'undefined' && module.exports) {
     smoothElevations,
     detectClimbs,
     getLiveGrade,
-    getCurrentClimbStatus
+    getCurrentClimbStatus,
+    extractKilometerMilestones
   };
 }
