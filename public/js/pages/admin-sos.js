@@ -72,6 +72,9 @@ async function renderAdminSos() {
     </div>
   `;
 
+  // ── Initialize Mobile Navigation Drawer ──
+  if (typeof setupAdminDrawer === 'function') setupAdminDrawer();
+
   const activeListEl = document.getElementById('sosActiveList');
   const historyListEl = document.getElementById('sosHistoryList');
   const historyHintEl = document.getElementById('sosHistoryHint');

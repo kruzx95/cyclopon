@@ -230,6 +230,9 @@ async function renderAdminEventReports(params = {}) {
     </div>
   `;
 
+  // ── Initialize Mobile Navigation Drawer ──
+  if (typeof setupAdminDrawer === 'function') setupAdminDrawer();
+
   // ── State Variables ──
   let allEvents = [];
   let currentEvent = null;

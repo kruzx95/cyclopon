@@ -1332,7 +1332,11 @@ async function renderLiveMap(params) {
       if (!cotDnfRiderIds.has(id)) refreshMarkerIcon(id);
     });
 
+    const hasChanged = cotDnfRiderIds.size !== next.size || ![...cotDnfRiderIds].every(id => next.has(id));
     cotDnfRiderIds = next;
+    if (hasChanged) {
+      updateLeaderboard();
+    }
   }
 
   async function refreshVirtualCot() {
@@ -1978,6 +1982,9 @@ async function renderLiveMap(params) {
       (calc.progressPct >= 98 || (totalDist > 0 && remainingKm <= 0.15));
 
     if (meetsFinishCriteria) {
+      if (!telem.isFinished) {
+        telem.finishTime = fixTime || new Date().toISOString();
+      }
       telem.isFinished = true;
     } else if (!telem.isFinished) {
       telem.isFinished = false;
@@ -2214,6 +2221,7 @@ async function renderLiveMap(params) {
       isOffRoute: telem.isOffRoute,
       deviationMeters: telem.deviationMeters,
       isFinished: telem.isFinished,
+      finishTime: telem.finishTime || null,
       lastTime: fixTime
     };
 
@@ -2316,15 +2324,37 @@ async function renderLiveMap(params) {
 
   // ── Leaderboard renderer & search filter ──
   function updateLeaderboard() {
-    // 1. Calculate live race ranks based on distance
-    const rankByRiderId = {};
-    const sortedRanks = Object.entries(progressById)
-      .map(([riderId, prog]) => ({ riderId: Number(riderId), ...prog }))
-      .sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
+    // Helper: non-competitive staff role (sweeper, marshall, medic)
+    const isSupportRole = r => r && (r.role === 'sweeper' || r.role === 'marshall' || r.role === 'medic');
 
-    sortedRanks.forEach((item, idx) => {
+    // Helper: check if rider has DNF (via Virtual COT or explicit status)
+    const isRiderDnf = rId => cotDnfRiderIds.has(rId) || (riderById[rId]?.traccar_device_id && cotDnfRiderIds.has(riderById[rId].traccar_device_id));
+
+    // 1. Calculate live race ranks exclusively for competitive, active racers
+    const rankByRiderId = {};
+    const competitiveEntries = Object.entries(progressById)
+      .map(([riderId, prog]) => ({ riderId: Number(riderId), rider: riderById[riderId], ...prog }))
+      .filter(e => e.rider && !isSupportRole(e.rider) && !isRiderDnf(e.riderId));
+
+    competitiveEntries.sort((a, b) => {
+      if (a.isFinished && b.isFinished) {
+        if (a.finishTime && b.finishTime) {
+          return new Date(a.finishTime).getTime() - new Date(b.finishTime).getTime();
+        }
+        return b.distanceKm - a.distanceKm;
+      }
+      if (a.isFinished) return -1;
+      if (b.isFinished) return 1;
+      return (b.distanceKm - a.distanceKm) || (b.progressPct - a.progressPct);
+    });
+
+    competitiveEntries.forEach((item, idx) => {
       rankByRiderId[item.riderId] = idx + 1;
     });
+
+    // Top leader reference for Gap calculation (P1)
+    const leaderEntry = competitiveEntries.length ? competitiveEntries[0] : null;
+    const leaderKm = leaderEntry ? (Number(leaderEntry.distanceKm) || 0) : 0;
 
     let entries = Object.entries(progressById)
       .map(([riderId, prog]) => ({ rider: riderById[riderId], ...prog }))
@@ -2338,7 +2368,30 @@ async function renderLiveMap(params) {
         return numA - numB;
       });
     } else {
-      entries.sort((a, b) => b.distanceKm - a.distanceKm || b.progressPct - a.progressPct);
+      // 🏆 Live Rank Mode:
+      // Group 1: Competitive active racers (Finished first, then active by distance)
+      // Group 2: DNF racers (sorted by last distance reached)
+      // Group 3: Support staff (Sweeper, Marshall, Medic at the bottom)
+      entries.sort((a, b) => {
+        const aSupport = isSupportRole(a.rider);
+        const bSupport = isSupportRole(b.rider);
+        if (aSupport !== bSupport) return aSupport ? 1 : -1;
+
+        const aDnf = isRiderDnf(a.rider.id);
+        const bDnf = isRiderDnf(b.rider.id);
+        if (aDnf !== bDnf) return aDnf ? 1 : -1;
+
+        if (a.isFinished && b.isFinished) {
+          if (a.finishTime && b.finishTime) {
+            return new Date(a.finishTime).getTime() - new Date(b.finishTime).getTime();
+          }
+          return b.distanceKm - a.distanceKm;
+        }
+        if (a.isFinished) return -1;
+        if (b.isFinished) return 1;
+
+        return (b.distanceKm - a.distanceKm) || (b.progressPct - a.progressPct);
+      });
     }
 
     // 3. Status filter
@@ -2404,8 +2457,40 @@ async function renderLiveMap(params) {
 
     entries.forEach((e, i) => {
       const riderId = e.rider.id;
-      const raceRank = rankByRiderId[riderId] || (i + 1);
-      const rankDisplay = raceRank <= 3 ? ['🥇','🥈','🥉'][raceRank - 1] : `#${raceRank}`;
+      const isDnf = isRiderDnf(riderId);
+      const isSupport = isSupportRole(e.rider);
+      const raceRank = !isSupport && !isDnf ? rankByRiderId[riderId] : null;
+
+      let rankDisplay = '';
+      let rankClass = 'leaderboard-rank';
+      if (isSupport) {
+        rankDisplay = e.rider.role === 'sweeper' ? '🧹' : (e.rider.role === 'medic' ? '🚑' : '🛡️');
+        rankClass += ' rank-support';
+      } else if (isDnf) {
+        rankDisplay = 'DNF';
+        rankClass += ' rank-dnf';
+      } else if (raceRank) {
+        rankDisplay = raceRank <= 3 ? ['🥇','🥈','🥉'][raceRank - 1] : `#${raceRank}`;
+        if (raceRank <= 3) rankClass += ' top';
+      } else {
+        rankDisplay = `#${i + 1}`;
+      }
+
+      // Gap calculation relative to P1 (Leader)
+      let gapText = '';
+      let isLeader = false;
+      if (!isSupport && !isDnf && leaderEntry) {
+        if (riderId === leaderEntry.riderId) {
+          gapText = 'LEADER';
+          isLeader = true;
+        } else {
+          const gapKm = Math.max(0, Math.round((leaderKm - (Number(e.distanceKm) || 0)) * 10) / 10);
+          gapText = `-${gapKm.toFixed(1)} km`;
+        }
+      } else if (isDnf) {
+        gapText = 'DNF';
+      }
+
       const status = getRiderStatus(e.lastTime);
       const isMoving = e.speed > 2;
       const isTarget = targetRider && String(targetRider.bib).toLowerCase() === String(e.rider.bib).toLowerCase();
@@ -2443,7 +2528,7 @@ async function renderLiveMap(params) {
         }
 
         card.innerHTML = `
-          <div class="leaderboard-rank ${raceRank <= 3 ? 'top' : ''}">${rankDisplay}</div>
+          <div class="${rankClass}">${rankDisplay}</div>
           <div class="rider-avatar" style="background:${e.rider.color || '#FFE600'}">${escapeHtml(e.rider.bib)}</div>
           <div class="leaderboard-info">
             <div class="leaderboard-name-row">
@@ -2479,6 +2564,7 @@ async function renderLiveMap(params) {
               <div class="leaderboard-progress-bar-fill" style="width:${e.progressPct}%;background:${e.rider.color || 'var(--color-yellow)'}"></div>
             </div>
             <div class="leaderboard-pct"><span class="val-pct">${e.progressPct}</span>%</div>
+            ${gapText ? `<div class="leaderboard-gap ${isLeader ? 'is-leader' : ''}">${gapText}</div>` : ''}
           </div>
         `;
         leaderboardEl.appendChild(card);
@@ -2493,7 +2579,7 @@ async function renderLiveMap(params) {
         const rankEl = card.querySelector('.leaderboard-rank');
         if (rankEl) {
           rankEl.textContent = rankDisplay;
-          rankEl.className = `leaderboard-rank ${raceRank <= 3 ? 'top' : ''}`;
+          rankEl.className = rankClass;
         }
 
         const nameEl = card.querySelector('.leaderboard-name');
@@ -2579,6 +2665,24 @@ async function renderLiveMap(params) {
 
         const barFill = card.querySelector('.leaderboard-progress-bar-fill');
         if (barFill) barFill.style.width = `${e.progressPct}%`;
+
+        let gapEl = card.querySelector('.leaderboard-gap');
+        if (gapText) {
+          if (!gapEl) {
+            const statCol = card.querySelector('.leaderboard-stat');
+            if (statCol) {
+              gapEl = document.createElement('div');
+              statCol.appendChild(gapEl);
+            }
+          }
+          if (gapEl) {
+            gapEl.className = `leaderboard-gap ${isLeader ? 'is-leader' : ''}`;
+            gapEl.textContent = gapText;
+            gapEl.style.display = '';
+          }
+        } else if (gapEl) {
+          gapEl.style.display = 'none';
+        }
 
         // Reorder card DOM position smoothly
         leaderboardEl.appendChild(card);

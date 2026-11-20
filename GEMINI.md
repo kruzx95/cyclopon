@@ -9,3 +9,10 @@
 ## 2. Superpowers Plugin & Workflow Override
 - **Superpowers Disabled**: Jangan gunakan plugin dan workflow Superpowers (seperti skill `brainstorming`, `writing-plans`, `subagent-driven-development`, `test-driven-development`, `using-superpowers`, dll.) untuk project ini.
 - **Direct Interaction**: Jawab pertanyaan dan eksekusi tugas pengguna secara langsung, ringkas, dan efisien tanpa mewajibkan proses wawancara perencanaan (planning ceremony), pembuatan spec berkepanjangan, atau subagent tasks, kecuali diminta secara eksplisit oleh pengguna.
+
+## 3. Karpathy Guidelines (Disiplin Coding)
+- **Think Before Coding**: Jangan berasumsi atau menebak dalam diam saat instruksi ambigu; sampaikan trade-off atau tanyakan sebelum implementasi.
+- **Simplicity First**: Tulis kode seminimal mungkin yang menyelesaikan masalah. Hindari abstraksi spekulatif atau fitur berlebihan yang tidak diminta.
+- **Surgical Changes**: Sentuh hanya baris dan file yang relevan dengan tugas. Dilarang melakukan *drive-by refactoring*, memformat ulang whitespace, atau mengubah kode yang tidak rusak di luar cakupan tugas.
+- **Goal-Driven Execution**: Tetapkan kriteria sukses yang dapat diverifikasi secara objektif (misal: `npm test` lolos 100% tanpa regresi) sebelum menyatakan tugas selesai.
+

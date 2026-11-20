@@ -761,36 +761,24 @@
 /* ── Sidebar Filter Status Pills ── */
 .sidebar-filter-pills {
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 0 4px;
   overflow-x: auto;
-  padding: 2px 8px 4px 2px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  position: relative;
 }
 .sidebar-filter-pills::-webkit-scrollbar {
   display: none;
 }
 
-/* Visual scroll affordance: smooth fade edges when overflowing */
-.sidebar-filter-pills.has-overflow:not(.is-at-end):not(.is-scrolled) {
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
-  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
-}
-.sidebar-filter-pills.has-overflow.is-scrolled:not(.is-at-end) {
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 calc(100% - 24px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 calc(100% - 24px), transparent 100%);
-}
-.sidebar-filter-pills.has-overflow.is-scrolled.is-at-end {
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 100%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 20px, #000 100%);
-}
-
 .status-filter-pill {
-  padding: 4px 10px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 5px 3px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   border: 1.5px solid #0D1117;
   background: #FFFFFF;
@@ -799,7 +787,11 @@
   white-space: nowrap;
   transition: all 0.15s ease;
   line-height: 1.2;
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
 }
 .status-filter-pill:hover {
   background: #0D1117;
@@ -1002,13 +994,28 @@
   font-size: 13px;
   font-weight: 900;
   color: #334155; /* High contrast: 7.8:1 on white (WCAG AAA) */
-  width: 24px;
+  width: 26px;
   text-align: center;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .leaderboard-rank.top {
   font-size: 15px;
   color: #0F172A;
+}
+.leaderboard-rank.rank-dnf {
+  font-size: 9px;
+  font-weight: 900;
+  color: #DC2626;
+  background: #FEE2E2;
+  border-radius: 4px;
+  padding: 1px 3px;
+  line-height: 1.2;
+}
+.leaderboard-rank.rank-support {
+  font-size: 14px;
 }
 
 .rider-avatar {
@@ -1185,6 +1192,20 @@
   color: #64748B;
   margin-top: 1px;
   font-weight: 700;
+}
+
+.leaderboard-gap {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #DC2626;
+  margin-top: 2px;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.leaderboard-gap.is-leader {
+  color: #16A34A;
+  font-weight: 900;
 }
 
 /* ── Responsive Adaptations ── */
@@ -1373,11 +1394,13 @@
     bottom: 215px !important;
   }
 
-  /* Sembunyikan strip hanya jika sheet leaderboard mobile dibuka penuh */
+  /* Saat sheet leaderboard mobile dibuka, strip sponsor tetap tampil mengambang di atas sheet */
   .map-viewport.sidebar-open .supporter-strip {
-    display: none !important;
+    display: flex !important;
+    bottom: 14px !important;
   }
 }
+
 
 @media (max-width: 768px) {
   /* ── Clean & Spacious Header on Mobile ── */

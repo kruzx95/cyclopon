@@ -1,3 +1,33 @@
+/* Mobile admin drawer binder — works across all admin pages */
+function setupAdminDrawer() {
+  const hamburger = document.getElementById('adminHamburger');
+  const drawer    = document.getElementById('adminDrawer');
+  const overlay   = document.getElementById('adminDrawerOverlay');
+  const closeBtn  = document.getElementById('adminDrawerClose');
+
+  if (!hamburger || !drawer) return;
+
+  function openDrawer() {
+    drawer.classList.add('open');
+    if (overlay) overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    if (overlay) overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.onclick = openDrawer;
+  if (closeBtn) closeBtn.onclick = closeDrawer;
+  if (overlay)  overlay.onclick = closeDrawer;
+
+  drawer.querySelectorAll('a[data-link]').forEach(link => {
+    link.onclick = closeDrawer;
+  });
+}
+window.setupAdminDrawer = setupAdminDrawer;
+
 /* Admin sidebar helper — shared by dashboard and event pages */
 function adminSidebar(activeKey) {
   let adminName = 'Admin';
@@ -8,6 +38,11 @@ function adminSidebar(activeKey) {
       adminName = u.name || u.email || 'Admin';
     }
   } catch {}
+
+  // Auto-bind drawer after DOM paint
+  setTimeout(() => {
+    if (typeof setupAdminDrawer === 'function') setupAdminDrawer();
+  }, 0);
 
   return `
     <!-- ── Mobile Top Bar (visible on mobile only) ── -->
@@ -1004,9 +1039,10 @@ async function renderAdminDashboard() {
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:900;color:#6B7280">// EVENT LIST</span>
             <h2 style="font-size:16px;font-weight:900;color:#0D1117;margin:0;text-transform:uppercase">Daftar Event Balapan</h2>
+            <span id="activeRidersIndicator" style="display:none;font-family:ui-monospace,monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px"></span>
           </div>
         </div>
 
@@ -1020,29 +1056,7 @@ async function renderAdminDashboard() {
   document.getElementById('btnNewEvent').addEventListener('click', () => Router.navigate('/admin/events/new'));
 
   // ── Mobile Hamburger Drawer ──
-  const hamburger = document.getElementById('adminHamburger');
-  const drawer    = document.getElementById('adminDrawer');
-  const overlay   = document.getElementById('adminDrawerOverlay');
-  const closeBtn  = document.getElementById('adminDrawerClose');
-
-  function openDrawer() {
-    drawer.classList.add('open');
-    overlay.classList.add('show');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeDrawer() {
-    drawer.classList.remove('open');
-    overlay.classList.remove('show');
-    document.body.style.overflow = '';
-  }
-
-  if (hamburger) hamburger.addEventListener('click', openDrawer);
-  if (closeBtn)  closeBtn.addEventListener('click', closeDrawer);
-  if (overlay)   overlay.addEventListener('click', closeDrawer);
-
-  // Close drawer when a nav link is clicked
-  const drawerLinks = drawer ? drawer.querySelectorAll('a[data-link]') : [];
-  drawerLinks.forEach(link => link.addEventListener('click', closeDrawer));
+  setupAdminDrawer();
 
   // Initialize Race Control SOS Monitor
   AdminSosMonitor.init();
@@ -1503,6 +1517,24 @@ async function renderAdminDashboard() {
         </div>
       `;
       return;
+    }
+
+    const activeEvents = events.filter(e => e.active);
+    const activeRidersCount = activeEvents.reduce((acc, ev) => acc + (Number(ev.rider_count) || 0), 0);
+    const indicator = document.getElementById('activeRidersIndicator');
+    if (indicator) {
+      if (activeEvents.length > 0) {
+        indicator.textContent = `🟢 ${activeRidersCount.toLocaleString()} Rider Aktif (${activeEvents.length} Event Berjalan)`;
+        indicator.style.color = '#047857';
+        indicator.style.background = '#ECFDF5';
+        indicator.style.border = '1px solid #A7F3D0';
+      } else {
+        indicator.textContent = '⚪ 0 Rider Aktif (Tidak Ada Event Berjalan)';
+        indicator.style.color = '#6B7280';
+        indicator.style.background = '#F3F4F6';
+        indicator.style.border = '1px solid #E5E7EB';
+      }
+      indicator.style.display = 'inline-flex';
     }
 
     grid.innerHTML = events.map(ev => `

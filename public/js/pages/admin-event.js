@@ -449,19 +449,7 @@ async function renderAdminEvent(params) {
   }
 
   // ── Mobile Hamburger Drawer ──
-  (function () {
-    const hamburger = document.getElementById('adminHamburger');
-    const drawer    = document.getElementById('adminDrawer');
-    const overlay   = document.getElementById('adminDrawerOverlay');
-    const closeBtn  = document.getElementById('adminDrawerClose');
-    function openDrawer()  { if (drawer) drawer.classList.add('open');    if (overlay) overlay.classList.add('show');    document.body.style.overflow = 'hidden'; }
-    function closeDrawer() { if (drawer) drawer.classList.remove('open'); if (overlay) overlay.classList.remove('show'); document.body.style.overflow = ''; }
-    if (hamburger) hamburger.addEventListener('click', openDrawer);
-    if (closeBtn)  closeBtn.addEventListener('click', closeDrawer);
-    if (overlay)   overlay.addEventListener('click', closeDrawer);
-    const drawerLinks = drawer ? drawer.querySelectorAll('a[data-link]') : [];
-    drawerLinks.forEach(l => l.addEventListener('click', closeDrawer));
-  })();
+  if (typeof setupAdminDrawer === 'function') setupAdminDrawer();
 
   // ── Event form handler ──
   document.getElementById('eventForm').addEventListener('submit', async e => {
@@ -645,7 +633,7 @@ async function renderAdminEvent(params) {
           </tr>`).join('');
 
     cotMonitor.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px">
+      <div class="cot-stats-grid">
         ${cotStatCard('MODE', modeLabel)}
         ${cotStatCard('STATUS MARKER', statusLabel, statusColor)}
         ${cotStatCard('POSISI MARKER', `${Number(marker.distanceKm || 0).toFixed(1)} km`)}

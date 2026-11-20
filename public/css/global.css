@@ -1824,7 +1824,11 @@ label {
   transition: all 0.2s ease;
   cursor: pointer;
 }
-.guide-nav-pill-btn:hover,
+.guide-nav-pill-btn:hover {
+  background: #F8FAFC;
+  color: #0D1117;
+  border-color: #94A3B8;
+}
 .guide-nav-pill-btn.active {
   background: #0D1117;
   color: #FFFFFF !important;
@@ -2645,8 +2649,8 @@ body.cockpit-active .sos-type-btn.active strong {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
-.guide-page .guide-nav-pill-btn:hover {
-  background: #FFFFFF;
+.guide-page .guide-nav-pill-btn:hover:not(.active) {
+  background: #F8FAFC;
   border-color: #94A3B8;
   color: #0D1117;
   transform: translateY(-1px);
