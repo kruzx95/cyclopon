@@ -2505,22 +2505,9 @@
   color: #FFF;
 }
 
-/* ── Replay FAB (Mobile Floating Controls) ── */
+/* ── Replay FAB (Permanently Disabled from Mobile & Public Views) ── */
 .btn-fab-replay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.btn-fab-replay.active {
-  background: #00E5FF !important;
-  color: #0D1117 !important;
-  border-color: #0D1117 !important;
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.6) !important;
-}
-@media (min-width: 769px) {
-  .btn-fab-replay {
-    display: none !important;
-  }
+  display: none !important;
 }
 
 @media (max-width: 768px) {

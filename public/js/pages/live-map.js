@@ -1,5 +1,5 @@
 async function renderLiveMap(params) {
-  loadCss('/css/map.css?v=70');
+  loadCss('/css/map.css?v=71');
 
   const eventId  = params.eventId;
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -252,10 +252,6 @@ async function renderLiveMap(params) {
             </button>
 
             ${isAdmin ? `
-            <!-- Time Machine Replay Toggle FAB (Admin Only) -->
-            <button class="map-fab-btn btn-fab-replay" id="btnFabReplay" title="Buka Replay Time Machine" aria-label="Toggle Replay">
-              <span class="fab-icon" aria-hidden="true">⏪</span>
-            </button>
             <a href="/admin/events/${eventId}" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard"><span class="fab-icon" aria-hidden="true">←</span></a>
             ` : ''}
           </div>
