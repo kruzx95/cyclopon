@@ -25,6 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/panduan', () => Router.navigate('/guide'));
 
+  // ── Public Event Registration ──
+  Router.register('/register', async (params) => {
+    await loadPageDeps(
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js'],
+      ['/css/register.css']
+    );
+    renderRegisterPage(params);
+  });
+
+  Router.register('/daftar', () => Router.navigate('/register'));
+
   // ── Rider flow ──
   Router.register('/r/:token', async (params) => {
     const token = params.token;

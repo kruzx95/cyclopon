@@ -404,6 +404,33 @@ label {
   border-color: #1C3E24;
 }
 
+.btn-register-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #1C3E24;
+  color: #FFFFFF;
+  border: 1.5px solid #1C3E24;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(28, 62, 36, 0.2);
+}
+.btn-register-nav:hover {
+  background: #255230;
+  border-color: #255230;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+.btn-register-nav .nav-label-short {
+  display: none;
+}
+
 .btn-admin-nav {
   display: inline-flex;
   align-items: center;
@@ -1577,6 +1604,33 @@ label {
   border-color: #1C3E24;
 }
 
+.btn-register-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #1C3E24;
+  color: #FFFFFF;
+  border: 1.5px solid #1C3E24;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(28, 62, 36, 0.2);
+}
+.btn-register-nav:hover {
+  background: #255230;
+  border-color: #255230;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+.btn-register-nav .nav-label-short {
+  display: none;
+}
+
 .btn-admin-nav {
     padding: 6px 12px;
     font-size: 11px;
@@ -1645,6 +1699,33 @@ label {
   background: #1C3E24;
   color: #FFFFFF;
   border-color: #1C3E24;
+}
+
+.btn-register-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #1C3E24;
+  color: #FFFFFF;
+  border: 1.5px solid #1C3E24;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(28, 62, 36, 0.2);
+}
+.btn-register-nav:hover {
+  background: #255230;
+  border-color: #255230;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+.btn-register-nav .nav-label-short {
+  display: none;
 }
 
 .btn-admin-nav {
@@ -2247,6 +2328,15 @@ label {
     gap: 0;
   }
   .btn-guide-nav .nav-label-full {
+    display: none;
+  }
+  .btn-register-nav {
+    padding: 7px 10px;
+    height: 34px;
+    gap: 5px;
+    font-size: 10.5px;
+  }
+  .btn-register-nav .nav-label-full {
     display: none;
   }
   .btn-admin-nav {
