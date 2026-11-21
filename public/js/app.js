@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Official Guide & Documentation Page ──
   Router.register('/guide', async () => {
-    await loadPageDeps(['/js/pages/guide.js?v=83']);
+    await loadPageDeps(['/js/pages/guide.js?v=86']);
     renderGuide();
   });
 
@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Public Event Registration ──
   Router.register('/register', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=83'],
-      ['/css/register.css?v=83']
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=86'],
+      ['/css/register.css?v=86']
     );
     renderRegisterPage(params);
   });
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   Router.register('/rider/setup', async () => {
-    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js?v=83'], ['/css/rider.css']);
+    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js?v=86'], ['/css/rider.css']);
     renderRiderSetup();
   });
 

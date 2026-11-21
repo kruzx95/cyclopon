@@ -31,12 +31,15 @@ function getPublicTraccarConfig(req, rider) {
   const proto = req.headers['x-forwarded-proto'] || (req.secure ? 'https' : 'http');
   const publicHost = process.env.TRACCAR_PUBLIC_HOST || process.env.DOMAIN || hostHeader;
 
+  let rawBib = rider.traccar_device_id ? String(rider.traccar_device_id) : String(rider.bib || '001');
+  const bib3Digit = (/^\d+$/.test(rawBib) && rawBib.length < 3) ? rawBib.padStart(3, '0') : rawBib;
+
   return {
     serverUrl:        `${proto}://${publicHost}`,
     osmandUrl:        `${proto}://${publicHost}/api/osmand`,
     osmandPort:       Number(process.env.TRACCAR_OSMAND_PORT || 5055),
-    deviceIdentifier: rider.traccar_device_id ? String(rider.traccar_device_id) : String(rider.bib),
-    interval:         10,
+    deviceIdentifier: bib3Digit,
+    interval:         45,
   };
 }
 
@@ -199,6 +202,9 @@ router.post('/rider/register', registerRateLimiter, (req, res) => {
   const existingBibs = new Set(existing.map(r => String(r.bib).toUpperCase()));
 
   let cleanBib = bib ? String(bib).trim().toUpperCase() : '';
+  if (cleanBib && /^\d+$/.test(cleanBib) && cleanBib.length < 3) {
+    cleanBib = cleanBib.padStart(3, '0');
+  }
   if (!cleanBib) {
     // Auto-generate BIB if not provided: 001, 002, 003...
     let nextNum = existing.length + 1;

@@ -31,6 +31,15 @@ function renderRiderSetup() {
   const osmandEndpointUrl = traccar.osmandUrl || `${window.location.origin}/api/osmand`;
   const osmandUrl = `http://${hostClean}:${traccar.osmandPort}`;
 
+  const bib3Digit = (/^\d+$/.test(String(rider.bib || '')) && String(rider.bib).length < 3)
+    ? String(rider.bib).padStart(3, '0')
+    : String(rider.bib || '001');
+  const traccarQuery = `url=${encodeURIComponent(osmandEndpointUrl)}&id=${encodeURIComponent(bib3Digit)}&interval=45&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
+  const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const traccarDeepLinkUrl = isIosDevice
+    ? `org.traccar.client://config?${traccarQuery}`
+    : `intent://config?${traccarQuery}#Intent;scheme=org.traccar.client;package=org.traccar.client;end`;
+
   const nameParts = (rider.name || 'Rider').trim().split(/\s+/);
   const riderInitials = nameParts.length > 1
     ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
@@ -190,10 +199,13 @@ function renderRiderSetup() {
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
+              <a href="${traccarDeepLinkUrl}" id="btnHubTraccarDeepLink" class="btn-hub-primary" style="font-size:12px;padding:9px;text-align:center;background:#047857;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;border-radius:8px">
+                <span>⚡ Buka &amp; Setting Otomatis (1-Klik)</span>
+              </a>
               <button id="btnCopyTraccarConfig" class="btn-hub-secondary" style="font-size:11px;padding:8px">
                 📋 Salin URL &amp; Device ID
               </button>
-              <a href="/guide#traccarGuideSection" data-link class="btn-hub-primary" style="font-size:11px;padding:8px;text-align:center">
+              <a href="/guide#traccarGuideSection" data-link class="btn-hub-secondary" style="font-size:11px;padding:8px;text-align:center">
                 Lihat Panduan Lengkap →
               </a>
             </div>
@@ -387,6 +399,17 @@ function renderRiderSetup() {
   }
 
   // Copy Traccar Client Configuration
+  const btnHubDeepLink = document.getElementById('btnHubTraccarDeepLink');
+  if (btnHubDeepLink) {
+    btnHubDeepLink.addEventListener('click', (e) => {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (!isMobile) {
+        e.preventDefault();
+        showToast('Tautan 1-Klik membuka aplikasi Traccar Client di ponsel Anda.', 'info');
+      }
+    });
+  }
+
   const btnCopyTraccar = document.getElementById('btnCopyTraccarConfig');
   if (btnCopyTraccar) {
     btnCopyTraccar.addEventListener('click', () => {

@@ -343,9 +343,11 @@ function renderGuide() {
                   <div class="guide-callout-text">
                     <div class="guide-callout-title">Location accuracy &amp; Interval Detik</div>
                     <ul class="step-checklist" style="margin-top:6px">
-                      <li><strong>Location accuracy:</strong> Pilih <code>High</code> atau <code>Highest</code> untuk akurasi antena satelit GPS maksimal.</li>
-                      <li><strong>Interval:</strong> Isi <code>10</code> detik (balap/sprint/tanjakan) atau <code>30</code> detik (ultra cycling/brevet 200km–1200km, sangat hemat baterai).</li>
-                      <li><strong>Distance:</strong> Wajib isi <code>0</code> meter agar koordinat tetap terkirim saat berhenti di lampu merah / pos istirahat.</li>
+                      <li><strong>Location accuracy:</strong> Pilih <code>Highest</code> untuk akurasi antena satelit GPS maksimal.</li>
+                      <li><strong>Distance (meters):</strong> Isi <code>0</code> (Disabled) agar koordinat terus terpantau stabil.</li>
+                      <li><strong>Interval (seconds):</strong> Isi <code>45</code> detik (standar resmi CycloPon, seimbang antara refresh live map &amp; ketahanan baterai HP seharian).</li>
+                      <li><strong>Angle (degrees):</strong> Isi <code>0</code> (Disabled).</li>
+                      <li><strong>Stationary heartbeat:</strong> Isi <code>0</code> (Disabled).</li>
                     </ul>
                   </div>
                 </div>
@@ -353,10 +355,14 @@ function renderGuide() {
                 <div class="guide-callout-row">
                   <span class="guide-callout-bullet green">4</span>
                   <div class="guide-callout-text">
-                    <div class="guide-callout-title">Offline Buffering (Anti Blank Spot)</div>
-                    <div>
-                      Aktifkan centang <strong>Offline buffering: ON</strong> agar smartphone tetap merekam rute di memori internal saat melewati rute tanpa sinyal seluler, dan otomatis diunggah begitu sinyal pulih.
-                    </div>
+                    <div class="guide-callout-title">Pengaturan Lanjutan (Advanced Settings)</div>
+                    <ul class="step-checklist" style="margin-top:6px">
+                      <li><strong>Advanced settings:</strong> Aktifkan <code>ON</code>.</li>
+                      <li><strong>Offline buffering:</strong> Aktifkan <code>ON</code> agar smartphone tetap merekam rute di memori internal saat melewati blank spot / tanpa sinyal.</li>
+                      <li><strong>Wake lock:</strong> Atur <code>OFF</code>.</li>
+                      <li><strong>Stop detection:</strong> Atur <code>OFF</code>.</li>
+                      <li><strong>Use system location:</strong> Aktifkan <code>ON</code>.</li>
+                    </ul>
                   </div>
                 </div>
               </div>

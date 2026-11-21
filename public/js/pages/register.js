@@ -114,20 +114,20 @@ async function renderRegisterPage(params) {
             <div class="interval-section">
               <div class="interval-header">
                 <span class="interval-label">INTERVAL PENGIRIMAN GPS</span>
-                <span class="interval-rec-tag">Disarankan: 10s</span>
+                <span class="interval-rec-tag">Disarankan: 45s</span>
               </div>
               <div class="interval-grid">
-                <button type="button" class="interval-pill-btn active" data-interval="10">
-                  <span class="interval-btn-sec">⚡ 10 Detik</span>
-                  <span class="interval-btn-desc">Balap / Standar</span>
-                </button>
-                <button type="button" class="interval-pill-btn" data-interval="15">
-                  <span class="interval-btn-sec">🚴 15 Detik</span>
-                  <span class="interval-btn-desc">Touring</span>
+                <button type="button" class="interval-pill-btn active" data-interval="45">
+                  <span class="interval-btn-sec">⚡ 45 Detik</span>
+                  <span class="interval-btn-desc">Standar Endurance (Hemat Baterai)</span>
                 </button>
                 <button type="button" class="interval-pill-btn" data-interval="30">
-                  <span class="interval-btn-sec">🔋 30 Detik</span>
-                  <span class="interval-btn-desc">Hemat Baterai</span>
+                  <span class="interval-btn-sec">🚴 30 Detik</span>
+                  <span class="interval-btn-desc">Sedang</span>
+                </button>
+                <button type="button" class="interval-pill-btn" data-interval="15">
+                  <span class="interval-btn-sec">🔋 15 Detik</span>
+                  <span class="interval-btn-desc">Balap Sprint</span>
                 </button>
               </div>
             </div>
@@ -392,7 +392,7 @@ async function renderRegisterPage(params) {
   let currentEventId = null;
   let currentRiders = [];
   let registeredRiderData = null;
-  let currentInterval = 10;
+  let currentInterval = 45;
 
   // ── Elements ──
   const eventSelect = document.getElementById('regEventSelect');
@@ -424,17 +424,31 @@ async function renderRegisterPage(params) {
 
   // ── Update Traccar Auto-Config (QR & Deep Link) ──
   function updateTraccarConfig(intervalSec) {
-    if (!registeredRiderData) return;
-    currentInterval = intervalSec;
+    if (intervalSec) currentInterval = intervalSec;
 
-    const { rider, traccar } = registeredRiderData;
+    const rider = registeredRiderData?.rider || { bib: '001' };
+    const traccar = registeredRiderData?.traccar || {};
     const osmandUrl = traccar?.osmandUrl || `${window.location.origin}/api/osmand`;
-    const bib = rider.bib;
+    
+    // Normalize numeric bib to 3 digits (e.g. 001)
+    let rawBib = rider.bib != null ? String(rider.bib).trim() : '001';
+    const bib = (/^\d+$/.test(rawBib) && rawBib.length < 3) ? rawBib.padStart(3, '0') : rawBib;
 
-    // Traccar Configuration Strings
-    const qrText = `url=${osmandUrl}&id=${bib}&interval=${currentInterval}&accuracy=highest`;
-    const intentUrl = `intent://config?url=${encodeURIComponent(osmandUrl)}&id=${bib}&interval=${currentInterval}&accuracy=highest#Intent;scheme=org.traccar.client;package=org.traccar.client;end`;
-    const iosUrl = `org.traccar.client://config?url=${encodeURIComponent(osmandUrl)}&id=${bib}&interval=${currentInterval}&accuracy=highest`;
+    // Configuration matching Traccar Client settings screenshot:
+    // - url: Server URL (https://cyclopon.my.id/api/osmand)
+    // - id: Device identifier 3-digit (001)
+    // - interval: 45
+    // - accuracy: highest
+    // - distance: 0 (Disabled)
+    // - angle: 0 (Disabled)
+    // - heartbeat: 0 (Disabled)
+    // - buffer: true (Offline buffering: ON)
+    // - wakelock: false (Wake lock: OFF)
+    // - stopDetection: false (Stop detection: OFF)
+    const configQuery = `url=${encodeURIComponent(osmandUrl)}&id=${encodeURIComponent(bib)}&interval=${currentInterval}&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
+    const qrText = `url=${osmandUrl}&id=${bib}&interval=${currentInterval}&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
+    const intentUrl = `intent://config?${configQuery}#Intent;scheme=org.traccar.client;package=org.traccar.client;end`;
+    const iosUrl = `org.traccar.client://config?${configQuery}`;
 
     // Detect iOS vs Android
     const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -444,6 +458,17 @@ async function renderRegisterPage(params) {
     const btnDeepLink = document.getElementById('btnTraccarDeepLink');
     if (btnDeepLink) {
       btnDeepLink.href = deepLinkUrl;
+      btnDeepLink.onclick = function(e) {
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (!isMobile) {
+          e.preventDefault();
+          if (typeof showToast === 'function') {
+            showToast('Tautan 1-Klik membuka aplikasi Traccar Client di ponsel. Di komputer, silakan scan QR code di samping menggunakan aplikasi Traccar Client.', 'info');
+          }
+          const qrSec = document.getElementById('traccarQrGraphic');
+          if (qrSec) qrSec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      };
     }
 
     // Update QR Code SVG
@@ -626,7 +651,7 @@ async function renderRegisterPage(params) {
       }
 
       // Initialize Traccar Auto-Config
-      updateTraccarConfig(10);
+      updateTraccarConfig(45);
 
       // Transition views: hide form, show success
       formCard.style.display = 'none';
@@ -658,7 +683,7 @@ async function renderRegisterPage(params) {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.interval-pill-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const intervalSec = Number(btn.dataset.interval) || 10;
+      const intervalSec = Number(btn.dataset.interval) || 45;
       updateTraccarConfig(intervalSec);
     });
   });
@@ -686,6 +711,7 @@ async function renderRegisterPage(params) {
   });
 
   // Initial load
+  updateTraccarConfig(45);
   loadEvents();
 }
 
