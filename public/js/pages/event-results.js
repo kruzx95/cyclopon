@@ -472,7 +472,6 @@ async function renderEventResults(params) {
               <!-- Header Brand & Seal -->
               <div class="cert-top-bar" style="display:flex;align-items:center;justify-content:space-between">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <img src="/icons/logo-emblem-dark.svg" alt="CYCLOPON" width="22" height="22">
                   <div class="cert-organization-tag">
                     // CYCLOPON OFFICIAL TIMEKEEPING & HOMOLOGATION
                   </div>
@@ -555,7 +554,6 @@ async function renderEventResults(params) {
                 </div>
 
                 <div class="cert-verification-stamp ${isFinisher ? 'finisher' : ''}">
-                  <img src="/icons/logo-emblem-dark.svg" alt="CYCLOPON" width="26" height="26" style="opacity:0.85;margin-bottom:2px">
                   <span class="stamp-main">✓ CYCLOPON AUDITED</span>
                   <span class="stamp-sub">HOMOLOGATION VERIFIED</span>
                 </div>

@@ -53,8 +53,7 @@ function renderExistingSession(config) {
           <span class="login-live-pill"><span class="pulse-dot"></span> SESI AKTIF</span>
         </div>
         
-        <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px">
-          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="36" height="36" style="border-radius:8px;box-shadow:0 3px 8px rgba(13,17,23,0.15)">
+        <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center">
           <span style="font-family:'Inter',system-ui,sans-serif;font-size:24px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
         </div>
         <h1 class="login-title">Sesi Aktif Ditemukan</h1>
@@ -134,8 +133,7 @@ async function renderLoginForm() {
 
         <!-- Header Center -->
         <div class="login-header-center">
-          <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px">
-            <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="36" height="36" style="border-radius:8px;box-shadow:0 3px 8px rgba(13,17,23,0.15)">
+          <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center">
             <span style="font-family:'Inter',system-ui,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
           </div>
           <h1 class="login-title">Akses Peserta &amp; Panitia</h1>

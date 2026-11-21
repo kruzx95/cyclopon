@@ -15,7 +15,6 @@ function renderGuide() {
       <!-- ── Pro Editorial Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
-          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="brand-logo-emblem" width="32" height="32">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
             <span class="brand-spec-label">// DOKUMENTASI PANDUAN</span>
@@ -521,7 +520,7 @@ function renderGuide() {
               <div class="step-card-num">LANGKAH 1</div>
               <div class="step-card-title">Pilih Event &amp; Buka Roster</div>
               <p class="step-card-desc">
-                Cari event balap di daftar <strong>Event Sedang Berlangsung</strong> beranda, lalu klik tombol <strong>👥 DAFTAR &amp; ROSTER</strong> untuk membuka halaman direktori resmi.
+                Cari event balap di daftar <strong>Event Sedang Berlangsung</strong> beranda, lalu klik tombol <strong>👥 LIHAT ROSTER</strong> untuk membuka halaman direktori resmi.
               </p>
               <div class="step-code-box" style="background:#F8FAFC;border:1px solid #CBD5E1;color:#0D1117">
                 <span style="font-size:12px;font-weight:800;color:#1C3E24">STAGE LIVE // EVENT DOSSIER</span>
@@ -537,7 +536,7 @@ function renderGuide() {
               <div class="step-card-num">LANGKAH 2</div>
               <div class="step-card-title">Isi Formulir Pendaftaran</div>
               <p class="step-card-desc">
-                Pada halaman event, klik tombol <strong>"+ GABUNG / DAFTAR"</strong> pada bilah bawah (sticky bar) lalu lengkapi data singkat berikut:
+                Klik tombol <strong>"DAFTAR EVENT"</strong> di navigasi atas atau tombol <strong>"+ DAFTAR EVENT INI"</strong> pada bilah bawah, lalu lengkapi data singkat berikut:
               </p>
               <ul class="step-checklist">
                 <li><strong>Nama Lengkap:</strong> Ditampilkan di Leaderboard &amp; Live Radar.</li>
@@ -803,7 +802,6 @@ function renderGuide() {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
-              <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="footer-logo" width="30" height="30">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>

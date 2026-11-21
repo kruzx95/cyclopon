@@ -8,7 +8,6 @@ function renderLanding() {
       <!-- ── Pro Editorial Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
-          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="brand-logo-emblem" width="32" height="32">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
           </div>
@@ -245,7 +244,6 @@ function renderLanding() {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
-              <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="footer-logo" width="30" height="30">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
@@ -518,8 +516,8 @@ function renderLanding() {
           </div>
 
           <div class="featured-event-actions">
-            <a href="/events/${ev.id}" data-link class="btn-gpx-chip btn-card-action-roster" data-event-id="${ev.id}" style="color:#0D1117;border-color:#0D1117;background:#FFFFFF;font-weight:800" title="Lihat Aktivitas & Roster Peserta (Kuyy Style)">
-              <span>👥 DAFTAR &amp; ROSTER</span>
+            <a href="/events/${ev.id}" data-link class="btn-gpx-chip btn-card-action-roster" data-event-id="${ev.id}" style="color:#0D1117;border-color:#0D1117;background:#FFFFFF;font-weight:800" title="Lihat Roster Peserta &amp; Info Event">
+              <span>👥 LIHAT ROSTER</span>
             </a>
             <a href="/watch/${ev.id}" data-link class="btn-watch-action btn-card-action-radar" data-event-id="${ev.id}" title="Buka Live Map Penonton">
               <span>BUKA RADAR</span>

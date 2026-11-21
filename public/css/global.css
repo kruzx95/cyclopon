@@ -274,21 +274,24 @@ label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
+  padding: 0 max(24px, calc((100% - 1160px) / 2 + 24px));
   border-bottom: 1px solid #E5E7EB;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 50;
+  box-sizing: border-box;
 }
 
 .landing-nav .brand-title {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  height: 36px;
+  line-height: 1;
   text-decoration: none;
   color: #0D1117;
+  gap: 8px;
 }
 
 .brand-logo-emblem {
@@ -305,19 +308,21 @@ label {
 }
 
 .brand-name-group {
-  display: flex;
-  align-items: baseline;
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
+  height: 36px;
 }
 .brand-name {
-  font-size: 21px;
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: -0.04em;
   color: #0D1117;
   transition: opacity 0.2s ease;
+  line-height: 1;
 }
 .brand-title:hover .brand-name {
-  opacity: 0.8;
+  opacity: 0.75;
 }
 .brand-spec-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

@@ -13,13 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=63']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=83']);
     renderLanding();
   });
 
   // ── Official Guide & Documentation Page ──
   Router.register('/guide', async () => {
-    await loadPageDeps(['/js/pages/guide.js?v=77']);
+    await loadPageDeps(['/js/pages/guide.js?v=83']);
     renderGuide();
   });
 
@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Public Event Registration ──
   Router.register('/register', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=81'],
-      ['/css/register.css?v=81']
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=83'],
+      ['/css/register.css?v=83']
     );
     renderRegisterPage(params);
   });
@@ -72,12 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   Router.register('/rider', async () => {
-    await loadPageDeps(['/js/pages/rider-login.js'], ['/css/rider.css']);
+    await loadPageDeps(['/js/pages/rider-login.js?v=83'], ['/css/rider.css']);
     renderRiderLogin();
   });
 
   Router.register('/rider/setup', async () => {
-    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js'], ['/css/rider.css']);
+    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js?v=83'], ['/css/rider.css']);
     renderRiderSetup();
   });
 
@@ -103,16 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Event Activity & Rider Roster Page (Kuyy.app Style) ──
   Router.register('/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js'],
-      ['/css/activity.css']
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=83'],
+      ['/css/activity.css?v=83']
     );
     renderEventActivity(params);
   });
 
   Router.register('/activities/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js'],
-      ['/css/activity.css']
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=83'],
+      ['/css/activity.css?v=83']
     );
     renderEventActivity(params);
   });
@@ -120,8 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Official Event Results & Brevet Certificate ──
   Router.register('/events/:id/results', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/pages/event-results.js'],
-      ['/css/results.css']
+      ['/js/lib/utils.js', '/js/pages/event-results.js?v=83'],
+      ['/css/results.css?v=83']
     );
     renderEventResults(params);
   });
@@ -129,32 +129,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Admin panel ──
   Router.register('/admin', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js'],
-      ['/css/admin.css']
+      ['/js/pages/admin-dashboard.js?v=83'],
+      ['/css/admin.css?v=83']
     );
     renderAdminLogin();
   });
 
   Router.register('/admin/dashboard', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js'],
-      ['/css/admin.css']
+      ['/js/pages/admin-dashboard.js?v=83'],
+      ['/css/admin.css?v=83']
     );
     renderAdminDashboard();
   });
 
   Router.register('/admin/sos', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js', '/js/pages/admin-sos.js'],
-      ['/css/admin.css']
+      ['/js/pages/admin-dashboard.js?v=83', '/js/pages/admin-sos.js?v=83'],
+      ['/css/admin.css?v=83']
     );
     renderAdminSos();
   });
 
   Router.register('/admin/event-reports', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js', '/js/pages/admin-event-reports.js'],
-      ['/css/admin.css']
+      ['/js/pages/admin-dashboard.js?v=83', '/js/pages/admin-event-reports.js?v=83'],
+      ['/css/admin.css?v=83']
     );
     renderAdminEventReports(params);
   });

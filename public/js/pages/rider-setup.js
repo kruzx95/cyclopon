@@ -60,8 +60,7 @@ function renderRiderSetup() {
             </svg>
             <span>Beranda</span>
           </a>
-          <div class="hub-brand-group" style="display:flex;align-items:center;gap:10px">
-            <img src="/icons/logo-emblem.svg" alt="CYCLOPON" width="28" height="28" style="border-radius:6px;box-shadow:0 2px 6px rgba(13,17,23,0.15)">
+          <div class="hub-brand-group" style="display:flex;align-items:center">
             <h1 class="hub-title"><span style="font-size:18px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span> <span class="hub-title-accent" style="font-size:12px;font-weight:800;color:#64748B">// RIDER HUB</span></h1>
           </div>
         </div>

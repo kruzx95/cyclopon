@@ -15,7 +15,6 @@ async function renderEventActivity(params) {
     <div class="activity-page-wrapper">
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
-          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="brand-logo-emblem" width="32" height="32">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
             <span class="brand-spec-label">// PRO GPS TELEMETRY</span>
@@ -108,7 +107,6 @@ async function renderEventActivity(params) {
         <!-- ── Pro Editorial Top Nav (Consistent with Beranda) ── -->
         <nav class="landing-nav">
           <a href="/" data-link class="brand-title">
-            <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="brand-logo-emblem" width="32" height="32">
             <div class="brand-name-group">
               <span class="brand-name">CYCLOPON</span>
               <span class="brand-spec-label">// PRO GPS TELEMETRY</span>
@@ -300,7 +298,7 @@ async function renderEventActivity(params) {
                 <div style="background:#FFFFFF;border:1.5px dashed #D0C9BF;border-radius:10px;padding:48px 24px;text-align:center;color:#6B7280">
                   <div style="font-size:36px;margin-bottom:12px">🔍</div>
                   <div style="font-weight:900;color:#0D1117;font-size:16px;letter-spacing:-0.02em;margin-bottom:6px">Tidak Ada Peserta yang Cocok</div>
-                  <div style="font-size:13px">${searchQuery ? `Tidak ada hasil pencarian untuk "<strong>${escapeHtml(searchQuery)}</strong>"` : 'Belum ada peserta terdaftar. Daftarkan diri Anda sekarang!'}</div>
+                  <div style="font-size:13px">${searchQuery ? `Tidak ada hasil pencarian untuk "<strong>${escapeHtml(searchQuery)}</strong>"` : `Belum ada peserta terdaftar. Daftarkan diri Anda melalui <a href="/register?event=${event.id}" data-link style="color:#0D1117;font-weight:800;text-decoration:underline">Pendaftaran Event</a>.`}</div>
                 </div>
               `}
             </div>
@@ -353,7 +351,6 @@ async function renderEventActivity(params) {
           <div class="footer-inner">
             <div class="footer-left">
               <a href="/" data-link class="footer-brand-lockup">
-                <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="footer-logo" width="30" height="30">
                 <div class="footer-brand-info">
                   <span class="footer-brand-title">CYCLOPON</span>
                   <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
@@ -388,10 +385,10 @@ async function renderEventActivity(params) {
                 <span>PANTAU RADAR</span>
               </a>
 
-              <button class="btn-sticky-join" id="btnOpenJoinModal">
-                <span>+ GABUNG / DAFTAR</span>
+              <a href="/register?event=${event.id}" data-link class="btn-sticky-join" title="Daftar Menjadi Peserta Event Ini">
+                <span>+ DAFTAR EVENT INI</span>
                 <span class="cta-arrow-icon">→</span>
-              </button>
+              </a>
             </div>
           </div>
         </div>

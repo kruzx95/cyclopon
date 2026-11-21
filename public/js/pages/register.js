@@ -12,7 +12,6 @@ async function renderRegisterPage(params) {
       <!-- ── Pro Editorial Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
-          <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="brand-logo-emblem" width="32" height="32">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
             <span class="brand-spec-label">// PENDAFTARAN PESERTA</span>
@@ -355,7 +354,6 @@ async function renderRegisterPage(params) {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
-              <img src="/icons/logo-emblem.svg" alt="CYCLOPON" class="footer-logo" width="30" height="30">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
