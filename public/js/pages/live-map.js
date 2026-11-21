@@ -1469,13 +1469,6 @@ async function renderLiveMap(params) {
         <div style="font-size:12px;color:#4B5563;margin-top:2px">${data.pace ? `${data.pace} km/jam` : '—'} · ${cotStatusLabel(data.status)}</div>
         <div style="font-size:12px;color:#4B5563;margin-top:2px">Mulai ${data.start_time || '—'} WIB · Selesai ±${data.end_time || '—'} WIB</div>
         <div style="font-size:11px;color:#6B7280;margin-top:4px">Rute ${Number(data.route_length_km || 0).toFixed(1)} km · ${data.dnf_count || 0} rider DNF</div>
-        ${isAdmin ? `
-          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #E5E7EB">
-            <button class="btn btn-outline btn-quick-reset-cot" style="font-size:11px;padding:5px 10px;color:#B91C1C;border-color:#FCA5A5;background:#FEF2F2;width:100%;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px;cursor:pointer;border-radius:6px">
-              🔄 Reset Sesi COT
-            </button>
-          </div>
-        ` : ''}
       `;
       cotMarker.bindPopup(popup, { autoPan: false, closeButton: true, offset: [0, -12], maxWidth: 260 });
 
@@ -1506,47 +1499,6 @@ async function renderLiveMap(params) {
   refreshVirtualCot();
   cotTimer = setInterval(refreshVirtualCot, 8000);
   window.addEventListener('beforeunload', stopCotTimer);
-
-  if (isAdmin) {
-    const mapContainer = map.getContainer();
-    mapContainer.addEventListener('click', async (e) => {
-      const btn = e.target.closest('.btn-quick-reset-cot');
-      if (!btn) return;
-
-      const confirmMsg = 'Reset Virtual COT untuk event ini?\n\n' +
-        '• Marker kembali ke awal rute (KM 0.0) pada menit berjalan (WIB)\n' +
-        '• Jam mulai diperbarui ke menit saat ini\n' +
-        '• Mode COT diaktifkan ke live bila sebelumnya nonaktif\n' +
-        '• Semua catatan DNF Virtual COT akan dihapus bersih (rider diputihkan kembali)\n\n' +
-        'Lanjutkan reset sekarang?';
-      if (!confirm(confirmMsg)) return;
-
-      btn.disabled = true;
-      btn.textContent = 'Mereset…';
-
-      try {
-        const res = await fetch(`/api/events/${eventId}/virtual-cot/reset`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'restart_now' }),
-          credentials: 'include'
-        });
-        const result = await res.json();
-        if (!res.ok) {
-          alert(result.error || 'Gagal mereset Virtual COT');
-          btn.disabled = false;
-          btn.textContent = '🔄 Reset Sesi COT';
-          return;
-        }
-        if (cotMarker) cotMarker.closePopup();
-        await refreshVirtualCot();
-      } catch (err) {
-        alert('Gagal mereset Virtual COT');
-        btn.disabled = false;
-        btn.textContent = '🔄 Reset Sesi COT';
-      }
-    });
-  }
 
   // ── Checkpoint Markers & Cut-Off Time (COT) Engine ──
   const cpMarkers = [];
