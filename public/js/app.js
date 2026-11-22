@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   Router.register('/rider/setup', async () => {
-    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js?v=90'], ['/css/rider.css?v=90']);
+    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js?v=91'], ['/css/rider.css?v=91']);
     renderRiderSetup();
   });
 
