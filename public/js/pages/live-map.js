@@ -30,6 +30,13 @@ async function renderLiveMap(params) {
       <path d="m8 3 4 8 5-5 5 15H2L8 3z"></path>
       <path d="M4.14 15.08c2.62-1.57 5.24-1.43 7.86.42 2.74 1.94 5.49 2 8.23.19"></path>
     </svg>`,
+    zoomIn: `<svg class="fab-svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>`,
+    zoomOut: `<svg class="fab-svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>`,
     osmMap: `<svg class="layer-opt-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
       <line x1="9" y1="3" x2="9" y2="18"></line>
@@ -78,6 +85,9 @@ async function renderLiveMap(params) {
       <!-- ── Unified Top Navigation Bar ── -->
       <header class="live-map-header ${isAdmin ? 'admin-mode' : 'spectator-mode'}">
         <div class="header-left">
+          <a href="/" data-link class="header-back-btn" title="Kembali ke Beranda" aria-label="Kembali ke Beranda">
+            <span class="back-arrow" aria-hidden="true">←</span>
+          </a>
           <a href="/" data-link class="header-logo" title="Kembali ke Beranda CycloPon">
             <span class="logo-text">CYCLOPON</span>
           </a>
@@ -241,19 +251,26 @@ async function renderLiveMap(params) {
               </div>
             </div>
 
-            <!-- Fit Route FAB -->
-            <button class="map-fab-btn" id="btnFitRoute" title="Pusatkan peta ke seluruh lintasan GPX" aria-label="Fit Rute">
-              ${ICONS.fitRoute}
-            </button>
-
             <!-- Elevation Profile Toggle FAB -->
             <button class="map-fab-btn ${isMobile ? '' : 'active'}" id="btnToggleElevation" title="Buka / Tutup Profil Elevasi" aria-label="Toggle Elevasi">
               ${ICONS.elevation}
             </button>
 
-            ${isAdmin ? `
-            <a href="/" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Beranda" aria-label="Kembali ke Beranda"><span class="fab-icon" aria-hidden="true">←</span></a>
-            ` : ''}
+            <!-- Center Rider / Fit Route FAB -->
+            <button class="map-fab-btn" id="btnFitRoute" title="Pusatkan peta ke posisi rider / seluruh lintasan" aria-label="Pusatkan Peta">
+              ${ICONS.fitRoute}
+            </button>
+
+            <!-- Zoom Controls (In / Out Pill) -->
+            <div class="map-zoom-group" id="mapZoomGroup">
+              <button type="button" class="map-fab-btn zoom-btn zoom-in" id="btnZoomIn" title="Perbesar Peta" aria-label="Zoom In">
+                ${ICONS.zoomIn}
+              </button>
+              <div class="zoom-divider"></div>
+              <button type="button" class="map-fab-btn zoom-btn zoom-out" id="btnZoomOut" title="Perkecil Peta" aria-label="Zoom Out">
+                ${ICONS.zoomOut}
+              </button>
+            </div>
           </div>
 
           <!-- ── Sponsor Logo Strip (di atas Leaderboard) ── -->
@@ -804,13 +821,68 @@ async function renderLiveMap(params) {
   });
 
   let polylineBounds = null;
-  document.getElementById('btnFitRoute').addEventListener('click', () => {
-    if (polylineBounds) {
-      map.fitBounds(polylineBounds, { padding: [40, 40] });
-    } else {
-      map.setView([-2.5, 118], 5);
+
+  function getFocusedRiderLatLng() {
+    let myRiderId = null;
+    let myBib = null;
+    try {
+      const cfg = JSON.parse(sessionStorage.getItem('riderConfig') || localStorage.getItem('riderConfig') || '{}');
+      if (cfg?.rider && Number(cfg.rider.event_id) === Number(eventId)) {
+        myRiderId = cfg.rider.id;
+        myBib = cfg.rider.bib;
+      }
+    } catch {}
+
+    if (!myBib && targetBibParam) {
+      myBib = targetBibParam;
     }
-  });
+
+    if (myRiderId && markerById[myRiderId]?.getLatLng) {
+      return markerById[myRiderId].getLatLng();
+    }
+    if (myBib) {
+      const clean = String(myBib).trim();
+      const m = markerById[clean] || (bibToRider[clean] && markerById[bibToRider[clean].id]);
+      if (m?.getLatLng) return m.getLatLng();
+    }
+    return null;
+  }
+
+  const btnFitRoute = document.getElementById('btnFitRoute');
+  if (btnFitRoute) {
+    btnFitRoute.addEventListener('click', () => {
+      const riderPos = getFocusedRiderLatLng();
+      if (riderPos) {
+        const center = map.getCenter();
+        const distDeg = Math.hypot(center.lat - riderPos.lat, center.lng - riderPos.lng);
+        // Jika sudah terpusat di rider dan zoom dekat, klik kedua menampilkan seluruh lintasan GPX
+        if (distDeg < 0.002 && map.getZoom() >= 14 && polylineBounds) {
+          map.fitBounds(polylineBounds, { padding: [40, 40] });
+        } else {
+          map.setView(riderPos, Math.max(map.getZoom(), 15), { animate: true });
+        }
+      } else if (polylineBounds) {
+        map.fitBounds(polylineBounds, { padding: [40, 40] });
+      } else {
+        map.setView([-2.5, 118], 5);
+      }
+    });
+  }
+
+  // ── Dedicated Zoom Controls (Zoom In & Zoom Out) ──
+  const btnZoomIn = document.getElementById('btnZoomIn');
+  if (btnZoomIn) {
+    btnZoomIn.addEventListener('click', () => {
+      map.zoomIn();
+    });
+  }
+
+  const btnZoomOut = document.getElementById('btnZoomOut');
+  if (btnZoomOut) {
+    btnZoomOut.addEventListener('click', () => {
+      map.zoomOut();
+    });
+  }
 
   // ── Komoot Elevation Drawer & Chart Engine ──
   const btnToggleElevation = document.getElementById('btnToggleElevation');
