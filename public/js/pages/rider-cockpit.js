@@ -182,39 +182,11 @@ async function renderRiderCockpit() {
           </div>
         </div>
         <div class="cockpit-top-actions">
-          <button id="btnToggleWakeLock" class="cockpit-pill-btn" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
-            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar Melek</span>
-          </button>
-          <button id="btnTogglePocket" class="cockpit-pill-btn" title="Mode Kantong Jersey (Background GPS Keep-Alive)">
-            <span id="pocketIcon">🎒</span> <span id="pocketStatusText">Kantong</span>
-          </button>
-          <button id="btnToggleOledPocket" class="cockpit-pill-btn" title="Mode Saku Gelap OLED (Baterai Hemat &amp; Anti-Mati Samsung)">
-            <span>🌙</span> <span id="oledStatusText">Saku Gelap</span>
+          <button id="btnToggleWakeLock" class="cockpit-pill-btn" style="width:100%" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
+            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar Selalu Menyala: AKTIF</span>
           </button>
         </div>
       </div>
-
-      <!-- ── AMOLED Dark Pocket Mode (OLED Saver & Touch Lock) ── -->
-      <div id="pocketOledOverlay" class="pocket-oled-overlay" style="display:none">
-        <div class="oled-lock-header">
-          <span class="oled-pulse-dot"></span>
-          <span class="oled-title">MODE SAKU GELAP (OLED SAVER)</span>
-        </div>
-
-        <div class="oled-metric-box">
-          <div class="oled-distance" id="oledDistVal" style="font-size:32px;font-weight:900;margin-bottom:8px">0.0 km • 00:00:00</div>
-          <div class="oled-acc" id="oledGpsAcc">GPS: Standby</div>
-        </div>
-
-        <div class="oled-instruction-box">
-          <div class="oled-lock-icon">🔒</div>
-          <div class="oled-touch-hint">Layar Terkunci &amp; Gelap (Anti-Kepencet di Saku)</div>
-          <div class="oled-double-tap-prompt">Ketuk layar 2× untuk membuka kunci</div>
-          <button id="btnExitOledMode" class="btn-exit-oled">Buka Layar Cockpit</button>
-        </div>
-      </div>
-
-
 
       <!-- Off-Route Warning Alert Banner -->
       <div id="cockpitOffRouteAlert" class="cockpit-offroute-banner">
@@ -242,33 +214,6 @@ async function renderRiderCockpit() {
         <button id="btnDismissProximityAlert" style="background:rgba(0,0,0,0.25);border:none;color:#FFF;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer">
           OK
         </button>
-      </div>
-
-      <!-- Pocket Mode (Background GPS Keep-Alive) Status Banner -->
-      <div id="cockpitPocketBanner" class="cockpit-pocket-banner">
-        <div class="cockpit-pocket-header">
-          <div class="cockpit-pocket-title">
-            <span>🎒</span> <span>MODE KANTONG JERSEY AKTIF</span>
-          </div>
-          <button id="btnStopPocketMode" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#FFF;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">
-            Matikan
-          </button>
-        </div>
-        <div class="cockpit-pocket-desc">
-          Audio sunyi menjaga GPS tetap aktif. Untuk HP Android/Samsung agar GPS tidak diputus saat dikantongi, gunakan <strong>Mode Saku Gelap</strong>:
-        </div>
-        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-          <button id="btnActivateOledScreen" class="btn-oled-trigger">
-            <span>🌙</span> Kunci Layar Gelap (OLED Saver)
-          </button>
-        </div>
-        <div class="cockpit-pocket-stats">
-          <span>📡 GPS: <strong id="pocketGpsAcc">Mencari...</strong></span>
-          <span>•</span>
-          <span>🚀 Terkirim: <strong id="pocketPointsSent">0 titik</strong></span>
-          <span>•</span>
-          <span>📦 Antrean Offline: <strong id="pocketQueueCount">0</strong></span>
-        </div>
       </div>
 
       <!-- Primary Metrics Grid (4-box High Contrast) -->
@@ -317,11 +262,13 @@ async function renderRiderCockpit() {
       <!-- Target Checkpoint Status Banner -->
       <div class="cockpit-cp-card" id="cockpitCpCard">
         <div class="cockpit-cp-header">
-          <div class="cockpit-cp-title">
-            <span>🚩</span>
-            <span id="cockpitCpName">Menunggu Data Checkpoint...</span>
+          <div class="cockpit-cp-title" style="width:100%;display:flex;align-items:center;justify-content:space-between">
+            <span style="display:inline-flex;align-items:center;gap:8px;min-width:0">
+              <span style="flex-shrink:0">🚩</span>
+              <span id="cockpitCpName" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Menunggu Data Checkpoint...</span>
+            </span>
+            <span id="cockpitCpDistRemain" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--cockpit-muted);flex-shrink:0;margin-left:8px">-- km</span>
           </div>
-          <span id="cockpitCpPill" class="cockpit-cp-status-pill safe">RUTE RESMI</span>
         </div>
 
         <div class="cockpit-cp-progress-bar">
@@ -491,18 +438,18 @@ async function renderRiderCockpit() {
       try {
         cockpitWakeLock = await navigator.wakeLock.request('screen');
         cockpitWakeLock.addEventListener('release', () => {
-          btnWakeLock.classList.remove('wake-active');
-          wakeStatusText.textContent = 'Tidur Normal';
+          btnWakeLock?.classList.remove('wake-active');
+          if (wakeStatusText) wakeStatusText.textContent = 'Layar Selalu Menyala: OFF';
         });
-        btnWakeLock.classList.add('wake-active');
-        wakeStatusText.textContent = 'Layar Melek';
+        btnWakeLock?.classList.add('wake-active');
+        if (wakeStatusText) wakeStatusText.textContent = 'Layar Selalu Menyala: AKTIF';
       } catch (err) {
         console.warn('[Cockpit WakeLock] Failed to request:', err);
-        btnWakeLock.classList.remove('wake-active');
-        wakeStatusText.textContent = 'No Lock';
+        btnWakeLock?.classList.remove('wake-active');
+        if (wakeStatusText) wakeStatusText.textContent = 'Layar Selalu Menyala: OFF';
       }
     } else {
-      wakeStatusText.textContent = 'No Sup';
+      if (wakeStatusText) wakeStatusText.textContent = 'Layar Selalu Menyala (Tidak Didukung)';
     }
   }
 
@@ -513,11 +460,11 @@ async function renderRiderCockpit() {
         cockpitWakeLock = null;
       } catch { /* ignore */ }
     }
-    btnWakeLock.classList.remove('wake-active');
-    wakeStatusText.textContent = 'Tidur Normal';
+    btnWakeLock?.classList.remove('wake-active');
+    if (wakeStatusText) wakeStatusText.textContent = 'Layar Selalu Menyala: OFF';
   }
 
-  btnWakeLock.addEventListener('click', () => {
+  btnWakeLock?.addEventListener('click', () => {
     if (cockpitWakeLock) releaseWakeLock();
     else activateWakeLock();
   });
@@ -757,19 +704,15 @@ async function renderRiderCockpit() {
     lastCoveredKm = currentCoveredKm;
     renderCotWidget(currentCoveredKm);
     const cpCard = document.getElementById('cockpitCpCard');
-    const cpDetails = cpCard?.querySelector('.cockpit-cp-details');
     const cpProgressEl = cpCard?.querySelector('.cockpit-cp-progress-bar');
     let noCpNotice = document.getElementById('cockpitNoCpNotice');
+    const nameEl = document.getElementById('cockpitCpName');
+    const distRemainEl = document.getElementById('cockpitCpDistRemain');
+    const fillEl = document.getElementById('cockpitCpProgressFill');
 
     if (!checkpoints.length) {
-      const nameEl = document.getElementById('cockpitCpName');
       if (nameEl) nameEl.textContent = '🏁 Rute Bebas (Tanpa Transit)';
-      const pill = document.getElementById('cockpitCpPill');
-      if (pill) {
-        pill.textContent = 'NAVIGASI GPX';
-        pill.className = 'cockpit-cp-status-pill safe';
-      }
-      if (cpDetails) cpDetails.style.display = 'none';
+      if (distRemainEl) distRemainEl.textContent = '';
       if (cpProgressEl) cpProgressEl.style.display = 'none';
       if (!noCpNotice && cpCard) {
         noCpNotice = document.createElement('div');
@@ -781,7 +724,6 @@ async function renderRiderCockpit() {
       return;
     }
 
-    if (cpDetails) cpDetails.style.display = 'grid';
     if (cpProgressEl) cpProgressEl.style.display = 'block';
     if (noCpNotice) noCpNotice.remove();
 
@@ -790,20 +732,9 @@ async function renderRiderCockpit() {
     const isPastAll = currentCoveredKm >= checkpoints[checkpoints.length - 1].km_distance;
 
     if (isPastAll) {
-      const nameEl = document.getElementById('cockpitCpName');
       if (nameEl) nameEl.textContent = '🏁 Menuju Garis Finish!';
-      const pill = document.getElementById('cockpitCpPill');
-      if (pill) {
-        pill.textContent = 'FINAL STAGE';
-        pill.className = 'cockpit-cp-status-pill safe';
-      }
-      const distEl = document.getElementById('cockpitCpDist');
-      if (distEl) distEl.textContent = `${Math.max(0, (totalKm - currentCoveredKm).toFixed(1))} km`;
-      const cotEl = document.getElementById('cockpitCpCot');
-      if (cotEl) cotEl.textContent = 'FINISH';
-      const etaEl = document.getElementById('cockpitCpEta');
-      if (etaEl) etaEl.textContent = 'SEGERA';
-      const fillEl = document.getElementById('cockpitCpProgressFill');
+      const finishDist = Math.max(0, (totalKm - currentCoveredKm)).toFixed(1);
+      if (distRemainEl) distRemainEl.textContent = `${finishDist} km lagi`;
       if (fillEl) fillEl.style.width = '100%';
       document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
       return;
@@ -814,13 +745,8 @@ async function renderRiderCockpit() {
     const cpSpan = nextCp.km_distance - prevCpKm;
     const cpProgress = cpSpan > 0 ? Math.min(100, Math.max(0, Math.round(((currentCoveredKm - prevCpKm) / cpSpan) * 100))) : 50;
 
-    const nameEl = document.getElementById('cockpitCpName');
     if (nameEl) nameEl.textContent = `${nextCp.name} (KM ${nextCp.km_distance})`;
-    const distEl = document.getElementById('cockpitCpDist');
-    if (distEl) distEl.textContent = `${distToCp} km`;
-    const cotEl = document.getElementById('cockpitCpCot');
-    if (cotEl) cotEl.textContent = nextCp.close_time || '--:--';
-    const fillEl = document.getElementById('cockpitCpProgressFill');
+    if (distRemainEl) distRemainEl.textContent = `${distToCp.toFixed(1)} km lagi`;
     if (fillEl) fillEl.style.width = `${cpProgress}%`;
 
     // Checkpoint Proximity Detection (< 200m / 0.2km)
@@ -844,35 +770,6 @@ async function renderRiderCockpit() {
       }
     } else if (distToCp > 0.3) {
       if (proxBanner) proxBanner.classList.remove('active');
-    }
-
-    // Compute ETA
-    const speedRef = movingAvg > 5 ? movingAvg : 20;
-    const hoursToCp = distToCp / speedRef;
-    const now = new Date();
-    const etaDate = new Date(now.getTime() + hoursToCp * 3600 * 1000);
-    const etaStr = etaDate.toTimeString().substring(0, 5);
-    const etaEl = document.getElementById('cockpitCpEta');
-    if (etaEl) etaEl.textContent = etaStr;
-
-    // Check COT Delta
-    if (nextCp.close_time) {
-      const [cotH, cotM] = nextCp.close_time.split(':').map(Number);
-      const cotDate = new Date(now);
-      cotDate.setHours(cotH, cotM, 0, 0);
-
-      const deltaMin = Math.round((cotDate - etaDate) / (60 * 1000));
-      const pill = document.getElementById('cockpitCpPill');
-      if (deltaMin >= 15) {
-        pill.textContent = `AMAN (+${deltaMin}m)`;
-        pill.className = 'cockpit-cp-status-pill safe';
-      } else if (deltaMin >= 0) {
-        pill.textContent = `WASPADA (+${deltaMin}m)`;
-        pill.className = 'cockpit-cp-status-pill warning';
-      } else {
-        pill.textContent = `LEWAT COT (${deltaMin}m)`;
-        pill.className = 'cockpit-cp-status-pill late';
-      }
     }
   }
 
@@ -1160,169 +1057,6 @@ async function renderRiderCockpit() {
   }
 
   applyNightMode(nightModeActive);
-
-  // ── Pocket Mode (Background GPS Keep-Alive) Handlers ──
-  const btnTogglePocket = document.getElementById('btnTogglePocket');
-  const pocketIcon = document.getElementById('pocketIcon');
-  const pocketStatusText = document.getElementById('pocketStatusText');
-  const pocketBanner = document.getElementById('cockpitPocketBanner');
-  const btnStopPocket = document.getElementById('btnStopPocketMode');
-  const pocketGpsAcc = document.getElementById('pocketGpsAcc');
-  const pocketPointsSent = document.getElementById('pocketPointsSent');
-  const pocketQueueCount = document.getElementById('pocketQueueCount');
-
-  function updatePocketUI(isActive) {
-    if (isActive) {
-      btnTogglePocket?.classList.add('pocket-active');
-      pocketBanner?.classList.add('active');
-      if (pocketStatusText) pocketStatusText.textContent = 'Kantong ON';
-      if (pocketIcon) pocketIcon.textContent = '🟢';
-    } else {
-      btnTogglePocket?.classList.remove('pocket-active');
-      pocketBanner?.classList.remove('active');
-      if (pocketStatusText) pocketStatusText.textContent = 'Kantong';
-      if (pocketIcon) pocketIcon.textContent = '🎒';
-    }
-  }
-
-  // ── Auto-sync Pocket Mode if already running in background across page navigation ──
-  if (window.GpsKeeper && GpsKeeper.isActive()) {
-    updatePocketUI(true);
-    GpsKeeper.setCallbacks({
-      onUpdate: (data) => {
-        updateTelemetry(data.latitude, data.longitude, data.speed, data.battery != null ? data.battery : currentBatteryLevel, true);
-      },
-      onStatus: (status) => {
-        if (pocketGpsAcc) pocketGpsAcc.textContent = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Aktif';
-        if (pocketPointsSent) pocketPointsSent.textContent = `${status.pointsSent} titik`;
-        if (pocketQueueCount) pocketQueueCount.textContent = `${status.offlineQueueCount}`;
-      }
-    });
-    const curStatus = GpsKeeper.getStatus();
-    if (curStatus) {
-      if (pocketGpsAcc) pocketGpsAcc.textContent = curStatus.accuracy ? `±${Math.round(curStatus.accuracy)}m` : 'Aktif';
-      if (pocketPointsSent) pocketPointsSent.textContent = `${curStatus.pointsSent} titik`;
-      if (pocketQueueCount) pocketQueueCount.textContent = `${curStatus.offlineQueueCount}`;
-    }
-  }
-
-  btnTogglePocket?.addEventListener('click', async () => {
-    if (window.GpsKeeper && GpsKeeper.isActive()) {
-      GpsKeeper.stop();
-      updatePocketUI(false);
-      showToast('🎒 Mode Kantong Jersey Dinonaktifkan.', 'info');
-    } else if (window.GpsKeeper) {
-      updatePocketUI(true);
-      showToast('🎒 Mode Kantong Jersey Aktif! Layar dapat dimatikan sekarang.', 'success');
-      await GpsKeeper.start({
-        rider,
-        event,
-        traccar: config.traccar,
-        onUpdate: (data) => {
-          updateTelemetry(data.latitude, data.longitude, data.speed, data.battery != null ? data.battery : currentBatteryLevel, true);
-        },
-        onStatus: (status) => {
-          if (pocketGpsAcc) pocketGpsAcc.textContent = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Aktif';
-          if (pocketPointsSent) pocketPointsSent.textContent = `${status.pointsSent} titik`;
-          if (pocketQueueCount) pocketQueueCount.textContent = `${status.offlineQueueCount}`;
-        }
-      });
-    } else {
-      showToast('Modul GPS Keeper sedang dimuat...', 'info');
-    }
-  });
-
-  btnStopPocket?.addEventListener('click', () => {
-    if (window.GpsKeeper && GpsKeeper.isActive()) {
-      GpsKeeper.stop();
-      updatePocketUI(false);
-      showToast('🎒 Mode Kantong Jersey Dinonaktifkan.', 'info');
-    }
-  });
-
-  // ── OLED Dark Pocket Mode (OLED Saver & Touch Lock) Handlers ──
-  const pocketOledOverlay = document.getElementById('pocketOledOverlay');
-  const btnToggleOledPocket = document.getElementById('btnToggleOledPocket');
-  const btnActivateOledScreen = document.getElementById('btnActivateOledScreen');
-  const btnExitOledMode = document.getElementById('btnExitOledMode');
-  const oledStatusText = document.getElementById('oledStatusText');
-
-  let oledModeActive = false;
-
-  async function enterOledMode() {
-    oledModeActive = true;
-    if (pocketOledOverlay) pocketOledOverlay.style.display = 'flex';
-    if (btnToggleOledPocket) btnToggleOledPocket.classList.add('pocket-active');
-    if (oledStatusText) oledStatusText.textContent = 'Terkunci 🌙';
-
-    // Auto-acquire wake lock to ensure screen does not sleep
-    activateWakeLock();
-
-    // Auto-start GpsKeeper if not active yet
-    if (window.GpsKeeper && !GpsKeeper.isActive()) {
-      updatePocketUI(true);
-      await GpsKeeper.start({
-        rider,
-        event,
-        traccar: config.traccar,
-        onUpdate: (data) => {
-          updateTelemetry(data.latitude, data.longitude, data.speed, data.battery != null ? data.battery : currentBatteryLevel, true);
-        },
-        onStatus: (status) => {
-          if (pocketGpsAcc) pocketGpsAcc.textContent = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Aktif';
-          if (pocketPointsSent) pocketPointsSent.textContent = `${status.pointsSent} titik`;
-          if (pocketQueueCount) pocketQueueCount.textContent = `${status.offlineQueueCount}`;
-        }
-      });
-    }
-
-    // Try requesting fullscreen to hide browser bars for 100% black OLED
-    try {
-      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      }
-    } catch (e) {}
-
-    showToast('🌙 Mode Saku Gelap Aktif! Baterai AMOLED hemat. Ketuk 2× untuk membuka.', 'success');
-  }
-
-  function exitOledMode() {
-    oledModeActive = false;
-    if (pocketOledOverlay) pocketOledOverlay.style.display = 'none';
-    if (btnToggleOledPocket) btnToggleOledPocket.classList.remove('pocket-active');
-    if (oledStatusText) oledStatusText.textContent = 'Saku Gelap';
-    showToast('☀️ Layar Cockpit Terbuka.', 'info');
-  }
-
-  btnToggleOledPocket?.addEventListener('click', () => {
-    if (oledModeActive) exitOledMode();
-    else enterOledMode();
-  });
-
-  btnActivateOledScreen?.addEventListener('click', enterOledMode);
-  btnExitOledMode?.addEventListener('click', exitOledMode);
-
-  // Double-tap on OLED overlay to unlock
-  let lastOledTapTime = 0;
-  pocketOledOverlay?.addEventListener('click', (e) => {
-    if (e.target.closest('#btnExitOledMode')) return;
-    const now = Date.now();
-    if (now - lastOledTapTime < 450) {
-      exitOledMode();
-      lastOledTapTime = 0;
-    } else {
-      lastOledTapTime = now;
-      const prompt = document.querySelector('.oled-double-tap-prompt');
-      if (prompt) {
-        prompt.style.color = '#38BDF8';
-        prompt.style.transform = 'scale(1.05)';
-        setTimeout(() => {
-          prompt.style.color = '';
-          prompt.style.transform = '';
-        }, 250);
-      }
-    }
-  });
 
   // ── Logout Rider from Cockpit ──
   const btnCockpitLogout = document.getElementById('btnCockpitLogout');
