@@ -395,11 +395,11 @@ async function renderLiveMap(params) {
             </div>
             <!-- Sort Toggle Button Group -->
             <div class="sidebar-sort-group">
-              <button class="sort-tab-btn active" id="btnSortBib" title="Urutkan tetap berdasarkan nomor BIB agar kartu tidak lompat-lompat">
-                🔢 No. BIB (Diam)
-              </button>
-              <button class="sort-tab-btn" id="btnSortRank" title="Urutkan berdasarkan posisi terdepan lomba">
+              <button class="sort-tab-btn active" id="btnSortRank" title="Urutkan berdasarkan posisi terdepan lomba">
                 🏆 Live Rank
+              </button>
+              <button class="sort-tab-btn" id="btnSortBib" title="Urutkan tetap berdasarkan nomor BIB">
+                🔢 No. BIB
               </button>
             </div>
             <div class="sidebar-search-box">
@@ -1712,11 +1712,14 @@ async function renderLiveMap(params) {
   function formatTimeAgo(timestamp) {
     if (!timestamp) return 'Belum ada data';
     const elapsedSec = Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000));
-    if (elapsedSec < 60) return `${elapsedSec}d lalu`;
+    if (elapsedSec < 15) return 'Baru saja';
+    if (elapsedSec < 60) return `${elapsedSec} dtk lalu`;
     const min = Math.floor(elapsedSec / 60);
-    if (min < 60) return `${min}m lalu`;
+    if (min < 60) return `${min} mnt lalu`;
     const hr = Math.floor(min / 60);
-    return `${hr}j lalu`;
+    if (hr < 24) return `${hr} jam lalu`;
+    const days = Math.floor(hr / 24);
+    return `${days} hari lalu`;
   }
 
   function getRiderStatus(timestamp) {
@@ -2371,7 +2374,7 @@ async function renderLiveMap(params) {
   }
 
   // ── Leaderboard Sort Mode & Status Filter State ──
-  let leaderboardSortMode = 'bib';
+  let leaderboardSortMode = 'rank';
   let currentStatusFilter = 'all';
 
   const btnSortBib = document.getElementById('btnSortBib');
@@ -2466,9 +2469,15 @@ async function renderLiveMap(params) {
     // 3. Status filter
     if (currentStatusFilter !== 'all') {
       if (currentStatusFilter === 'moving') {
-        entries = entries.filter(e => e.speed > 2 && !e.isFinished);
+        entries = entries.filter(e => {
+          const st = getRiderStatus(e.lastTime);
+          return st.text === 'Online' && e.speed > 2 && !e.isFinished;
+        });
       } else if (currentStatusFilter === 'idle') {
-        entries = entries.filter(e => e.speed <= 2 && !e.isFinished);
+        entries = entries.filter(e => {
+          const st = getRiderStatus(e.lastTime);
+          return (st.text !== 'Online' || e.speed <= 2) && !e.isFinished;
+        });
       } else if (currentStatusFilter === 'offroute') {
         entries = entries.filter(e => e.isOffRoute);
       } else if (currentStatusFilter === 'finished') {
@@ -2561,7 +2570,11 @@ async function renderLiveMap(params) {
       }
 
       const status = getRiderStatus(e.lastTime);
-      const isMoving = e.speed > 2;
+      const isOnline = status && status.text === 'Online';
+      const isMoving = isOnline && (e.speed > 2);
+      const displaySpeed = isOnline ? e.speed : 0;
+      const displayEta = e.isFinished ? 'Finish' : (isOnline && e.etaTime && e.etaTime !== '-' ? e.etaTime : '-');
+      const etaBadgeClass = e.isFinished ? 'eta-finished' : (isOnline && e.etaTime && e.etaTime !== '-' ? (e.etaBadgeClass || 'eta-active') : 'eta-idle');
       const isTarget = targetRider && String(targetRider.bib).toLowerCase() === String(e.rider.bib).toLowerCase();
 
       let card = document.getElementById(`rider-card-${riderId}`);
@@ -2609,20 +2622,22 @@ async function renderLiveMap(params) {
             </div>
             <div class="leaderboard-telemetry-row">
               <span class="telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}">
-                ⚡ <span class="val-speed">${e.speed}</span> km/h
+                ⚡ <span class="val-speed">${displaySpeed}</span> km/h
               </span>
-              <span class="telemetry-pill eta-pill ${e.etaBadgeClass || 'eta-idle'}">
-                🏁 <span class="val-eta">${e.isFinished ? 'Finish' : (e.etaTime && e.etaTime !== '-' ? e.etaTime : '-')}</span>
+              <span class="telemetry-pill eta-pill ${etaBadgeClass}">
+                🏁 <span class="val-eta">${displayEta}</span>
               </span>
               <span class="offroute-pill" style="display:${e.isOffRoute ? 'inline-flex' : 'none'}">
                 ⚠️ NYASAR (+<span class="val-deviation">${e.deviationMeters}</span>m)
               </span>
-              <span class="battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}" style="display:${e.batteryLevel != null ? 'inline-flex' : 'none'}">
-                <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span><span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
-              </span>
+            </div>
+            <div class="leaderboard-status-sub">
               <span class="telemetry-status-tag">
                 <span class="val-status-dot" style="color:${status.color}">${status.dot}</span>
                 <span class="val-timeago">${formatTimeAgo(e.lastTime)}</span>
+              </span>
+              <span class="battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}" style="display:${e.batteryLevel != null ? 'inline-flex' : 'none'}">
+                <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span><span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
               </span>
             </div>
             ${cpDisplayHtml}
@@ -2661,14 +2676,14 @@ async function renderLiveMap(params) {
         if (speedPill) {
           speedPill.className = `telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}`;
           const valSpeed = speedPill.querySelector('.val-speed');
-          if (valSpeed) valSpeed.textContent = e.speed;
+          if (valSpeed) valSpeed.textContent = displaySpeed;
         }
 
         const etaPill = card.querySelector('.eta-pill');
         if (etaPill) {
-          etaPill.className = `telemetry-pill eta-pill ${e.etaBadgeClass || 'eta-idle'}`;
+          etaPill.className = `telemetry-pill eta-pill ${etaBadgeClass}`;
           const valEta = etaPill.querySelector('.val-eta');
-          if (valEta) valEta.textContent = e.isFinished ? 'Finish' : (e.etaTime && e.etaTime !== '-' ? e.etaTime : '-');
+          if (valEta) valEta.textContent = displayEta;
         }
 
         const offRoutePill = card.querySelector('.offroute-pill');
