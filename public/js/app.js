@@ -13,13 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=83']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=88']);
     renderLanding();
   });
 
   // ── Official Guide & Documentation Page ──
   Router.register('/guide', async () => {
-    await loadPageDeps(['/js/pages/guide.js?v=86']);
+    await loadPageDeps(['/js/pages/guide.js?v=88']);
     renderGuide();
   });
 
@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Public Event Registration ──
   Router.register('/register', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=86'],
-      ['/css/register.css?v=86']
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=88'],
+      ['/css/register.css?v=88']
     );
     renderRegisterPage(params);
   });
@@ -94,8 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=86'],
-      ['/css/map.css?v=86']
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=88'],
+      ['/css/map.css?v=88']
     );
     renderLiveMap(params);
   });
@@ -103,16 +103,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Event Activity & Rider Roster Page (Kuyy.app Style) ──
   Router.register('/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=83'],
-      ['/css/activity.css?v=83']
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=88'],
+      ['/css/activity.css?v=88']
     );
     renderEventActivity(params);
   });
 
   Router.register('/activities/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=83'],
-      ['/css/activity.css?v=83']
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=88'],
+      ['/css/activity.css?v=88']
     );
     renderEventActivity(params);
   });

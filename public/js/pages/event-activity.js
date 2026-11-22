@@ -362,7 +362,7 @@ async function renderEventActivity(params) {
               <div class="footer-meta-row">
                 <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
                 <span class="footer-dot">·</span>
-                <span class="footer-author">ENGINEERED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" title="Instagram @kruzamidiwinata">RUSHAMIDIWINATA</a></span>
+                <span class="footer-author">ENGINEERED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" style="color:#0D1117;text-decoration:none;font-weight:800;" title="Instagram @kruzamidiwinata">RUSHAMIDIWINATA</a></span>
               </div>
               <div class="footer-copy">
                 <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
