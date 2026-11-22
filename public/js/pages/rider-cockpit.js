@@ -169,12 +169,11 @@ async function renderRiderCockpit() {
 
       <!-- Top Bar -->
       <div class="cockpit-topbar">
-        <!-- Section Identitas: Baris 1 (Hub - BIB - Baterai) & Baris 2 (Nama Rider) -->
+        <!-- Section Identitas: Baris 1 (Hub di Kiri - BIB di Kanan) & Baris 2 (Nama Rider) -->
         <div class="cockpit-identity-box">
           <div class="cockpit-topbar-row">
             <a href="/rider/setup" data-link class="cockpit-hub-link" title="Kembali ke Rider Hub">🏠 Hub</a>
             <span class="cockpit-bib-badge">BIB #${rider.bib}</span>
-            <span class="cockpit-pill-btn cockpit-battery-pill" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
           </div>
           <div class="cockpit-rider-name-banner" title="${rider.name}">
             ${rider.name}

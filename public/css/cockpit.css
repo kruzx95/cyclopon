@@ -56,22 +56,10 @@ body.cockpit-active {
 }
 
 .cockpit-topbar-row {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
-}
-
-.cockpit-topbar-row .cockpit-hub-link {
-  justify-self: start;
-}
-
-.cockpit-topbar-row .cockpit-bib-badge {
-  justify-self: center;
-}
-
-.cockpit-topbar-row .cockpit-battery-pill {
-  justify-self: end;
 }
 
 .cockpit-rider-name-banner {
