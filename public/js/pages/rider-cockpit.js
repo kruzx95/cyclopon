@@ -169,13 +169,10 @@ async function renderRiderCockpit() {
 
       <!-- Top Bar -->
       <div class="cockpit-topbar">
-        <!-- Baris 1: Hub (Kiri) & BIB + Nama Rider (Kanan) -->
+        <!-- Baris 1: Hub (Kiri) & BIB (Kanan) -->
         <div class="cockpit-topbar-row">
           <a href="/rider/setup" data-link class="cockpit-hub-link" title="Kembali ke Rider Hub">🏠 Hub</a>
-          <div class="cockpit-bib-badge" title="BIB #${rider.bib} ${rider.name}">
-            <span class="cockpit-bib-num">BIB #${rider.bib}</span>
-            <span class="cockpit-rider-name">${rider.name}</span>
-          </div>
+          <span class="cockpit-bib-badge" title="Nomor Peserta BIB #${rider.bib}">BIB #${rider.bib}</span>
         </div>
 
         <!-- Baris 2: Toggle Layar Melek (Penuh 100%) -->
