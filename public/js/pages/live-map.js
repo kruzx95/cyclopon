@@ -2126,15 +2126,15 @@ async function renderLiveMap(params) {
 
         <div class="popup-metrics-grid">
           <div class="popup-metric-box">
-            <div class="popup-metric-label">⚡ Kecepatan</div>
-            <div class="popup-metric-value">${telem.currentSpeed} <span class="popup-metric-unit">km/h</span></div>
-            <div class="popup-metric-sub">Avg: ${telem.movingAvg || telem.currentSpeed} km/h</div>
+            <div class="popup-metric-label">📏 Jarak Ditempuh</div>
+            <div class="popup-metric-value">${displayKm} <span class="popup-metric-unit">km</span></div>
+            <div class="popup-metric-sub">${calc.progressPct}% dari total rute</div>
           </div>
 
           <div class="popup-metric-box">
-            <div class="popup-metric-label">📏 Jarak Ditempuh</div>
-            <div class="popup-metric-value">${displayKm} <span class="popup-metric-unit">km</span></div>
-            <div class="popup-metric-sub">${telem.isOffRoute ? `Rute resmi: ${calc.distanceKm} km` : `Sisa: ${telem.remainingKm} km`}</div>
+            <div class="popup-metric-label">🎯 Sisa Jarak</div>
+            <div class="popup-metric-value">${telem.remainingKm} <span class="popup-metric-unit">km</span></div>
+            <div class="popup-metric-sub">${telem.isOffRoute ? `⚠️ Deviasi +${telem.deviationMeters}m` : 'Sesuai rute resmi'}</div>
           </div>
 
           <div class="popup-metric-box full-width">
@@ -2143,7 +2143,7 @@ async function renderLiveMap(params) {
               ${isFinished ? '🏁 Selesai di Garis Finish' : `${telem.etaTime} (${telem.etaDuration})`}
             </div>
             <div class="popup-metric-sub">
-              ${isFinished ? 'Rute 100% tuntas' : `Ritme rata-rata ${telem.movingAvg || telem.currentSpeed || 20} km/h`}
+              ${isFinished ? 'Rute 100% tuntas' : (telem.etaTime && telem.etaTime !== '-' ? `Estimasi tiba di finish ±${telem.etaTime} WIB` : 'Menghitung estimasi...')}
             </div>
           </div>
         </div>
@@ -2209,19 +2209,20 @@ async function renderLiveMap(params) {
         if (marker.isPopupOpen()) {
           const popupEl = marker.getPopup().getElement();
           if (popupEl) {
-            // Calm in-place DOM updates so the popup doesn't flicker or re-render
-            const speedVal = popupEl.querySelector('.popup-metric-box:nth-child(1) .popup-metric-value');
-            if (speedVal) speedVal.innerHTML = `${telem.currentSpeed} <span class="popup-metric-unit">km/h</span>`;
-            const speedSub = popupEl.querySelector('.popup-metric-box:nth-child(1) .popup-metric-sub');
-            if (speedSub) speedSub.textContent = `Avg: ${telem.movingAvg || telem.currentSpeed} km/h`;
-
-            const distVal = popupEl.querySelector('.popup-metric-box:nth-child(2) .popup-metric-value');
+            const distVal = popupEl.querySelector('.popup-metric-box:nth-child(1) .popup-metric-value');
             if (distVal) distVal.innerHTML = `${displayKm} <span class="popup-metric-unit">km</span>`;
-            const distSub = popupEl.querySelector('.popup-metric-box:nth-child(2) .popup-metric-sub');
-            if (distSub) distSub.textContent = telem.isOffRoute ? `Rute resmi: ${calc.distanceKm} km` : `Sisa: ${telem.remainingKm} km`;
+            const distSub = popupEl.querySelector('.popup-metric-box:nth-child(1) .popup-metric-sub');
+            if (distSub) distSub.textContent = `${calc.progressPct}% dari total rute`;
+
+            const remVal = popupEl.querySelector('.popup-metric-box:nth-child(2) .popup-metric-value');
+            if (remVal) remVal.innerHTML = `${telem.remainingKm} <span class="popup-metric-unit">km</span>`;
+            const remSub = popupEl.querySelector('.popup-metric-box:nth-child(2) .popup-metric-sub');
+            if (remSub) remSub.textContent = telem.isOffRoute ? `⚠️ Deviasi +${telem.deviationMeters}m` : 'Sesuai rute resmi';
 
             const etaVal = popupEl.querySelector('.popup-metric-box.full-width .popup-metric-value');
             if (etaVal) etaVal.innerHTML = isFinished ? '🏁 Selesai di Garis Finish' : `${telem.etaTime} (${telem.etaDuration})`;
+            const etaSub = popupEl.querySelector('.popup-metric-box.full-width .popup-metric-sub');
+            if (etaSub) etaSub.textContent = isFinished ? 'Rute 100% tuntas' : (telem.etaTime && telem.etaTime !== '-' ? `Estimasi tiba di finish ±${telem.etaTime} WIB` : 'Menghitung estimasi...');
 
             const timeAgoVal = popupEl.querySelector('.popup-footer span strong');
             if (timeAgoVal) timeAgoVal.textContent = formatTimeAgo(fixTime);
@@ -2325,7 +2326,7 @@ async function renderLiveMap(params) {
     if (banner) {
       document.getElementById('focusRiderName').textContent = `#${r.bib} ${r.name}`;
       const prog = progressById[r.id];
-      document.getElementById('focusRiderSpeed').textContent = prog ? `${prog.speed} km/h • ${prog.distanceKm || 0} km` : 'Terhubung';
+      document.getElementById('focusRiderSpeed').textContent = prog ? `${prog.distanceKm || 0} km • ${prog.progressPct || 0}%` : 'Terhubung';
       banner.style.display = 'flex';
     }
     const m = markerById[r.id] || (r.traccar_device_id && markerById[r.traccar_device_id]);
@@ -2344,7 +2345,7 @@ async function renderLiveMap(params) {
 
     const speedEl = document.getElementById('focusRiderSpeed');
     if (speedEl) {
-      speedEl.textContent = `${telem.currentSpeed} km/h • ${calc.distanceKm || 0} km`;
+      speedEl.textContent = `${calc.distanceKm || 0} km • ${calc.progressPct || 0}%`;
     }
 
     // Dynamic Live Breadcrumb Trail for focused rider
@@ -2621,23 +2622,20 @@ async function renderLiveMap(params) {
               </button>
             </div>
             <div class="leaderboard-telemetry-row">
-              <span class="telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}">
-                ⚡ <span class="val-speed">${displaySpeed}</span> km/h
-              </span>
               <span class="telemetry-pill eta-pill ${etaBadgeClass}">
                 🏁 <span class="val-eta">${displayEta}</span>
               </span>
               <span class="offroute-pill" style="display:${e.isOffRoute ? 'inline-flex' : 'none'}">
                 ⚠️ NYASAR (+<span class="val-deviation">${e.deviationMeters}</span>m)
               </span>
+              <span class="battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}" style="display:${e.batteryLevel != null ? 'inline-flex' : 'none'}">
+                <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span><span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
+              </span>
             </div>
             <div class="leaderboard-status-sub">
               <span class="telemetry-status-tag">
                 <span class="val-status-dot" style="color:${status.color}">${status.dot}</span>
                 <span class="val-timeago">${formatTimeAgo(e.lastTime)}</span>
-              </span>
-              <span class="battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}" style="display:${e.batteryLevel != null ? 'inline-flex' : 'none'}">
-                <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span><span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
               </span>
             </div>
             ${cpDisplayHtml}
@@ -2673,11 +2671,7 @@ async function renderLiveMap(params) {
         }
 
         const speedPill = card.querySelector('.speed-pill');
-        if (speedPill) {
-          speedPill.className = `telemetry-pill speed-pill ${isMoving ? 'moving' : 'idle'}`;
-          const valSpeed = speedPill.querySelector('.val-speed');
-          if (valSpeed) valSpeed.textContent = displaySpeed;
-        }
+        if (speedPill) speedPill.remove();
 
         const etaPill = card.querySelector('.eta-pill');
         if (etaPill) {
@@ -4014,15 +4008,16 @@ async function renderLiveMap(params) {
 
       ctx.fillStyle = '#94A3B8';
       ctx.font = '800 12px ui-monospace, monospace';
-      ctx.fillText('// KECEPATAN LIVE', 80, dashY + 36);
+      ctx.fillText('// SISA JARAK', 80, dashY + 36);
 
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '900 52px ui-monospace, monospace';
-      ctx.fillText(curSpeed.toFixed(1), 80, dashY + 104);
+      const remKm = Math.max(0, (totalCourseKm - curDist)).toFixed(1);
+      ctx.fillText(remKm, 80, dashY + 104);
 
       ctx.fillStyle = '#10B981';
       ctx.font = '800 15px -apple-system, sans-serif';
-      ctx.fillText('KM / JAM', 220, dashY + 100);
+      ctx.fillText('KM SISA', 220, dashY + 100);
 
       // Distance & Time Card
       ctx.fillStyle = '#161B22';
@@ -4176,15 +4171,15 @@ async function renderLiveMap(params) {
         </div>
 
         <div class="h2h-stat-row">
-          <div class="h2h-val">${progA.speed} km/h</div>
-          <div class="h2h-lbl">Kecepatan Saat Ini</div>
-          <div class="h2h-val val-b">${progB.speed} km/h</div>
+          <div class="h2h-val">${progA.remainingKm != null ? progA.remainingKm : '-'} km</div>
+          <div class="h2h-lbl">Sisa Jarak ke Finish</div>
+          <div class="h2h-val val-b">${progB.remainingKm != null ? progB.remainingKm : '-'} km</div>
         </div>
 
         <div class="h2h-stat-row">
-          <div class="h2h-val">${progA.movingAvg || progA.speed} km/h</div>
-          <div class="h2h-lbl">Rata-rata Bergerak</div>
-          <div class="h2h-val val-b">${progB.movingAvg || progB.speed} km/h</div>
+          <div class="h2h-val">${formatTimeAgo(progA.lastTime)}</div>
+          <div class="h2h-lbl">Sinyal GPS Terakhir</div>
+          <div class="h2h-val val-b">${formatTimeAgo(progB.lastTime)}</div>
         </div>
 
         <div class="h2h-stat-row">
