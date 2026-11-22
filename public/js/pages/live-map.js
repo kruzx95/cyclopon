@@ -252,7 +252,7 @@ async function renderLiveMap(params) {
             </button>
 
             ${isAdmin ? `
-            <a href="/admin/events/${eventId}" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Dashboard" aria-label="Kembali ke Dashboard"><span class="fab-icon" aria-hidden="true">←</span></a>
+            <a href="/" data-link class="map-fab-btn btn-back-admin-fab" title="Kembali ke Beranda" aria-label="Kembali ke Beranda"><span class="fab-icon" aria-hidden="true">←</span></a>
             ` : ''}
           </div>
 
