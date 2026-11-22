@@ -169,6 +169,7 @@ async function renderRiderCockpit() {
 
       <!-- Top Bar -->
       <div class="cockpit-topbar">
+        <!-- Baris 1: Identitas Rider & Baterai -->
         <div class="cockpit-topbar-row">
           <div class="cockpit-rider-info">
             <a href="/rider/setup" data-link class="cockpit-hub-link" title="Kembali ke Rider Hub">🏠 Hub</a>
@@ -177,15 +178,25 @@ async function renderRiderCockpit() {
           </div>
           <span class="cockpit-pill-btn cockpit-battery-pill" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
         </div>
-        <div class="cockpit-top-actions">
-          <button id="btnToggleWakeLock" class="cockpit-pill-btn" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
+
+        <!-- Baris 2: Toggle Layar Melek (Penuh 100%) -->
+        <div class="cockpit-wake-row">
+          <button id="btnToggleWakeLock" class="cockpit-pill-btn wake-lock-btn" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
             <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar Selalu Menyala: AKTIF</span>
           </button>
-          <div class="cockpit-top-controls">
-            <button id="btnToggleTheme" class="cockpit-pill-btn icon-only" title="Ganti Mode Terang / Gelap">🌙</button>
-            <button id="btnToggleFullscreen" class="cockpit-pill-btn icon-only" title="Fullscreen HUD">⛶</button>
-            <button id="btnCockpitLogout" class="cockpit-pill-btn icon-only danger" title="Keluar / Logout">🚪</button>
-          </div>
+        </div>
+
+        <!-- Baris 3: Menu Alat & Kontrol (3 Kolom Luas) -->
+        <div class="cockpit-tools-row">
+          <button id="btnToggleTheme" class="cockpit-pill-btn tool-btn" title="Ganti Mode Terang / Gelap">
+            <span id="themeIcon">☀️</span> <span id="themeText">Terang</span>
+          </button>
+          <button id="btnToggleFullscreen" class="cockpit-pill-btn tool-btn" title="Layar Penuh (Fullscreen)">
+            <span>⛶</span> <span>Fullscreen</span>
+          </button>
+          <button id="btnCockpitLogout" class="cockpit-pill-btn tool-btn danger" title="Keluar / Logout">
+            <span>🚪</span> <span>Keluar</span>
+          </button>
         </div>
       </div>
 
@@ -986,6 +997,8 @@ async function renderRiderCockpit() {
 
   // ── Auto & Manual Dark / Light Mode ──
   const btnToggleTheme = document.getElementById('btnToggleTheme');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeText = document.getElementById('themeText');
   const savedNight = localStorage.getItem('cyclopon_cockpit_night');
   let nightModeActive = false;
   if (savedNight !== null) {
@@ -998,8 +1011,9 @@ async function renderRiderCockpit() {
   const bottomBar = document.querySelector('.cockpit-bottom-bar');
 
   function updateThemeButton(isNight) {
+    if (themeIcon) themeIcon.textContent = isNight ? '☀️' : '🌙';
+    if (themeText) themeText.textContent = isNight ? 'Terang' : 'Gelap';
     if (btnToggleTheme) {
-      btnToggleTheme.textContent = isNight ? '☀️' : '🌙';
       btnToggleTheme.title = isNight ? 'Beralih ke Mode Terang (Siang)' : 'Beralih ke Mode Gelap (Malam/AMOLED)';
     }
   }
