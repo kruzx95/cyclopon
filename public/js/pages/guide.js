@@ -63,14 +63,13 @@ function renderGuide() {
             <span>Panduan Pengguna</span>
           </div>
           <span class="guide-hero-kicker">// DOKUMENTASI RINGKAS HARI-H</span>
-          <h1 class="guide-hero-title">Panduan Singkat CycloPon<br><span>Rider &amp; Panitia</span></h1>
+          <h1 class="guide-hero-title">Panduan Cepat CycloPon<br><span>Rider &amp; Panitia</span></h1>
           <p class="guide-hero-lead">
-            Panduan cepat konfigurasi GPS Traccar (10s/30s), pendaftaran BIB, navigasi Live Map, hingga Cockpit — ringkas dan langsung bisa diterapkan saat hari-H.
+            Cukup klik tombol <strong>"DAFTAR EVENT"</strong> di header atas untuk mendapatkan nomor BIB dan mengonfigurasi GPS Traccar di ponsel secara otomatis dalam 1 klik.
           </p>
           <div class="guide-hero-meta">
-            <span class="guide-meta-chip">⚡ Live GPS (10s/30s)</span>
-            <span class="guide-meta-chip">📲 Setup 1 Menit</span>
-            <span class="guide-meta-chip">📋 BIB &amp; Pass Digital</span>
+            <span class="guide-meta-chip">⚡ Live Tracking (10s/30s)</span>
+            <span class="guide-meta-chip">📲 1-Klik Daftar &amp; Traccar</span>
             <span class="guide-meta-chip">🚴 Cockpit HUD</span>
             <span class="guide-meta-chip">❓ Solusi Cepat</span>
           </div>
@@ -81,13 +80,13 @@ function renderGuide() {
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="search" id="guideSearchInput" class="guide-search-input" placeholder="Cari cepat (misal: interval, izin baterai, bib, blank spot, zoom, cot)..." autocomplete="off" aria-label="Cari panduan">
+            <input type="search" id="guideSearchInput" class="guide-search-input" placeholder="Cari cepat (misal: daftar, traccar, izin baterai, bib, zoom, cot)..." autocomplete="off" aria-label="Cari panduan">
             <button type="button" id="guideSearchClear" class="guide-search-clear" aria-label="Bersihkan pencarian" style="display:none">✕</button>
           </div>
           <div id="guideSearchFeedback" class="guide-search-feedback" role="status" aria-live="polite" style="display:none"></div>
         </div>
 
-        <!-- ── Quick Guide Jump Switcher ── -->
+        <!-- ── Quick Guide Jump Switcher (4 Clean Chapters) ── -->
         <div class="guide-nav-bar" id="guideNavBar">
           <div class="guide-nav-progress" aria-hidden="true"><span id="guideNavProgress"></span></div>
           <div class="guide-nav-label">
@@ -100,18 +99,14 @@ function renderGuide() {
             </a>
             <a href="#traccarGuideSection" class="guide-nav-pill-btn" id="pillNavTraccar">
               <span class="guide-pill-index">02</span>
-              <span class="guide-pill-label">Setup Traccar</span>
-            </a>
-            <a href="#rosterGuideSection" class="guide-nav-pill-btn" id="pillNavRoster">
-              <span class="guide-pill-index">03</span>
-              <span class="guide-pill-label">Pendaftaran</span>
+              <span class="guide-pill-label">Daftar &amp; Auto Traccar</span>
             </a>
             <a href="#cockpitGuideSection" class="guide-nav-pill-btn" id="pillNavCockpit">
-              <span class="guide-pill-index">04</span>
+              <span class="guide-pill-index">03</span>
               <span class="guide-pill-label">Rider Cockpit</span>
             </a>
             <a href="#faqGuideSection" class="guide-nav-pill-btn" id="pillNavFaq">
-              <span class="guide-pill-index">05</span>
+              <span class="guide-pill-index">04</span>
               <span class="guide-pill-label">FAQ &amp; Solusi</span>
             </a>
           </div>
@@ -199,7 +194,7 @@ function renderGuide() {
                 <li><strong>Interval 10 Detik:</strong> Sangat responsif. Cocok untuk criterium, road race, dan segmen tanjakan pendek.</li>
                 <li><strong>Interval 30 Detik:</strong> Sangat hemat baterai. Sangat direkomendasikan untuk event ultra-cycling (200km–1200km).</li>
                 <li><strong>Distance: Wajib 0 meter</strong> agar transmisi posisi murni berdasarkan waktu detik dan tidak tertahan saat rider pelan.</li>
-                <li><strong>Tanpa Metrik Speed:</strong> Kecepatan seketika dihilangkan demi fokus pada akurasi jarak tempuh (KM) &amp; profil elevasi.</li>
+                <li><strong>Tanpa Metrik Speed:</strong> Kecepatan seketika ditiadakan demi fokus pada akurasi jarak tempuh (KM) &amp; profil elevasi.</li>
               </ul>
             </div>
 
@@ -225,224 +220,128 @@ function renderGuide() {
         </section>
 
         <!-- ══════════════════════════════════════════════════════════════════════════════
-             BAB 2: SETUP SMARTPHONE RIDER (TRACCAR CLIENT)
+             BAB 2: PENDAFTARAN EVENT & AUTO-SETUP TRACCAR (1-KLIK VIA HEADER)
              ══════════════════════════════════════════════════════════════════════════════ -->
         <section class="landing-guide-section" id="traccarGuideSection">
           <div class="landing-guide-header">
             <div class="guide-tag-wrap">
-              <span class="guide-mono-tag">// APLIKASI PELACAK RESMI · TRACCAR CLIENT</span>
+              <span class="guide-mono-tag">// ALUR TERCEPAT PESERTA · 1-KLIK VIA HEADER</span>
               <h2 class="guide-main-title">
                 <span class="guide-chapter-num">02</span>
-                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">📲</span> Setup Traccar Client dalam 1 Menit</span>
+                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">🎯</span> Pendaftaran Event &amp; Auto-Setup Traccar (1-Klik)</span>
               </h2>
               <p class="guide-subtitle">
-                Aplikasi resmi gratis Traccar Client. Layar HP dapat dimatikan sepenuhnya dan disimpan hemat daya di saku jersey.
-              </p>
-            </div>
-            <div class="guide-store-badges">
-              <a href="https://play.google.com/store/apps/details?id=org.traccar.client" target="_blank" rel="noopener" class="store-badge-btn" title="Download di Google Play Store">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M3.609 1.814L13.793 12 3.61 22.186c-.378-.403-.61-.976-.61-1.621V3.435c0-.645.232-1.218.61-1.621zM15.207 13.414l2.564 2.564-11.89 6.837 9.326-9.401zm0-2.828L5.881 1.185l11.89 6.837-2.564 2.564zm1.414 1.414l3.657 2.102c.866.498.866 1.31 0 1.808l-3.657 2.102-2.146-2.146 2.146-2.146z"/>
-                </svg>
-                <span>Google Play</span>
-              </a>
-              <a href="https://apps.apple.com/app/traccar-client/id843156976" target="_blank" rel="noopener" class="store-badge-btn" title="Download di Apple App Store">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.62-.77 1.04-1.84.93-2.91-.9.04-2 .61-2.65 1.37-.57.66-.99 1.74-.86 2.78 1.01.08 1.96-.47 2.58-1.24z"/>
-                </svg>
-                <span>App Store</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Parameter Cheat-Sheet Table -->
-          <div class="guide-step-card primary-step" style="margin-bottom:20px">
-            <div class="step-card-num">// CHEAT-SHEET PARAMETER · MENU SETTINGS TRACCAR</div>
-            <div class="step-card-title">Cukup Atur 5 Nilai Praktis Berikut:</div>
-            
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin:12px 0">
-              <div style="background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:12px">
-                <div style="font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase">1. Server URL</div>
-                <div class="step-code-box" style="margin:6px 0 4px;padding:6px 10px;font-size:11.5px">
-                  <code id="traccarServerUrlDisplay">${traccarServerUrl}</code>
-                  <button id="btnCopyServerUrl" class="btn-copy-code" title="Salin ke Clipboard" style="padding:2px 8px;font-size:10px">
-                    <span id="copyUrlText">Salin</span>
-                  </button>
-                </div>
-              </div>
-
-              <div style="background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:12px">
-                <div style="font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase">2. Device Identifier</div>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-                  <span class="bib-pill" style="font-size:12px">BIB-001</span>
-                  <span class="bib-sep">atau</span>
-                  <span class="bib-pill" style="font-size:12px">001</span>
-                </div>
-                <div style="font-size:11px;color:#64748B;margin-top:4px">Ganti angka acak dengan nomor BIB resmi Anda.</div>
-              </div>
-
-              <div style="background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:12px">
-                <div style="font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase">3. Interval &amp; Distance</div>
-                <div style="font-size:13px;font-weight:800;color:#0D1117;margin-top:4px">
-                  Interval: <code>10</code> atau <code>30</code> detik
-                </div>
-                <div style="font-size:11.5px;color:#047857;margin-top:2px">
-                  Distance: <strong>0 meter</strong> (Wajib)
-                </div>
-              </div>
-
-              <div style="background:#FFFFFF;border:1px solid #CBD5E1;border-radius:8px;padding:12px">
-                <div style="font-size:11px;font-weight:800;color:#64748B;text-transform:uppercase">4. Akurasi &amp; Buffering</div>
-                <div style="font-size:12.5px;color:#334155;margin-top:4px">
-                  • <strong>Location accuracy:</strong> <code>Highest</code><br>
-                  • <strong>Offline buffering:</strong> <code>ON</code> (Rekam blank spot)
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 2 Visual Step Cards -->
-          <div class="guide-visual-card">
-            <div class="guide-phone-frame" data-src="/img/traccar-guide/traccar-settings-full.png" data-caption="Menu Settings Traccar Client: Konfigurasi Server URL, Device Identifier (Nomor BIB), dan Interval" title="Klik untuk memperbesar screenshot">
-              <img src="/img/traccar-guide/traccar-settings-full.png" alt="Screenshot Menu Settings Traccar Client" class="guide-phone-img" loading="lazy">
-              <div class="guide-zoom-badge">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <span>Perbesar</span>
-              </div>
-            </div>
-
-            <div class="guide-step-body">
-              <div class="step-card-num">// LANGKAH 1 · ATUR PARAMETER</div>
-              <h3 class="step-card-title">Buka Menu Settings di Traccar Client</h3>
-              <p class="step-card-desc">
-                Tekan ikon roda gigi <strong>Settings</strong> pada aplikasi Traccar Client ponsel Anda, lalu pastikan:
-              </p>
-              <ul class="step-checklist">
-                <li><strong>Server URL:</strong> Tempelkan alamat server (<code>${traccarServerUrl}</code>).</li>
-                <li><strong>Device Identifier:</strong> Masukkan nomor BIB Anda (misal <code>001</code>).</li>
-                <li><strong>Interval:</strong> Isi <code>10</code> (balap) atau <code>30</code> (ultra-endurance).</li>
-                <li><strong>Distance:</strong> Set <code>0</code> agar posisi dikirim murni berdasarkan interval waktu.</li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="guide-visual-card">
-            <div class="guide-phone-frame" data-src="/img/traccar-guide/traccar-continuous-tracking.png" data-caption="Layar Utama Traccar Client: Menyalakan Saklar Continuous Tracking hingga bertuliskan Service Started" title="Klik untuk memperbesar screenshot">
-              <img src="/img/traccar-guide/traccar-continuous-tracking.png" alt="Screenshot Layar Utama Traccar Client" class="guide-phone-img" loading="lazy">
-              <div class="guide-zoom-badge">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <span>Perbesar</span>
-              </div>
-            </div>
-
-            <div class="guide-step-body">
-              <div class="step-card-num">// LANGKAH 2 · AKTIFKAN TRACKING</div>
-              <h3 class="step-card-title">Nyalakan Saklar Tracking &amp; Siap Gowes</h3>
-              <p class="step-card-desc">
-                Kembali ke layar utama aplikasi Traccar Client:
-              </p>
-              <ul class="step-checklist">
-                <li>Geser saklar <strong>Continuous tracking</strong> ke posisi <strong>ON (Hijau)</strong>.</li>
-                <li>Pastikan status berubah menjadi <strong style="color:#166534">"Service started"</strong>.</li>
-                <li>Saat muncul izin Android, <strong>WAJIB pilih "Allow all the time"</strong>.</li>
-                <li>Tekan tombol <strong>"Send location"</strong> sekali untuk tes kirim awal.</li>
-              </ul>
-              <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:12px;color:#166534">
-                🎉 <strong>Selesai:</strong> Layar HP dapat langsung dimatikan dan disimpan aman di saku jersey sepanjang race.
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ══════════════════════════════════════════════════════════════════════════════
-             BAB 3: PENDAFTARAN EVENT & ROSTER PESERTA
-             ══════════════════════════════════════════════════════════════════════════════ -->
-        <section class="landing-guide-section" id="rosterGuideSection">
-          <div class="landing-guide-header">
-            <div class="guide-tag-wrap">
-              <span class="guide-mono-tag">// REGISTRASI PESERTA &amp; ROSTER</span>
-              <h2 class="guide-main-title">
-                <span class="guide-chapter-num">03</span>
-                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">📋</span> Pendaftaran Event &amp; Roster</span>
-              </h2>
-              <p class="guide-subtitle">
-                Bergabung ke event, mendapatkan Nomor BIB resmi, Tiket Pass Digital QR Code, dan mengunduh rute GPX resmi.
+                Tidak perlu mengetik konfigurasi manual! Cukup klik tombol <strong>"DAFTAR EVENT"</strong> di header, nomor BIB terbit otomatis, dan Traccar langsung terkonfigurasi dalam 1 klik.
               </p>
             </div>
             <div class="guide-header-actions">
-              <a href="/events/1" id="btnGuideOpenRoster" data-link class="store-badge-btn" style="background:#1C3E24" title="Buka Halaman Roster Event">
-                <span>👥 Buka Roster Event</span>
+              <a href="/register" data-link class="store-badge-btn" style="background:#1C3E24" title="Daftar Event Sekarang">
+                <span>⚡ Buka DAFTAR EVENT</span>
                 <span>→</span>
               </a>
             </div>
           </div>
 
+          <!-- Alur 3 Langkah Kilat Berbasis Header Button -->
           <div class="guide-steps-grid">
             <div class="guide-step-card primary-step">
-              <div class="step-card-num">LANGKAH 1</div>
-              <div class="step-card-title">Isi Formulir Pendaftaran</div>
+              <div class="step-card-num">LANGKAH 1 · VIA HEADER</div>
+              <div class="step-card-title">Klik "DAFTAR EVENT" di Header Atas</div>
               <ul class="step-checklist">
-                <li>Klik tombol <strong>"DAFTAR EVENT"</strong> di menu atas.</li>
-                <li><strong>Nama &amp; Kategori:</strong> Ditampilkan di Leaderboard &amp; Live Map.</li>
-                <li><strong>Nomor WhatsApp:</strong> 4 digit terakhir otomatis menjadi PIN login akun rider.</li>
-                <li><strong>Nomor BIB:</strong> Pilih nomor sendiri atau ditentukan otomatis oleh panitia.</li>
+                <li>Klik tombol <strong>"DAFTAR EVENT"</strong> di bar header atas (atau buka <code>/register</code>).</li>
+                <li><strong>Nama &amp; WhatsApp:</strong> Masukkan nama lengkap dan nomor WhatsApp Anda.</li>
+                <li><strong>PIN Akun:</strong> 4 digit terakhir nomor WA otomatis menjadi PIN akses Cockpit Anda.</li>
+                <li><strong>Nomor BIB:</strong> Sistem otomatis menerbitkan nomor BIB resmi Anda di lintasan.</li>
               </ul>
+              <a href="/register" data-link class="btn-callout-action" style="margin-top:auto">
+                <span>Menuju Formulir Pendaftaran →</span>
+              </a>
             </div>
 
             <div class="guide-step-card primary-step">
-              <div class="step-card-num">LANGKAH 2</div>
-              <div class="step-card-title">Terbit Tiket Pass Digital &amp; QR</div>
+              <div class="step-card-num">LANGKAH 2 · AUTO-SETUP 1-KLIK</div>
+              <div class="step-card-title">Tekan "Buka &amp; Setting Otomatis di Traccar"</div>
               <p class="step-card-desc">
-                Sistem menerbitkan tiket pass digital resmi ber-QR Code:
+                Setelah form terkirim, Tiket Pass Digital instan muncul di layar lengkap dengan QR Code &amp; nomor BIB resmi:
               </p>
-              <div class="guide-mini-ticket" style="margin-bottom:10px">
-                <div class="guide-mini-ticket-top">
-                  <span class="guide-mini-ticket-kicker">DIGITAL PASS // OFFICIAL TICKET</span>
-                  <span style="font-size:14px">🎟️</span>
-                </div>
-                <div class="guide-mini-ticket-bib">#BIB-001</div>
-                <div class="guide-mini-ticket-meta">
-                  <span>PIN: <strong>1234</strong></span>
-                  <span class="guide-ticket-status">✓ TERKONFIRMASI</span>
-                </div>
-              </div>
-              <div class="step-card-hint">
-                💡 Tombol <strong>"Buka Pelacak GPS Rider"</strong> memungkinkan langsung masuk Cockpit tanpa login manual.
-              </div>
-            </div>
-
-            <div class="guide-step-card">
-              <div class="step-card-num">LANGKAH 3</div>
-              <div class="step-card-title">Unduh GPX &amp; Pos Checkpoint (CP)</div>
               <ul class="step-checklist">
-                <li><strong>Unduh GPX Resmi:</strong> Masukkan file rute ke cyclocomp (Garmin, Wahoo, Bryton).</li>
-                <li><strong>Pos Checkpoint:</strong> Cek kilometer tiap pos kontrol dan batas waktu Cut-Off Time (COT).</li>
-                <li><strong>Direktori Roster:</strong> Pantau daftar peleton peserta di tab Roster event.</li>
+                <li>Tekan tombol hijau besar: <strong>"⚡ Buka &amp; Setting Otomatis di Traccar Client"</strong>.</li>
+                <li>Aplikasi Traccar Client di ponsel otomatis terbuka.</li>
+                <li><strong>Server URL, nomor BIB, interval (30s/10s), distance 0, dan offline buffering OTOMATIS TERISI</strong> tanpa perlu mengetik satu huruf pun!</li>
+                <li><em>(Jika mendaftar via laptop/PC, cukup scan QR Code dari aplikasi kamera ponsel).</em></li>
               </ul>
             </div>
 
+            <div class="guide-step-card alert-step">
+              <div class="step-card-num">LANGKAH 3 · NYALAKAN TRACKING</div>
+              <div class="step-card-title">Aktivasi Continuous Tracking &amp; Izin HP</div>
+              <ul class="step-checklist">
+                <li>Di layar utama Traccar Client, geser saklar <strong>Continuous tracking</strong> ke posisi <strong>ON (Hijau)</strong>.</li>
+                <li>Pastikan status berubah menjadi <strong style="color:#166534">"Service started"</strong>.</li>
+                <li>Saat muncul izin lokasi Android, <strong>WAJIB pilih "Allow all the time"</strong>.</li>
+                <li>Layar HP dapat langsung dimatikan dan dimasukkan ke saku jersey. Selesai! Posisi Anda langsung live di peta.</li>
+              </ul>
+              <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 12px;margin-top:10px;font-size:11.5px;color:#166534">
+                🎉 <strong>Bebas Repot:</strong> Tidak perlu repot input URL atau konfigurasi rumit di hari-H.
+              </div>
+            </div>
+
             <div class="guide-step-card">
-              <div class="step-card-num">PANITIA</div>
-              <div class="step-card-title">Import Peserta Massal (CSV)</div>
-              <p class="step-card-desc">
-                Panitia dapat mengunggah ratusan peserta sekaligus via <strong>Panel Panitia (/admin)</strong> dengan file CSV format: <code>bib,nama,no_hp,peran,pin</code>.
-              </p>
+              <div class="step-card-num">INFO TAMBAHAN · PANITIA &amp; GPX</div>
+              <div class="step-card-title">Impor CSV Panitia &amp; Unduh Rute GPX</div>
+              <ul class="step-checklist">
+                <li><strong>Panitia Event:</strong> Unggah ratusan peserta sekaligus via Panel Panitia (<code>/admin</code>) dengan CSV format: <code>bib,nama,no_hp,peran,pin</code>.</li>
+                <li><strong>Unduh GPX Resmi:</strong> Masukkan file rute resmi ke bike computer (Garmin, Wahoo, Bryton).</li>
+                <li><strong>Pos Checkpoint:</strong> Cek kilometer tiap pos kontrol dan batas waktu Cut-Off Time (COT).</li>
+              </ul>
               <a href="/admin" data-link class="btn-callout-action" style="margin-top:auto">
-                <span>Panel Panitia →</span>
+                <span>Panel Panitia (/admin) →</span>
               </a>
+            </div>
+          </div>
+
+          <!-- Opsi Tambahan / Fallback Manual -->
+          <div class="guide-step-card" style="margin-top:14px;background:#F8FAFC;border:1px dashed #CBD5E1">
+            <div class="step-card-num">// OPSI CADANGAN · JIKA MEMERLUKAN INPUT MANUAL</div>
+            <div class="step-card-title" style="font-size:13.5px">Pengaturan Manual Traccar Client (Tanpa Auto-Setup)</div>
+            <div style="font-size:12.5px;color:#475569;margin-bottom:8px">
+              Jika ponsel Anda tidak mendukung fitur deep link otomatis atau menggunakan perangkat GPS tracker khusus, masukkan parameter berikut di menu Settings Traccar:
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px">
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:6px;padding:10px">
+                <span style="font-size:10.5px;font-weight:800;color:#64748B">SERVER URL:</span>
+                <div class="step-code-box" style="margin:4px 0 0;padding:4px 8px;font-size:11px">
+                  <code id="traccarServerUrlDisplay">${traccarServerUrl}</code>
+                  <button id="btnCopyServerUrl" class="btn-copy-code" title="Salin ke Clipboard" style="padding:2px 6px;font-size:9.5px">
+                    <span id="copyUrlText">Salin</span>
+                  </button>
+                </div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:6px;padding:10px">
+                <span style="font-size:10.5px;font-weight:800;color:#64748B">DEVICE IDENTIFIER:</span>
+                <div style="font-size:12px;font-weight:800;color:#0D1117;margin-top:4px">Nomor BIB Anda (misal <code>001</code>)</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:6px;padding:10px">
+                <span style="font-size:10.5px;font-weight:800;color:#64748B">INTERVAL &amp; DISTANCE:</span>
+                <div style="font-size:12px;color:#0D1117;margin-top:4px">Interval: <code>10s</code> / <code>30s</code> · Distance: <code>0m</code></div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:6px;padding:10px">
+                <span style="font-size:10.5px;font-weight:800;color:#64748B">BUFFERING:</span>
+                <div style="font-size:12px;color:#0D1117;margin-top:4px">Offline buffering: <code>ON</code></div>
+              </div>
             </div>
           </div>
         </section>
 
         <!-- ══════════════════════════════════════════════════════════════════════════════
-             BAB 4: RIDER COCKPIT HUD (PELACAK WEB BROWSER)
+             BAB 3: RIDER COCKPIT HUD (PELACAK WEB BROWSER)
              ══════════════════════════════════════════════════════════════════════════════ -->
         <section class="landing-guide-section" id="cockpitGuideSection">
           <div class="landing-guide-header">
             <div class="guide-tag-wrap">
               <span class="guide-mono-tag">// PELACAK WEB BROWSER · TANPA INSTALL APLIKASI</span>
               <h2 class="guide-main-title">
-                <span class="guide-chapter-num">04</span>
+                <span class="guide-chapter-num">03</span>
                 <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">🚴</span> Rider Cockpit HUD</span>
               </h2>
               <p class="guide-subtitle">
@@ -499,14 +398,14 @@ function renderGuide() {
         </section>
 
         <!-- ══════════════════════════════════════════════════════════════════════════════
-             BAB 5: TANYA JAWAB & SOLUSI CEPAT (FAQ)
+             BAB 4: TANYA JAWAB & SOLUSI CEPAT (FAQ)
              ══════════════════════════════════════════════════════════════════════════════ -->
         <section class="landing-guide-section" id="faqGuideSection">
           <div class="landing-guide-header">
             <div class="guide-tag-wrap">
               <span class="guide-mono-tag">// SOLUSI CEPAT KENDALA OPERASIONAL</span>
               <h2 class="guide-main-title">
-                <span class="guide-chapter-num">05</span>
+                <span class="guide-chapter-num">04</span>
                 <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">❓</span> Tanya Jawab &amp; Solusi Cepat (FAQ)</span>
               </h2>
               <p class="guide-subtitle">
@@ -681,11 +580,10 @@ function renderGuide() {
     }
   });
 
-  // ── Smooth Scroll Navigation Pills (5 Chapters) ──
+  // ── Smooth Scroll Navigation Pills (4 Chapters) ──
   const pills = [
     { id: 'pillNavTracking', target: 'trackingFlowSection' },
     { id: 'pillNavTraccar', target: 'traccarGuideSection' },
-    { id: 'pillNavRoster', target: 'rosterGuideSection' },
     { id: 'pillNavCockpit', target: 'cockpitGuideSection' },
     { id: 'pillNavFaq', target: 'faqGuideSection' }
   ];
@@ -803,7 +701,7 @@ function renderGuide() {
         searchFeedback.textContent = `✓ Ditemukan ${matchCount} topik yang cocok dengan "${query}"`;
         searchFeedback.style.color = '#166534';
       } else {
-        searchFeedback.textContent = `Tidak ada topik yang cocok dengan "${query}". Coba kata kunci lain (misal: bib, traccar, cot, cockpit).`;
+        searchFeedback.textContent = `Tidak ada topik yang cocok dengan "${query}". Coba kata kunci lain (misal: daftar, traccar, cot, cockpit).`;
         searchFeedback.style.color = '#DC2626';
       }
     }
@@ -822,18 +720,4 @@ function renderGuide() {
       executeGuideSearch();
     });
   }
-
-  // Dynamic active event check for roster link
-  fetch('/api/events')
-    .then(r => r.json())
-    .then(events => {
-      if (Array.isArray(events) && events.length > 0) {
-        const ev = events.find(e => e.status === 'active') || events[0];
-        const btnRoster = document.getElementById('btnGuideOpenRoster');
-        if (btnRoster && ev) {
-          btnRoster.href = `/events/${ev.id}`;
-        }
-      }
-    })
-    .catch(() => {});
 }
