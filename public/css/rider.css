@@ -648,25 +648,50 @@
 }
 .rider-device-pill {
   display: inline-flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   padding: 8px 14px;
-  background: #F9FAFB;
-  border: 1px solid #E5E7EB;
-  border-radius: 6px;
-  text-align: right;
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+}
+.device-pill-content {
+  display: flex;
+  flex-direction: column;
 }
 .rider-device-pill .device-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 9px;
   font-weight: 800;
-  color: #9CA3AF;
+  color: #64748B;
   letter-spacing: 0.06em;
 }
 .rider-device-pill .device-val {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 900;
-  color: #0D1117;
+  color: #0F172A;
+}
+.device-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.device-copy-btn:hover {
+  background: #047857;
+  border-color: #047857;
+  color: #FFFFFF;
 }
 
 /* Action Hub Cards (Pro Equipment Specs) */
@@ -1241,8 +1266,35 @@
   .key-digit {
     font-size: 18px;
   }
+  .rider-hub-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .hub-header-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .hub-header-right {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
   .rider-welcome-card {
     padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .rider-device-pill {
+    width: 100%;
+    justify-content: space-between;
+    box-sizing: border-box;
   }
   .hub-actions-grid {
     grid-template-columns: 1fr;

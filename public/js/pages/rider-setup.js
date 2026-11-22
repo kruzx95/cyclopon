@@ -114,8 +114,17 @@ function renderRiderSetup() {
           </p>
         </div>
         <div class="rider-device-pill" title="ID Perangkat Traccar Client (Gunakan saat mengatur aplikasi Traccar)">
-          <span class="device-label">DEVICE ID</span>
-          <span class="device-val">${escapeHtml(compositeDeviceId)}</span>
+          <div class="device-pill-content">
+            <span class="device-label">DEVICE ID</span>
+            <span class="device-val">${escapeHtml(compositeDeviceId)}</span>
+          </div>
+          <button id="btnCopyDeviceIdHeader" class="device-copy-btn" title="Salin Device ID">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Salin</span>
+          </button>
         </div>
       </div>
 
@@ -127,69 +136,21 @@ function renderRiderSetup() {
 
         <div class="hub-actions-grid">
 
-          <!-- Action 1: Cockpit HUD -->
+          <!-- Action 1: Setup Traccar Instructions (Rekomendasi Utama Paling Hemat Baterai) -->
           <div class="hub-action-card fade-in">
             <div class="hub-action-top">
               <div class="hub-action-header-row">
                 <div class="hub-action-badge emerald">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                </div>
-                <span class="hub-action-tag emerald">REKOMENDASI</span>
-              </div>
-              <div class="hub-action-title">Cockpit HUD</div>
-              <p class="hub-action-desc">
-                Layar speedometer handlebar, timer batas Cut-Off Time (COT), peringatan off-route, dan anti-layar mati.
-              </p>
-            </div>
-            <a href="/rider/cockpit" data-link class="btn-hub-primary">
-              <span>Buka Layar Kemudi →</span>
-            </a>
-          </div>
-
-          <!-- Action 2: Pocket Tracker (In-Browser Background GPS) -->
-          <div id="cardPocketTracker" class="hub-action-card fade-in">
-            <div class="hub-action-top">
-              <div class="hub-action-header-row">
-                <div class="hub-action-badge sand">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </div>
-                <span class="hub-action-tag sand">LATAR BELAKANG</span>
-              </div>
-              <div class="hub-action-title">Lacak di Kantong</div>
-              <p class="hub-action-desc">
-                Lacak langsung dari browser tanpa aplikasi Traccar tambahan! Audio sunyi menjaga GPS tetap aktif saat HP dikunci di saku jersey.
-              </p>
-              <div id="setupPocketStatusBox" style="display:none;background:rgba(4,120,87,0.08);border:1px solid rgba(4,120,87,0.25);padding:8px 12px;border-radius:10px;font-size:11px;color:#047857;margin-top:10px">
-                <span id="setupPocketDot">🟢</span> <strong>Melacak di Latar Belakang</strong>
-                <div id="setupPocketDetail" style="margin-top:3px;font-size:10px;opacity:0.9">Terkirim: 0 titik • Akurasi: --m</div>
-              </div>
-            </div>
-            <button id="btnTogglePocketSetup" class="btn-hub-secondary">
-              Mulai Lacak di Kantong
-            </button>
-          </div>
-
-          <!-- Action 3: Setup Traccar Instructions -->
-          <div class="hub-action-card fade-in">
-            <div class="hub-action-top">
-              <div class="hub-action-header-row">
-                <div class="hub-action-badge sage">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="5" y="2" width="14" height="20" rx="3" ry="3"/>
                     <line x1="12" y1="18" x2="12.01" y2="18"/>
                   </svg>
                 </div>
-                <span class="hub-action-tag sage">LAYAR MATI (HEMAT BATERAI)</span>
+                <span class="hub-action-tag emerald">⭐ PALING HEMAT BATERAI</span>
               </div>
               <div class="hub-action-title">Aplikasi Traccar Client</div>
               <p class="hub-action-desc">
-                Gunakan aplikasi resmi Traccar Client (Play Store) jika ingin HP dikantongi dengan layar mati sepenuhnya.
+                Layar HP mati 100% di saku jersey! Sangat hemat baterai (2-3%/jam) dan pelacakan GPS tidak pernah tertidur.
               </p>
               <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:11px">
                 <div style="margin-bottom:6px">
@@ -198,7 +159,8 @@ function renderRiderSetup() {
                 </div>
                 <div>
                   <span style="color:#64748B;font-weight:700">DEVICE IDENTIFIER:</span><br>
-                  <code style="font-weight:900;color:#047857;font-size:13px">${escapeHtml(rider.bib)}</code>
+                  <code style="font-weight:900;color:#047857;font-size:13px">${escapeHtml(compositeDeviceId)}</code>
+                  <div style="font-size:10px;color:#64748B;margin-top:3px">Bisa gunakan <strong>${escapeHtml(compositeDeviceId)}</strong> atau BIB <strong>${escapeHtml(rider.bib)}</strong></div>
                 </div>
               </div>
             </div>
@@ -213,6 +175,54 @@ function renderRiderSetup() {
                 Lihat Panduan Lengkap →
               </a>
             </div>
+          </div>
+
+          <!-- Action 2: Cockpit HUD -->
+          <div class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge sky">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag sky">LAYAR STANG (HANDLEBAR HUD)</span>
+              </div>
+              <div class="hub-action-title">Cockpit HUD</div>
+              <p class="hub-action-desc">
+                Layar speedometer stang sepeda: timer batas Cut-Off Time (COT), peringatan off-route, dan anti-layar mati.
+              </p>
+            </div>
+            <a href="/rider/cockpit" data-link class="btn-hub-primary">
+              <span>Buka Layar Kemudi →</span>
+            </a>
+          </div>
+
+          <!-- Action 3: Pocket Tracker (In-Browser Background GPS) -->
+          <div id="cardPocketTracker" class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge sand">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag sand">ALTERNATIF WEB BROWSER</span>
+              </div>
+              <div class="hub-action-title">Lacak di Kantong</div>
+              <p class="hub-action-desc">
+                Lacak langsung dari browser tanpa aplikasi Traccar tambahan! Audio sunyi menjaga GPS tetap aktif saat HP dikunci di saku jersey.
+              </p>
+              <div id="setupPocketStatusBox" style="display:none;background:rgba(4,120,87,0.08);border:1px solid rgba(4,120,87,0.25);padding:8px 12px;border-radius:10px;font-size:11px;color:#047857;margin-top:10px">
+                <span id="setupPocketDot">🟢</span> <strong>Melacak di Latar Belakang</strong>
+                <div id="setupPocketDetail" style="margin-top:3px;font-size:10px;opacity:0.9">Terkirim: 0 titik • Akurasi: --m</div>
+              </div>
+            </div>
+            <button id="btnTogglePocketSetup" class="btn-hub-secondary">
+              Mulai Lacak di Kantong
+            </button>
           </div>
 
           <!-- Action 4: Live Map -->
@@ -414,10 +424,27 @@ function renderRiderSetup() {
     });
   }
 
+  const btnCopyHeader = document.getElementById('btnCopyDeviceIdHeader');
+  if (btnCopyHeader) {
+    btnCopyHeader.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const val = compositeDeviceId;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(val).then(() => {
+          showToast(`✓ Device ID "${val}" disalin!`, 'success');
+        }).catch(() => {
+          prompt('Device ID Anda:', val);
+        });
+      } else {
+        prompt('Device ID Anda:', val);
+      }
+    });
+  }
+
   const btnCopyTraccar = document.getElementById('btnCopyTraccarConfig');
   if (btnCopyTraccar) {
     btnCopyTraccar.addEventListener('click', () => {
-      const textToCopy = `Server URL: ${osmandEndpointUrl}\nDevice Identifier: ${rider.bib}`;
+      const textToCopy = `Server URL: ${osmandEndpointUrl}\nDevice Identifier: ${compositeDeviceId}`;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(textToCopy).then(() => {
           showToast('✓ Konfigurasi Traccar berhasil disalin!', 'success');
