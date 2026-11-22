@@ -953,8 +953,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  min-height: 54px;
+  padding: 8px 12px;
+  min-height: 56px;
+  height: auto;
+  flex-shrink: 0;
   box-sizing: border-box;
   background: #FFFFFF;
   border-radius: 8px;
@@ -963,7 +965,6 @@
   border: 1.5px solid #CBD5E1;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   touch-action: manipulation;
-  overflow: hidden;
 }
 .leaderboard-item:hover {
   background: #FFFFFF;
@@ -1058,8 +1059,8 @@
 .leaderboard-telemetry-row {
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 3px;
   flex-wrap: wrap;
 }
 
@@ -1121,7 +1122,7 @@
 .leaderboard-cp-row {
   display: flex;
   align-items: center;
-  margin-top: 4px;
+  margin-top: 3px;
   max-width: 100%;
 }
 

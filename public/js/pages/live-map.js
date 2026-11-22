@@ -2563,7 +2563,7 @@ async function renderLiveMap(params) {
           cpDisplayHtml = `
             <div class="leaderboard-cp-row">
               <span class="cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}" title="${escapeHtml(latSp.cp_name || 'CP')}">
-                🚩 <span class="val-cp-text">${escapeHtml(cleanCpName)} · ${tStr} (${isPass ? '✓ In Time' : '⚠️ Over COT'})</span>
+                🚩 <span class="val-cp-text">${escapeHtml(cleanCpName)} · ${tStr} ${isPass ? '✓ In Time' : '⚠️ COT'}</span>
               </span>
             </div>
           `;
@@ -2587,18 +2587,16 @@ async function renderLiveMap(params) {
               </button>
             </div>
             <div class="leaderboard-telemetry-row">
+              <span class="telemetry-status-tag">
+                <span class="val-status-dot" style="color:${status.color}">${status.dot}</span>
+                <span class="val-timeago">${formatTimeAgo(e.lastTime)}</span>
+              </span>
               ${e.isFinished ? '<span class="telemetry-pill eta-pill eta-finished">🏁 FINISH</span>' : ''}
               <span class="offroute-pill" style="display:${e.isOffRoute ? 'inline-flex' : 'none'}">
                 ⚠️ NYASAR (+<span class="val-deviation">${e.deviationMeters}</span>m)
               </span>
               <span class="battery-pill ${e.batteryLevel != null && e.batteryLevel < 20 ? 'battery-low' : 'battery-good'}" style="display:${e.batteryLevel != null ? 'inline-flex' : 'none'}">
                 <span class="val-bat-icon">${e.batteryLevel != null && e.batteryLevel < 20 ? '🪫' : '🔋'}</span><span class="val-bat">${e.batteryLevel != null ? e.batteryLevel : ''}</span>%
-              </span>
-            </div>
-            <div class="leaderboard-status-sub">
-              <span class="telemetry-status-tag">
-                <span class="val-status-dot" style="color:${status.color}">${status.dot}</span>
-                <span class="val-timeago">${formatTimeAgo(e.lastTime)}</span>
               </span>
             </div>
             ${cpDisplayHtml}
@@ -2689,13 +2687,16 @@ async function renderLiveMap(params) {
             cpRow.style.display = 'flex';
             cpRow.innerHTML = `
               <span class="cp-pill ${isPass ? 'cp-in-time' : 'cp-over-cot'}" title="${escapeHtml(latSp.cp_name || 'CP')}">
-                🚩 <span class="val-cp-text">${escapeHtml(cleanCpName)} · ${tStr} (${isPass ? '✓ In Time' : '⚠️ Over COT'})</span>
+                🚩 <span class="val-cp-text">${escapeHtml(cleanCpName)} · ${tStr} ${isPass ? '✓ In Time' : '⚠️ COT'}</span>
               </span>
             `;
           } else {
             cpRow.style.display = 'none';
           }
         }
+
+        const oldStatusSub = card.querySelector('.leaderboard-status-sub');
+        if (oldStatusSub) oldStatusSub.remove();
 
         const statusDot = card.querySelector('.val-status-dot');
         if (statusDot) {
