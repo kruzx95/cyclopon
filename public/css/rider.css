@@ -661,10 +661,10 @@
 }
 .rider-device-pill .device-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 800;
   color: #64748B;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
 }
 .rider-device-pill .device-val {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

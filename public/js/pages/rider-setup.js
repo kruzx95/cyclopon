@@ -34,11 +34,11 @@ function renderRiderSetup() {
   const bib3Digit = (/^\d+$/.test(String(rider.bib || '')) && String(rider.bib).length < 3)
     ? String(rider.bib).padStart(3, '0')
     : String(rider.bib || '001');
-  const compositeDeviceId = (traccar && traccar.deviceIdentifier) || `${event.id}-${bib3Digit}`;
+  const deviceIdentifier = bib3Digit;
   const endpointWithEvent = (traccar && traccar.osmandUrl)
     ? traccar.osmandUrl
     : `${window.location.origin}/api/osmand?event_id=${event.id}`;
-  const traccarQuery = `url=${encodeURIComponent(endpointWithEvent)}&id=${encodeURIComponent(compositeDeviceId)}&interval=45&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
+  const traccarQuery = `url=${encodeURIComponent(endpointWithEvent)}&id=${encodeURIComponent(deviceIdentifier)}&interval=45&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
   const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const traccarDeepLinkUrl = isIosDevice
     ? `org.traccar.client://config?${traccarQuery}`
@@ -113,12 +113,12 @@ function renderRiderSetup() {
             Tanggal: <strong>${escapeHtml(event.date)}</strong> &nbsp;·&nbsp; Status: <span style="color:#047857;font-weight:700">Terdaftar Aktif</span>
           </p>
         </div>
-        <div class="rider-device-pill" title="ID Perangkat Traccar Client (Gunakan saat mengatur aplikasi Traccar)">
+        <div class="rider-device-pill" title="Device Identifier Traccar Client (Gunakan saat mengatur aplikasi Traccar)">
           <div class="device-pill-content">
-            <span class="device-label">DEVICE ID</span>
-            <span class="device-val">${escapeHtml(compositeDeviceId)}</span>
+            <span class="device-label">DEVICE IDENTIFIER</span>
+            <span class="device-val">${escapeHtml(deviceIdentifier)}</span>
           </div>
-          <button id="btnCopyDeviceIdHeader" class="device-copy-btn" title="Salin Device ID">
+          <button id="btnCopyDeviceIdHeader" class="device-copy-btn" title="Salin Device Identifier">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -159,8 +159,7 @@ function renderRiderSetup() {
                 </div>
                 <div>
                   <span style="color:#64748B;font-weight:700">DEVICE IDENTIFIER:</span><br>
-                  <code style="font-weight:900;color:#047857;font-size:13px">${escapeHtml(compositeDeviceId)}</code>
-                  <div style="font-size:10px;color:#64748B;margin-top:3px">Bisa gunakan <strong>${escapeHtml(compositeDeviceId)}</strong> atau BIB <strong>${escapeHtml(rider.bib)}</strong></div>
+                  <code style="font-weight:900;color:#047857;font-size:14px">${escapeHtml(deviceIdentifier)}</code>
                 </div>
               </div>
             </div>
@@ -169,7 +168,7 @@ function renderRiderSetup() {
                 <span>⚡ Buka &amp; Setting Otomatis (1-Klik)</span>
               </a>
               <button id="btnCopyTraccarConfig" class="btn-hub-secondary" style="font-size:11px;padding:8px">
-                📋 Salin URL &amp; Device ID
+                📋 Salin URL &amp; Device Identifier
               </button>
               <a href="/guide#traccarGuideSection" data-link class="btn-hub-secondary" style="font-size:11px;padding:8px;text-align:center">
                 Lihat Panduan Lengkap →
@@ -428,15 +427,15 @@ function renderRiderSetup() {
   if (btnCopyHeader) {
     btnCopyHeader.addEventListener('click', (e) => {
       e.stopPropagation();
-      const val = compositeDeviceId;
+      const val = deviceIdentifier;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(val).then(() => {
-          showToast(`✓ Device ID "${val}" disalin!`, 'success');
+          showToast(`✓ Device Identifier "${val}" disalin!`, 'success');
         }).catch(() => {
-          prompt('Device ID Anda:', val);
+          prompt('Device Identifier Anda:', val);
         });
       } else {
-        prompt('Device ID Anda:', val);
+        prompt('Device Identifier Anda:', val);
       }
     });
   }
@@ -444,7 +443,7 @@ function renderRiderSetup() {
   const btnCopyTraccar = document.getElementById('btnCopyTraccarConfig');
   if (btnCopyTraccar) {
     btnCopyTraccar.addEventListener('click', () => {
-      const textToCopy = `Server URL: ${osmandEndpointUrl}\nDevice Identifier: ${compositeDeviceId}`;
+      const textToCopy = `Server URL: ${osmandEndpointUrl}\nDevice Identifier: ${deviceIdentifier}`;
       if (navigator.clipboard) {
         navigator.clipboard.writeText(textToCopy).then(() => {
           showToast('✓ Konfigurasi Traccar berhasil disalin!', 'success');
