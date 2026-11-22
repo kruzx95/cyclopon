@@ -177,6 +177,7 @@ async function renderRiderCockpit() {
           </div>
           <div class="cockpit-top-quick">
             <span class="cockpit-pill-btn" style="padding:6px 10px;font-size:12px;font-weight:800;gap:4px" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
+            <button id="btnToggleTheme" class="cockpit-pill-btn icon-only" title="Ganti Mode Terang / Gelap">🌙</button>
             <button id="btnToggleFullscreen" class="cockpit-pill-btn icon-only" title="Fullscreen HUD">⛶</button>
             <button id="btnCockpitLogout" class="cockpit-pill-btn icon-only danger" title="Keluar / Logout">🚪</button>
           </div>
@@ -983,7 +984,8 @@ async function renderRiderCockpit() {
     document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
   });
 
-  // ── Auto Night Mode ──
+  // ── Auto & Manual Dark / Light Mode ──
+  const btnToggleTheme = document.getElementById('btnToggleTheme');
   const savedNight = localStorage.getItem('cyclopon_cockpit_night');
   let nightModeActive = false;
   if (savedNight !== null) {
@@ -995,6 +997,13 @@ async function renderRiderCockpit() {
   const cockpitContainer = document.querySelector('.cockpit-container');
   const bottomBar = document.querySelector('.cockpit-bottom-bar');
 
+  function updateThemeButton(isNight) {
+    if (btnToggleTheme) {
+      btnToggleTheme.textContent = isNight ? '☀️' : '🌙';
+      btnToggleTheme.title = isNight ? 'Beralih ke Mode Terang (Siang)' : 'Beralih ke Mode Gelap (Malam/AMOLED)';
+    }
+  }
+
   function applyNightMode(isNight) {
     if (isNight) {
       document.body.classList.add('night-mode');
@@ -1005,9 +1014,21 @@ async function renderRiderCockpit() {
       cockpitContainer?.classList.remove('night-mode');
       bottomBar?.classList.remove('night-mode');
     }
+    updateThemeButton(isNight);
   }
 
   applyNightMode(nightModeActive);
+
+  btnToggleTheme?.addEventListener('click', () => {
+    nightModeActive = !nightModeActive;
+    try {
+      localStorage.setItem('cyclopon_cockpit_night', String(nightModeActive));
+    } catch (e) {}
+    applyNightMode(nightModeActive);
+    if (window.showToast) {
+      showToast(nightModeActive ? '🌙 Mode Gelap Aktif' : '☀️ Mode Terang Aktif', 'info');
+    }
+  });
 
   // ── Logout Rider from Cockpit ──
   const btnCockpitLogout = document.getElementById('btnCockpitLogout');
