@@ -1418,8 +1418,8 @@
   }
 
   .header-logo {
-    padding-right: 8px;
-    border-right: 1px solid var(--border);
+    border-right: none;
+    padding-right: 0;
     flex-shrink: 0;
   }
 
