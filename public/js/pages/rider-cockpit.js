@@ -175,17 +175,17 @@ async function renderRiderCockpit() {
             <span class="cockpit-bib-badge">BIB #${rider.bib}</span>
             <span class="cockpit-rider-name" title="${rider.name}">${rider.name}</span>
           </div>
-          <div class="cockpit-top-quick">
-            <span class="cockpit-pill-btn" style="padding:6px 10px;font-size:12px;font-weight:800;gap:4px" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
+          <span class="cockpit-pill-btn cockpit-battery-pill" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
+        </div>
+        <div class="cockpit-top-actions">
+          <button id="btnToggleWakeLock" class="cockpit-pill-btn" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
+            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar Selalu Menyala: AKTIF</span>
+          </button>
+          <div class="cockpit-top-controls">
             <button id="btnToggleTheme" class="cockpit-pill-btn icon-only" title="Ganti Mode Terang / Gelap">🌙</button>
             <button id="btnToggleFullscreen" class="cockpit-pill-btn icon-only" title="Fullscreen HUD">⛶</button>
             <button id="btnCockpitLogout" class="cockpit-pill-btn icon-only danger" title="Keluar / Logout">🚪</button>
           </div>
-        </div>
-        <div class="cockpit-top-actions">
-          <button id="btnToggleWakeLock" class="cockpit-pill-btn" style="width:100%" title="Kunci Layar Selalu Menyala (Screen Wake Lock)">
-            <span class="wake-icon">💡</span> <span id="wakeStatusText">Layar Selalu Menyala: AKTIF</span>
-          </button>
         </div>
       </div>
 
