@@ -41,14 +41,14 @@ function renderGuide() {
             <span class="nav-label-short">DAFTAR</span>
           </a>
 
-          <a href="/admin" data-link class="btn-admin-nav">
+          <a href="/login" data-link class="btn-login-nav" title="Login Cockpit Rider" aria-label="Login rider">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+              <polyline points="10 17 15 12 10 7"></polyline>
+              <line x1="15" y1="12" x2="3" y2="12"></line>
             </svg>
-            <span class="nav-label-full">PANEL PANITIA</span>
-            <span class="nav-label-short">PANITIA</span>
-            <span class="admin-nav-arrow">↗</span>
+            <span class="nav-label-full">LOGIN RIDER</span>
+            <span class="nav-label-short">LOGIN</span>
           </a>
         </div>
       </nav>
@@ -63,7 +63,7 @@ function renderGuide() {
             <span>Panduan Pengguna</span>
           </div>
           <span class="guide-hero-kicker">// DOKUMENTASI RINGKAS HARI-H</span>
-          <h1 class="guide-hero-title">Panduan Cepat CycloPon<br><span>Rider &amp; Panitia</span></h1>
+          <h1 class="guide-hero-title">Panduan Cepat CycloPon<br><span>Rider &amp; Penonton</span></h1>
           <p class="guide-hero-lead">
             Cukup klik tombol <strong>"DAFTAR EVENT"</strong> di header atas untuk mendapatkan nomor BIB dan mengonfigurasi GPS Traccar di ponsel secara otomatis dalam 1 klik.
           </p>
@@ -287,15 +287,15 @@ function renderGuide() {
             </div>
 
             <div class="guide-step-card">
-              <div class="step-card-num">INFO TAMBAHAN · PANITIA &amp; GPX</div>
-              <div class="step-card-title">Impor CSV Panitia &amp; Unduh Rute GPX</div>
+              <div class="step-card-num">RUTE &amp; POS KONTROL</div>
+              <div class="step-card-title">Unduh Rute GPX &amp; Pos Checkpoint (CP)</div>
               <ul class="step-checklist">
-                <li><strong>Panitia Event:</strong> Unggah ratusan peserta sekaligus via Panel Panitia (<code>/admin</code>) dengan CSV format: <code>bib,nama,no_hp,peran,pin</code>.</li>
-                <li><strong>Unduh GPX Resmi:</strong> Masukkan file rute resmi ke bike computer (Garmin, Wahoo, Bryton).</li>
-                <li><strong>Pos Checkpoint:</strong> Cek kilometer tiap pos kontrol dan batas waktu Cut-Off Time (COT).</li>
+                <li><strong>Unduh GPX Resmi:</strong> Masukkan file rute resmi <code>.gpx</code> ke cyclocomp sepeda Anda (Garmin, Wahoo, Bryton) untuk navigasi belokan.</li>
+                <li><strong>Pos Checkpoint:</strong> Periksa kilometer tiap pos kontrol dan batas waktu Cut-Off Time (COT) agar tidak terkena diskualifikasi DNF.</li>
+                <li><strong>Pantau Roster:</strong> Pantau peleton seluruh peserta yang terdaftar pada tab Roster event.</li>
               </ul>
-              <a href="/admin" data-link class="btn-callout-action" style="margin-top:auto">
-                <span>Panel Panitia (/admin) →</span>
+              <a href="/events/1" id="btnGuideOpenRoster" data-link class="btn-callout-action" style="margin-top:auto">
+                <span>Buka Rute &amp; Roster Event →</span>
               </a>
             </div>
           </div>
