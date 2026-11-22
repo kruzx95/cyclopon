@@ -1230,7 +1230,7 @@
   display: none;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   padding: 8px 18px 9px 18px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -1259,7 +1259,16 @@
   text-transform: uppercase;
   color: #64748B;
   user-select: none;
-  line-height: 1;
+  line-height: 1.25;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.supporter-strip.supporter-strip--plain .supporter-strip-label {
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95), 0 0 6px rgba(255, 255, 255, 0.85);
+  font-weight: 900;
 }
 
 .supporter-strip-logos {
@@ -1278,7 +1287,8 @@
   line-height: 0;
   cursor: pointer;
   text-decoration: none;
-  height: 52px;
+  height: auto;
+  min-height: 32px;
   background: transparent !important;
   border: none !important;
   outline: none !important;
@@ -1345,7 +1355,7 @@
     bottom: calc(max(24px, calc(16px + env(safe-area-inset-bottom, 0px))) + 58px) !important;
     padding: 6px 14px 7px 14px;
     border-radius: 12px;
-    gap: 3px;
+    gap: 6px;
     max-width: min(92%, 360px);
   }
 
@@ -1360,7 +1370,8 @@
 
   .supporter-link {
     padding: 0 2px;
-    height: 42px;
+    height: auto;
+    min-height: 28px;
   }
 
   /* Ukuran mobile: tajam, jelas, dan proporsional */
