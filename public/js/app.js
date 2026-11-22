@@ -83,8 +83,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/rider/cockpit', async () => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/lib/gps-keeper.js', '/js/pages/rider-cockpit.js'],
-      ['/css/cockpit.css']
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/lib/gps-keeper.js', '/js/pages/rider-cockpit.js?v=92'],
+      ['/css/cockpit.css?v=92']
     );
     renderRiderCockpit();
   });

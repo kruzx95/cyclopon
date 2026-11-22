@@ -176,6 +176,7 @@ async function renderRiderCockpit() {
             <span class="cockpit-rider-name" title="${rider.name}">${rider.name}</span>
           </div>
           <div class="cockpit-top-quick">
+            <span class="cockpit-pill-btn" style="padding:6px 10px;font-size:12px;font-weight:800;gap:4px" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
             <button id="btnToggleFullscreen" class="cockpit-pill-btn icon-only" title="Fullscreen HUD">⛶</button>
             <button id="btnCockpitLogout" class="cockpit-pill-btn icon-only danger" title="Keluar / Logout">🚪</button>
           </div>
@@ -201,9 +202,7 @@ async function renderRiderCockpit() {
         </div>
 
         <div class="oled-metric-box">
-          <div class="oled-speed" id="oledSpeedVal">0.0</div>
-          <div class="oled-speed-unit">KM/JAM</div>
-          <div class="oled-distance" id="oledDistVal">0.0 km • 00:00:00</div>
+          <div class="oled-distance" id="oledDistVal" style="font-size:32px;font-weight:900;margin-bottom:8px">0.0 km • 00:00:00</div>
           <div class="oled-acc" id="oledGpsAcc">GPS: Standby</div>
         </div>
 
@@ -272,20 +271,7 @@ async function renderRiderCockpit() {
         </div>
       </div>
 
-      <!-- Speedometer Hero Card -->
-      <div class="cockpit-speedo-card">
-        <div class="cockpit-speed-number" id="cockpitSpeedVal">0.0</div>
-        <div class="cockpit-speed-unit">KM/JAM</div>
-        <div class="cockpit-speed-sub">
-          <span>Max: <strong id="cockpitMaxSpeed">0.0</strong> km/h</span>
-          <span>•</span>
-          <span>Avg: <strong id="cockpitAvgSpeed">0.0</strong> km/h</span>
-          <span>•</span>
-          <span>Baterai: <strong id="cockpitBattery">--%</strong></span>
-        </div>
-      </div>
-
-      <!-- Primary Metrics Grid -->
+      <!-- Primary Metrics Grid (4-box High Contrast) -->
       <div class="cockpit-grid">
         <div class="cockpit-stat-box">
           <div class="cockpit-stat-label">
@@ -326,85 +312,20 @@ async function renderRiderCockpit() {
           </div>
           <div class="cockpit-stat-sub" id="cockpitCoordsSub">-7.0000, 110.0000</div>
         </div>
-
-        <div class="cockpit-stat-box">
-          <div class="cockpit-stat-label">
-            <span>📐</span> Kemiringan (Grade)
-          </div>
-          <div class="cockpit-stat-value grade-val" id="cockpitGradeVal" data-grade-level="flat">
-            0%
-          </div>
-          <div class="cockpit-stat-sub" id="cockpitEleSub">Elevasi: -- mdpl</div>
-        </div>
-
-        <div class="cockpit-stat-box">
-          <div class="cockpit-stat-label">
-            <span>⛰️</span> Total Elev Gain
-          </div>
-          <div class="cockpit-stat-value">
-            <span id="cockpitElevGainVal">+0</span><span class="cockpit-stat-unit">m</span>
-          </div>
-          <div class="cockpit-stat-sub" id="cockpitClimbSummarySub">0 Tanjakan Terdeteksi</div>
-        </div>
       </div>
 
-      <!-- Dynamic ClimbPro Card (Auto-activated when approaching or climbing) -->
-      <div class="cockpit-climb-card hidden" id="cockpitClimbCard">
-        <div class="cockpit-climb-header">
-          <div class="cockpit-climb-title-wrap">
-            <span class="climb-cat-pill" id="cockpitClimbCatPill" style="background:#F59E0B">CAT 3</span>
-            <span class="cockpit-climb-title" id="cockpitClimbTitle">Tanjakan 1</span>
-          </div>
-          <span class="cockpit-climb-avg" id="cockpitClimbAvg">Avg 6.5% • Max 12%</span>
-        </div>
-
-        <div class="cockpit-climb-canvas-container">
-          <canvas id="cockpitClimbCanvas"></canvas>
-        </div>
-
-        <div class="cockpit-climb-stats">
-          <div class="cockpit-climb-stat-item">
-            <div class="cockpit-climb-stat-lbl">Sisa Jarak</div>
-            <div class="cockpit-climb-stat-val" id="cockpitClimbDistRemaining">-- km</div>
-          </div>
-          <div class="cockpit-climb-stat-item">
-            <div class="cockpit-climb-stat-lbl">Sisa Elevasi</div>
-            <div class="cockpit-climb-stat-val" id="cockpitClimbElevRemaining">+-- m</div>
-          </div>
-          <div class="cockpit-climb-stat-item">
-            <div class="cockpit-climb-stat-lbl">Kemiringan</div>
-            <div class="cockpit-climb-stat-val grade-val" id="cockpitClimbGradeLive">0%</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Target Checkpoint & COT Widget -->
+      <!-- Target Checkpoint Status Banner -->
       <div class="cockpit-cp-card" id="cockpitCpCard">
         <div class="cockpit-cp-header">
           <div class="cockpit-cp-title">
             <span>🚩</span>
             <span id="cockpitCpName">Menunggu Data Checkpoint...</span>
           </div>
-          <span id="cockpitCpPill" class="cockpit-cp-status-pill safe">ON TRACK</span>
+          <span id="cockpitCpPill" class="cockpit-cp-status-pill safe">RUTE RESMI</span>
         </div>
 
         <div class="cockpit-cp-progress-bar">
           <div class="cockpit-cp-progress-fill" id="cockpitCpProgressFill"></div>
-        </div>
-
-        <div class="cockpit-cp-details">
-          <div class="cockpit-cp-detail-box">
-            <div class="cockpit-cp-detail-lbl">Jarak ke Pos</div>
-            <div class="cockpit-cp-detail-val" id="cockpitCpDist">-- km</div>
-          </div>
-          <div class="cockpit-cp-detail-box">
-            <div class="cockpit-cp-detail-lbl">Target COT</div>
-            <div class="cockpit-cp-detail-val" id="cockpitCpCot">--:--</div>
-          </div>
-          <div class="cockpit-cp-detail-box">
-            <div class="cockpit-cp-detail-lbl">Estimasi Tiba</div>
-            <div class="cockpit-cp-detail-val" id="cockpitCpEta">--:--</div>
-          </div>
         </div>
       </div>
 
@@ -736,9 +657,13 @@ async function renderRiderCockpit() {
     }
 
     // Update Speed Display
-    document.getElementById('cockpitSpeedVal').textContent = currentSpeed.toFixed(1);
-    document.getElementById('cockpitMaxSpeed').textContent = maxSpeed.toFixed(1);
-    document.getElementById('cockpitAvgSpeed').textContent = avgSpeed.toFixed(1);
+    // Update Speed Display (safe if element removed)
+    const spdEl = document.getElementById('cockpitSpeedVal');
+    if (spdEl) spdEl.textContent = currentSpeed.toFixed(1);
+    const maxSpdEl = document.getElementById('cockpitMaxSpeed');
+    if (maxSpdEl) maxSpdEl.textContent = maxSpeed.toFixed(1);
+    const avgSpdEl = document.getElementById('cockpitAvgSpeed');
+    if (avgSpdEl) avgSpdEl.textContent = avgSpeed.toFixed(1);
 
     // Battery Display with Multi-Format Normalization
     if (batteryLevel != null) {
@@ -1056,13 +981,21 @@ async function renderRiderCockpit() {
     const isPastAll = currentCoveredKm >= checkpoints[checkpoints.length - 1].km_distance;
 
     if (isPastAll) {
-      document.getElementById('cockpitCpName').textContent = '🏁 Menuju Garis Finish!';
-      document.getElementById('cockpitCpPill').textContent = 'FINAL STAGE';
-      document.getElementById('cockpitCpPill').className = 'cockpit-cp-status-pill safe';
-      document.getElementById('cockpitCpDist').textContent = `${Math.max(0, (totalKm - currentCoveredKm).toFixed(1))} km`;
-      document.getElementById('cockpitCpCot').textContent = 'FINISH';
-      document.getElementById('cockpitCpEta').textContent = 'SEGERA';
-      document.getElementById('cockpitCpProgressFill').style.width = '100%';
+      const nameEl = document.getElementById('cockpitCpName');
+      if (nameEl) nameEl.textContent = '🏁 Menuju Garis Finish!';
+      const pill = document.getElementById('cockpitCpPill');
+      if (pill) {
+        pill.textContent = 'FINAL STAGE';
+        pill.className = 'cockpit-cp-status-pill safe';
+      }
+      const distEl = document.getElementById('cockpitCpDist');
+      if (distEl) distEl.textContent = `${Math.max(0, (totalKm - currentCoveredKm).toFixed(1))} km`;
+      const cotEl = document.getElementById('cockpitCpCot');
+      if (cotEl) cotEl.textContent = 'FINISH';
+      const etaEl = document.getElementById('cockpitCpEta');
+      if (etaEl) etaEl.textContent = 'SEGERA';
+      const fillEl = document.getElementById('cockpitCpProgressFill');
+      if (fillEl) fillEl.style.width = '100%';
       document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
       return;
     }
@@ -1072,10 +1005,14 @@ async function renderRiderCockpit() {
     const cpSpan = nextCp.km_distance - prevCpKm;
     const cpProgress = cpSpan > 0 ? Math.min(100, Math.max(0, Math.round(((currentCoveredKm - prevCpKm) / cpSpan) * 100))) : 50;
 
-    document.getElementById('cockpitCpName').textContent = `${nextCp.name} (KM ${nextCp.km_distance})`;
-    document.getElementById('cockpitCpDist').textContent = `${distToCp} km`;
-    document.getElementById('cockpitCpCot').textContent = nextCp.close_time || '--:--';
-    document.getElementById('cockpitCpProgressFill').style.width = `${cpProgress}%`;
+    const nameEl = document.getElementById('cockpitCpName');
+    if (nameEl) nameEl.textContent = `${nextCp.name} (KM ${nextCp.km_distance})`;
+    const distEl = document.getElementById('cockpitCpDist');
+    if (distEl) distEl.textContent = `${distToCp} km`;
+    const cotEl = document.getElementById('cockpitCpCot');
+    if (cotEl) cotEl.textContent = nextCp.close_time || '--:--';
+    const fillEl = document.getElementById('cockpitCpProgressFill');
+    if (fillEl) fillEl.style.width = `${cpProgress}%`;
 
     // Checkpoint Proximity Detection (< 200m / 0.2km)
     const proxBanner = document.getElementById('cockpitCpProximityAlert');
@@ -1106,7 +1043,8 @@ async function renderRiderCockpit() {
     const now = new Date();
     const etaDate = new Date(now.getTime() + hoursToCp * 3600 * 1000);
     const etaStr = etaDate.toTimeString().substring(0, 5);
-    document.getElementById('cockpitCpEta').textContent = etaStr;
+    const etaEl = document.getElementById('cockpitCpEta');
+    if (etaEl) etaEl.textContent = etaStr;
 
     // Check COT Delta
     if (nextCp.close_time) {
