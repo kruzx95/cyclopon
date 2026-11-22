@@ -169,14 +169,16 @@ async function renderRiderCockpit() {
 
       <!-- Top Bar -->
       <div class="cockpit-topbar">
-        <!-- Baris 1: Identitas Rider & Baterai -->
-        <div class="cockpit-topbar-row">
-          <div class="cockpit-rider-info">
+        <!-- Section Identitas: Baris 1 (Hub - BIB - Baterai) & Baris 2 (Nama Rider) -->
+        <div class="cockpit-identity-box">
+          <div class="cockpit-topbar-row">
             <a href="/rider/setup" data-link class="cockpit-hub-link" title="Kembali ke Rider Hub">🏠 Hub</a>
             <span class="cockpit-bib-badge">BIB #${rider.bib}</span>
-            <span class="cockpit-rider-name" title="${rider.name}">${rider.name}</span>
+            <span class="cockpit-pill-btn cockpit-battery-pill" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
           </div>
-          <span class="cockpit-pill-btn cockpit-battery-pill" title="Daya Baterai Ponsel">🔋 <span id="cockpitBattery">--%</span></span>
+          <div class="cockpit-rider-name-banner" title="${rider.name}">
+            ${rider.name}
+          </div>
         </div>
 
         <!-- Baris 2: Toggle Layar Melek (Penuh 100%) -->
