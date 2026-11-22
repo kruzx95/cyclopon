@@ -128,7 +128,7 @@ function renderRiderSetup() {
         </div>
       </div>
 
-      <!-- ── 5 Main Action Hub Cards ── -->
+      <!-- ── 4 Main Action Hub Cards ── -->
       <div style="margin-bottom:30px">
         <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px">
           Pilihan Menu Rider
@@ -198,33 +198,7 @@ function renderRiderSetup() {
             </a>
           </div>
 
-          <!-- Action 3: Pocket Tracker (In-Browser Background GPS) -->
-          <div id="cardPocketTracker" class="hub-action-card fade-in">
-            <div class="hub-action-top">
-              <div class="hub-action-header-row">
-                <div class="hub-action-badge sand">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                </div>
-                <span class="hub-action-tag sand">ALTERNATIF WEB BROWSER</span>
-              </div>
-              <div class="hub-action-title">Lacak di Kantong</div>
-              <p class="hub-action-desc">
-                Lacak langsung dari browser tanpa aplikasi Traccar tambahan! Audio sunyi menjaga GPS tetap aktif saat HP dikunci di saku jersey.
-              </p>
-              <div id="setupPocketStatusBox" style="display:none;background:rgba(4,120,87,0.08);border:1px solid rgba(4,120,87,0.25);padding:8px 12px;border-radius:10px;font-size:11px;color:#047857;margin-top:10px">
-                <span id="setupPocketDot">🟢</span> <strong>Melacak di Latar Belakang</strong>
-                <div id="setupPocketDetail" style="margin-top:3px;font-size:10px;opacity:0.9">Terkirim: 0 titik • Akurasi: --m</div>
-              </div>
-            </div>
-            <button id="btnTogglePocketSetup" class="btn-hub-secondary">
-              Mulai Lacak di Kantong
-            </button>
-          </div>
-
-          <!-- Action 4: Live Map -->
+          <!-- Action 3: Live Map -->
           <div class="hub-action-card fade-in">
             <div class="hub-action-top">
               <div class="hub-action-header-row">
@@ -252,7 +226,7 @@ function renderRiderSetup() {
             </div>
           </div>
 
-          <!-- Action 5: Download GPX Route -->
+          <!-- Action 4: Download GPX Route -->
           <div class="hub-action-card fade-in">
             <div class="hub-action-top">
               <div class="hub-action-header-row">
@@ -456,60 +430,6 @@ function renderRiderSetup() {
     });
   }
 
-
-  // ── Pocket Tracker (Background GPS Keep-Alive) in Setup Hub ──
-  const btnTogglePocket = document.getElementById('btnTogglePocketSetup');
-  const statusBox = document.getElementById('setupPocketStatusBox');
-  const statusDetail = document.getElementById('setupPocketDetail');
-  const cardPocket = document.getElementById('cardPocketTracker');
-
-  function updateSetupPocketUI(isActive, status = null) {
-    if (isActive) {
-      btnTogglePocket.textContent = '⏹️ Hentikan Lacak di Kantong';
-      btnTogglePocket.className = 'btn btn-primary';
-      btnTogglePocket.style.background = '#059669';
-      btnTogglePocket.style.borderColor = '#059669';
-      statusBox.style.display = 'block';
-      if (cardPocket) cardPocket.style.borderColor = '#059669';
-      if (status) {
-        const acc = status.accuracy ? `±${Math.round(status.accuracy)}m` : 'Mencari...';
-        statusDetail.textContent = `Terkirim: ${status.pointsSent} titik • Akurasi: ${acc} • Jarak: ${(status.distanceKm || 0).toFixed(1)} km`;
-      }
-    } else {
-      btnTogglePocket.textContent = 'Mulai Lacak di Kantong';
-      btnTogglePocket.className = 'btn btn-outline';
-      btnTogglePocket.style.background = '';
-      btnTogglePocket.style.borderColor = '';
-      statusBox.style.display = 'none';
-      if (cardPocket) cardPocket.style.borderColor = '';
-    }
-  }
-
-  // Sync state if already active
-  if (window.GpsKeeper && GpsKeeper.isActive()) {
-    updateSetupPocketUI(true, GpsKeeper.getStatus());
-  }
-
-  btnTogglePocket?.addEventListener('click', async () => {
-    if (window.GpsKeeper && GpsKeeper.isActive()) {
-      GpsKeeper.stop();
-      updateSetupPocketUI(false);
-      showToast('🎒 Pelacakan di kantong dihentikan.', 'info');
-    } else if (window.GpsKeeper) {
-      updateSetupPocketUI(true);
-      showToast('🎒 Mode Kantong Aktif! HP dapat dikunci di kantong jersey.', 'success');
-      await GpsKeeper.start({
-        rider,
-        event,
-        traccar: config.traccar,
-        onStatus: (status) => {
-          updateSetupPocketUI(true, status);
-        }
-      });
-    } else {
-      showToast('Modul GPS Keeper sedang dimuat...', 'info');
-    }
-  });
 
   // ── SOS Modal Logic ──
   const modalOverlay = document.getElementById('sosModalOverlay');
