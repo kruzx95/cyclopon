@@ -2137,15 +2137,7 @@ async function renderLiveMap(params) {
             <div class="popup-metric-sub">${telem.isOffRoute ? `⚠️ Deviasi +${telem.deviationMeters}m` : 'Sesuai rute resmi'}</div>
           </div>
 
-          <div class="popup-metric-box full-width">
-            <div class="popup-metric-label">🏁 Estimasi Finish (ETA)</div>
-            <div class="popup-metric-value highlight">
-              ${isFinished ? '🏁 Selesai di Garis Finish' : `${telem.etaTime} (${telem.etaDuration})`}
-            </div>
-            <div class="popup-metric-sub">
-              ${isFinished ? 'Rute 100% tuntas' : (telem.etaTime && telem.etaTime !== '-' ? `Estimasi tiba di finish ±${telem.etaTime} WIB` : 'Menghitung estimasi...')}
-            </div>
-          </div>
+
         </div>
 
         ${checkpoints && checkpoints.length ? `
@@ -2219,10 +2211,8 @@ async function renderLiveMap(params) {
             const remSub = popupEl.querySelector('.popup-metric-box:nth-child(2) .popup-metric-sub');
             if (remSub) remSub.textContent = telem.isOffRoute ? `⚠️ Deviasi +${telem.deviationMeters}m` : 'Sesuai rute resmi';
 
-            const etaVal = popupEl.querySelector('.popup-metric-box.full-width .popup-metric-value');
-            if (etaVal) etaVal.innerHTML = isFinished ? '🏁 Selesai di Garis Finish' : `${telem.etaTime} (${telem.etaDuration})`;
-            const etaSub = popupEl.querySelector('.popup-metric-box.full-width .popup-metric-sub');
-            if (etaSub) etaSub.textContent = isFinished ? 'Rute 100% tuntas' : (telem.etaTime && telem.etaTime !== '-' ? `Estimasi tiba di finish ±${telem.etaTime} WIB` : 'Menghitung estimasi...');
+            const etaBox = popupEl.querySelector('.popup-metric-box.full-width');
+            if (etaBox) etaBox.remove();
 
             const timeAgoVal = popupEl.querySelector('.popup-footer span strong');
             if (timeAgoVal) timeAgoVal.textContent = formatTimeAgo(fixTime);
@@ -2622,9 +2612,7 @@ async function renderLiveMap(params) {
               </button>
             </div>
             <div class="leaderboard-telemetry-row">
-              <span class="telemetry-pill eta-pill ${etaBadgeClass}">
-                🏁 <span class="val-eta">${displayEta}</span>
-              </span>
+              ${e.isFinished ? '<span class="telemetry-pill eta-pill eta-finished">🏁 FINISH</span>' : ''}
               <span class="offroute-pill" style="display:${e.isOffRoute ? 'inline-flex' : 'none'}">
                 ⚠️ NYASAR (+<span class="val-deviation">${e.deviationMeters}</span>m)
               </span>
@@ -2674,10 +2662,18 @@ async function renderLiveMap(params) {
         if (speedPill) speedPill.remove();
 
         const etaPill = card.querySelector('.eta-pill');
-        if (etaPill) {
-          etaPill.className = `telemetry-pill eta-pill ${etaBadgeClass}`;
-          const valEta = etaPill.querySelector('.val-eta');
-          if (valEta) valEta.textContent = displayEta;
+        if (e.isFinished) {
+          if (!etaPill) {
+            const telemRow = card.querySelector('.leaderboard-telemetry-row');
+            if (telemRow) {
+              const span = document.createElement('span');
+              span.className = 'telemetry-pill eta-pill eta-finished';
+              span.innerHTML = '🏁 FINISH';
+              telemRow.prepend(span);
+            }
+          }
+        } else if (etaPill) {
+          etaPill.remove();
         }
 
         const offRoutePill = card.querySelector('.offroute-pill');
@@ -4182,11 +4178,7 @@ async function renderLiveMap(params) {
           <div class="h2h-val val-b">${formatTimeAgo(progB.lastTime)}</div>
         </div>
 
-        <div class="h2h-stat-row">
-          <div class="h2h-val">${progA.etaTime} (${progA.etaDuration})</div>
-          <div class="h2h-lbl">Estimasi Finish (ETA)</div>
-          <div class="h2h-val val-b">${progB.etaTime} (${progB.etaDuration})</div>
-        </div>
+
       </div>
 
       <div class="h2h-actions">
