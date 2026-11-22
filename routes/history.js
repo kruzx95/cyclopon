@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db/database');
 const { requireAdminAuth, safeStringCompare } = require('../lib/admin-auth');
 const { requireEventAccess } = require('../lib/event-access');
+const virtualCot = require('../lib/virtual-cot');
 
 /**
  * Middleware to check event access PIN for protected events.
@@ -17,19 +18,50 @@ router.get('/events/:id/positions/latest', requireEventAccessForHistory, (req, r
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
 
   try {
+    const route = virtualCot.loadRoute ? virtualCot.loadRoute(eventId) : null;
+    const eventDist = (route && route.totalKm > 0) ? route.totalKm : 0;
+    const cps = db.getCheckpointsByEvent ? db.getCheckpointsByEvent.all(eventId) : [];
+    const totalCps = cps.length;
+
     const latestRows = db.db.prepare(`
-      SELECT h.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color, r.traccar_device_id
+      SELECT 
+        h.*, 
+        r.bib as rider_bib, 
+        r.name as rider_name, 
+        r.color as rider_color, 
+        r.traccar_device_id,
+        agg.max_distance_km
       FROM position_history h
       JOIN riders r ON h.rider_id = r.id
-      WHERE h.id IN (
-        SELECT MAX(id)
+      JOIN (
+        SELECT rider_id, MAX(id) AS max_id, MAX(distance_km) AS max_distance_km
         FROM position_history
         WHERE event_id = ?
         GROUP BY rider_id
-      )
+      ) agg ON agg.max_id = h.id
     `).all(eventId);
 
-    res.json(latestRows || []);
+    const splits = (totalCps > 0 && db.getSplitsByEvent) ? db.getSplitsByEvent.all(eventId) : [];
+
+    const enriched = latestRows.map(row => {
+      const maxKm = Number(row.max_distance_km || row.distance_km || 0);
+      let isFinished = false;
+
+      if (totalCps > 0) {
+        const clearedCps = splits.filter(s => s.rider_id === row.rider_id).length;
+        if (clearedCps >= totalCps) isFinished = true;
+      } else if (eventDist > 0) {
+        if (maxKm >= (eventDist * 0.95)) isFinished = true;
+      }
+
+      return {
+        ...row,
+        max_distance_km: maxKm,
+        is_finished: isFinished
+      };
+    });
+
+    res.json(enriched || []);
   } catch (err) {
     res.status(500).json({ error: 'Gagal mengambil posisi terbaru: ' + err.message });
   }
@@ -208,6 +240,7 @@ router.post('/events/:id/history', requireEventAccessForHistory, (req, res) => {
             isKmh: true,
             course: Number(pos.course || 0),
             altitude: Number(pos.altitude || 0),
+            distance_km: Number(pos.distance_km || 0),
             fixTime: pos.recorded_at || new Date().toISOString(),
             attributes
           };

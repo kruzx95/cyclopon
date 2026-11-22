@@ -56,8 +56,18 @@ async function handleOsmandPosition(req, res) {
       return res.status(400).send('Invalid latitude/longitude coordinates');
     }
 
-    // Resolve Rider by BIB, traccar_device_id, or ID
-    const devStr = String(rawId).trim();
+    // Resolve Rider by BIB, traccar_device_id, or ID (with multi-event support)
+    const rawEventId = source.event_id || source.event || req.query.event_id || req.query.event;
+    let targetEventId = rawEventId ? Number(rawEventId) : null;
+    let devStr = String(rawId).trim();
+
+    // Check for composite format: {eventId}-{bib} or E{eventId}-{bib}
+    const compositeMatch = /^E?(\d+)[-_:](.+)$/i.exec(devStr);
+    if (compositeMatch) {
+      if (!targetEventId) targetEventId = Number(compositeMatch[1]);
+      devStr = compositeMatch[2].trim();
+    }
+
     const cleanDev = devStr.replace(/^BIB-?/i, '').trim();
     const strippedZero = cleanDev.replace(/^0+/, '') || '0';
     const pad3 = cleanDev.padStart(3, '0');
@@ -65,23 +75,49 @@ async function handleOsmandPosition(req, res) {
 
     let rider = null;
     try {
-      rider = db.db.prepare(`
-        SELECT * FROM riders 
-        WHERE bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ?
-           OR traccar_device_id = ?
-           OR id = ?
-        ORDER BY id DESC
-        LIMIT 1
-      `).get(
-        cleanDev,
-        devStr,
-        `BIB-${cleanDev}`,
-        strippedZero,
-        pad3,
-        pad4,
-        Number(cleanDev) || 0,
-        Number(cleanDev) || 0
-      );
+      if (targetEventId && Number.isInteger(targetEventId)) {
+        // Scoped lookup strictly to specified event
+        rider = db.db.prepare(`
+          SELECT * FROM riders 
+          WHERE event_id = ? AND (
+            bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ?
+            OR traccar_device_id = ?
+            OR id = ?
+          )
+          ORDER BY id DESC
+          LIMIT 1
+        `).get(
+          targetEventId,
+          cleanDev,
+          devStr,
+          `BIB-${cleanDev}`,
+          strippedZero,
+          pad3,
+          pad4,
+          Number(cleanDev) || 0,
+          Number(cleanDev) || 0
+        );
+      } else {
+        // Fallback: check active events first, then newest
+        rider = db.db.prepare(`
+          SELECT r.* FROM riders r
+          JOIN events e ON r.event_id = e.id
+          WHERE r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ?
+             OR r.traccar_device_id = ?
+             OR r.id = ?
+          ORDER BY CASE WHEN e.active = 1 THEN 0 ELSE 1 END, e.created_at DESC, r.id DESC
+          LIMIT 1
+        `).get(
+          cleanDev,
+          devStr,
+          `BIB-${cleanDev}`,
+          strippedZero,
+          pad3,
+          pad4,
+          Number(cleanDev) || 0,
+          Number(cleanDev) || 0
+        );
+      }
     } catch (e) {
       console.warn('[OsmAnd API] Error querying rider:', e.message);
     }
@@ -169,6 +205,7 @@ async function handleOsmandPosition(req, res) {
       const wsPosition = {
         deviceId:    devId,
         rider_id:    rider.id,
+        event_id:    rider.event_id,
         latitude:    lat,
         longitude:   lon,
         speed:       speedKmh,
@@ -190,5 +227,6 @@ async function handleOsmandPosition(req, res) {
 
 router.get('/', handleOsmandPosition);
 router.post('/', handleOsmandPosition);
+router.handleOsmandPosition = handleOsmandPosition;
 
 module.exports = router;

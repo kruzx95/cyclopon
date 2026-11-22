@@ -33,12 +33,14 @@ function getPublicTraccarConfig(req, rider) {
 
   let rawBib = rider.traccar_device_id ? String(rider.traccar_device_id) : String(rider.bib || '001');
   const bib3Digit = (/^\d+$/.test(rawBib) && rawBib.length < 3) ? rawBib.padStart(3, '0') : rawBib;
+  // Multi-event safe composite ID: {eventId}-{bib} prevents collisions when identical BIBs run concurrently
+  const compositeId = rider.traccar_device_id ? String(rider.traccar_device_id) : `${rider.event_id}-${bib3Digit}`;
 
   return {
     serverUrl:        `${proto}://${publicHost}`,
-    osmandUrl:        `${proto}://${publicHost}/api/osmand`,
+    osmandUrl:        `${proto}://${publicHost}/api/osmand?event_id=${rider.event_id}`,
     osmandPort:       Number(process.env.TRACCAR_OSMAND_PORT || 5055),
-    deviceIdentifier: bib3Digit,
+    deviceIdentifier: compositeId,
     interval:         45,
   };
 }

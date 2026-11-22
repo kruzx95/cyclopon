@@ -34,7 +34,11 @@ function renderRiderSetup() {
   const bib3Digit = (/^\d+$/.test(String(rider.bib || '')) && String(rider.bib).length < 3)
     ? String(rider.bib).padStart(3, '0')
     : String(rider.bib || '001');
-  const traccarQuery = `url=${encodeURIComponent(osmandEndpointUrl)}&id=${encodeURIComponent(bib3Digit)}&interval=45&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
+  const compositeDeviceId = (traccar && traccar.deviceIdentifier) || `${event.id}-${bib3Digit}`;
+  const endpointWithEvent = (traccar && traccar.osmandUrl)
+    ? traccar.osmandUrl
+    : `${window.location.origin}/api/osmand?event_id=${event.id}`;
+  const traccarQuery = `url=${encodeURIComponent(endpointWithEvent)}&id=${encodeURIComponent(compositeDeviceId)}&interval=45&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
   const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const traccarDeepLinkUrl = isIosDevice
     ? `org.traccar.client://config?${traccarQuery}`
@@ -109,9 +113,9 @@ function renderRiderSetup() {
             Tanggal: <strong>${escapeHtml(event.date)}</strong> &nbsp;·&nbsp; Status: <span style="color:#047857;font-weight:700">Terdaftar Aktif</span>
           </p>
         </div>
-        <div class="rider-device-pill" title="ID Perangkat Traccar Client">
+        <div class="rider-device-pill" title="ID Perangkat Traccar Client (Gunakan saat mengatur aplikasi Traccar)">
           <span class="device-label">DEVICE ID</span>
-          <span class="device-val">${escapeHtml(traccar.deviceIdentifier)}</span>
+          <span class="device-val">${escapeHtml(compositeDeviceId)}</span>
         </div>
       </div>
 

@@ -1637,19 +1637,21 @@ async function renderLiveMap(params) {
     const isOffline = status && (status.text === 'Offline' || status.text === 'Blank Spot');
     const isIdle = status && status.text === 'Idle';
 
-    const baseColor = isOffRoute ? '#EF4444' : (isCotDnf ? '#6B7280' : (isOffline ? '#94A3B8' : meta.color));
-    const markerOpacity = isCotDnf ? '0.55' : (isOffline ? '0.42' : (isIdle ? '0.75' : '1.0'));
-    const markerFilter = isCotDnf ? 'grayscale(100%)' : (isOffline ? 'grayscale(45%)' : 'none');
+    // Rider hit by COT stays lit up with original vivid colors (not dimmed or grayed out)
+    const baseColor = isOffRoute ? '#EF4444' : (isOffline ? '#94A3B8' : meta.color);
+    const markerOpacity = isOffline ? '0.50' : (isIdle ? '0.80' : '1.0');
+    const markerFilter = isOffline ? 'grayscale(40%)' : 'none';
 
     let statusTag = '';
     if (isCotDnf) {
       statusTag = `<div style="
           position:absolute;top:-36px;left:50%;transform:translateX(-50%);
-          background:rgba(185,28,28,0.92);color:#FFFFFF;font-size:8px;font-weight:800;
-          padding:1px 6px;border-radius:100px;white-space:nowrap;
-          box-shadow:0 2px 6px rgba(185,28,28,0.4);
-          pointer-events:none;z-index:10;
-        ">⏱️ DNF COT</div>`;
+          background:#EA580C;color:#FFFFFF;font-size:8.5px;font-weight:900;
+          padding:2px 7px;border-radius:100px;white-space:nowrap;
+          border:1.5px solid #FFFFFF;
+          box-shadow:0 2px 8px rgba(234,88,12,0.6);
+          pointer-events:none;z-index:15;
+        ">⏱️ OVER COT</div>`;
     } else if (isOffRoute) {
       statusTag = `<div style="
           position:absolute;top:-36px;left:50%;transform:translateX(-50%);
@@ -2031,26 +2033,33 @@ async function renderLiveMap(params) {
     // 2. Traveled sufficient cumulative distance (>= 75% of route)
     // 3. Cleared all checkpoints (if any)
     // 4. Progressed to the finish point (progress >= 98% or remainingKm <= 0.15)
-    const meetsFinishCriteria = !telem.isOffRoute &&
+    // OR pos.is_finished was already confirmed from server / previous finish!
+    const meetsFinishCriteria = !!pos.is_finished || (!telem.isOffRoute &&
       hasTraveledEnough &&
       allCpsCleared &&
-      (calc.progressPct >= 98 || (totalDist > 0 && remainingKm <= 0.15));
+      (calc.progressPct >= 98 || (totalDist > 0 && remainingKm <= 0.15)));
 
-    if (meetsFinishCriteria) {
+    // STICKY FINISH LATCH: Once finished, ALWAYS stay finished!
+    // Never reset to false even if rider turns around and rides back home along the course!
+    if (meetsFinishCriteria || telem.isFinished) {
       if (!telem.isFinished) {
         telem.finishTime = fixTime || new Date().toISOString();
+        telem.finishDist = totalDist > 0 ? totalDist : (calc.distanceKm || totalDist);
       }
       telem.isFinished = true;
-    } else if (!telem.isFinished) {
-      telem.isFinished = false;
     }
 
     const isFinished = !!telem.isFinished;
 
-    if (telem.isFinished) {
+    if (isFinished) {
       telem.etaTime = 'FINISH';
       telem.etaDuration = 'Tiba di Finish';
       telem.etaBadgeClass = 'eta-finished';
+      telem.remainingKm = 0;
+      calc.progressPct = 100;
+      if (totalDist > 0) {
+        calc.distanceKm = totalDist;
+      }
     } else if (totalDist > 0 && remainingKm > 0) {
       const speedRef = telem.movingAvg > 3 ? telem.movingAvg : (telem.currentSpeed > 3 ? telem.currentSpeed : 0);
       if (speedRef >= 3) {
@@ -2262,20 +2271,25 @@ async function renderLiveMap(params) {
     markerById[rider.bib] = marker;
 
     // Save state for leaderboard uniquely by canonical rider.id
+    const finalLeaderboardDist = isFinished
+      ? (totalDist > 0 ? totalDist : (telem.finishDist || displayKm))
+      : displayKm;
+
     progressById[canonicalId] = {
       ...calc,
-      distanceKm: displayKm,
-      routeDistanceKm: calc.distanceKm,
+      distanceKm: finalLeaderboardDist,
+      routeDistanceKm: isFinished ? (totalDist > 0 ? totalDist : calc.distanceKm) : calc.distanceKm,
+      progressPct: isFinished ? 100 : calc.progressPct,
+      remainingKm: isFinished ? 0 : telem.remainingKm,
       speed: telem.currentSpeed,
       movingAvg: telem.movingAvg,
-      remainingKm: telem.remainingKm,
       etaTime: telem.etaTime,
       etaDuration: telem.etaDuration,
       etaBadgeClass: telem.etaBadgeClass,
       batteryLevel: telem.batteryLevel,
-      isOffRoute: telem.isOffRoute,
-      deviationMeters: telem.deviationMeters,
-      isFinished: telem.isFinished,
+      isOffRoute: isFinished ? false : telem.isOffRoute,
+      deviationMeters: isFinished ? 0 : telem.deviationMeters,
+      isFinished: isFinished,
       finishTime: telem.finishTime || null,
       lastTime: fixTime
     };
@@ -2522,7 +2536,7 @@ async function renderLiveMap(params) {
         rankDisplay = e.rider.role === 'sweeper' ? '🧹' : (e.rider.role === 'medic' ? '🚑' : '🛡️');
         rankClass += ' rank-support';
       } else if (isDnf) {
-        rankDisplay = 'DNF';
+        rankDisplay = 'COT';
         rankClass += ' rank-dnf';
       } else if (raceRank) {
         rankDisplay = raceRank <= 3 ? ['🥇','🥈','🥉'][raceRank - 1] : `#${raceRank}`;
@@ -2543,7 +2557,7 @@ async function renderLiveMap(params) {
           gapText = `-${gapKm.toFixed(1)} km`;
         }
       } else if (isDnf) {
-        gapText = 'DNF';
+        gapText = 'OVER COT';
       }
 
       const status = getRiderStatus(e.lastTime);
@@ -4373,7 +4387,8 @@ async function renderLiveMap(params) {
           longitude: pt.longitude,
           speed: pt.speed || 0,
           isKmh: true,
-          distance_km: Number(pt.distance_km || 0),
+          distance_km: Number(pt.max_distance_km || pt.distance_km || 0),
+          is_finished: !!pt.is_finished,
           fixTime: pt.recorded_at,
           attributes: {}
         });
