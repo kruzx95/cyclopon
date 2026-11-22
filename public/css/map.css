@@ -881,97 +881,7 @@
   box-shadow: none;
 }
 
-/* ── Target Rider Focus Floating Bar ── */
-.target-rider-focus-bar {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 1000;
-  background: #FFFFFF;
-  border: 1.5px solid #0D1117;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(13, 17, 23, 0.14);
-  padding: 6px 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: inherit;
-  animation: fadeInDown 0.25s ease-out;
-}
-.focus-rider-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-}
-.focus-pulse-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #047857;
-  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.25);
-  animation: pulse 1.5s infinite alternate;
-}
-.focus-label {
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  color: #64748B;
-  text-transform: uppercase;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-}
-.focus-name {
-  font-weight: 800;
-  color: #0D1117;
-}
-.focus-speed {
-  font-size: 11px;
-  font-weight: 800;
-  color: #0D1117;
-  background: #F1F5F9;
-  border: 1px solid #CBD5E1;
-  padding: 1px 6px;
-  border-radius: 4px;
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-}
-.focus-bar-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.btn-focus-action {
-  background: #FFFFFF;
-  border: 1.5px solid #0D1117;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #0D1117;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-focus-action:hover {
-  background: #0D1117;
-  color: #FFFFFF;
-}
-.btn-focus-close {
-  background: none;
-  border: none;
-  color: #64748B;
-  font-size: 14px;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 4px;
-  margin-left: 2px;
-}
-.btn-focus-close:hover {
-  background: #F1F5F9;
-  color: #0D1117;
-}
+
 
 /* ── Popup Share Button ── */
 .popup-share-link-btn {
@@ -1767,19 +1677,7 @@
     padding: 2px 6px 4px 6px !important;
   }
 
-  /* ── Target Rider Floating Bar on Mobile ── */
-  .target-rider-focus-bar {
-    top: 10px;
-    left: 10px;
-    max-width: calc(100% - 60px);
-    font-size: 11px;
-    padding: 3px 8px;
-    gap: 6px;
-  }
 
-  .focus-speed {
-    display: none;
-  }
 }
 
 /* ── Komoot Elevation Profile Drawer ── */

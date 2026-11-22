@@ -311,20 +311,7 @@ async function renderLiveMap(params) {
             </a>
           </div>
 
-          <!-- ── Target Rider Focus Floating Banner ── -->
-          <div id="targetRiderFocusBanner" class="target-rider-focus-bar" style="display:none">
-            <div class="focus-rider-info">
-              <span class="focus-pulse-dot"></span>
-              <span class="focus-label">FOKUS:</span>
-              <span id="focusRiderName" class="focus-name">-</span>
-              <span id="focusRiderSpeed" class="focus-speed">-</span>
-            </div>
-            <div class="focus-bar-actions">
-              <button id="btnFocusPan" class="btn-focus-action" title="Pusatkan Peta ke Rider">🎯 Pusatkan</button>
-              <button id="btnFocusShare" class="btn-focus-action" title="Bagikan Tautan">🔗 Bagikan</button>
-              <button id="btnCancelFocus" class="btn-focus-close" title="Lepaskan Fokus">✕</button>
-            </div>
-          </div>
+
 
           <!-- ── Komoot Elevation Profile Drawer ── -->
           <div class="elevation-drawer ${isMobile ? 'collapsed' : ''}" id="elevationDrawer">
@@ -2312,13 +2299,6 @@ async function renderLiveMap(params) {
     clearTargetTrail();
     targetRider = r;
     isAutoFollowing = true;
-    const banner = document.getElementById('targetRiderFocusBanner');
-    if (banner) {
-      document.getElementById('focusRiderName').textContent = `#${r.bib} ${r.name}`;
-      const prog = progressById[r.id];
-      document.getElementById('focusRiderSpeed').textContent = prog ? `${prog.distanceKm || 0} km • ${prog.progressPct || 0}%` : 'Terhubung';
-      banner.style.display = 'flex';
-    }
     const m = markerById[r.id] || (r.traccar_device_id && markerById[r.traccar_device_id]);
     if (m) {
       map.setView(m.getLatLng(), 16);
@@ -2332,11 +2312,6 @@ async function renderLiveMap(params) {
 
   function handleTargetRiderFocus(rider, latlng, telem, calc) {
     if (!targetRider || String(targetRider.bib).toLowerCase() !== String(rider.bib).toLowerCase()) return;
-
-    const speedEl = document.getElementById('focusRiderSpeed');
-    if (speedEl) {
-      speedEl.textContent = `${calc.distanceKm || 0} km • ${calc.progressPct || 0}%`;
-    }
 
     // Dynamic Live Breadcrumb Trail for focused rider
     if (latlng) {
@@ -2837,47 +2812,7 @@ async function renderLiveMap(params) {
     setTimeout(updatePillsScrollState, 150);
   }
 
-  // ── Focus Floating Bar Button Listeners ──
-  const btnFocusPan = document.getElementById('btnFocusPan');
-  const btnFocusShare = document.getElementById('btnFocusShare');
-  const btnCancelFocus = document.getElementById('btnCancelFocus');
 
-  if (btnFocusPan) {
-    btnFocusPan.addEventListener('click', () => {
-      if (!targetRider) return;
-      isAutoFollowing = true;
-      const m = markerById[targetRider.traccar_device_id];
-      if (m) {
-        map.setView(m.getLatLng(), 16);
-        m.openPopup();
-        showToast(`🎯 Mengikuti #${targetRider.bib} ${targetRider.name}`, 'info');
-      } else {
-        showToast(`Belum ada sinyal GPS untuk #${targetRider.bib}`, 'info');
-      }
-    });
-  }
-
-  if (btnFocusShare) {
-    btnFocusShare.addEventListener('click', () => {
-      if (targetRider) {
-        window.shareRiderLink(targetRider.bib, targetRider.name);
-      }
-    });
-  }
-
-  if (btnCancelFocus) {
-    btnCancelFocus.addEventListener('click', () => {
-      clearTargetTrail();
-      targetRider = null;
-      isAutoFollowing = false;
-      const banner = document.getElementById('targetRiderFocusBanner');
-      if (banner) banner.style.display = 'none';
-      document.querySelectorAll('.leaderboard-item.focused-rider').forEach(el => el.classList.remove('focused-rider'));
-      window.history.replaceState({}, '', `/watch/${eventId}`);
-      showToast('Mode fokus rider dinonaktifkan.', 'info');
-      updateLeaderboard();
-    });
-  }
 
   // Disengage auto-following when user manually drags the map
   map.on('dragstart', () => {
