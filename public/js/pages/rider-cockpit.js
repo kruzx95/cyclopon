@@ -259,23 +259,6 @@ async function renderRiderCockpit() {
         </div>
       </div>
 
-      <!-- Target Checkpoint Status Banner -->
-      <div class="cockpit-cp-card" id="cockpitCpCard">
-        <div class="cockpit-cp-header">
-          <div class="cockpit-cp-title" style="width:100%;display:flex;align-items:center;justify-content:space-between">
-            <span style="display:inline-flex;align-items:center;gap:8px;min-width:0">
-              <span style="flex-shrink:0">🚩</span>
-              <span id="cockpitCpName" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Menunggu Data Checkpoint...</span>
-            </span>
-            <span id="cockpitCpDistRemain" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:var(--cockpit-muted);flex-shrink:0;margin-left:8px">-- km</span>
-          </div>
-        </div>
-
-        <div class="cockpit-cp-progress-bar">
-          <div class="cockpit-cp-progress-fill" id="cockpitCpProgressFill"></div>
-        </div>
-      </div>
-
       <!-- Virtual COT Status -->
       <div class="cockpit-cp-card" id="cockpitCotCard" style="display:none;margin-top:10px">
         <div class="cockpit-cp-header">
@@ -703,51 +686,19 @@ async function renderRiderCockpit() {
   function updateCheckpointWidget(currentCoveredKm, movingAvg) {
     lastCoveredKm = currentCoveredKm;
     renderCotWidget(currentCoveredKm);
-    const cpCard = document.getElementById('cockpitCpCard');
-    const cpProgressEl = cpCard?.querySelector('.cockpit-cp-progress-bar');
-    let noCpNotice = document.getElementById('cockpitNoCpNotice');
-    const nameEl = document.getElementById('cockpitCpName');
-    const distRemainEl = document.getElementById('cockpitCpDistRemain');
-    const fillEl = document.getElementById('cockpitCpProgressFill');
 
-    if (!checkpoints.length) {
-      if (nameEl) nameEl.textContent = '🏁 Rute Bebas (Tanpa Transit)';
-      if (distRemainEl) distRemainEl.textContent = '';
-      if (cpProgressEl) cpProgressEl.style.display = 'none';
-      if (!noCpNotice && cpCard) {
-        noCpNotice = document.createElement('div');
-        noCpNotice.id = 'cockpitNoCpNotice';
-        noCpNotice.style.cssText = 'font-size:12px;color:var(--cockpit-muted);display:flex;align-items:center;gap:6px;padding:4px 0';
-        noCpNotice.innerHTML = '<span>ℹ️</span> Ikuti garis rute GPX pada peta hingga garis finish.';
-        cpCard.appendChild(noCpNotice);
-      }
-      return;
-    }
-
-    if (cpProgressEl) cpProgressEl.style.display = 'block';
-    if (noCpNotice) noCpNotice.remove();
+    if (!checkpoints.length) return;
 
     // Find next checkpoint
     const nextCp = checkpoints.find(cp => cp.km_distance > currentCoveredKm) || checkpoints[checkpoints.length - 1];
     const isPastAll = currentCoveredKm >= checkpoints[checkpoints.length - 1].km_distance;
 
     if (isPastAll) {
-      if (nameEl) nameEl.textContent = '🏁 Menuju Garis Finish!';
-      const finishDist = Math.max(0, (totalKm - currentCoveredKm)).toFixed(1);
-      if (distRemainEl) distRemainEl.textContent = `${finishDist} km lagi`;
-      if (fillEl) fillEl.style.width = '100%';
       document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
       return;
     }
 
     const distToCp = Math.max(0, Math.round((nextCp.km_distance - currentCoveredKm) * 10) / 10);
-    const prevCpKm = checkpoints.indexOf(nextCp) > 0 ? checkpoints[checkpoints.indexOf(nextCp) - 1].km_distance : 0;
-    const cpSpan = nextCp.km_distance - prevCpKm;
-    const cpProgress = cpSpan > 0 ? Math.min(100, Math.max(0, Math.round(((currentCoveredKm - prevCpKm) / cpSpan) * 100))) : 50;
-
-    if (nameEl) nameEl.textContent = `${nextCp.name} (KM ${nextCp.km_distance})`;
-    if (distRemainEl) distRemainEl.textContent = `${distToCp.toFixed(1)} km lagi`;
-    if (fillEl) fillEl.style.width = `${cpProgress}%`;
 
     // Checkpoint Proximity Detection (< 200m / 0.2km)
     const proxBanner = document.getElementById('cockpitCpProximityAlert');
