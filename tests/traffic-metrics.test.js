@@ -98,6 +98,34 @@ test('Traffic & Visitor Analytics Engine', async (t) => {
     assert.ok(data.system, 'Traffic response should contain system metrics');
     assert.ok(typeof data.system.vps.totalMemMB === 'number');
     assert.ok(typeof data.system.vps.cpuCount === 'number');
+    assert.ok(data.surgeMitigation, 'Traffic response should contain surgeMitigation object');
+    assert.equal(data.surgeMitigation.socketLimit, 65535);
+    assert.equal(typeof data.surgeMitigation.telemetryRatePerMin, 'number');
+    assert.equal(typeof data.surgeMitigation.activeRidersCount, 'number');
+  });
+
+  await t.test('GET /api/admin/metrics/event/:id returns live metrics for specific event', async () => {
+    // Create test event
+    const eventResult = db.createEvent.run({
+      name: 'Metrics Test Event',
+      date: '2026-11-23',
+      description: 'Event to test per-event live metrics'
+    });
+    const testEventId = Number(eventResult.lastInsertRowid);
+
+    const res = await fetch(`${baseUrl}/api/admin/metrics/event/${testEventId}`);
+    assert.equal(res.status, 200);
+
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.eventId, testEventId);
+    assert.equal(typeof data.eventViewers, 'number');
+    assert.equal(typeof data.telemetryRatePerMin, 'number');
+    assert.equal(typeof data.activeRiders, 'number');
+    assert.ok(data.system);
+
+    // Clean up test event
+    db.db.prepare('DELETE FROM events WHERE id = ?').run(testEventId);
   });
 
   await t.test('GET /api/admin/metrics/system returns real-time VPS resource metrics', async () => {

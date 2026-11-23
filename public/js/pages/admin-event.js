@@ -71,6 +71,47 @@ async function renderAdminEvent(params) {
           ` : ''}
         </div>
 
+        ${!isNew ? `
+          <!-- Real-Time Event & Spectator Telemetry Monitoring -->
+          <div class="card" id="eventLiveMonitorCard" style="margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB;flex-wrap:wrap;gap:8px">
+              <div>
+                <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// REAL-TIME TELEMETRY &amp; SPECTATOR SURGE</span>
+                <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0;display:flex;align-items:center;gap:8px">
+                  <span class="live-pulse-dot" style="display:inline-block;width:8px;height:8px;background:#10B981;border-radius:50%"></span>
+                  Live Monitoring &amp; Penonton
+                </h2>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:11px;color:#6B7280;font-weight:600">Pembaruan tiap 5 dtk</span>
+                <span id="evSurgeBadge" class="badge badge-active">● KAPASITAS AMAN</span>
+              </div>
+            </div>
+            <div class="traffic-metrics-grid">
+              <div class="traffic-metric-item" title="Jumlah koneksi live spectator yang membuka peta event ini via WebSocket">
+                <div class="traffic-metric-lbl">Penonton Live</div>
+                <div class="traffic-metric-val" id="evMetricViewers">0</div>
+                <div class="traffic-metric-sub">Koneksi Penonton Aktif</div>
+              </div>
+              <div class="traffic-metric-item" title="Jumlah pesepeda yang perangkat GPS-nya aktif mengirim sinyal dalam 5 menit terakhir">
+                <div class="traffic-metric-lbl">Rider Online</div>
+                <div class="traffic-metric-val" id="evMetricActiveRiders" style="color:#166534">0 / --</div>
+                <div class="traffic-metric-sub">Sinyal 5 Menit Terakhir</div>
+              </div>
+              <div class="traffic-metric-item" title="Kecepatan update koordinat GPS yang masuk dan disimpan database per menit">
+                <div class="traffic-metric-lbl">Laju Update GPS</div>
+                <div class="traffic-metric-val" id="evMetricTelemetryRate" style="color:#0284C7">0 titik/mnt</div>
+                <div class="traffic-metric-sub">Titik per Menit (t/m)</div>
+              </div>
+              <div class="traffic-metric-item" title="Beban prosesor dan memori server VPS yang sedang berjalan">
+                <div class="traffic-metric-lbl">Beban Server VPS</div>
+                <div class="traffic-metric-val" id="evMetricServerLoad">--% RAM</div>
+                <div class="traffic-metric-sub" id="evMetricServerLoadSub">CPU: --% · Traccar: OK</div>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <!-- Event Details Form -->
         <div class="card" style="margin-bottom:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
@@ -1215,6 +1256,57 @@ async function renderAdminEvent(params) {
       }
     });
   });
+
+  if (!isNew && eventId) {
+    if (window._adminEventMetricInterval) {
+      clearInterval(window._adminEventMetricInterval);
+      window._adminEventMetricInterval = null;
+    }
+    const updateEventMetrics = async () => {
+      if (!window.location.pathname.includes(`/admin/events/${eventId}`)) {
+        if (window._adminEventMetricInterval) {
+          clearInterval(window._adminEventMetricInterval);
+          window._adminEventMetricInterval = null;
+        }
+        return;
+      }
+      try {
+        const res = await fetch(`/api/admin/metrics/event/${eventId}`, { credentials: 'include' });
+        if (!res.ok) return;
+        const m = await res.json();
+        if (!m.success) return;
+
+        const vEl = document.getElementById('evMetricViewers');
+        const rEl = document.getElementById('evMetricActiveRiders');
+        const tEl = document.getElementById('evMetricTelemetryRate');
+        const sEl = document.getElementById('evMetricServerLoad');
+        const sSub = document.getElementById('evMetricServerLoadSub');
+        const badge = document.getElementById('evSurgeBadge');
+
+        if (vEl) vEl.textContent = Number(m.eventViewers || 0).toLocaleString();
+        if (rEl) rEl.textContent = `${m.activeRiders || 0} / ${m.totalRiders || 0}`;
+        if (tEl) tEl.textContent = `${m.telemetryRatePerMin || 0} titik/mnt`;
+        if (sEl && m.system) sEl.textContent = `${m.system.memUsagePct || 0}% RAM`;
+        if (sSub && m.system) sSub.textContent = `CPU: ${m.system.cpuLoadPct || 0}% · Traccar: ${m.system.traccarConnected ? 'OK' : 'Standby'}`;
+
+        if (badge) {
+          if (m.surgeStatus === 'HIGH_SURGE') {
+            badge.className = 'badge badge-medic';
+            badge.textContent = '● LONJAKAN TINGGI';
+          } else if (m.surgeStatus === 'MODERATE') {
+            badge.className = 'badge badge-sweeper';
+            badge.textContent = '● TRAFIK MENINGKAT';
+          } else {
+            badge.className = 'badge badge-active';
+            badge.textContent = '● KAPASITAS AMAN';
+          }
+        }
+      } catch (e) {}
+    };
+
+    updateEventMetrics();
+    window._adminEventMetricInterval = setInterval(updateEventMetrics, 5000);
+  }
 }
 
 function renderSponsorTableRows(sponsors) {

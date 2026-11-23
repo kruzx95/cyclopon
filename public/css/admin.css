@@ -2169,13 +2169,29 @@ input[type="time"].input {
   font-family: ui-monospace, monospace;
 }
 
+.print-only-header,
+.print-only-footer {
+  display: none;
+}
+
 /* ── Print Media Query for Clean Paper Output ── */
 @media print {
   body * {
     visibility: hidden;
   }
-  #batchPrintPaper, #batchPrintPaper * {
+  #batchPrintPaper, #batchPrintPaper *,
+  #logsContainer, #logsContainer * {
     visibility: visible;
+  }
+  .print-only-header,
+  .print-only-footer {
+    display: block !important;
+  }
+  #logsContainer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
   }
   #batchPrintPaper {
     position: absolute;

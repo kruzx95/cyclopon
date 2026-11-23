@@ -250,6 +250,7 @@ router.get('/:id', (req, res) => {
     const row = db.db.prepare('SELECT COUNT(*) as c FROM riders WHERE event_id = ?').get(event.id);
     if (row) riderCount = Number(row.c) || 0;
   } catch {}
+  res.set('Cache-Control', 'public, max-age=3, stale-while-revalidate=10');
   res.json({
     ...sanitizeEvent(event),
     distance_km: getEventDistanceKm(event),

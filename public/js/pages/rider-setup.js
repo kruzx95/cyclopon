@@ -39,10 +39,14 @@ function renderRiderSetup() {
     ? traccar.osmandUrl
     : `${window.location.origin}/api/osmand?event_id=${event.id}`;
   const traccarQuery = `url=${encodeURIComponent(endpointWithEvent)}&id=${encodeURIComponent(deviceIdentifier)}&interval=45&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
+  const traccarFallbackQuery = `url=${encodeURIComponent(osmandUrl)}&id=${encodeURIComponent(deviceIdentifier)}&interval=45&accuracy=highest&distance=0&angle=0&heartbeat=0&buffer=true&wakelock=false&stopDetection=false`;
   const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const traccarDeepLinkUrl = isIosDevice
     ? `org.traccar.client://config?${traccarQuery}`
     : `intent://config?${traccarQuery}#Intent;scheme=org.traccar.client;package=org.traccar.client;end`;
+  const traccarFallbackDeepLinkUrl = isIosDevice
+    ? `org.traccar.client://config?${traccarFallbackQuery}`
+    : `intent://config?${traccarFallbackQuery}#Intent;scheme=org.traccar.client;package=org.traccar.client;end`;
 
   const nameParts = (rider.name || 'Rider').trim().split(/\s+/);
   const riderInitials = nameParts.length > 1
@@ -73,19 +77,21 @@ function renderRiderSetup() {
             </svg>
             <span>Beranda</span>
           </a>
-          <div class="hub-brand-group" style="display:flex;align-items:center">
-            <h1 class="hub-title"><span style="font-size:18px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span> <span class="hub-title-accent" style="font-size:12px;font-weight:800;color:#64748B">// RIDER HUB</span></h1>
+          <div class="hub-brand-group">
+            <h1 class="hub-title"><span class="hub-title-main">CYCLOPON</span> <span class="hub-title-accent">// RIDER HUB</span></h1>
           </div>
         </div>
         <div class="hub-header-right">
-          ${rider.role && rider.role !== 'rider' ? `
-            <span class="hub-role-badge ${rider.role}">
-              ${rider.role === 'sweeper' ? '🧹 SWEEPER' : (rider.role === 'marshall' ? '🏍️ MARSHALL' : rider.role.toUpperCase())}
+          <div class="hub-badges-group">
+            ${rider.role && rider.role !== 'rider' ? `
+              <span class="hub-role-badge ${rider.role}">
+                ${rider.role === 'sweeper' ? '🧹 SWEEPER' : (rider.role === 'marshall' ? '🏍️ MARSHALL' : rider.role.toUpperCase())}
+              </span>
+            ` : ''}
+            <span class="hub-bib-badge">
+              BIB #${escapeHtml(rider.bib)}
             </span>
-          ` : ''}
-          <span class="hub-bib-badge">
-            BIB #${escapeHtml(rider.bib)}
-          </span>
+          </div>
           <button id="btnRiderLogout" class="hub-logout-btn" title="Keluar dari sesi rider">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -154,7 +160,7 @@ function renderRiderSetup() {
               </p>
               <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:11px">
                 <div style="margin-bottom:6px">
-                  <span style="color:#64748B;font-weight:700">SERVER URL:</span><br>
+                  <span style="color:#64748B;font-weight:700">SERVER URL (UTAMA):</span><br>
                   <code style="font-weight:800;color:#0D1117;word-break:break-all">${escapeHtml(osmandEndpointUrl)}</code>
                 </div>
                 <div>
@@ -162,6 +168,28 @@ function renderRiderSetup() {
                   <code style="font-weight:900;color:#047857;font-size:14px">${escapeHtml(deviceIdentifier)}</code>
                 </div>
               </div>
+
+              <!-- Jalur Cadangan Darurat (Direct Port 5055) -->
+              <details style="margin: 8px 0 12px; font-size: 11px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 8px 10px;">
+                <summary style="font-weight: 700; color: #92400E; cursor: pointer; user-select: none;">
+                  🛡️ Jalur Cadangan Darurat (Port 5055)
+                </summary>
+                <div style="margin-top: 8px; color: #78350F; line-height: 1.4;">
+                  <p style="margin: 0 0 6px;">Gunakan jika jalur utama web padat penonton. Mengirim langsung ke GPS Engine Traccar:</p>
+                  <div style="background: #FFFFFF; border: 1px solid #FCD34D; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px;">
+                    <span style="color:#64748B;font-weight:700;font-size:10px">FALLBACK URL:</span><br>
+                    <code style="font-weight:800;color:#0D1117;word-break:break-all">${escapeHtml(osmandUrl)}</code>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button id="btnCopyFallbackTraccar" class="btn-hub-secondary" style="font-size:10.5px;padding:6px 8px;flex:1">
+                      📋 Salin Fallback URL
+                    </button>
+                    <a href="${traccarFallbackDeepLinkUrl}" class="btn-hub-secondary" style="font-size:10.5px;padding:6px 8px;text-align:center;text-decoration:none;flex:1">
+                      ⚡ 1-Klik Fallback
+                    </a>
+                  </div>
+                </div>
+              </details>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
               <a href="${traccarDeepLinkUrl}" id="btnHubTraccarDeepLink" class="btn-hub-primary" style="font-size:12px;padding:9px;text-align:center;background:#047857;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;border-radius:8px">
@@ -426,6 +454,22 @@ function renderRiderSetup() {
         });
       } else {
         prompt('Salin konfigurasi Traccar di bawah ini:', textToCopy);
+      }
+    });
+  }
+
+  const btnCopyFallback = document.getElementById('btnCopyFallbackTraccar');
+  if (btnCopyFallback) {
+    btnCopyFallback.addEventListener('click', () => {
+      const textToCopy = `Server URL (Fallback): ${osmandUrl}\nDevice Identifier: ${deviceIdentifier}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showToast('✓ Konfigurasi Jalur Cadangan (Port 5055) disalin!', 'success');
+        }).catch(() => {
+          prompt('Konfigurasi Jalur Cadangan:', textToCopy);
+        });
+      } else {
+        prompt('Konfigurasi Jalur Cadangan:', textToCopy);
       }
     });
   }

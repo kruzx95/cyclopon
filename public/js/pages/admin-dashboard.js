@@ -85,6 +85,9 @@ function adminSidebar(activeKey) {
         <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
           <span>📑</span> Laporan &amp; Riwayat Event
         </a>
+        <a href="/admin/logs" data-link class="${activeKey === 'logs' ? 'active' : ''}">
+          <span>📋</span> Log &amp; Rekap Event
+        </a>
         <a href="/" data-link>
           <span>🏠</span> Beranda
         </a>
@@ -123,6 +126,9 @@ function adminSidebar(activeKey) {
         </a>
         <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
           <span style="display:flex;align-items:center;gap:8px">📑 Laporan &amp; Riwayat Event</span>
+        </a>
+        <a href="/admin/logs" data-link class="${activeKey === 'logs' ? 'active' : ''}">
+          <span style="display:flex;align-items:center;gap:8px">📋 Log &amp; Rekap Event</span>
         </a>
         <a href="/" data-link>🏠 &nbsp;Beranda</a>
       </nav>
@@ -667,6 +673,10 @@ function stopAdminBackgroundTasks() {
     clearInterval(window._adminTrafficInterval);
     window._adminTrafficInterval = null;
   }
+  if (window._adminEventMetricInterval) {
+    clearInterval(window._adminEventMetricInterval);
+    window._adminEventMetricInterval = null;
+  }
   if (window.AdminSosMonitor) {
     window.AdminSosMonitor.stop();
   }
@@ -900,6 +910,24 @@ async function renderAdminDashboard() {
               <div class="traffic-metric-sub">Total Kunjungan Hari Ini</div>
             </div>
           </div>
+          <div class="traffic-sub-bar" id="trafficSurgeBar" style="border-top:1px solid #E5E7EB;margin-top:14px;padding-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px">
+              <span style="display:inline-flex;align-items:center;gap:5px;color:#0D1117;font-weight:700" title="Batas teknis izin koneksi sistem operasi dibuka hingga 65.535 socket agar server tidak memblokir penonton di angka default 1.024. Daya tahan riil bergantung pada RAM/CPU VPS.">
+                🛡️ <span>Plafon Socket OS:</span> <code style="font-family:ui-monospace,monospace;color:#047857;background:#ECFDF5;padding:1px 6px;border-radius:4px;border:1px solid #A7F3D0">65.535 FD</code>
+              </span>
+              <span style="color:#64748B">·</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;color:#0D1117;font-weight:700" title="Jumlah titik koordinat GPS yang diterima server per menit (t/m = titik per menit)">
+                📡 <span>Update GPS:</span> <span id="metricTelemetryRate" style="color:#0284C7;font-family:ui-monospace,monospace;font-weight:800">-- titik/mnt</span>
+              </span>
+              <span style="color:#64748B">·</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;color:#0D1117;font-weight:700" title="Jumlah rider yang GPS-nya terdeteksi aktif mengirim sinyal dalam 5 menit terakhir">
+                🚴 <span>Rider Mengirim Sinyal:</span> <span id="metricActiveRiders" style="color:#0D1117;font-family:ui-monospace,monospace;font-weight:800">-- online</span>
+              </span>
+            </div>
+            <div id="metricSurgeBadge" style="font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0">
+              ✓ KAPASITAS AMAN (NORMAL)
+            </div>
+          </div>
           <div class="traffic-sub-bar" id="trafficSubBar" style="display:none">
             <div style="font-size:12px;color:#4B5563;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <span>🔥</span> <strong>Halaman Terpopuler Hari Ini:</strong>
@@ -1103,6 +1131,33 @@ async function renderAdminDashboard() {
         } else {
           badgeEl.textContent = 'Standby (0 Live)';
           badgeEl.style.color = 'var(--text-secondary)';
+        }
+      }
+
+      if (data.surgeMitigation) {
+        const sm = data.surgeMitigation;
+        const rateEl = document.getElementById('metricTelemetryRate');
+        const ridersEl = document.getElementById('metricActiveRiders');
+        const surgeBadge = document.getElementById('metricSurgeBadge');
+        if (rateEl) rateEl.textContent = `${sm.telemetryRatePerMin} titik/mnt`;
+        if (ridersEl) ridersEl.textContent = `${sm.activeRidersCount} online`;
+        if (surgeBadge) {
+          if (sm.surgeLevel === 'HIGH_SURGE') {
+            surgeBadge.textContent = '⚠️ LONJAKAN PENONTON TINGGI';
+            surgeBadge.style.background = '#FEF2F2';
+            surgeBadge.style.color = '#B91C1C';
+            surgeBadge.style.borderColor = '#FCA5A5';
+          } else if (sm.surgeLevel === 'MODERATE') {
+            surgeBadge.textContent = '⚡ TRAFIK PENONTON MENINGKAT';
+            surgeBadge.style.background = '#FFFBEB';
+            surgeBadge.style.color = '#D97706';
+            surgeBadge.style.borderColor = '#FDE68A';
+          } else {
+            surgeBadge.textContent = '✓ KAPASITAS AMAN (NORMAL)';
+            surgeBadge.style.background = '#ECFDF5';
+            surgeBadge.style.color = '#047857';
+            surgeBadge.style.borderColor = '#A7F3D0';
+          }
         }
       }
 

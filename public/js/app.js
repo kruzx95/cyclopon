@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   Router.register('/rider/setup', async () => {
-    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js?v=91'], ['/css/rider.css?v=91']);
+    await loadPageDeps(['/js/lib/gps-keeper.js', '/js/pages/rider-setup.js?v=94'], ['/css/rider.css?v=93']);
     renderRiderSetup();
   });
 
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Admin panel ──
   Router.register('/admin', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=83'],
+      ['/js/pages/admin-dashboard.js?v=86'],
       ['/css/admin.css?v=83']
     );
     renderAdminLogin();
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/dashboard', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=83'],
+      ['/js/pages/admin-dashboard.js?v=86'],
       ['/css/admin.css?v=83']
     );
     renderAdminDashboard();
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/sos', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=83', '/js/pages/admin-sos.js?v=83'],
+      ['/js/pages/admin-dashboard.js?v=86', '/js/pages/admin-sos.js?v=83'],
       ['/css/admin.css?v=83']
     );
     renderAdminSos();
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/event-reports', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=83', '/js/pages/admin-event-reports.js?v=83'],
+      ['/js/pages/admin-dashboard.js?v=86', '/js/pages/admin-event-reports.js?v=83'],
       ['/css/admin.css?v=83']
     );
     renderAdminEventReports(params);
@@ -163,10 +163,18 @@ document.addEventListener('DOMContentLoaded', () => {
     Router.navigate('/admin/event-reports');
   });
 
+  Router.register('/admin/logs', async (params) => {
+    await loadPageDeps(
+      ['/js/pages/admin-dashboard.js?v=87', '/js/pages/admin-logs.js?v=85'],
+      ['/css/admin.css?v=85']
+    );
+    renderAdminLogs(params);
+  });
+
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js', '/js/pages/admin-event.js?v=79'],
-      ['/css/admin.css?v=79']
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=86', '/js/pages/admin-event.js?v=82'],
+      ['/css/admin.css?v=80']
     );
     renderAdminEvent(params);
   });

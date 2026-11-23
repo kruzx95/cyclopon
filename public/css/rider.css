@@ -505,12 +505,17 @@
   gap: 8px;
 }
 .hub-title {
-  font-size: 18px;
-  font-weight: 900;
-  color: #0D1117;
-  letter-spacing: -0.03em;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   margin: 0;
   text-transform: uppercase;
+}
+.hub-title-main {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0D1117;
 }
 .hub-title-accent {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -521,6 +526,11 @@
 
 .hub-header-right {
   display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hub-badges-group {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
 }
@@ -1285,32 +1295,68 @@
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-rows: auto auto;
-    gap: 12px 8px;
+    gap: 12px 10px;
     align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
   }
-  .hub-header-left {
+  .hub-header-left,
+  .hub-header-right {
     display: contents;
   }
   .hub-back-btn {
     grid-column: 1;
     grid-row: 1;
     justify-self: start;
+    min-height: 34px;
+    padding: 5px 11px;
+    white-space: nowrap;
   }
-  .hub-header-right {
+  .hub-logout-btn {
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    min-height: 34px;
+    padding: 5px 11px;
+    white-space: nowrap;
   }
   .hub-brand-group {
-    grid-column: 1 / -1;
+    grid-column: 1;
     grid-row: 2;
+    justify-self: start;
     display: flex;
     align-items: baseline;
-    padding-top: 2px;
+    gap: 5px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .hub-title-main {
+    font-size: 16px;
+  }
+  .hub-title-accent {
+    font-size: 10.5px;
+  }
+  .hub-badges-group {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .hub-bib-badge {
+    min-height: 32px;
+    padding: 4px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .hub-role-badge {
+    min-height: 32px;
+    padding: 4px 8px;
+    font-size: 10px;
+    white-space: nowrap;
   }
   .rider-welcome-card {
     padding: 16px;
@@ -1569,6 +1615,24 @@
 }
 .permission-screenshot-card .screenshot-img-wrapper {
   margin-bottom: 12px;
+}
+
+/* Small mobile screens (<= 380px: Galaxy A-series, iPhone SE, Foldable cover, Android with large font) */
+@media (max-width: 380px) {
+  .rider-hub-header {
+    grid-template-rows: auto auto auto;
+    gap: 10px;
+  }
+  .hub-brand-group {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .hub-badges-group {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: start;
+    justify-content: flex-start;
+  }
 }
 
 
