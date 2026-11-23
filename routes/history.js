@@ -11,9 +11,29 @@ const virtualCot = require('../lib/virtual-cot');
  */
 const requireEventAccessForHistory = requireEventAccess();
 
+// In-memory micro-cache to mitigate high spectator concurrency spikes (TTL: 2s)
+const latestPositionsCache = new Map(); // eventId -> { timestamp: number, data: Array }
+const LATEST_POSITIONS_TTL_MS = 2000;
+
+function invalidateLatestPositionsCache(eventId) {
+  if (eventId != null) {
+    latestPositionsCache.delete(Number(eventId));
+  } else {
+    latestPositionsCache.clear();
+  }
+}
+
 // GET /api/events/:id/positions/latest — Fetch the single latest position per rider (ultra-fast for live map sync)
 router.get('/events/:id/positions/latest', requireEventAccessForHistory, (req, res) => {
   const eventId = Number(req.params.id);
+  const now = Date.now();
+
+  // Fast-path: serve from in-memory cache if fresh (< 2s old)
+  const cached = latestPositionsCache.get(eventId);
+  if (cached && (now - cached.timestamp < LATEST_POSITIONS_TTL_MS)) {
+    return res.json(cached.data);
+  }
+
   const event = db.getEventById.get(eventId);
   if (!event) return res.status(404).json({ error: 'Event tidak ditemukan' });
 
@@ -61,6 +81,7 @@ router.get('/events/:id/positions/latest', requireEventAccessForHistory, (req, r
       };
     });
 
+    latestPositionsCache.set(eventId, { timestamp: now, data: enriched || [] });
     res.json(enriched || []);
   } catch (err) {
     res.status(500).json({ error: 'Gagal mengambil posisi terbaru: ' + err.message });
@@ -249,6 +270,7 @@ router.post('/events/:id/history', requireEventAccessForHistory, (req, res) => {
       }
     } catch (wsErr) {}
 
+    invalidateLatestPositionsCache(eventId);
     res.status(201).json({ success: true, inserted });
   } catch (err) {
     res.status(500).json({ error: 'Gagal menyimpan history: ' + err.message });
@@ -263,6 +285,7 @@ router.delete('/events/:id/history', requireAdminAuth, (req, res) => {
 
   try {
     const info = db.db.prepare('DELETE FROM position_history WHERE event_id = ?').run(eventId);
+    invalidateLatestPositionsCache(eventId);
     res.json({ success: true, message: `Berhasil menghapus ${info.changes} titik jejak GPS untuk event ini.` });
   } catch (err) {
     res.status(500).json({ error: 'Gagal membersihkan history: ' + err.message });

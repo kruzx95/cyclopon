@@ -303,15 +303,28 @@ router.post('/:id/verify-pin', (req, res) => {
   });
 });
 
+// In-memory micro-cache for event riders list to protect DB under high concurrent load (TTL: 3s)
+const eventRidersCache = new Map(); // eventId -> { timestamp: number, data: Array }
+const EVENT_RIDERS_TTL_MS = 3000;
+
 // GET /api/events/:id/riders — public rider list (no PIN)
 // Protected by event access PIN if configured
 router.get('/:id/riders', requireEventAccess, (req, res) => {
-  const riders = db.getRidersByEvent.all(req.params.id).map(r => ({
+  const eventId = Number(req.params.id);
+  const now = Date.now();
+  const cached = eventRidersCache.get(eventId);
+  if (cached && (now - cached.timestamp < EVENT_RIDERS_TTL_MS)) {
+    return res.json(cached.data);
+  }
+
+  const riders = db.getRidersByEvent.all(eventId).map(r => ({
     id: r.id, bib: r.bib, name: r.name,
     role: r.role || 'rider',
     traccar_device_id: r.traccar_device_id,
     color: r.color
   }));
+
+  eventRidersCache.set(eventId, { timestamp: now, data: riders });
   res.json(riders);
 });
 

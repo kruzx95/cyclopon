@@ -42,8 +42,6 @@ const remoteCommands = [
   'echo "→ Menggunakan compose file: $COMPOSE_FILE"',
   'echo "→ Membangun ulang (rebuild) container CycloPon..."',
   'docker compose -f $COMPOSE_FILE up -d --build --force-recreate',
-  'echo "→ Menjalankan pembersihan data demo..."',
-  'docker compose -f $COMPOSE_FILE exec -T cyclopon node scripts/clean-demo-data.js || true',
   'echo "→ Status container aktif:"',
   'docker compose -f $COMPOSE_FILE ps'
 ].join(' && ');

@@ -3,11 +3,13 @@ async function renderLiveMap(params) {
 
   const eventId  = params.eventId;
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const hasAdminParam = params.query?.admin === '1' || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1');
+  const hasAdminSession = typeof window !== 'undefined' && Boolean(
+    sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser')
+  );
+  // Panitia / Admin mode on live map is strictly active only when ?admin=1 is explicitly provided
   const isAdmin  = typeof window !== 'undefined' && Boolean(
-    sessionStorage.getItem('adminUser') ||
-    localStorage.getItem('adminUser') ||
-    params.query?.admin === '1' ||
-    new URLSearchParams(window.location.search).get('admin') === '1'
+    hasAdminParam && (hasAdminSession || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   );
   const app      = document.getElementById('app');
 
@@ -69,6 +71,10 @@ async function renderLiveMap(params) {
       <path d="M1 4v6h6"></path>
       <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
     </svg>`,
+    replayFab: `<svg class="fab-svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 4v6h6"></path>
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+    </svg>`,
     downloadGpx: `<svg class="nav-svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
       <polyline points="7 10 12 15 17 10"></polyline>
@@ -102,6 +108,12 @@ async function renderLiveMap(params) {
         </div>
 
         <div class="header-right">
+          ${isAdmin && !isMobile ? `
+            <!-- Toggle Replay (Desktop, Admin Only) -->
+            <button class="header-action-btn" id="btnToggleReplay" style="display:none" title="Putar Ulang Lintasan (Time Machine Replay)">
+              ${ICONS.replay}<span class="action-btn-label">Replay</span>
+            </button>
+          ` : ''}
           ${!isMobile ? `
             <!-- Toggle Leaderboard (Desktop) -->
             <button class="header-action-btn active btn-highlight-leaderboard" id="btnToggleSidebar" title="Tampilkan / Sembunyikan Leaderboard">
@@ -160,6 +172,13 @@ async function renderLiveMap(params) {
               </div>
             </div>
 
+            <div style="margin-bottom:16px" id="exportRiderFilterWrap">
+              <label for="exportRiderSelect" style="font-size:11px;font-weight:800;text-transform:uppercase;color:#64748B;display:block;margin-bottom:8px">// TARGET REKAMAN (RIDER)</label>
+              <select id="exportRiderSelect" style="width:100%;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:13px;font-weight:700;color:#0D1117;background:#FFF;cursor:pointer">
+                <option value="all">🏁 Semua Rider (Race Overview)</option>
+              </select>
+            </div>
+
             <div style="margin-bottom:16px">
               <label style="font-size:11px;font-weight:800;text-transform:uppercase;color:#64748B;display:block;margin-bottom:8px">// KECEPATAN PUTAR REKAMAN</label>
               <div class="export-speed-pills">
@@ -167,6 +186,7 @@ async function renderLiveMap(params) {
                 <button type="button" class="export-speed-pill" data-speed="2">2× Cepat</button>
                 <button type="button" class="export-speed-pill active" data-speed="4">4× Story</button>
                 <button type="button" class="export-speed-pill" data-speed="8">8× Kilat</button>
+                <button type="button" class="export-speed-pill" data-speed="16">16× Turbo</button>
               </div>
             </div>
 
@@ -283,7 +303,9 @@ async function renderLiveMap(params) {
           <!-- ── Time Machine Replay Control Bar (Admin Only) ── -->
           <div id="replayControlBar" class="replay-control-bar" style="display:none">
             <div class="replay-bar-inner">
+              <button id="btnReplayPrevCp" class="replay-btn replay-nav-btn" title="Lompat ke Pos Checkpoint Sebelumnya" aria-label="CP Sebelumnya">⏮ CP</button>
               <button id="btnReplayPlay" class="replay-play-btn" title="Play / Pause Replay" aria-label="Play / Pause">⏸</button>
+              <button id="btnReplayNextCp" class="replay-btn replay-nav-btn" title="Lompat ke Pos Checkpoint Berikutnya" aria-label="CP Berikutnya">CP ⏭</button>
               <div class="replay-time-display">
                 <span class="replay-badge">WAKTU REPLAY</span>
                 <span id="replayClock" class="replay-clock">--:--:--</span>
@@ -298,7 +320,10 @@ async function renderLiveMap(params) {
                 <button class="replay-speed-btn" data-speed="2">2×</button>
                 <button class="replay-speed-btn" data-speed="4">4×</button>
                 <button class="replay-speed-btn" data-speed="8">8×</button>
+                <button class="replay-speed-btn" data-speed="16">16×</button>
+                <button class="replay-speed-btn" data-speed="32">32×</button>
               </div>
+              <button id="btnToggleReplayAutoSkip" class="replay-btn replay-skip-btn active" title="Otomatis lewati jeda waktu tanpa pergerakan (jam mati)">⏩ Skip Jeda</button>
               <button id="btnExportReplayVideo" class="replay-btn replay-export-btn" title="Rekam & Ekspor Video Replay">🎥 Rekam Video</button>
               <button id="btnExitReplay" class="replay-btn replay-exit-btn" title="Keluar dari Replay">✕ Kembali Live</button>
             </div>
@@ -581,6 +606,12 @@ async function renderLiveMap(params) {
   const headerRiderCountEl = document.getElementById('headerRiderCount');
   if (headerRiderCountEl) headerRiderCountEl.textContent = riders.length;
   document.title = `${event.name} — CycloPon Live`;
+
+  // Replay controls are strictly restricted to admin / panitia
+  const btnReplayHeader = document.getElementById('btnToggleReplay');
+  if (isAdmin && btnReplayHeader) {
+    btnReplayHeader.style.display = 'inline-flex';
+  }
 
   // ── Init Leaflet Map (Touch pinch-to-zoom & mouse scroll zoom enabled) ──
   const map = L.map('leaflet-map', {
@@ -3098,9 +3129,13 @@ async function renderLiveMap(params) {
   let isReplayActive = false;
   let replayHistoryData = [];      // Raw array of telemetry history points
   let replayFrames = [];           // Array of { timeMs, points: [] }
+  let replayPointsByRider = null;  // rider_id -> sorted array of historical telemetry points for lerp
+  let replayCpFrames = [];         // Checkpoints mapped to frame index for fast jump navigation
+  let replayAutoSkipEnabled = true;// Auto-skip long dead hours by default
+  let lastAutoSkipToastMs = 0;
   let replayFrameIndex = 0;        // Current frame index
   let replayInterval = null;       // Timer interval
-  let replaySpeed = 1;             // 1, 2, 4, 8
+  let replaySpeed = 1;             // 1, 2, 4, 8, 16, 32
   let replayIsPlaying = false;
   let originalSplitsBackup = null; // Backup of splitsCache before replay
   let replayTrailsByRider = {};    // rider_id -> L.polyline
@@ -3118,14 +3153,22 @@ async function renderLiveMap(params) {
     if (!map) return;
     if (!replayTrailsByRider[riderId]) {
       replayTrailsByRider[riderId] = L.polyline([latlng], {
-        color: color || '#00E5FF',
+        color: color || '#10B981',
         weight: 3,
         opacity: 0.7,
         lineCap: 'round',
         lineJoin: 'round'
       }).addTo(map);
     } else {
-      replayTrailsByRider[riderId].addLatLng(latlng);
+      const poly = replayTrailsByRider[riderId];
+      const pts = poly.getLatLngs();
+      if (pts.length > 0) {
+        const last = pts[pts.length - 1];
+        if (Math.abs(last.lat - latlng[0]) < 0.00002 && Math.abs(last.lng - latlng[1]) < 0.00002) {
+          return;
+        }
+      }
+      poly.addLatLng(latlng);
     }
   }
 
@@ -3253,12 +3296,73 @@ async function renderLiveMap(params) {
     return cotDistanceKm;
   }
 
+  // ── Smooth Linear Interpolation (Lerp) for Replay Coordinates ──
+  function getInterpolatedRiderPosition(riderId, targetTimeMs) {
+    if (!replayPointsByRider) return null;
+    const pts = replayPointsByRider[riderId];
+    if (!pts || !pts.length) return null;
+
+    if (targetTimeMs < pts[0].timeMs) {
+      return null; // Rider has not started yet
+    }
+    if (targetTimeMs >= pts[pts.length - 1].timeMs) {
+      return pts[pts.length - 1]; // Rider reached end of telemetry
+    }
+
+    // Binary search for surrounding points ptA.timeMs <= targetTimeMs < ptB.timeMs
+    let low = 0;
+    let high = pts.length - 1;
+    while (low <= high) {
+      const mid = (low + high) >> 1;
+      if (pts[mid].timeMs <= targetTimeMs) {
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    const idxA = Math.max(0, high);
+    const ptA = pts[idxA];
+    const ptB = pts[idxA + 1];
+
+    if (!ptB) return ptA;
+
+    const dt = ptB.timeMs - ptA.timeMs;
+    // If telemetry gap is > 20 minutes (e.g. overnight sleep, resting at CP, or GPS blackout),
+    // stay stationary at ptA until shortly before ptB (last 60s) to avoid unnatural slow drifting.
+    if (dt > 1200000) {
+      if (targetTimeMs < ptB.timeMs - 60000) {
+        return ptA;
+      }
+      const ratio = (targetTimeMs - (ptB.timeMs - 60000)) / 60000;
+      return {
+        ...ptB,
+        latitude: ptA.latitude + (ptB.latitude - ptA.latitude) * ratio,
+        longitude: ptA.longitude + (ptB.longitude - ptA.longitude) * ratio,
+        distance_km: (ptA.distance_km || 0) + ((ptB.distance_km || 0) - (ptA.distance_km || 0)) * ratio,
+        speed: (ptA.speed || 0) + ((ptB.speed || 0) - (ptA.speed || 0)) * ratio,
+        recorded_at: new Date(targetTimeMs).toISOString()
+      };
+    }
+
+    const ratio = dt > 0 ? (targetTimeMs - ptA.timeMs) / dt : 0;
+    return {
+      ...ptA,
+      latitude: ptA.latitude + (ptB.latitude - ptA.latitude) * ratio,
+      longitude: ptA.longitude + (ptB.longitude - ptA.longitude) * ratio,
+      distance_km: (ptA.distance_km || 0) + ((ptB.distance_km || 0) - (ptA.distance_km || 0)) * ratio,
+      speed: (ptA.speed || 0) + ((ptB.speed || 0) - (ptA.speed || 0)) * ratio,
+      recorded_at: new Date(targetTimeMs).toISOString()
+    };
+  }
+
   function applyReplayFrame(targetIdx) {
     if (targetIdx < 0 || targetIdx >= replayFrames.length) return;
     replayFrameIndex = targetIdx;
 
     const frame = replayFrames[targetIdx];
-    const frameDate = new Date(frame.timeMs);
+    const targetTimeMs = frame.timeMs;
+    const frameDate = new Date(targetTimeMs);
     const clockStr = frameDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
     const clockEl = document.getElementById('replayClock');
@@ -3266,23 +3370,57 @@ async function renderLiveMap(params) {
     const slider = document.getElementById('replaySlider');
     if (slider && Number(slider.value) !== targetIdx) slider.value = targetIdx;
 
-    if (frame.points && frame.points.length) {
-      frame.points.forEach(pt => {
-        const r = riders.find(item => item.id === pt.rider_id);
+    // Smooth linear interpolation (lerp) for every active rider at current targetTimeMs
+    if (replayPointsByRider) {
+      Object.keys(replayPointsByRider).forEach(rId => {
+        const riderId = Number(rId);
+        const r = riders.find(item => item.id === riderId);
         if (!r) return;
         const devKey = r.traccar_device_id || r.id;
 
-        updateRiderPosition(devKey, {
-          latitude: pt.latitude,
-          longitude: pt.longitude,
-          speed: pt.speed || 0,
-          isKmh: true,
-          fixTime: pt.recorded_at,
-          attributes: {}
-        });
+        const interpolated = getInterpolatedRiderPosition(riderId, targetTimeMs);
+        if (interpolated) {
+          updateRiderPosition(devKey, {
+            latitude: interpolated.latitude,
+            longitude: interpolated.longitude,
+            speed: interpolated.speed || 0,
+            distance_km: interpolated.distance_km,
+            isKmh: true,
+            fixTime: interpolated.recorded_at,
+            attributes: {}
+          });
 
-        addReplayTrail(pt.rider_id, [pt.latitude, pt.longitude], pt.rider_color || r.color);
+          addReplayTrail(riderId, [interpolated.latitude, interpolated.longitude], interpolated.rider_color || r.color);
+        }
       });
+    }
+
+    // Update Virtual COT position & dynamic DNF state during replay
+    const replayCotKm = updateReplayCot(targetTimeMs);
+    if (cotConfig && cotConfig.enabled && cotConfig.mode !== 'off' && cotConfig.start_ms && cotConfig.pace) {
+      const elapsedHours = (targetTimeMs - cotConfig.start_ms) / 3600000;
+      if (elapsedHours > 0 && replayCotKm > 0 && replayPointsByRider) {
+        const dnfIds = [];
+        Object.keys(replayPointsByRider).forEach(rId => {
+          const riderId = Number(rId);
+          const r = riders.find(item => item.id === riderId);
+          if (r && (!r.role || r.role === 'rider')) {
+            const interpolated = getInterpolatedRiderPosition(riderId, targetTimeMs);
+            if (interpolated && interpolated.distance_km != null && interpolated.distance_km < (replayCotKm - 1.0)) {
+              dnfIds.push(riderId);
+            }
+          }
+        });
+        applyCotDnfVisuals(dnfIds);
+      } else {
+        applyCotDnfVisuals([]);
+      }
+    }
+
+    // Sync elevation profile with current replay rider positions if drawer is open
+    const elevationDrawer = document.getElementById('elevationDrawer');
+    if (elevationDrawer && !elevationDrawer.classList.contains('collapsed') && typeof redrawElevationChart === 'function') {
+      redrawElevationChart();
     }
   }
 
@@ -3296,81 +3434,101 @@ async function renderLiveMap(params) {
     Object.keys(progressById).forEach(k => delete progressById[k]);
     clearReplayTrails();
 
-    const targetTimeMs = replayFrames[targetIdx].timeMs + 30000;
-    const latestPerRider = {};
+    const targetTimeMs = replayFrames[targetIdx].timeMs;
 
-    for (let i = 0; i < replayHistoryData.length; i++) {
-      const pt = replayHistoryData[i];
-      const ptTime = new Date(pt.recorded_at).getTime();
-      if (ptTime > targetTimeMs) break;
-
-      latestPerRider[pt.rider_id] = pt;
-      addReplayTrail(pt.rider_id, [pt.latitude, pt.longitude], pt.rider_color);
-
-      // Re-populate splitsCache for checkpoints reached up to target time
-      if (checkpoints && checkpoints.length && pt.distance_km > 0) {
-        checkpoints.forEach(cp => {
-          const cacheKey = `${pt.rider_id}_${cp.id}`;
-          if (!splitsCache[cacheKey] && pt.distance_km >= cp.km_distance) {
-            const cpTime = new Date(pt.recorded_at);
-            splitsCache[cacheKey] = {
-              rider_id: pt.rider_id,
-              checkpoint_id: cp.id,
-              cp_name: cp.name,
-              km_distance: cp.km_distance,
-              arrival_time: pt.recorded_at,
-              status: checkCotStatus(cpTime, cp.open_time, cp.close_time)
-            };
+    // Re-populate historical trail lines up to targetTimeMs
+    if (replayPointsByRider) {
+      Object.keys(replayPointsByRider).forEach(rId => {
+        const rPts = replayPointsByRider[rId];
+        const rInfo = riders.find(r => r.id === Number(rId));
+        const color = (rInfo && rInfo.color) || '#10B981';
+        for (let i = 0; i < rPts.length; i++) {
+          if (rPts[i].timeMs <= targetTimeMs) {
+            addReplayTrail(Number(rId), [rPts[i].latitude, rPts[i].longitude], color);
+          } else {
+            break;
           }
-        });
-      }
-    }
-
-    Object.values(latestPerRider).forEach(pt => {
-      const r = riders.find(item => item.id === pt.rider_id);
-      if (!r) return;
-      const devKey = r.traccar_device_id || r.id;
-      updateRiderPosition(devKey, {
-        latitude: pt.latitude,
-        longitude: pt.longitude,
-        speed: pt.speed || 0,
-        isKmh: true,
-        fixTime: pt.recorded_at,
-        attributes: {}
+        }
       });
-    });
+    }
 
-    // Update Virtual COT position & dynamic DNF state during replay
-    const replayCotKm = updateReplayCot(targetTimeMs);
-    if (cotConfig && cotConfig.enabled && cotConfig.mode !== 'off' && cotConfig.start_ms && cotConfig.pace) {
-      const elapsedHours = (targetTimeMs - cotConfig.start_ms) / 3600000;
-      if (elapsedHours > 0 && replayCotKm > 0) {
-        const dnfIds = [];
-        Object.values(latestPerRider).forEach(pt => {
-          const r = riders.find(item => item.id === pt.rider_id);
-          if (r && (!r.role || r.role === 'rider')) {
-            if (pt.distance_km != null && pt.distance_km < (replayCotKm - 1.0)) {
-              dnfIds.push(pt.rider_id);
+    // Re-populate splitsCache for checkpoints reached up to target time
+    if (checkpoints && checkpoints.length) {
+      for (let i = 0; i < replayHistoryData.length; i++) {
+        const pt = replayHistoryData[i];
+        const ptTime = new Date(pt.recorded_at).getTime();
+        if (ptTime > targetTimeMs) break;
+
+        if (pt.distance_km > 0) {
+          checkpoints.forEach(cp => {
+            const cacheKey = `${pt.rider_id}_${cp.id}`;
+            if (!splitsCache[cacheKey] && pt.distance_km >= cp.km_distance) {
+              const cpTime = new Date(pt.recorded_at);
+              splitsCache[cacheKey] = {
+                rider_id: pt.rider_id,
+                checkpoint_id: cp.id,
+                cp_name: cp.name,
+                km_distance: cp.km_distance,
+                arrival_time: pt.recorded_at,
+                status: checkCotStatus(cpTime, cp.open_time, cp.close_time)
+              };
             }
-          }
-        });
-        applyCotDnfVisuals(dnfIds);
-      } else {
-        applyCotDnfVisuals([]);
+          });
+        }
       }
     }
 
-    replayFrameIndex = targetIdx;
-    const frameDate = new Date(replayFrames[targetIdx].timeMs);
-    const clockEl = document.getElementById('replayClock');
-    if (clockEl) {
-      clockEl.textContent = frameDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    // Apply smoothly interpolated positions at target frame
+    applyReplayFrame(targetIdx);
+  }
+
+  function jumpToPrevCheckpoint() {
+    if (!isReplayActive || !replayCpFrames.length) {
+      showToast('Belum ada data checkpoint yang terlewati.', 'info');
+      return;
     }
+    let target = null;
+    for (let i = replayCpFrames.length - 1; i >= 0; i--) {
+      if (replayCpFrames[i].frameIdx < replayFrameIndex - 1) {
+        target = replayCpFrames[i];
+        break;
+      }
+    }
+    if (!target) target = replayCpFrames[0];
+    seekReplay(target.frameIdx);
+    showToast(`🚩 Lompat ke ${target.name} (${target.km} km)`, 'info');
+  }
+
+  function jumpToNextCheckpoint() {
+    if (!isReplayActive || !replayCpFrames.length) {
+      showToast('Belum ada data checkpoint yang terlewati.', 'info');
+      return;
+    }
+    let target = null;
+    for (let i = 0; i < replayCpFrames.length; i++) {
+      if (replayCpFrames[i].frameIdx > replayFrameIndex + 1) {
+        target = replayCpFrames[i];
+        break;
+      }
+    }
+    if (!target) target = replayCpFrames[replayCpFrames.length - 1];
+    seekReplay(target.frameIdx);
+    showToast(`🚩 Lompat ke ${target.name} (${target.km} km)`, 'info');
   }
 
   function startReplayTimer() {
     if (replayInterval) clearInterval(replayInterval);
     const baseIntervalMs = 800;
+    const targetInterval = baseIntervalMs / replaySpeed;
+    let step = 1;
+    let intervalMs = targetInterval;
+    if (targetInterval < 40) {
+      intervalMs = 40;
+      step = Math.max(1, Math.round(40 / targetInterval));
+    } else {
+      intervalMs = Math.round(targetInterval);
+    }
+
     replayInterval = setInterval(() => {
       if (!isReplayActive || !replayIsPlaying) return;
 
@@ -3379,9 +3537,40 @@ async function renderLiveMap(params) {
         return;
       }
 
-      replayFrameIndex++;
-      applyReplayFrame(replayFrameIndex);
-    }, Math.max(50, Math.round(baseIntervalMs / replaySpeed)));
+      // Smart Auto-Skip: If auto-skip is enabled and upcoming frames have zero telemetry activity
+      if (replayAutoSkipEnabled && replayFrameIndex < replayFrames.length - 1) {
+        const curFrame = replayFrames[replayFrameIndex];
+        if (!curFrame.points || curFrame.points.length === 0) {
+          let emptyCount = 0;
+          let nextActiveIdx = -1;
+          for (let j = replayFrameIndex + 1; j < replayFrames.length; j++) {
+            if (!replayFrames[j].points || replayFrames[j].points.length === 0) {
+              emptyCount++;
+            } else {
+              nextActiveIdx = j;
+              break;
+            }
+          }
+
+          // If gap is >= 6 frames (>= 3 minutes of empty telemetry across all riders)
+          if (emptyCount >= 6 && nextActiveIdx !== -1) {
+            const skipMinutes = Math.round((emptyCount * 30) / 60);
+            const nowTime = Date.now();
+            if (nowTime - lastAutoSkipToastMs > 5000) {
+              showToast(`⏩ Melompati jeda kosong (${skipMinutes} menit)...`, 'info');
+              lastAutoSkipToastMs = nowTime;
+            }
+            seekReplay(nextActiveIdx);
+            return;
+          }
+        }
+      }
+
+      const nextIdx = Math.min(replayFrames.length - 1, replayFrameIndex + step);
+      for (let i = replayFrameIndex + 1; i <= nextIdx; i++) {
+        applyReplayFrame(i);
+      }
+    }, intervalMs);
   }
 
   function toggleReplayPlayPause() {
@@ -3411,7 +3600,10 @@ async function renderLiveMap(params) {
   }
 
   async function startReplay() {
-    if (!isAdmin) return; // Strict guard: replay is restricted to admin
+    if (!isAdmin) {
+      showToast('Akses Replay hanya dapat digunakan oleh panitia.', 'warning');
+      return;
+    }
     if (isReplayActive) return;
 
     showToast('Memuat rekaman telemetri event...', 'info');
@@ -3462,7 +3654,7 @@ async function renderLiveMap(params) {
 
     const dot = document.getElementById('liveDot');
     const statusText = document.getElementById('liveStatusText');
-    if (dot) { dot.className = 'live-dot'; dot.style.background = '#00E5FF'; }
+    if (dot) { dot.className = 'live-dot'; dot.style.background = '#D97706'; }
     if (statusText) { statusText.textContent = '⏪ REPLAY'; }
 
     // 2. RISK 2: Backup and clear splitsCache so checkpoints aren't falsely marked
@@ -3483,6 +3675,49 @@ async function renderLiveMap(params) {
       return;
     }
 
+    // Index points by rider for smooth linear interpolation (lerp)
+    replayPointsByRider = {};
+    historyPoints.forEach(pt => {
+      if (pt.latitude != null && pt.longitude != null) {
+        if (!replayPointsByRider[pt.rider_id]) {
+          replayPointsByRider[pt.rider_id] = [];
+        }
+        replayPointsByRider[pt.rider_id].push({
+          ...pt,
+          timeMs: new Date(pt.recorded_at).getTime()
+        });
+      }
+    });
+    Object.values(replayPointsByRider).forEach(pts => {
+      pts.sort((a, b) => a.timeMs - b.timeMs);
+    });
+
+    // Map checkpoints to nearest arrival frames for fast jump navigation
+    replayCpFrames = [];
+    if (checkpoints && checkpoints.length) {
+      checkpoints.forEach(cp => {
+        const arrivalPt = historyPoints.find(p => (p.distance_km || 0) >= cp.km_distance);
+        if (arrivalPt) {
+          const arrTime = new Date(arrivalPt.recorded_at).getTime();
+          let matchedFrameIdx = 0;
+          for (let f = 0; f < replayFrames.length; f++) {
+            if (replayFrames[f].timeMs >= arrTime) {
+              matchedFrameIdx = f;
+              break;
+            }
+          }
+          replayCpFrames.push({
+            id: cp.id,
+            name: cp.name,
+            km: cp.km_distance,
+            timeMs: arrTime,
+            frameIdx: matchedFrameIdx
+          });
+        }
+      });
+      replayCpFrames.sort((a, b) => a.frameIdx - b.frameIdx);
+    }
+
     replayFrameIndex = 0;
     replaySpeed = 1;
     replayIsPlaying = true;
@@ -3490,9 +3725,7 @@ async function renderLiveMap(params) {
     // 4. Update UI
     const replayControlBar = document.getElementById('replayControlBar');
     const btnReplay = document.getElementById('btnToggleReplay');
-    const fabReplay = document.getElementById('btnFabReplay');
     if (btnReplay) btnReplay.classList.add('active');
-    if (fabReplay) fabReplay.classList.add('active');
     if (replayControlBar) {
       replayControlBar.style.display = 'block';
       const playBtn = document.getElementById('btnReplayPlay');
@@ -3513,8 +3746,8 @@ async function renderLiveMap(params) {
       }
     }
 
-    // Collapse elevation drawer if open to give full view
-    if (typeof toggleElevation === 'function') {
+    // Collapse elevation drawer on mobile if open to give full view
+    if (isMobile && typeof toggleElevation === 'function') {
       try { toggleElevation(false); } catch (e) {}
     }
 
@@ -3540,10 +3773,13 @@ async function renderLiveMap(params) {
 
     const replayControlBar = document.getElementById('replayControlBar');
     const btnReplay = document.getElementById('btnToggleReplay');
-    const fabReplay = document.getElementById('btnFabReplay');
     if (replayControlBar) replayControlBar.style.display = 'none';
     if (btnReplay) btnReplay.classList.remove('active');
-    if (fabReplay) fabReplay.classList.remove('active');
+
+    const dot = document.getElementById('liveDot');
+    const statusText = document.getElementById('liveStatusText');
+    if (dot) { dot.style.background = ''; }
+    if (statusText) { statusText.textContent = 'LIVE'; }
 
     clearReplayTrails();
 
@@ -3557,11 +3793,18 @@ async function renderLiveMap(params) {
     // Reset telemetry & progress back to live state
     Object.keys(telemetryById).forEach(k => delete telemetryById[k]);
     Object.keys(progressById).forEach(k => delete progressById[k]);
+    replayPointsByRider = null;
+    replayCpFrames = [];
+
+    // Sync elevation profile back to live positions if drawer is open
+    const elevationDrawer = document.getElementById('elevationDrawer');
+    if (elevationDrawer && !elevationDrawer.classList.contains('collapsed') && typeof redrawElevationChart === 'function') {
+      setTimeout(redrawElevationChart, 100);
+    }
 
     // RISK 1: Re-sync to latest live positions and restore polling + WebSocket
     syncLatestPositionsFromHistory().catch(() => {});
-    if (historyPollInterval) clearInterval(historyPollInterval);
-    historyPollInterval = setInterval(triggerFallbackPositionSync, 5000);
+    scheduleNextFallbackSync();
     connectWs();
 
     // Restore live Virtual COT timer & marker
@@ -3588,17 +3831,29 @@ async function renderLiveMap(params) {
     });
   }
 
-  const btnFabReplay = document.getElementById('btnFabReplay');
-  if (btnFabReplay) {
-    btnFabReplay.addEventListener('click', () => {
-      if (isReplayActive) stopReplay();
-      else startReplay();
-    });
-  }
 
   const btnReplayPlay = document.getElementById('btnReplayPlay');
   if (btnReplayPlay) {
     btnReplayPlay.addEventListener('click', toggleReplayPlayPause);
+  }
+
+  const btnReplayPrevCp = document.getElementById('btnReplayPrevCp');
+  if (btnReplayPrevCp) {
+    btnReplayPrevCp.addEventListener('click', jumpToPrevCheckpoint);
+  }
+
+  const btnReplayNextCp = document.getElementById('btnReplayNextCp');
+  if (btnReplayNextCp) {
+    btnReplayNextCp.addEventListener('click', jumpToNextCheckpoint);
+  }
+
+  const btnToggleReplayAutoSkip = document.getElementById('btnToggleReplayAutoSkip');
+  if (btnToggleReplayAutoSkip) {
+    btnToggleReplayAutoSkip.addEventListener('click', () => {
+      replayAutoSkipEnabled = !replayAutoSkipEnabled;
+      btnToggleReplayAutoSkip.classList.toggle('active', replayAutoSkipEnabled);
+      showToast(replayAutoSkipEnabled ? '⏩ Auto-skip jam mati diaktifkan' : '⏸ Auto-skip dimatikan', 'info');
+    });
   }
 
   const btnExitReplay = document.getElementById('btnExitReplay');
@@ -3648,6 +3903,26 @@ async function renderLiveMap(params) {
     if (replayIsPlaying) {
       toggleReplayPlayPause();
     }
+
+    const riderSelect = document.getElementById('exportRiderSelect');
+    if (riderSelect) {
+      const curVal = riderSelect.value || 'all';
+      riderSelect.innerHTML = '<option value="all">🏁 Semua Rider (Race Overview)</option>';
+      if (Array.isArray(riders) && riders.length) {
+        riders.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = String(r.id);
+          opt.textContent = `#${r.bib || '-'} ${r.name || 'Rider'}`;
+          riderSelect.appendChild(opt);
+        });
+      }
+      if (selectedRiderId && riders.some(r => String(r.id) === String(selectedRiderId))) {
+        riderSelect.value = String(selectedRiderId);
+      } else {
+        riderSelect.value = curVal;
+      }
+    }
+
     modalExportReplay.style.display = 'flex';
   }
 
@@ -3795,6 +4070,28 @@ async function renderLiveMap(params) {
       return;
     }
 
+    const selectedRiderVal = document.getElementById('exportRiderSelect')?.value || 'all';
+    const isSingleRider = selectedRiderVal !== 'all';
+    const targetRiderId = isSingleRider ? Number(selectedRiderVal) : null;
+    const targetRider = isSingleRider ? (riders.find(r => r.id === targetRiderId) || null) : null;
+
+    let pts = [];
+    if (isSingleRider) {
+      pts = replayHistoryData.filter(p => p.rider_id === targetRiderId && p.latitude != null && p.longitude != null);
+      if (pts.length < 2) {
+        showToast('Data GPS rider tidak mencukupi untuk video animasi.', 'warning');
+        closeExportModal();
+        return;
+      }
+    } else {
+      pts = replayHistoryData.filter(p => p.latitude != null && p.longitude != null);
+      if (pts.length < 2) {
+        showToast('Data GPS tidak mencukupi untuk video animasi.', 'warning');
+        closeExportModal();
+        return;
+      }
+    }
+
     const progressWrap = document.getElementById('exportCanvasProgressWrap');
     const progressText = document.getElementById('exportProgressText');
     const progressBar = document.getElementById('exportProgressBar');
@@ -3807,16 +4104,7 @@ async function renderLiveMap(params) {
     canvas.height = 1280;
     const ctx = canvas.getContext('2d');
 
-    // Extract sorted coordinates from replay data
-    const pts = replayHistoryData.filter(p => p.latitude != null && p.longitude != null);
-    if (pts.length < 2) {
-      showToast('Data GPS tidak mencukupi untuk video animasi.', 'warning');
-      closeExportModal();
-      if (btnStartExportVideo) btnStartExportVideo.disabled = false;
-      return;
-    }
-
-    // Determine bounding box
+    // Determine bounding box across whole course & telemetry points
     let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
     pts.forEach(p => {
       if (p.latitude < minLat) minLat = p.latitude;
@@ -3825,7 +4113,6 @@ async function renderLiveMap(params) {
       if (p.longitude > maxLng) maxLng = p.longitude;
     });
 
-    // Also include routeCoords if available for full course preview
     if (routeCoords && routeCoords.length) {
       routeCoords.forEach(c => {
         if (c[0] < minLat) minLat = c[0];
@@ -3837,8 +4124,6 @@ async function renderLiveMap(params) {
 
     const dLat = (maxLat - minLat) || 0.01;
     const dLng = (maxLng - minLng) || 0.01;
-
-    // Map viewport area on canvas
     const mapX = 60, mapY = 240, mapW = 600, mapH = 680;
 
     function project(lat, lng) {
@@ -3846,6 +4131,21 @@ async function renderLiveMap(params) {
       const y = mapY + mapH - 30 - ((lat - minLat) / dLat) * (mapH - 60);
       return [x, y];
     }
+
+    // Group points by rider for multi-rider race overview
+    const pointsByRider = {};
+    if (!isSingleRider) {
+      pts.forEach(p => {
+        if (!pointsByRider[p.rider_id]) pointsByRider[p.rider_id] = [];
+        pointsByRider[p.rider_id].push(p);
+      });
+    }
+
+    // Determine global timestamps
+    const globalMinTime = new Date(pts[0].recorded_at).getTime();
+    const globalMaxTime = new Date(pts[pts.length - 1].recorded_at).getTime();
+    const totalTimeSpan = Math.max(1000, globalMaxTime - globalMinTime);
+    const totalCourse = routeKm || (event && event.distance_km) || 0;
 
     const mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
       ? 'video/mp4;codecs=avc1'
@@ -3864,8 +4164,9 @@ async function renderLiveMap(params) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       const cleanEventName = (event && event.name ? event.name : 'Event').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const fileTarget = isSingleRider && targetRider ? `Rider_${targetRider.bib || targetRider.id}` : 'Race_Overview';
       a.href = url;
-      a.download = `CycloPon-Story-Replay-${cleanEventName}-${Date.now()}.${ext}`;
+      a.download = `CycloPon-Story-${fileTarget}-${cleanEventName}-${Date.now()}.${ext}`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
@@ -3880,36 +4181,31 @@ async function renderLiveMap(params) {
 
     recorder.start();
 
-    // Render loop: ~360 frames (12 seconds at 30 fps)
-    const totalFrames = 360;
+    const totalFrames = 360; // 12 detik pada 30 fps
     let frame = 0;
 
     const renderInterval = setInterval(() => {
       frame++;
       const progress = frame / totalFrames;
 
-      // Update progress bar
       if (progressBar) progressBar.style.width = `${Math.round(progress * 100)}%`;
       if (progressText) progressText.textContent = `Rendering Video Story... ${Math.round(progress * 100)}%`;
 
-      // Interpolate current position in history
-      const ptIndex = Math.min(pts.length - 1, Math.floor(progress * pts.length));
-      const curPt = pts[ptIndex];
-      const curDist = curPt.distance_km || 0;
-      const curSpeed = curPt.speed || 0;
-      const clockStr = curPt.recorded_at ? new Date(curPt.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+      const curTargetTimeMs = globalMinTime + progress * totalTimeSpan;
+      const clockDate = new Date(curTargetTimeMs);
+      const clockStr = clockDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-      // 1. Background
-      ctx.fillStyle = '#0D1117';
+      // 1. Canvas Background
+      ctx.fillStyle = '#0F141C';
       ctx.fillRect(0, 0, 720, 1280);
 
       // Subtle background grid
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
       ctx.lineWidth = 1;
-      for (let x = 0; x < 720; x += 40) {
+      for (let x = 0; x < 720; x += 45) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 1280); ctx.stroke();
       }
-      for (let y = 0; y < 1280; y += 40) {
+      for (let y = 0; y < 1280; y += 45) {
         ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(720, y); ctx.stroke();
       }
 
@@ -3920,21 +4216,36 @@ async function renderLiveMap(params) {
 
       ctx.fillStyle = '#10B981';
       ctx.font = '800 13px ui-monospace, SFMono-Regular, monospace';
-      ctx.fillText('// PRO GPS TELEMETRY REPLAY', 220, 90);
+      ctx.fillText('// TELEMETRY REPLAY', 220, 90);
 
       ctx.fillStyle = '#E2E8F0';
-      ctx.font = '800 28px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText((event && event.name ? event.name : 'EVENT REPLAY').toUpperCase(), 60, 140);
+      ctx.font = '800 26px -apple-system, BlinkMacSystemFont, sans-serif';
+      const eventTitle = (event && event.name ? event.name : 'EVENT REPLAY').toUpperCase();
+      ctx.fillText(eventTitle.length > 28 ? eventTitle.substring(0, 26) + '...' : eventTitle, 60, 138);
 
-      const riderName = (curPt.rider_name || (riders[0] ? riders[0].name : 'Mallik 2'));
-      const riderBib = (curPt.rider_bib || (riders[0] ? riders[0].bib : '195'));
-      ctx.fillStyle = '#94A3B8';
-      ctx.font = '700 16px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.fillText(`RIDER: #${riderBib} ${riderName.toUpperCase()}`, 60, 175);
+      let curDist = 0;
+      let curSpeed = 0;
+
+      if (isSingleRider) {
+        const ptIndex = Math.min(pts.length - 1, Math.floor(progress * pts.length));
+        const curPt = pts[ptIndex];
+        curDist = curPt.distance_km || 0;
+        curSpeed = curPt.speed || 0;
+
+        const riderName = targetRider ? targetRider.name : (curPt.rider_name || 'Rider');
+        const riderBib = targetRider ? targetRider.bib : (curPt.rider_bib || '-');
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '700 16px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(`RIDER: #${riderBib} ${riderName.toUpperCase()}`, 60, 172);
+      } else {
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '700 16px -apple-system, BlinkMacSystemFont, sans-serif';
+        ctx.fillText(`RACE OVERVIEW: ${Object.keys(pointsByRider).length} RIDERS TRACKED`, 60, 172);
+      }
 
       // 3. Map Card Background
       ctx.fillStyle = '#161B22';
-      ctx.strokeStyle = '#30363D';
+      ctx.strokeStyle = '#2E3846';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       if (typeof ctx.roundRect === 'function') {
@@ -3947,7 +4258,7 @@ async function renderLiveMap(params) {
 
       // Full Route Ghost Line
       if (routeCoords && routeCoords.length > 1) {
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -3961,45 +4272,106 @@ async function renderLiveMap(params) {
         ctx.stroke();
       }
 
-      // Active Traversed Glowing Route Line
-      if (ptIndex > 0) {
-        ctx.strokeStyle = '#00E5FF';
-        ctx.lineWidth = 5;
-        ctx.shadowColor = '#00E5FF';
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        const p0 = project(pts[0].latitude, pts[0].longitude);
-        ctx.moveTo(p0[0], p0[1]);
-        for (let i = 1; i <= ptIndex; i++) {
-          const pi = project(pts[i].latitude, pts[i].longitude);
-          ctx.lineTo(pi[0], pi[1]);
-        }
-        ctx.stroke();
-        ctx.shadowBlur = 0; // reset
-      }
+      // Draw Trails and Pins
+      if (isSingleRider) {
+        const ptIndex = Math.min(pts.length - 1, Math.floor(progress * pts.length));
+        const riderColor = (targetRider && targetRider.color) || pts[0].rider_color || '#10B981';
 
-      // Current Rider Marker Pin
-      const curCoord = project(curPt.latitude, curPt.longitude);
-      // Outer pulse
-      ctx.fillStyle = 'rgba(0, 229, 255, 0.25)';
-      ctx.beginPath();
-      ctx.arc(curCoord[0], curCoord[1], 16 + Math.sin(frame * 0.2) * 4, 0, Math.PI * 2);
-      ctx.fill();
-      // Inner Pin
-      ctx.fillStyle = '#00E5FF';
-      ctx.beginPath();
-      ctx.arc(curCoord[0], curCoord[1], 8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
+        // Single Rider Traversed Route Line
+        if (ptIndex > 0) {
+          ctx.strokeStyle = riderColor;
+          ctx.lineWidth = 5;
+          ctx.shadowColor = riderColor;
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          const p0 = project(pts[0].latitude, pts[0].longitude);
+          ctx.moveTo(p0[0], p0[1]);
+          for (let i = 1; i <= ptIndex; i++) {
+            const pi = project(pts[i].latitude, pts[i].longitude);
+            ctx.lineTo(pi[0], pi[1]);
+          }
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+
+        // Rider Pin
+        const curPt = pts[ptIndex];
+        const curCoord = project(curPt.latitude, curPt.longitude);
+        ctx.fillStyle = riderColor;
+        ctx.beginPath();
+        ctx.arc(curCoord[0], curCoord[1], 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      } else {
+        // Multi-Rider: render each rider's trail and pin up to curTargetTimeMs
+        let leadRider = null;
+        let leadDist = -1;
+
+        Object.keys(pointsByRider).forEach(rId => {
+          const rPts = pointsByRider[rId];
+          const passedPts = [];
+          for (let i = 0; i < rPts.length; i++) {
+            const ptTime = new Date(rPts[i].recorded_at).getTime();
+            if (ptTime <= curTargetTimeMs) {
+              passedPts.push(rPts[i]);
+            } else {
+              break;
+            }
+          }
+
+          if (passedPts.length > 0) {
+            const rInfo = riders.find(r => r.id === Number(rId));
+            const rColor = (rInfo && rInfo.color) || passedPts[0].rider_color || '#10B981';
+
+            // Draw rider trail
+            if (passedPts.length > 1) {
+              ctx.strokeStyle = rColor;
+              ctx.lineWidth = 3;
+              ctx.globalAlpha = 0.65;
+              ctx.beginPath();
+              const p0 = project(passedPts[0].latitude, passedPts[0].longitude);
+              ctx.moveTo(p0[0], p0[1]);
+              for (let j = 1; j < passedPts.length; j++) {
+                const pj = project(passedPts[j].latitude, passedPts[j].longitude);
+                ctx.lineTo(pj[0], pj[1]);
+              }
+              ctx.stroke();
+              ctx.globalAlpha = 1.0;
+            }
+
+            // Draw current pin
+            const latest = passedPts[passedPts.length - 1];
+            const pinCoord = project(latest.latitude, latest.longitude);
+            ctx.fillStyle = rColor;
+            ctx.beginPath();
+            ctx.arc(pinCoord[0], pinCoord[1], 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            const dist = latest.distance_km || 0;
+            if (dist > leadDist) {
+              leadDist = dist;
+              leadRider = { info: rInfo, latest: latest };
+            }
+          }
+        });
+
+        if (leadRider) {
+          curDist = leadDist;
+          curSpeed = leadRider.latest.speed || 0;
+        }
+      }
 
       // 4. Bottom Dashboard Hero Cards
       const dashY = 960;
 
-      // Speed Hero Card
+      // Card 1: Sisa Jarak
       ctx.fillStyle = '#161B22';
-      ctx.strokeStyle = '#30363D';
+      ctx.strokeStyle = '#2E3846';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       if (typeof ctx.roundRect === 'function') {
@@ -4015,17 +4387,17 @@ async function renderLiveMap(params) {
       ctx.fillText('// SISA JARAK', 80, dashY + 36);
 
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = '900 52px ui-monospace, monospace';
-      const remKm = Math.max(0, (totalCourseKm - curDist)).toFixed(1);
+      ctx.font = '900 50px ui-monospace, monospace';
+      const remKm = totalCourse > 0 ? Math.max(0, totalCourse - curDist).toFixed(1) : curDist.toFixed(1);
       ctx.fillText(remKm, 80, dashY + 104);
 
       ctx.fillStyle = '#10B981';
-      ctx.font = '800 15px -apple-system, sans-serif';
-      ctx.fillText('KM SISA', 220, dashY + 100);
+      ctx.font = '800 14px -apple-system, sans-serif';
+      ctx.fillText(totalCourse > 0 ? 'KM SISA' : 'KM TOTAL', 220, dashY + 100);
 
-      // Distance & Time Card
+      // Card 2: Jarak & Waktu Replay
       ctx.fillStyle = '#161B22';
-      ctx.strokeStyle = '#30363D';
+      ctx.strokeStyle = '#2E3846';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       if (typeof ctx.roundRect === 'function') {
@@ -4038,9 +4410,9 @@ async function renderLiveMap(params) {
 
       ctx.fillStyle = '#94A3B8';
       ctx.font = '800 12px ui-monospace, monospace';
-      ctx.fillText('// JARAK & WAKTU', 380, dashY + 36);
+      ctx.fillText(isSingleRider ? '// PROGRES & WAKTU' : '// PIMPINAN (LEADER)', 380, dashY + 36);
 
-      ctx.fillStyle = '#00E5FF';
+      ctx.fillStyle = '#10B981';
       ctx.font = '900 36px ui-monospace, monospace';
       ctx.fillText(`${curDist.toFixed(1)} km`, 380, dashY + 84);
 
@@ -4054,9 +4426,9 @@ async function renderLiveMap(params) {
       ctx.fillStyle = '#10B981';
       ctx.fillRect(60, 1160, 600 * progress, 8);
 
-      // Finisher Overlay for last 1.5 seconds
+      // Finisher / Summary Overlay for last 1.5 seconds
       if (frame >= totalFrames - 45) {
-        ctx.fillStyle = 'rgba(13, 17, 23, 0.88)';
+        ctx.fillStyle = 'rgba(15, 20, 28, 0.92)';
         ctx.fillRect(mapX, mapY + 180, mapW, 280);
         ctx.strokeStyle = '#10B981';
         ctx.lineWidth = 2;
@@ -4065,16 +4437,19 @@ async function renderLiveMap(params) {
         ctx.fillStyle = '#10B981';
         ctx.font = '900 36px -apple-system, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('🏁 FINISHER', mapX + mapW / 2, mapY + 270);
+        ctx.fillText('🏁 FINISHER SUMMARY', mapX + mapW / 2, mapY + 270);
 
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '800 22px ui-monospace, monospace';
-        ctx.fillText(`TOTAL: ${curDist.toFixed(1)} KM`, mapX + mapW / 2, mapY + 330);
+        const finishDistStr = isSingleRider
+          ? `#${targetRider?.bib || '-'} ${targetRider?.name || 'Rider'} · ${curDist.toFixed(1)} KM`
+          : `TOTAL EVENT: ${curDist.toFixed(1)} KM COMPLETED`;
+        ctx.fillText(finishDistStr, mapX + mapW / 2, mapY + 330);
 
         ctx.fillStyle = '#94A3B8';
         ctx.font = '600 16px -apple-system, sans-serif';
         ctx.fillText('Selamat atas pencapaian rute Anda!', mapX + mapW / 2, mapY + 380);
-        ctx.textAlign = 'left'; // reset
+        ctx.textAlign = 'left';
       }
 
       if (frame >= totalFrames) {
@@ -4083,7 +4458,7 @@ async function renderLiveMap(params) {
           recorder.stop();
         }, 500);
       }
-    }, 33); // ~30 fps
+    }, 33);
   }
 
   btnStartExportVideo?.addEventListener('click', () => {
@@ -4416,6 +4791,21 @@ async function renderLiveMap(params) {
     syncLatestPositionsFromHistory();
   }
 
+  // Periodic fallback sync with randomized jitter (4.5s - 6.5s) to eliminate thundering herd
+  function scheduleNextFallbackSync() {
+    if (historyPollInterval) {
+      clearTimeout(historyPollInterval);
+      clearInterval(historyPollInterval);
+      historyPollInterval = null;
+    }
+    if (!isLiveMapMounted || isReplayActive) return;
+    const jitterMs = 4500 + Math.random() * 2000;
+    historyPollInterval = setTimeout(() => {
+      triggerFallbackPositionSync();
+      scheduleNextFallbackSync();
+    }, jitterMs);
+  }
+
   // Check and update pocket mode indicator if rider navigated to map with Pocket Mode active
   function checkPocketModeIndicator() {
     const pill = document.getElementById('riderPocketActivePill');
@@ -4430,8 +4820,7 @@ async function renderLiveMap(params) {
 
   // Fetch immediately on load
   syncLatestPositionsFromHistory();
-  // Periodic fallback sync: active only if WebSocket is disconnected or in reconnect state
-  historyPollInterval = setInterval(triggerFallbackPositionSync, 5000);
+  scheduleNextFallbackSync();
 
   window.addEventListener('popstate', () => {
     if (replayInterval) {

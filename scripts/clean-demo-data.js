@@ -11,6 +11,13 @@
 
 const db = require('../db/database');
 
+// Safety guard: prevent accidental data wipe in production
+if (process.env.NODE_ENV === 'production' && !process.argv.includes('--force')) {
+  console.log('\x1b[33m[SAFETY GUARD] Terdeteksi lingkungan PRODUCTION. Pembersihan data dibatalkan untuk menjaga keutuhan riwayat event dan data telemetri.\x1b[0m');
+  console.log('Gunakan flag --force jika Anda benar-benar ingin mereset: node scripts/clean-demo-data.js --force\n');
+  process.exit(0);
+}
+
 console.log('\n🧹 \x1b[1m\x1b[36m[CYCLOPON CLEAN-CODE]\x1b[0m Pembersihan data demo, dummy, dan riwayat simulasi...\n');
 
 // 1. Identify demo/dummy events to delete

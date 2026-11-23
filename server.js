@@ -47,7 +47,17 @@ app.use('/gpx', requireEventAccess({
   }
 }), express.static(path.join(__dirname, 'public', 'gpx')));
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
+  etag: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache');
+    } else if (/\.(css|js|svg|png|jpg|jpeg|gif|webp|woff2|woff|ttf|ico)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+    }
+  }
+}));
 
 // Lightweight Page Views & Traffic Tracker Middleware (Buffered In-Memory)
 app.use((req, res, next) => {
