@@ -332,7 +332,6 @@ async function renderEventResults(params) {
           <div class="footer-inner">
             <div class="footer-left">
               <a href="/" data-link class="footer-brand-lockup">
-                <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
                 <div class="footer-brand-info">
                   <span class="footer-brand-title">CYCLOPON</span>
                   <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>

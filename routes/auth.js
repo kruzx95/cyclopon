@@ -77,8 +77,14 @@ router.post('/rider', (req, res) => {
   let rider = null;
   if (event_id) {
     rider = db.getRiderByEventBibPin.get(Number(event_id), cleanBib, cleanPin);
+    if (!rider && cleanBib !== cleanBib.toUpperCase()) {
+      rider = db.getRiderByEventBibPin.get(Number(event_id), cleanBib.toUpperCase(), cleanPin);
+    }
   } else {
     rider = db.getRiderByBibPin.get(cleanBib, cleanPin);
+    if (!rider && cleanBib !== cleanBib.toUpperCase()) {
+      rider = db.getRiderByBibPin.get(cleanBib.toUpperCase(), cleanPin);
+    }
   }
 
   if (!rider) {

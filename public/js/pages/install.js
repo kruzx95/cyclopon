@@ -19,17 +19,20 @@ function renderInstallPage() {
       <!-- ── Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
-          <img src="/icons/logo-emblem.svg" alt="CycloPon Logo" class="brand-logo-emblem" width="32" height="32">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
-            <span class="brand-spec-label">// INSTALL PWA</span>
           </div>
         </a>
 
         <div class="nav-actions-group">
-          <a href="/share" data-link class="btn-guide-nav" title="Buat kartu aktivitas untuk media sosial" aria-label="Buat kartu aktivitas">
-            <span class="nav-label-full">KARTU AKTIVITAS</span>
-            <span class="nav-label-short">KARTU</span>
+          <a href="/" data-link class="btn-guide-nav" title="Kembali ke Beranda" aria-label="Beranda">
+            <span class="nav-label-full">BERANDA</span>
+            <span class="nav-label-short">BERANDA</span>
+          </a>
+
+          <a href="/share" data-link class="btn-guide-nav" title="Buat poster gowes peserta event untuk media sosial" aria-label="Buat poster gowes">
+            <span class="nav-label-full">POSTER GOWES</span>
+            <span class="nav-label-short">POSTER</span>
           </a>
 
           <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
@@ -69,7 +72,7 @@ function renderInstallPage() {
             <span class="install-eyebrow">⚡ PROGRESSIVE WEB APP (PWA)</span>
             <h1 class="install-hero-title">Pasang CycloPon di <span>Layar Utama HP</span></h1>
             <p class="install-hero-desc">
-              Akses Live Map, Cockpit Rider, dan Kartu Aktivitas langsung seperti aplikasi native tanpa perlu mengunduh lewat Play Store atau App Store. Ringan, cepat, dan layar penuh.
+              Akses Live Map, Cockpit Rider, dan Poster Gowes langsung seperti aplikasi native tanpa perlu mengunduh lewat Play Store atau App Store. Ringan, cepat, dan layar penuh.
             </p>
             <div class="install-benefits-row">
               <span class="install-benefit-chip">✓ Ukuran &lt; 2 MB</span>
@@ -80,8 +83,7 @@ function renderInstallPage() {
 
           <div class="install-action-card" id="installActionCard">
             <div class="install-app-preview">
-              <img src="/icons/icon-192.png" alt="Ikon Aplikasi CycloPon" class="install-app-icon" width="44" height="44">
-              <div class="install-app-meta">
+              <div class="install-app-meta" style="text-align:center">
                 <div class="install-app-name">CycloPon Live Tracker</div>
                 <div class="install-app-sub">Web App · v2.0</div>
               </div>
@@ -184,7 +186,6 @@ function renderInstallPage() {
                 <span class="mockup-caption">Popup Konfirmasi</span>
                 <div class="mockup-confirm-dialog">
                   <div class="mockup-dialog-app">
-                    <img src="/icons/icon-192.png" alt="">
                     <div>
                       <div style="font-size:11.5px;font-weight:800;color:#0D1117">Install aplikasi?</div>
                       <div style="font-size:10px;color:#64748B">CycloPon Live Tracker</div>
@@ -283,7 +284,6 @@ function renderInstallPage() {
                     <span class="mockup-ios-add">Add</span>
                   </div>
                   <div class="mockup-dialog-app">
-                    <img src="/icons/icon-192.png" alt="">
                     <div>
                       <div style="font-size:11.5px;font-weight:800;color:#0D1117">CycloPon</div>
                       <div style="font-size:10px;color:#64748B">cyclopon.com</div>
@@ -340,7 +340,6 @@ function renderInstallPage() {
                 <span class="mockup-caption">Dialog Konfirmasi Browser</span>
                 <div class="mockup-confirm-dialog">
                   <div class="mockup-dialog-app">
-                    <img src="/icons/icon-192.png" alt="">
                     <div>
                       <div style="font-size:11.5px;font-weight:800;color:#0D1117">Install CycloPon Live Tracker?</div>
                       <div style="font-size:10px;color:#64748B">Buka sebagai jendela aplikasi mandiri</div>
@@ -384,7 +383,6 @@ function renderInstallPage() {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
-              <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>

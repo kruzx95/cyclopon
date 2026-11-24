@@ -97,7 +97,6 @@ async function renderLiveMap(params) {
           <a href="/" data-link class="header-logo" title="Kembali ke Beranda CycloPon">
             <span class="logo-text">CYCLOPON</span>
           </a>
-          <span class="header-meta-tag">// LIVE MATRIX</span>
           <div class="event-info-cluster">
             <h1 class="header-event-title" id="eventBadge">Memuat Event...</h1>
             <span class="header-event-stats" id="eventStats">Menghitung...</span>

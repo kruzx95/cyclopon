@@ -473,7 +473,7 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
   cardText(ctx, 'CYCLOPON', pad + Math.round(26 * base), brandY, {
     size: 21 * base, weight: 700, stack: label, color: palette.ink, letterSpacing: 6 * base
   });
-  cardText(ctx, 'ACTIVITY CARD', width - pad, brandY, {
+  cardText(ctx, 'POSTER GOWES', width - pad, brandY, {
     size: 18 * base, weight: 600, stack: label, color: palette.muted, align: 'right', letterSpacing: 4 * base
   });
 
@@ -610,7 +610,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
     size: metrics.titleFont, weight: 700, stack: display, color: palette.ink, maxWidth: width - pad * 2
   });
   const subtitleY = titleY + Math.round(46 * base);
-  cardText(ctx, model.riderName ? model.riderName.toUpperCase() : `${model.source.toUpperCase()} ACTIVITY`, pad, subtitleY, {
+  cardText(ctx, model.riderName ? model.riderName.toUpperCase() : `${model.source.toUpperCase()} ROUTE`, pad, subtitleY, {
     size: 18 * base, stack: label, color: palette.accent2, letterSpacing: 3.4 * base, maxWidth: width - pad * 2
   });
 
@@ -740,7 +740,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
 
   const riderTop = sparkTop + Math.max(0, sparkHeight) + Math.round(54 * base);
   if (model.riderName && footerY - riderTop > Math.round(80 * base)) {
-    cardText(ctx, 'RIDER', pad, riderTop, {
+    cardText(ctx, (model.roleLabel || 'RIDER').toUpperCase(), pad, riderTop, {
       size: 15 * base, stack: label, color: palette.muted, letterSpacing: 2.8 * base
     });
     cardText(ctx, model.riderName, pad, riderTop + Math.round(46 * base), {
@@ -756,7 +756,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
     width, height, pad, base, footerFont: metrics.footerFont,
     stack: label, ink: palette.ink, muted: palette.muted,
     attribution: layer.attribution || 'ROUTE ART · TANPA BASEMAP',
-    leftText: 'CYCLOPON — KARTU AKTIVITAS'
+    leftText: 'CYCLOPON — POSTER GOWES'
   });
 }
 /* ──────────────────────── Theme 3: Brutalist Mono ──────────────────────── */
@@ -786,7 +786,7 @@ async function drawBrutalistMono(ctx, size, model, template, metrics, options, r
   cardText(ctx, 'CYCLOPON', pad, headerY, {
     size: 22 * base, weight: 700, stack: label, color: palette.ink, letterSpacing: 7 * base
   });
-  cardText(ctx, 'ACTIVITY CARD / 01', width - pad, headerY, {
+  cardText(ctx, 'POSTER GOWES / 01', width - pad, headerY, {
     size: 20 * base, weight: 700, stack: label, color: palette.ink, align: 'right', letterSpacing: 3 * base
   });
   const sportLine = `${(model.riderName || model.source).toUpperCase()} · ${CardModel.formatDateId(model.startedAt) || 'NO DATE'}`;
@@ -884,7 +884,7 @@ async function drawBrutalistMono(ctx, size, model, template, metrics, options, r
 
   ctx.fillStyle = palette.ink;
   ctx.fillRect(0, footerTop, width, footerBarH);
-  cardText(ctx, 'CYCLOPON — KARTU AKTIVITAS', pad, footerTop + Math.round(footerBarH * 0.62), {
+  cardText(ctx, 'CYCLOPON — POSTER GOWES', pad, footerTop + Math.round(footerBarH * 0.62), {
     size: 18 * base, weight: 700, stack: label, color: '#FFFFFF', letterSpacing: 2.4 * base
   });
   cardText(ctx, 'ROUTE ART · TANPA BASEMAP', width - pad, footerTop + Math.round(footerBarH * 0.62), {

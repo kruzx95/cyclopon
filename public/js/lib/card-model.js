@@ -293,9 +293,48 @@ function formatDateId(value) {
   return `${String(date.getUTCDate()).padStart(2, '0')} ${CARD_MONTHS_ID[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
+const CARD_ROLE_LABELS = {
+  rider: 'Rider',
+  sweeper: 'Sweeper',
+  marshall: 'Marshall',
+  medic: 'Medis'
+};
+
+function formatRoleLabel(role) {
+  const key = String(role || 'rider').trim().toLowerCase();
+  return CARD_ROLE_LABELS[key] || 'Rider';
+}
+
+/**
+ * Derive locked poster metadata from verified server rider + event records.
+ * Event title and participant identity cannot be spoofed by client inputs.
+ */
+function formatParticipantPosterMeta(rider, event) {
+  const safeRider = rider || {};
+  const safeEvent = event || {};
+  const name = String(safeRider.name || '').trim();
+  const bib = String(safeRider.bib || '').trim();
+  const roleKey = String(safeRider.role || 'rider').trim().toLowerCase();
+  const roleLabel = formatRoleLabel(roleKey);
+  const title = String(safeEvent.name || '').trim() || 'Event CycloPon';
+
+  const idParts = [];
+  if (name) idParts.push(name);
+  if (bib) idParts.push(`BIB #${bib}`);
+  if (roleKey && roleKey !== 'rider') idParts.push(roleLabel.toUpperCase());
+
+  return {
+    title,
+    riderName: idParts.join(' · '),
+    roleLabel,
+    roleKey: CARD_ROLE_LABELS[roleKey] ? roleKey : 'rider',
+    eventDate: String(safeEvent.date || '').trim()
+  };
+}
+
 function cardTitleFromFileName(fileName) {
   const base = String(fileName || '').replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim();
-  if (!base) return 'Aktivitas Gowes';
+  if (!base) return 'Poster Gowes';
   const words = base.split(/\s+/).filter(Boolean).map(word => {
     if (/^\d+$/.test(word)) return word;
     return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
@@ -307,22 +346,22 @@ function cardTitleFromFileName(fileName) {
  * Caption text reused by the Web Share sheet and clipboard fallback.
  */
 function formatCaption(model) {
-  if (!model || !model.stats) return 'Kartu aktivitas dari CycloPon';
+  if (!model || !model.stats) return 'Poster gowes dari CycloPon';
   const parts = [`${formatDistance(model.stats.distanceKm)} km`];
   const duration = formatDuration(model.stats.movingSec || model.stats.elapsedSec);
   if (duration) parts.push(duration);
   if (model.stats.elevGainM > 0) parts.push(`${model.stats.elevGainM} m elevasi`);
   if (model.stats.avgKmh) parts.push(`${formatSpeed(model.stats.avgKmh)} km/jam`);
-  const title = model.title || 'Aktivitas Gowes';
+  const title = model.title || 'Poster Gowes';
   return `${title} — ${parts.join(' · ')}. Dibuat dengan CycloPon 🚴`;
 }
 
 /**
  * Build the complete card model from uploaded file text.
- * @param {{fileName?:string, text:string, title?:string, riderName?:string}} input
+ * @param {{fileName?:string, text:string, title?:string, riderName?:string, roleLabel?:string}} input
  */
 function buildCardModel(input = {}) {
-  const { fileName = '', text = '', title = '', riderName = '' } = input;
+  const { fileName = '', text = '', title = '', riderName = '', roleLabel = '' } = input;
   const format = detectActivityFormat(fileName, text);
   if (!format) {
     throw cardError('Format file tidak dikenali. Gunakan file .gpx atau .tcx.', ACTIVITY_ERROR_CODES.UNSUPPORTED_FORMAT);
@@ -341,6 +380,7 @@ function buildCardModel(input = {}) {
     sport: 'Ride',
     title: String(title || '').trim() || cardTitleFromFileName(fileName),
     riderName: String(riderName || '').trim(),
+    roleLabel: String(roleLabel || '').trim(),
     startedAt: firstTimed ? new Date(firstTimed.time).toISOString() : null,
     points,
     bbox: computeBbox(points),
@@ -353,6 +393,7 @@ function buildCardModel(input = {}) {
 const CARD_MODEL_API = {
   ACTIVITY_ERROR_CODES,
   CARD_MONTHS_ID,
+  CARD_ROLE_LABELS,
   detectActivityFormat,
   parseGpxActivity,
   parseTcxActivity,
@@ -364,6 +405,8 @@ const CARD_MODEL_API = {
   formatDistance,
   formatSpeed,
   formatDateId,
+  formatRoleLabel,
+  formatParticipantPosterMeta,
   formatCaption,
   buildCardModel
 };

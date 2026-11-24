@@ -84,6 +84,60 @@ test('Auth API & Flow Validation', async (t) => {
     assert.equal(res.status, 401);
   });
 
+  await t.test('POST /api/auth/rider and GET /api/auth/token allow sweeper, marshall, and medic on archived events', async () => {
+    const archivedEvResult = db.createEvent.run({
+      name: 'Archived Poster Event',
+      date: '2026-09-01'
+    });
+    const archivedEventId = Number(archivedEvResult.lastInsertRowid);
+    db.db.prepare('UPDATE events SET active = 0 WHERE id = ?').run(archivedEventId);
+
+    try {
+      const roles = [
+        { bib: 'SWEEP-01', name: 'Doni Sweeper', role: 'sweeper', pin: '1111' },
+        { bib: 'RC-01', name: 'Agus Marshall', role: 'marshall', pin: '2222' },
+        { bib: 'MED-01', name: 'Sari Medic', role: 'medic', pin: '3333' }
+      ];
+
+      for (const participant of roles) {
+        db.createRider.run({
+          event_id: archivedEventId,
+          bib: participant.bib,
+          name: participant.name,
+          pin: participant.pin,
+          role: participant.role
+        });
+
+        // Verify lowercase BIB input also resolves on login
+        const loginRes = await fetch(`${baseUrl}/api/auth/rider`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_id: archivedEventId,
+            bib: participant.bib.toLowerCase(),
+            pin: participant.pin
+          })
+        });
+        assert.equal(loginRes.status, 200);
+        const loginData = await loginRes.json();
+        assert.equal(loginData.success, true);
+        assert.equal(loginData.rider.role, participant.role);
+        assert.equal(loginData.event.name, 'Archived Poster Event');
+        assert.ok(loginData.rider.token);
+
+        // Verify token lookup works for Poster Gowes session check
+        const tokenRes = await fetch(`${baseUrl}/api/auth/token/${encodeURIComponent(loginData.rider.token)}`);
+        assert.equal(tokenRes.status, 200);
+        const tokenData = await tokenRes.json();
+        assert.equal(tokenData.success, true);
+        assert.equal(tokenData.rider.bib, participant.bib);
+        assert.equal(tokenData.rider.role, participant.role);
+      }
+    } finally {
+      db.db.prepare('DELETE FROM events WHERE id = ?').run(archivedEventId);
+    }
+  });
+
   await t.test('POST /api/auth/admin/login handles dev admin login', async () => {
     const res = await fetch(`${baseUrl}/api/auth/admin/login`, {
       method: 'POST',

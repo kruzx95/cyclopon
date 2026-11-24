@@ -14,9 +14,14 @@ function renderLanding() {
         </a>
 
         <div class="nav-actions-group">
-          <a href="/share" data-link class="btn-guide-nav" title="Buat kartu aktivitas untuk media sosial" aria-label="Buat kartu aktivitas">
-            <span class="nav-label-full">KARTU AKTIVITAS</span>
-            <span class="nav-label-short">KARTU</span>
+          <a href="/" data-link class="btn-guide-nav active" title="Kembali ke Beranda" aria-label="Beranda">
+            <span class="nav-label-full">BERANDA</span>
+            <span class="nav-label-short">BERANDA</span>
+          </a>
+
+          <a href="/share" data-link class="btn-guide-nav" title="Buat poster gowes peserta event untuk media sosial" aria-label="Buat poster gowes">
+            <span class="nav-label-full">POSTER GOWES</span>
+            <span class="nav-label-short">POSTER</span>
           </a>
 
           <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna & Pesepeda" aria-label="Panduan pengguna">
@@ -248,7 +253,6 @@ function renderLanding() {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
-              <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>

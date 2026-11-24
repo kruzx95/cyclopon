@@ -14,11 +14,15 @@ async function renderRegisterPage(params) {
         <a href="/" data-link class="brand-title">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
-            <span class="brand-spec-label">// PENDAFTARAN PESERTA</span>
           </div>
         </a>
 
         <div class="nav-actions-group">
+          <a href="/" data-link class="btn-guide-nav" title="Kembali ke Beranda" aria-label="Beranda">
+            <span class="nav-label-full">BERANDA</span>
+            <span class="nav-label-short">BERANDA</span>
+          </a>
+
           <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
             <span class="nav-label-full">PANDUAN</span>
             <span class="nav-label-short">PANDUAN</span>
@@ -363,7 +367,6 @@ async function renderRegisterPage(params) {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
-              <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>

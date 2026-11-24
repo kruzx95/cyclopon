@@ -16,3 +16,7 @@
 - **Surgical Changes**: Sentuh hanya baris dan file yang relevan dengan tugas. Dilarang melakukan *drive-by refactoring*, memformat ulang whitespace, atau mengubah kode yang tidak rusak di luar cakupan tugas.
 - **Goal-Driven Execution**: Tetapkan kriteria sukses yang dapat diverifikasi secara objektif (misal: `npm test` lolos 100% tanpa regresi) sebelum menyatakan tugas selesai.
 
+## 4. Aturan Branding & Logo
+- **Dilarang Memakai Logo Lama**: Jangan menampilkan, menyematkan, atau mengaktifkan kembali logo emblem/monogram lama (`/icons/logo-emblem.svg`, `/icons/logo-emblem-dark.svg`, `/icons/logo.svg`, `/icons/icon-192.*`, `/icons/icon-512.*`) di komponen UI mana pun (navbar, mobile drawer, footer, halaman `/install`, `/share`, favicon, manifest, ataupun notifikasi). Gunakan wordmark tipografi `CYCLOPON` saja sampai pengguna menyediakan aset logo resmi yang baru.
+- **Tanpa Tagline di Sebelah Wordmark `CYCLOPON`**: Jangan menambahkan tagline/spec label apa pun setelah wordmark `CYCLOPON` di header/navbar/drawer (misal `// POSTER GOWES`, `// INSTALL PWA`, `// PANDUAN PENGGUNA`, `// PENDAFTARAN PESERTA`, `// PRO GPS TELEMETRY`, `// MENU`, `// RIDER HUB`, `// LIVE MATRIX`). Tampilkan `CYCLOPON` polos tanpa imbuhan teks di sampingnya.
+

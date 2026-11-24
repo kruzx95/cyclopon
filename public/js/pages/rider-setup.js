@@ -78,7 +78,7 @@ function renderRiderSetup() {
             <span>Beranda</span>
           </a>
           <div class="hub-brand-group">
-            <h1 class="hub-title"><span class="hub-title-main">CYCLOPON</span> <span class="hub-title-accent">// RIDER HUB</span></h1>
+            <h1 class="hub-title"><span class="hub-title-main">CYCLOPON</span></h1>
           </div>
         </div>
         <div class="hub-header-right">
@@ -373,6 +373,7 @@ function renderRiderSetup() {
     if (confirm('Keluar dari sesi rider?')) {
       sessionStorage.removeItem('riderConfig');
       localStorage.removeItem('riderConfig');
+      sessionStorage.removeItem('posterRiderToken');
       showToast('Berhasil logout rider.', 'info');
       Router.navigate('/rider');
     }

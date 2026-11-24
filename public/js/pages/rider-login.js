@@ -93,6 +93,7 @@ function renderExistingSession(config) {
   document.getElementById('btnSwitchAccount').addEventListener('click', () => {
     sessionStorage.removeItem('riderConfig');
     localStorage.removeItem('riderConfig');
+    sessionStorage.removeItem('posterRiderToken');
     renderLoginForm();
   });
 }

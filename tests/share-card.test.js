@@ -452,3 +452,119 @@ test('share card — real GPX fixture stays consistent with gpx-utils', async (t
     assert.ok(projection.zoom >= 10 && projection.zoom <= 16, `unexpected zoom ${projection.zoom}`);
   });
 });
+
+test('share card — Poster Gowes participant metadata & naming', async (t) => {
+  await t.test('formatRoleLabel maps rider, sweeper, marshall, medic and defaults to Rider', () => {
+    assert.equal(model.formatRoleLabel('rider'), 'Rider');
+    assert.equal(model.formatRoleLabel('SWEEPER'), 'Sweeper');
+    assert.equal(model.formatRoleLabel('marshall'), 'Marshall');
+    assert.equal(model.formatRoleLabel('medic'), 'Medis');
+    assert.equal(model.formatRoleLabel(''), 'Rider');
+  });
+
+  await t.test('formatParticipantPosterMeta locks event title and participant identity for all roles', () => {
+    const riderMeta = model.formatParticipantPosterMeta(
+      { name: 'Budi Santoso', bib: '001', role: 'rider' },
+      { name: 'Tour de Gravel 2026', date: '2026-11-25' }
+    );
+    assert.equal(riderMeta.title, 'Tour de Gravel 2026');
+    assert.equal(riderMeta.riderName, 'Budi Santoso · BIB #001');
+    assert.equal(riderMeta.roleLabel, 'Rider');
+    assert.equal(riderMeta.roleKey, 'rider');
+
+    const sweeperMeta = model.formatParticipantPosterMeta(
+      { name: 'Doni', bib: 'SWEEP-01', role: 'sweeper' },
+      { name: 'Audax 300K', date: '2026-10-10' }
+    );
+    assert.equal(sweeperMeta.title, 'Audax 300K');
+    assert.equal(sweeperMeta.riderName, 'Doni · BIB #SWEEP-01 · SWEEPER');
+    assert.equal(sweeperMeta.roleLabel, 'Sweeper');
+    assert.equal(sweeperMeta.roleKey, 'sweeper');
+
+    const medicMeta = model.formatParticipantPosterMeta(
+      { name: 'Sari', bib: 'MED-1', role: 'medic' },
+      { name: 'Audax 300K', date: '2026-10-10' }
+    );
+    assert.equal(medicMeta.riderName, 'Sari · BIB #MED-1 · MEDIS');
+    assert.equal(medicMeta.roleLabel, 'Medis');
+  });
+
+  await t.test('buildCardModel preserves roleLabel and formatCaption uses Poster gowes wording', () => {
+    const built = model.buildCardModel({
+      fileName: 'track.gpx',
+      text: GPX_WITH_TIME,
+      title: 'Tour de Gravel 2026',
+      riderName: 'Agus · BIB #RC-1 · MARSHALL',
+      roleLabel: 'Marshall'
+    });
+    assert.equal(built.title, 'Tour de Gravel 2026');
+    assert.equal(built.riderName, 'Agus · BIB #RC-1 · MARSHALL');
+    assert.equal(built.roleLabel, 'Marshall');
+    assert.equal(model.formatCaption(null), 'Poster gowes dari CycloPon');
+  });
+
+  await t.test('UI labels use POSTER GOWES instead of KARTU AKTIVITAS', () => {
+    const root = path.join(__dirname, '..');
+    const filesToCheck = [
+      'public/index.html',
+      'public/js/pages/landing.js',
+      'public/js/pages/install.js',
+      'public/js/pages/share-card.js',
+      'public/js/lib/card-renderer.js'
+    ];
+    for (const rel of filesToCheck) {
+      const content = fs.readFileSync(path.join(root, rel), 'utf8');
+      assert.equal(/KARTU AKTIVITAS/i.test(content), false, `${rel} should not contain KARTU AKTIVITAS`);
+      assert.match(content, /POSTER GOWES/);
+    }
+  });
+
+  await t.test('no UI, manifest, service worker, or page references deprecated CP logo assets', () => {
+    const root = path.join(__dirname, '..');
+    const filesToCheck = [
+      'public/index.html',
+      'public/manifest.json',
+      'public/sw.js',
+      'public/js/lib/gps-keeper.js'
+    ];
+    const pagesDir = path.join(root, 'public', 'js', 'pages');
+    for (const entry of fs.readdirSync(pagesDir)) {
+      if (entry.endsWith('.js')) filesToCheck.push(`public/js/pages/${entry}`);
+    }
+    const deprecatedRe = /\/icons\/(?:logo-emblem|logo-emblem-dark|logo\.svg|icon-192|icon-512)/i;
+    for (const rel of filesToCheck) {
+      const content = fs.readFileSync(path.join(root, rel), 'utf8');
+      assert.equal(deprecatedRe.test(content), false, `${rel} still references deprecated logo icon`);
+    }
+  });
+
+  await t.test('no header, drawer, or page renders inline // tagline after CYCLOPON wordmark', () => {
+    const root = path.join(__dirname, '..');
+    const filesToCheck = ['public/index.html'];
+    const pagesDir = path.join(root, 'public', 'js', 'pages');
+    for (const entry of fs.readdirSync(pagesDir)) {
+      if (entry.endsWith('.js')) filesToCheck.push(`public/js/pages/${entry}`);
+    }
+    const taglineClassRe = /(?:brand-spec-label|mobile-nav-spec|hub-title-accent|header-meta-tag)/;
+    for (const rel of filesToCheck) {
+      const content = fs.readFileSync(path.join(root, rel), 'utf8');
+      assert.equal(taglineClassRe.test(content), false, `${rel} should not render inline tagline next to CYCLOPON`);
+    }
+  });
+
+  await t.test('top navigation bars and mobile drawer include explicit BERANDA link', () => {
+    const root = path.join(__dirname, '..');
+    const navFiles = [
+      'public/index.html',
+      'public/js/pages/landing.js',
+      'public/js/pages/share-card.js',
+      'public/js/pages/install.js',
+      'public/js/pages/guide.js',
+      'public/js/pages/register.js'
+    ];
+    for (const rel of navFiles) {
+      const content = fs.readFileSync(path.join(root, rel), 'utf8');
+      assert.match(content, /href="\/"[^>]*>[\s\S]*?BERANDA/);
+    }
+  });
+});
