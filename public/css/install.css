@@ -1,0 +1,565 @@
+/* ── CycloPon PWA Install Tutorial Page (/install) ── */
+
+.install-page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #F8F9FA;
+  background-image: radial-gradient(rgba(17, 24, 39, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  color: #0D1117;
+}
+
+.install-container {
+  flex: 1;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 24px 56px;
+  box-sizing: border-box;
+}
+
+/* ── Hero Header ── */
+.install-hero {
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 #0D1117;
+  padding: 28px;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+
+.install-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #1C3E24;
+  background: #E8F5E9;
+  border: 1.5px solid #1C3E24;
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-bottom: 12px;
+}
+
+.install-hero-title {
+  font-size: clamp(24px, 3.4vw, 34px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: #0D1117;
+  margin: 0 0 10px;
+}
+
+.install-hero-title span {
+  color: #1C3E24;
+}
+
+.install-hero-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #475569;
+  margin: 0 0 16px;
+  max-width: 620px;
+}
+
+.install-benefits-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.install-benefit-chip {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+/* ── Live Status / 1-Click Install Box ── */
+.install-action-card {
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 12px;
+  padding: 18px;
+  min-width: 240px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.install-app-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.install-app-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  border: 1.5px solid #0D1117;
+  box-shadow: 0 3px 8px rgba(13, 17, 23, 0.16);
+}
+
+.install-app-meta {
+  text-align: left;
+}
+
+.install-app-name {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #0D1117;
+  line-height: 1.2;
+}
+
+.install-app-sub {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748B;
+}
+
+.btn-pwa-direct {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  background: #1C3E24;
+  color: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 2px 2px 0 #0D1117;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.btn-pwa-direct:hover {
+  background: #142E1B;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #0D1117;
+}
+
+.btn-pwa-direct:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #0D1117;
+}
+
+.install-status-note {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #475569;
+  font-weight: 600;
+}
+
+.install-status-note.is-installed {
+  color: #15803D;
+  background: #DCFCE7;
+  border: 1px solid #86EFAC;
+  border-radius: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Platform Tabs ── */
+.install-platform-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.install-tab-btn {
+  min-height: 48px;
+  padding: 10px 14px;
+  background: #FFFFFF;
+  border: 2px solid #CBD5E1;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.install-tab-btn:hover {
+  border-color: #0D1117;
+  color: #0D1117;
+}
+
+.install-tab-btn.active {
+  background: #0D1117;
+  border-color: #0D1117;
+  color: #FFFFFF;
+  box-shadow: 3px 3px 0 #1C3E24;
+}
+
+.install-tab-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 99px;
+  background: #E8F5E9;
+  color: #1C3E24;
+}
+
+.install-tab-btn.active .install-tab-badge {
+  background: #1C3E24;
+  color: #FFFFFF;
+}
+
+/* ── Tutorial Panel & Step Cards ── */
+.install-panel {
+  display: none;
+}
+
+.install-panel.active {
+  display: block;
+}
+
+.install-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #FFFBEB;
+  border: 1.5px solid #F59E0B;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #78350F;
+}
+
+.install-warning-icon {
+  font-size: 18px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.install-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.install-steps-grid.two-cols {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.install-step-card {
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 #0D1117;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.install-step-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.install-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #1C3E24;
+  color: #FFFFFF;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.install-step-title {
+  font-size: 14.5px;
+  font-weight: 900;
+  color: #0D1117;
+  line-height: 1.25;
+}
+
+.install-step-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #475569;
+  margin: 0;
+}
+
+/* ── Visual UI Mockup Stage ── */
+.install-visual-box {
+  margin-top: auto;
+  background: #F1F5F9;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mockup-caption {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #64748B;
+  text-transform: uppercase;
+}
+
+/* Android Chrome Bar Mockup */
+.mockup-chrome-bar {
+  background: #FFFFFF;
+  border: 1.5px solid #94A3B8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mockup-url-pill {
+  flex: 1;
+  background: #F1F5F9;
+  border-radius: 99px;
+  padding: 5px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.mockup-tap-target {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #DCFCE7;
+  border: 2px solid #1C3E24;
+  color: #1C3E24;
+  font-weight: 900;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(28, 62, 36, 0.16);
+}
+
+.mockup-menu-list {
+  background: #FFFFFF;
+  border: 1.5px solid #94A3B8;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mockup-menu-row {
+  padding: 8px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748B;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mockup-menu-row:last-child {
+  border-bottom: none;
+}
+
+.mockup-menu-row.highlight {
+  background: #ECFDF5;
+  color: #1C3E24;
+  font-weight: 800;
+  border-left: 3px solid #1C3E24;
+}
+
+/* Confirmation Dialog & Home Screen Icon Mockup */
+.mockup-confirm-dialog {
+  background: #FFFFFF;
+  border: 1.5px solid #94A3B8;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mockup-dialog-app {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mockup-dialog-app img {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid #0D1117;
+}
+
+.mockup-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mockup-btn-cancel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  padding: 5px 10px;
+}
+
+.mockup-btn-confirm {
+  font-size: 11px;
+  font-weight: 800;
+  color: #FFFFFF;
+  background: #1C3E24;
+  border-radius: 6px;
+  padding: 5px 12px;
+  box-shadow: 0 0 0 3px rgba(28, 62, 36, 0.18);
+}
+
+/* iOS Safari Bottom Bar Mockup */
+.mockup-safari-bar {
+  background: #FFFFFF;
+  border: 1.5px solid #94A3B8;
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  color: #94A3B8;
+}
+
+.mockup-ios-sheet-header {
+  background: #FFFFFF;
+  border: 1.5px solid #94A3B8;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.mockup-ios-add {
+  background: #1C3E24;
+  color: #FFFFFF;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 800;
+  box-shadow: 0 0 0 3px rgba(28, 62, 36, 0.16);
+}
+
+/* ── Bottom Tips / FAQ Cards ── */
+.install-tips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.install-tip-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.install-tip-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0D1117;
+  margin: 0 0 6px;
+}
+
+.install-tip-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #475569;
+  margin: 0;
+}
+
+/* ── Mobile Responsive ── */
+@media (max-width: 900px) {
+  .install-hero {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 18px;
+  }
+
+  .install-action-card {
+    max-width: none;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .install-steps-grid,
+  .install-steps-grid.two-cols,
+  .install-tips-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .install-container {
+    padding: 18px 14px 40px;
+  }
+
+  .install-platform-tabs {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .install-tab-btn {
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+}

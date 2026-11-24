@@ -925,12 +925,35 @@
 /* Roster Table */
 .roster-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   border: 1.5px solid #E2E8F0;
   border-radius: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #94A3B8 #F1F5F9;
+}
+
+.roster-table-wrap::-webkit-scrollbar {
+  height: 6px;
+}
+
+.roster-table-wrap::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 0 0 6px 6px;
+}
+
+.roster-table-wrap::-webkit-scrollbar-thumb {
+  background: #94A3B8;
+  border-radius: 99px;
+}
+
+.roster-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #1C3E24;
 }
 
 .roster-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
   font-size: 12.5px;
 }
@@ -945,6 +968,7 @@
   text-transform: uppercase;
   border-bottom: 1.5px solid #CBD5E1;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .roster-table td {
@@ -966,6 +990,7 @@
   border: 1.5px solid #0D1117;
   display: inline-block;
   color: #0D1117;
+  white-space: nowrap;
 }
 
 .roster-name-cell {
@@ -980,6 +1005,68 @@
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Horizontal Scroll Slider Bar (auto-shown when table overflows horizontally) */
+.roster-slider-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+}
+
+.roster-slider-bar[hidden] {
+  display: none;
+}
+
+.roster-slider-hint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  color: #475569;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.roster-scroll-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  background: #CBD5E1;
+  border-radius: 99px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+.roster-scroll-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 16px;
+  border-radius: 99px;
+  background: #1C3E24;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 1px 4px rgba(13, 17, 23, 0.25);
+  cursor: grab;
+}
+
+.roster-scroll-slider::-moz-range-thumb {
+  width: 30px;
+  height: 16px;
+  border-radius: 99px;
+  background: #1C3E24;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 1px 4px rgba(13, 17, 23, 0.25);
+  cursor: grab;
 }
 .role-badge-pill.rider { background: #E2E8F0; color: #334155; }
 .role-badge-pill.sweeper { background: #FFEDD5; color: #C2410C; border: 1px solid #FDBA74; }

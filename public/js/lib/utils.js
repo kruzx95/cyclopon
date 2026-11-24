@@ -158,7 +158,10 @@ function initSosReasonChips(root, input) {
  * @param {string} href
  */
 function loadCss(href) {
-  if (!document.querySelector(`link[href="${href}"]`)) {
+  const path = String(href).split('?')[0];
+  const alreadyLoaded = [...document.querySelectorAll('link[rel="stylesheet"][href]')]
+    .some(tag => tag.getAttribute('href').split('?')[0] === path);
+  if (!alreadyLoaded) {
     const l = document.createElement('link');
     l.rel = 'stylesheet';
     l.href = href;
@@ -167,11 +170,17 @@ function loadCss(href) {
 }
 
 /**
- * Load a JS script once, returns Promise
+ * Load a JS script once, returns Promise.
+ * Scripts already present under a different cache-busting query (e.g.
+ * `/js/lib/utils.js` vs `/js/lib/utils.js?v=70`) count as loaded — injecting a
+ * second copy re-declares its top-level `const`s and throws.
  * @param {string} src
  */
 function loadScript(src) {
-  if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve();
+  const path = String(src).split('?')[0];
+  const alreadyLoaded = [...document.querySelectorAll('script[src]')]
+    .some(tag => tag.getAttribute('src').split('?')[0] === path);
+  if (alreadyLoaded) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = src;

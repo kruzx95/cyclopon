@@ -346,27 +346,26 @@ async function renderEventActivity(params) {
           </div>
         </main>
 
-        <!-- ── Pro Editorial Footer (Identical with Beranda) ── -->
+        <!-- ── Pro Editorial Footer ── -->
         <footer class="landing-footer">
           <div class="footer-inner">
             <div class="footer-left">
               <a href="/" data-link class="footer-brand-lockup">
+                <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
                 <div class="footer-brand-info">
                   <span class="footer-brand-title">CYCLOPON</span>
-                  <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+                  <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>
                 </div>
               </a>
             </div>
 
             <div class="footer-right">
               <div class="footer-meta-row">
-                <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
-                <span class="footer-dot">·</span>
-                <span class="footer-author">ENGINEERED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" style="color:#0D1117;text-decoration:none;font-weight:800;" title="Instagram @kruzamidiwinata">RUSHAMIDIWINATA</a></span>
+                <span class="footer-chip">POWERED BY TRACCAR ENGINE</span>
+                <span class="footer-sep">·</span>
+                <span class="footer-author">CREATED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" title="Instagram @kruzamidiwinata">@KRUZAMIDIWINATA</a></span>
               </div>
-              <div class="footer-copy">
-                <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
-              </div>
+              <div class="footer-copy">© 2026 CYCLOPON TELEMETRY · ALL RIGHTS RESERVED</div>
             </div>
           </div>
         </footer>

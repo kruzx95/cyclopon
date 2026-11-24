@@ -327,6 +327,30 @@ async function renderEventResults(params) {
 
         </div>
 
+        <!-- ── Pro Editorial Footer ── -->
+        <footer class="landing-footer">
+          <div class="footer-inner">
+            <div class="footer-left">
+              <a href="/" data-link class="footer-brand-lockup">
+                <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
+                <div class="footer-brand-info">
+                  <span class="footer-brand-title">CYCLOPON</span>
+                  <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>
+                </div>
+              </a>
+            </div>
+
+            <div class="footer-right">
+              <div class="footer-meta-row">
+                <span class="footer-chip">POWERED BY TRACCAR ENGINE</span>
+                <span class="footer-sep">·</span>
+                <span class="footer-author">CREATED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" title="Instagram @kruzamidiwinata">@KRUZAMIDIWINATA</a></span>
+              </div>
+              <div class="footer-copy">© 2026 CYCLOPON TELEMETRY · ALL RIGHTS RESERVED</div>
+            </div>
+          </div>
+        </footer>
+
         <!-- Certificate Modal Container -->
         <div id="certModalOverlay" class="certificate-modal-overlay" style="display:none">
           <div class="certificate-modal-container">

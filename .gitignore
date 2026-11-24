@@ -98,3 +98,6 @@ DEPLOY_COMMANDS.md
 
 # OpenCode config (contains API key reference)
 opencode.json
+
+# Graphify tool outputs
+graphify-out/

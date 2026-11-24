@@ -9,27 +9,58 @@ async function loadPageDeps(scripts, cssList) {
   if (scripts) await loadScripts(scripts);
 }
 
+// Capture PWA native install prompt globally so /install can trigger it anytime
+window.__deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.__deferredInstallPrompt = e;
+  window.dispatchEvent(new CustomEvent('cyclopon:pwa-prompt-ready'));
+});
+
 document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=88']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=100']);
     renderLanding();
   });
 
   // ── Official Guide & Documentation Page ──
   Router.register('/guide', async () => {
-    await loadPageDeps(['/js/pages/guide.js?v=91']);
+    await loadPageDeps(['/js/pages/guide.js?v=96']);
     renderGuide();
   });
 
   Router.register('/panduan', () => Router.navigate('/guide'));
 
+  // ── PWA Install Tutorial Page ──
+  Router.register('/install', async () => {
+    await loadPageDeps(['/js/pages/install.js?v=2'], ['/css/install.css?v=2']);
+    renderInstallPage();
+  });
+
+  Router.register('/pwa', () => Router.navigate('/install'));
+
+  // ── Activity Share Studio (GPX/TCX -> PNG card, parsed in the browser) ──
+  Router.register('/share', async () => {
+    await loadPageDeps(
+      [
+        '/js/lib/card-model.js',
+        '/js/lib/card-map.js',
+        '/js/lib/card-templates.js',
+        '/js/lib/card-renderer.js',
+        '/js/pages/share-card.js?v=4'
+      ],
+      ['/css/share.css?v=2']
+    );
+    renderSharePage();
+  });
+
   // ── Public Event Registration ──
   Router.register('/register', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=88'],
-      ['/css/register.css?v=88']
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=93'],
+      ['/css/register.css?v=89']
     );
     renderRegisterPage(params);
   });
@@ -71,6 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  Router.register('/login', () => Router.navigate('/rider'));
+
   Router.register('/rider', async () => {
     await loadPageDeps(['/js/pages/rider-login.js?v=83'], ['/css/rider.css']);
     renderRiderLogin();
@@ -103,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Event Activity & Rider Roster Page (Kuyy.app Style) ──
   Router.register('/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=88'],
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=89'],
       ['/css/activity.css?v=88']
     );
     renderEventActivity(params);
@@ -111,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/activities/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=88'],
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=89'],
       ['/css/activity.css?v=88']
     );
     renderEventActivity(params);
@@ -120,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Official Event Results & Brevet Certificate ──
   Router.register('/events/:id/results', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/pages/event-results.js?v=83'],
+      ['/js/lib/utils.js', '/js/pages/event-results.js?v=84'],
       ['/css/results.css?v=83']
     );
     renderEventResults(params);
@@ -181,4 +214,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Init router (resolves current URL)
   Router.init();
+
+  // ── Global Mobile Navigation Drawer Controller ──
+  function initMobileNav() {
+    const drawer = document.getElementById('mobileNavDrawer');
+    if (!drawer) return;
+
+    function openDrawer() {
+      drawer.classList.add('is-open');
+      drawer.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('mobile-drawer-open');
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove('is-open');
+      drawer.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('mobile-drawer-open');
+    }
+
+    document.addEventListener('click', (e) => {
+      const openBtn = e.target.closest('.mobile-menu-btn');
+      if (openBtn) {
+        e.preventDefault();
+        openDrawer();
+        return;
+      }
+
+      const closeTrigger = e.target.closest('.mobile-nav-close, .mobile-nav-backdrop, .mobile-nav-item');
+      if (closeTrigger && drawer.classList.contains('is-open')) {
+        closeDrawer();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('is-open')) {
+        closeDrawer();
+      }
+    });
+
+    window.addEventListener('popstate', closeDrawer);
+  }
+  initMobileNav();
 });

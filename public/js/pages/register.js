@@ -20,23 +20,28 @@ async function renderRegisterPage(params) {
 
         <div class="nav-actions-group">
           <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </svg>
             <span class="nav-label-full">PANDUAN</span>
+            <span class="nav-label-short">PANDUAN</span>
+          </a>
+
+          <a href="/install" data-link class="btn-guide-nav" title="Tutorial Install Aplikasi PWA di HP" aria-label="Install aplikasi">
+            <span class="nav-label-full">INSTALL</span>
+            <span class="nav-label-short">INSTALL</span>
           </a>
 
           <a href="/login" data-link class="btn-login-nav" title="Login Cockpit Rider" aria-label="Login rider">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-              <polyline points="10 17 15 12 10 7"></polyline>
-              <line x1="15" y1="12" x2="3" y2="12"></line>
-            </svg>
             <span class="nav-label-full">LOGIN RIDER</span>
             <span class="nav-label-short">LOGIN</span>
           </a>
         </div>
+
+        <button type="button" class="mobile-menu-btn" aria-label="Buka menu navigasi" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </nav>
 
       <div class="register-container">
@@ -327,7 +332,7 @@ async function renderRegisterPage(params) {
             </div>
           </div>
 
-          <div class="roster-table-wrap">
+          <div class="roster-table-wrap" id="rosterTableWrap">
             <table class="roster-table">
               <thead>
                 <tr>
@@ -346,30 +351,33 @@ async function renderRegisterPage(params) {
               </tbody>
             </table>
           </div>
+          <div class="roster-slider-bar" id="rosterSliderBar" hidden>
+            <span class="roster-slider-hint">← Geser →</span>
+            <input type="range" id="rosterScrollSlider" class="roster-scroll-slider" min="0" max="100" value="0" aria-label="Geser tabel daftar peserta ke kiri atau kanan">
+          </div>
         </div>
       </div>
 
-      <!-- ── Pro Editorial Footer (Identical with Beranda) ── -->
+      <!-- ── Pro Editorial Footer ── -->
       <footer class="landing-footer">
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
-                <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+                <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>
               </div>
             </a>
           </div>
 
           <div class="footer-right">
             <div class="footer-meta-row">
-              <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
-              <span class="footer-dot">·</span>
-              <span class="footer-author">ENGINEERED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" style="color:#0D1117;text-decoration:none;font-weight:800;" title="Instagram @kruzamidiwinata">RUSHAMIDIWINATA</a></span>
+              <span class="footer-chip">POWERED BY TRACCAR ENGINE</span>
+              <span class="footer-sep">·</span>
+              <span class="footer-author">CREATED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" title="Instagram @kruzamidiwinata">@KRUZAMIDIWINATA</a></span>
             </div>
-            <div class="footer-copy">
-              <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
-            </div>
+            <div class="footer-copy">© 2026 CYCLOPON TELEMETRY · ALL RIGHTS RESERVED</div>
           </div>
         </div>
       </footer>
@@ -404,6 +412,33 @@ async function renderRegisterPage(params) {
   const rosterBody = document.getElementById('rosterTableBody');
   const rosterCountBadge = document.getElementById('rosterCountBadge');
   const rosterSearchInput = document.getElementById('rosterSearchInput');
+  const rosterTableWrap = document.getElementById('rosterTableWrap');
+  const rosterSliderBar = document.getElementById('rosterSliderBar');
+  const rosterScrollSlider = document.getElementById('rosterScrollSlider');
+
+  function syncRosterSlider() {
+    if (!rosterTableWrap || !rosterSliderBar || !rosterScrollSlider || !rosterTableWrap.isConnected) return;
+    const maxScroll = Math.max(0, rosterTableWrap.scrollWidth - rosterTableWrap.clientWidth);
+    if (maxScroll <= 2) {
+      rosterSliderBar.hidden = true;
+      return;
+    }
+    rosterSliderBar.hidden = false;
+    rosterScrollSlider.max = String(maxScroll);
+    rosterScrollSlider.value = String(Math.round(rosterTableWrap.scrollLeft));
+  }
+
+  rosterTableWrap?.addEventListener('scroll', () => {
+    if (!rosterScrollSlider || rosterSliderBar?.hidden) return;
+    rosterScrollSlider.value = String(Math.round(rosterTableWrap.scrollLeft));
+  }, { passive: true });
+
+  rosterScrollSlider?.addEventListener('input', () => {
+    if (!rosterTableWrap) return;
+    rosterTableWrap.scrollLeft = Number(rosterScrollSlider.value);
+  });
+
+  window.addEventListener('resize', syncRosterSlider);
 
   // ── QR Code SVG Helper ──
   function generateQrSvg(text) {
@@ -540,6 +575,7 @@ async function renderRegisterPage(params) {
 
     if (!filtered.length) {
       rosterBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;color:#64748B">${q ? 'Tidak ada peserta yang cocok dengan pencarian.' : 'Belum ada peserta terdaftar di event ini.'}</td></tr>`;
+      requestAnimationFrame(syncRosterSlider);
       return;
     }
 
@@ -562,13 +598,14 @@ async function renderRegisterPage(params) {
             <span class="role-badge-pill ${roleClass}">${roleLabel}</span>
           </td>
           <td style="text-align:center">
-            <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:#16A34A">
+            <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:800;color:#16A34A;white-space:nowrap">
               ✓ Terdaftar
             </span>
           </td>
         </tr>
       `;
     }).join('');
+    requestAnimationFrame(syncRosterSlider);
   }
 
   // ── Event Selection Changed ──

@@ -23,34 +23,33 @@ function renderGuide() {
 
         <div class="nav-actions-group">
           <a href="/guide" data-link class="btn-guide-nav active" title="Panduan Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </svg>
             <span class="nav-label-full">PANDUAN</span>
+            <span class="nav-label-short">PANDUAN</span>
+          </a>
+
+          <a href="/install" data-link class="btn-guide-nav" title="Tutorial Install Aplikasi PWA di HP" aria-label="Install aplikasi">
+            <span class="nav-label-full">INSTALL</span>
+            <span class="nav-label-short">INSTALL</span>
           </a>
 
           <a href="/register" data-link class="btn-register-nav" title="Daftar Menjadi Peserta Event" aria-label="Daftar event">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="8.5" cy="7" r="4"></circle>
-              <line x1="20" y1="8" x2="20" y2="14"></line>
-              <line x1="23" y1="11" x2="17" y2="11"></line>
-            </svg>
             <span class="nav-label-full">DAFTAR EVENT</span>
             <span class="nav-label-short">DAFTAR</span>
           </a>
 
           <a href="/login" data-link class="btn-login-nav" title="Login Cockpit Rider" aria-label="Login rider">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-              <polyline points="10 17 15 12 10 7"></polyline>
-              <line x1="15" y1="12" x2="3" y2="12"></line>
-            </svg>
             <span class="nav-label-full">LOGIN RIDER</span>
             <span class="nav-label-short">LOGIN</span>
           </a>
         </div>
+
+        <button type="button" class="mobile-menu-btn" aria-label="Buka menu navigasi" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </nav>
 
       <!-- ── Guide Main Container ── -->
@@ -68,10 +67,10 @@ function renderGuide() {
             Cukup klik tombol <strong>"DAFTAR EVENT"</strong> di header atas untuk mendapatkan nomor BIB dan mengonfigurasi GPS Traccar di ponsel secara otomatis dalam 1 klik.
           </p>
           <div class="guide-hero-meta">
-            <span class="guide-meta-chip">⚡ Live Tracking (10s/30s)</span>
-            <span class="guide-meta-chip">📲 1-Klik Daftar &amp; Traccar</span>
-            <span class="guide-meta-chip">🚴 Cockpit HUD</span>
-            <span class="guide-meta-chip">❓ Solusi Cepat</span>
+            <span class="guide-meta-chip">Live Tracking (10s/30s)</span>
+            <span class="guide-meta-chip">1-Klik Daftar &amp; Traccar</span>
+            <span class="guide-meta-chip">Cockpit HUD</span>
+            <span class="guide-meta-chip">Solusi Cepat</span>
           </div>
 
           <!-- Hero Search Box for Instant Topic Lookup -->
@@ -121,7 +120,7 @@ function renderGuide() {
               <span class="guide-mono-tag">// ARSITEKTUR &amp; KONTROL PETA TERBARU</span>
               <h2 class="guide-main-title">
                 <span class="guide-chapter-num">01</span>
-                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">⚡</span> Alur Pelacakan Real-Time &amp; Kontrol Peta</span>
+                <span class="guide-title-text">Alur Pelacakan Real-Time &amp; Kontrol Peta</span>
               </h2>
               <p class="guide-subtitle">
                 GPS smartphone memancarkan koordinat secara berkala. Server menghitung jarak tempuh &amp; posisi rute, lalu memindahkan marker sepeda di peta penonton tanpa reload.
@@ -129,8 +128,7 @@ function renderGuide() {
             </div>
             <div class="guide-header-actions">
               <a href="/" data-link class="store-badge-btn" style="background:#1C3E24" title="Buka Live Map Event">
-                <span>🗺️ Buka Live Map</span>
-                <span>→</span>
+                <span>Buka Live Map</span>
               </a>
             </div>
           </div>
@@ -143,7 +141,7 @@ function renderGuide() {
             <div class="guide-pipeline-grid">
               <div class="guide-pipeline-item">
                 <span class="guide-pipeline-badge">1</span>
-                <div class="guide-pipeline-title">📱 Smartphone Rider</div>
+                <div class="guide-pipeline-title">Smartphone Rider</div>
                 <div class="guide-pipeline-desc">
                   Traccar Client memancarkan koordinat via HTTP port <code>5055</code> tiap <strong>10s</strong> (balap) atau <strong>30s</strong> (ultra).
                 </div>
@@ -151,7 +149,7 @@ function renderGuide() {
 
               <div class="guide-pipeline-item">
                 <span class="guide-pipeline-badge">2</span>
-                <div class="guide-pipeline-title">🛡️ Server CycloPon</div>
+                <div class="guide-pipeline-title">Server CycloPon</div>
                 <div class="guide-pipeline-desc">
                   Mencocokkan Device ID dengan BIB, menghitung jarak tempuh rute (KM), dan memvalidasi batas waktu Cut-Off Time (COT).
                 </div>
@@ -159,7 +157,7 @@ function renderGuide() {
 
               <div class="guide-pipeline-item">
                 <span class="guide-pipeline-badge">3</span>
-                <div class="guide-pipeline-title">📡 Broadcast Instan</div>
+                <div class="guide-pipeline-title">Broadcast Instan</div>
                 <div class="guide-pipeline-desc">
                   Data disalurkan serentak via WebSocket Fan-Out ke seluruh browser penonton &amp; panitia tanpa perlu me-refresh halaman.
                 </div>
@@ -167,7 +165,7 @@ function renderGuide() {
 
               <div class="guide-pipeline-item active-node">
                 <span class="guide-pipeline-badge">4</span>
-                <div class="guide-pipeline-title">🚴 Live Map Penonton</div>
+                <div class="guide-pipeline-title">Live Map Penonton</div>
                 <div class="guide-pipeline-desc">
                   Marker pesepeda bergeser halus di jalur rute dengan animasi interpolasi sliding.
                 </div>
@@ -181,9 +179,9 @@ function renderGuide() {
               <div class="step-card-title">Tombol Navigasi Live Map Ramah Rider</div>
               <ul class="step-checklist">
                 <li><strong>Kembali ke Beranda (←):</strong> Terletak di bar header atas (kiri samping CYCLOPON) untuk navigasi instan ke beranda.</li>
-                <li><strong>Pusatkan Kamera (🎯):</strong> 1x klik kunci rider (zoom 15); klik ke-2 tampilkan seluruh rute event.</li>
+                <li><strong>Pusatkan Kamera:</strong> 1x klik kunci rider (zoom 15); klik ke-2 tampilkan seluruh rute event.</li>
                 <li><strong>Zoom Pill Vertikal (+ / −):</strong> Tombol zoom mandiri di sisi kanan, mudah ditekan dengan jempol saat gowes.</li>
-                <li><strong>Lapisan Peta &amp; Elevasi:</strong> Tombol layer 📑 dan profil elevasi rute ⛰️ tersedia rapi di sudut kanan.</li>
+                <li><strong>Lapisan Peta &amp; Elevasi:</strong> Tombol layer dan profil elevasi rute tersedia rapi di sudut kanan.</li>
               </ul>
             </div>
 
@@ -228,7 +226,7 @@ function renderGuide() {
               <span class="guide-mono-tag">// ALUR TERCEPAT PESERTA · 1-KLIK VIA HEADER</span>
               <h2 class="guide-main-title">
                 <span class="guide-chapter-num">02</span>
-                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">🎯</span> Pendaftaran Event &amp; Auto-Setup Traccar (1-Klik)</span>
+                <span class="guide-title-text">Pendaftaran Event &amp; Auto-Setup Traccar (1-Klik)</span>
               </h2>
               <p class="guide-subtitle">
                 Tidak perlu mengetik konfigurasi manual! Cukup klik tombol <strong>"DAFTAR EVENT"</strong> di header, nomor BIB terbit otomatis, dan Traccar langsung terkonfigurasi dalam 1 klik.
@@ -236,8 +234,7 @@ function renderGuide() {
             </div>
             <div class="guide-header-actions">
               <a href="/register" data-link class="store-badge-btn" style="background:#1C3E24" title="Daftar Event Sekarang">
-                <span>⚡ Buka DAFTAR EVENT</span>
-                <span>→</span>
+                <span>Buka DAFTAR EVENT</span>
               </a>
             </div>
           </div>
@@ -254,7 +251,7 @@ function renderGuide() {
                 <li><strong>Nomor BIB:</strong> Sistem otomatis menerbitkan nomor BIB resmi Anda di lintasan.</li>
               </ul>
               <a href="/register" data-link class="btn-callout-action" style="margin-top:auto">
-                <span>Menuju Formulir Pendaftaran →</span>
+                <span>Menuju Formulir Pendaftaran</span>
               </a>
             </div>
 
@@ -265,7 +262,7 @@ function renderGuide() {
                 Setelah form terkirim, Tiket Pass Digital instan muncul di layar lengkap dengan QR Code &amp; nomor BIB resmi:
               </p>
               <ul class="step-checklist">
-                <li>Tekan tombol hijau besar: <strong>"⚡ Buka &amp; Setting Otomatis di Traccar Client"</strong>.</li>
+                <li>Tekan tombol hijau besar: <strong>"Buka &amp; Setting Otomatis di Traccar Client"</strong>.</li>
                 <li>Aplikasi Traccar Client di ponsel otomatis terbuka.</li>
                 <li><strong>Server URL, nomor BIB, interval (30s/10s), distance 0, dan offline buffering OTOMATIS TERISI</strong> tanpa perlu mengetik satu huruf pun!</li>
                 <li><em>(Jika mendaftar via laptop/PC, cukup scan QR Code dari aplikasi kamera ponsel).</em></li>
@@ -282,7 +279,7 @@ function renderGuide() {
                 <li>Layar HP dapat langsung dimatikan dan dimasukkan ke saku jersey. Selesai! Posisi Anda langsung live di peta.</li>
               </ul>
               <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 12px;margin-top:10px;font-size:11.5px;color:#166534">
-                🎉 <strong>Bebas Repot:</strong> Tidak perlu repot input URL atau konfigurasi rumit di hari-H.
+                <strong>Bebas Repot:</strong> Tidak perlu repot input URL atau konfigurasi rumit di hari-H.
               </div>
             </div>
 
@@ -295,7 +292,7 @@ function renderGuide() {
                 <li><strong>Pantau Roster:</strong> Pantau peleton seluruh peserta yang terdaftar pada tab Roster event.</li>
               </ul>
               <a href="/events/1" id="btnGuideOpenRoster" data-link class="btn-callout-action" style="margin-top:auto">
-                <span>Buka Rute &amp; Roster Event →</span>
+                <span>Buka Rute &amp; Roster Event</span>
               </a>
             </div>
           </div>
@@ -342,7 +339,7 @@ function renderGuide() {
               <span class="guide-mono-tag">// PELACAK WEB BROWSER · TANPA INSTALL APLIKASI</span>
               <h2 class="guide-main-title">
                 <span class="guide-chapter-num">03</span>
-                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">🚴</span> Rider Cockpit HUD</span>
+                <span class="guide-title-text">Rider Cockpit HUD</span>
               </h2>
               <p class="guide-subtitle">
                 Alternatif praktis pelacakan langsung dari browser smartphone dengan navigasi jalur GPX dan alarm peringatan deviasi.
@@ -350,8 +347,7 @@ function renderGuide() {
             </div>
             <div class="guide-header-actions">
               <a href="/rider" data-link class="store-badge-btn" style="background:#1C3E24" title="Buka Rider Portal">
-                <span>🚴 Buka Cockpit</span>
-                <span>→</span>
+                <span>Buka Cockpit</span>
               </a>
             </div>
           </div>
@@ -362,7 +358,7 @@ function renderGuide() {
               <div class="step-card-title">Navigasi Rute GPX &amp; Jarak Tempuh</div>
               <ul class="step-checklist">
                 <li>Akses <strong>/rider/cockpit</strong> saat HP dipasang di mount stang / handlebar.</li>
-                <li>Aktifkan <strong>💡 Layar ON (Wake Lock)</strong> agar layar tidak mati otomatis saat gowes.</li>
+                <li>Aktifkan <strong>Layar ON (Wake Lock)</strong> agar layar tidak mati otomatis saat gowes.</li>
                 <li>Menampilkan kilometer jarak tempuh dan sisa jarak ke pos kontrol berikutnya.</li>
               </ul>
             </div>
@@ -371,7 +367,7 @@ function renderGuide() {
               <div class="step-card-num">FITUR 2</div>
               <div class="step-card-title">Mode Kantong Jersey (Layar Mati)</div>
               <ul class="step-checklist">
-                <li>Pilih <strong>🎒 Mode Kantong Jersey</strong> untuk hemat daya maksimal.</li>
+                <li>Pilih <strong>Mode Kantong Jersey</strong> untuk hemat daya maksimal.</li>
                 <li>Sistem memutar loop audio sunyi di background agar browser terus aktif mengirimkan koordinat saat layar HP terkunci di saku.</li>
               </ul>
             </div>
@@ -406,7 +402,7 @@ function renderGuide() {
               <span class="guide-mono-tag">// SOLUSI CEPAT KENDALA OPERASIONAL</span>
               <h2 class="guide-main-title">
                 <span class="guide-chapter-num">04</span>
-                <span class="guide-title-text"><span class="guide-phone-icon" aria-hidden="true">❓</span> Tanya Jawab &amp; Solusi Cepat (FAQ)</span>
+                <span class="guide-title-text">Tanya Jawab &amp; Solusi Cepat (FAQ)</span>
               </h2>
               <p class="guide-subtitle">
                 Solusi ringkas kendala operasional yang paling sering dialami pesepeda saat hari-H.
@@ -417,7 +413,6 @@ function renderGuide() {
           <div class="guide-faq-grid">
             <div class="guide-faq-card">
               <div class="guide-faq-q">
-                <span class="guide-faq-q-icon">⚠️</span>
                 <span>Marker saya tidak bergerak atau diam di peta, apa solusinya?</span>
               </div>
               <p class="guide-faq-a">
@@ -430,7 +425,6 @@ function renderGuide() {
 
             <div class="guide-faq-card">
               <div class="guide-faq-q">
-                <span class="guide-faq-q-icon">🔋</span>
                 <span>Bagaimana cara menghemat baterai HP untuk gowes ultra (200km–1200km)?</span>
               </div>
               <p class="guide-faq-a">
@@ -442,7 +436,6 @@ function renderGuide() {
 
             <div class="guide-faq-card">
               <div class="guide-faq-q">
-                <span class="guide-faq-q-icon">🚴</span>
                 <span>Bisa dipakai bersamaan dengan Garmin / Wahoo / Strava?</span>
               </div>
               <p class="guide-faq-a">
@@ -452,7 +445,6 @@ function renderGuide() {
 
             <div class="guide-faq-card">
               <div class="guide-faq-q">
-                <span class="guide-faq-q-icon">📶</span>
                 <span>Bagaimana jika melewati daerah blank spot tanpa sinyal internet?</span>
               </div>
               <p class="guide-faq-a">
@@ -462,7 +454,6 @@ function renderGuide() {
 
             <div class="guide-faq-card">
               <div class="guide-faq-q">
-                <span class="guide-faq-q-icon">🧹</span>
                 <span>Apa arti Sweeper Virtual COT di Live Map?</span>
               </div>
               <p class="guide-faq-a">
@@ -488,22 +479,21 @@ function renderGuide() {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
-                <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+                <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>
               </div>
             </a>
           </div>
 
           <div class="footer-right">
             <div class="footer-meta-row">
-              <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
-              <span class="footer-dot">·</span>
-              <span class="footer-author">ENGINEERED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" style="color:#0D1117;text-decoration:none;font-weight:800;" title="Instagram @kruzamidiwinata">RUSHAMIDIWINATA</a></span>
+              <span class="footer-chip">POWERED BY TRACCAR ENGINE</span>
+              <span class="footer-sep">·</span>
+              <span class="footer-author">CREATED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" title="Instagram @kruzamidiwinata">@KRUZAMIDIWINATA</a></span>
             </div>
-            <div class="footer-copy">
-              <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
-            </div>
+            <div class="footer-copy">© 2026 CYCLOPON TELEMETRY · ALL RIGHTS RESERVED</div>
           </div>
         </div>
       </footer>

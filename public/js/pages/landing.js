@@ -14,35 +14,39 @@ function renderLanding() {
         </a>
 
         <div class="nav-actions-group">
+          <a href="/share" data-link class="btn-guide-nav" title="Buat kartu aktivitas untuk media sosial" aria-label="Buat kartu aktivitas">
+            <span class="nav-label-full">KARTU AKTIVITAS</span>
+            <span class="nav-label-short">KARTU</span>
+          </a>
+
           <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna & Pesepeda" aria-label="Panduan pengguna">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-            </svg>
             <span class="nav-label-full">PANDUAN</span>
+            <span class="nav-label-short">PANDUAN</span>
+          </a>
+
+          <a href="/install" data-link class="btn-guide-nav" title="Tutorial Install Aplikasi PWA di HP" aria-label="Install aplikasi">
+            <span class="nav-label-full">INSTALL</span>
+            <span class="nav-label-short">INSTALL</span>
           </a>
 
           <a href="/register" data-link class="btn-register-nav" title="Daftar Menjadi Peserta Event" aria-label="Daftar event">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="8.5" cy="7" r="4"></circle>
-              <line x1="20" y1="8" x2="20" y2="14"></line>
-              <line x1="23" y1="11" x2="17" y2="11"></line>
-            </svg>
             <span class="nav-label-full">DAFTAR EVENT</span>
             <span class="nav-label-short">DAFTAR</span>
           </a>
 
-          <a href="/admin" data-link class="btn-admin-nav">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
+          <a href="/admin" data-link class="btn-admin-nav" title="Panel Khusus Panitia Event" aria-label="Panel panitia">
             <span class="nav-label-full">PANEL PANITIA</span>
             <span class="nav-label-short">PANITIA</span>
-            <span class="admin-nav-arrow">↗</span>
           </a>
         </div>
+
+        <button type="button" class="mobile-menu-btn" aria-label="Buka menu navigasi" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
       </nav>
 
       <!-- ── Split Editorial Hero Section ── -->
@@ -244,22 +248,21 @@ function renderLanding() {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/logo-emblem.svg" alt="CycloPon" class="footer-logo" width="28" height="28">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
-                <span class="footer-brand-tagline">ULTRA-ENDURANCE CYCLING LIVE TELEMETRY</span>
+                <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>
               </div>
             </a>
           </div>
 
           <div class="footer-right">
             <div class="footer-meta-row">
-              <span class="footer-spec-badge">OPEN PROTOCOL 5055</span>
-              <span class="footer-dot">·</span>
-              <span class="footer-author">ENGINEERED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" style="color:#0D1117;text-decoration:none;font-weight:800;" title="Instagram @kruzamidiwinata">RUSHAMIDIWINATA</a></span>
+              <span class="footer-chip">POWERED BY TRACCAR ENGINE</span>
+              <span class="footer-sep">·</span>
+              <span class="footer-author">CREATED BY <a href="https://www.instagram.com/kruzamidiwinata/" target="_blank" rel="noopener noreferrer" class="footer-author-link" title="Instagram @kruzamidiwinata">@KRUZAMIDIWINATA</a></span>
             </div>
-            <div class="footer-copy">
-              <span>© 2026 CYCLOPON · REAL-TIME GPS TRACKING ENGINE</span>
-            </div>
+            <div class="footer-copy">© 2026 CYCLOPON TELEMETRY · ALL RIGHTS RESERVED</div>
           </div>
         </div>
       </footer>

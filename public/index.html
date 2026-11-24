@@ -29,13 +29,54 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/icons/logo-emblem.svg">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <link rel="stylesheet" href="/css/global.css?v=88">
+  <link rel="stylesheet" href="/css/global.css?v=104">
 </head>
 <body>
   <div id="app"></div>
+
+  <!-- ── Global Mobile Navigation Drawer (Sidebar) ── -->
+  <div id="mobileNavDrawer" class="mobile-nav-drawer" aria-hidden="true">
+    <div class="mobile-nav-backdrop"></div>
+    <aside class="mobile-nav-panel">
+      <div class="mobile-nav-header">
+        <div class="mobile-nav-brand">
+          <img src="/icons/logo-emblem.svg" alt="" width="26" height="26" class="mobile-nav-logo">
+          <span class="mobile-nav-title">CYCLOPON</span>
+          <span class="mobile-nav-spec">// MENU</span>
+        </div>
+        <button type="button" class="mobile-nav-close" aria-label="Tutup menu">✕</button>
+      </div>
+      <nav class="mobile-nav-links">
+        <a href="/share" data-link class="mobile-nav-item">
+          <span class="mobile-nav-item-title">KARTU AKTIVITAS</span>
+          <span class="mobile-nav-item-desc">Studio kartu jejak &amp; elevasi GPX/TCX</span>
+        </a>
+        <a href="/guide" data-link class="mobile-nav-item">
+          <span class="mobile-nav-item-title">PANDUAN</span>
+          <span class="mobile-nav-item-desc">Panduan lengkap pesepeda &amp; GPS</span>
+        </a>
+        <a href="/install" data-link class="mobile-nav-item">
+          <span class="mobile-nav-item-title">INSTALL APLIKASI</span>
+          <span class="mobile-nav-item-desc">Tutorial pasang PWA ke layar utama HP</span>
+        </a>
+        <a href="/register" data-link class="mobile-nav-item">
+          <span class="mobile-nav-item-title">DAFTAR EVENT</span>
+          <span class="mobile-nav-item-desc">Pendaftaran peserta &amp; nomor BIB</span>
+        </a>
+        <a href="/admin" data-link class="mobile-nav-item">
+          <span class="mobile-nav-item-title">PANEL PANITIA ↗</span>
+          <span class="mobile-nav-item-desc">Portal manajemen event &amp; telemetri</span>
+        </a>
+      </nav>
+      <div class="mobile-nav-footer">
+        <div class="mobile-nav-badge">⚡ PRO CYCLING TELEMETRY</div>
+      </div>
+    </aside>
+  </div>
+
   <script src="/js/router.js?v=70"></script>
-  <script src="/js/lib/utils.js?v=70"></script>
-  <script src="/js/app.js?v=116"></script>
+  <script src="/js/lib/utils.js?v=71"></script>
+  <script src="/js/app.js?v=121"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
