@@ -3,11 +3,31 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const zlib = require('node:zlib');
 const db = require('../db/database');
 const app = require('../server');
 const { generateAdminSession } = require('../lib/admin-auth');
 
 const ROOT = path.join(__dirname, '..');
+
+// Membaca isi arsip .xlsx (zip tanpa data descriptor) untuk verifikasi ekspor.
+function readZipEntries(buffer) {
+  const entries = new Map();
+  let offset = 0;
+  while (offset + 30 <= buffer.length && buffer.readUInt32LE(offset) === 0x04034b50) {
+    const method = buffer.readUInt16LE(offset + 8);
+    const compSize = buffer.readUInt32LE(offset + 18);
+    const nameLen = buffer.readUInt16LE(offset + 26);
+    const extraLen = buffer.readUInt16LE(offset + 28);
+    const name = buffer.toString('utf8', offset + 30, offset + 30 + nameLen);
+    const dataStart = offset + 30 + nameLen + extraLen;
+    const raw = buffer.subarray(dataStart, dataStart + compSize);
+    const data = method === 0 ? raw : zlib.inflateRawSync(raw);
+    entries.set(name, data.toString('utf8'));
+    offset = dataStart + compSize;
+  }
+  return entries;
+}
 
 function buildValidFormData(overrides = {}, includeProof = true) {
   const fd = new FormData();
@@ -184,7 +204,7 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
     assert.equal(missingProof.status, 400);
   });
 
-  await t.test('accepts valid registration with upload, serves proof to admin, supports verification, syncs rider, and exports CSV', async () => {
+  await t.test('accepts valid registration with upload, serves proof to admin, supports verification, syncs rider, and exports Excel', async () => {
     const regRes = await fetch(`${baseUrl}/api/ala-ultra/register`, {
       method: 'POST',
       body: buildValidFormData({
@@ -254,22 +274,45 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
     assert.equal(syncData.rider.bib, '001');
     assert.equal(syncData.rider.pin, '7890');
 
-    // Export CSV escapes formula injection and includes Section E headers & report template
-    const csvRes = await fetch(`${baseUrl}/api/admin/ala-ultra/export.csv`, {
+    // Export Excel: berkas .xlsx valid berisi sheet Ringkasan + Data Peserta
+    const xlsxRes = await fetch(`${baseUrl}/api/admin/ala-ultra/export.xlsx`, {
       headers: { 'Authorization': `Bearer ${adminToken}`, 'x-enforce-auth': '1' }
     });
-    assert.equal(csvRes.status, 200);
-    assert.match(csvRes.headers.get('content-disposition') || '', /ala-ala-ultra-2027-registrations-\d{4}-\d{2}-\d{2}\.csv/);
-    const csvText = await csvRes.text();
-    assert.match(csvText, /LAPORAN PENDAFTARAN PESERTA - ALA-ALA ULTRA 2027/);
-    assert.match(csvText, /Ringkasan Status/);
-    assert.match(csvText, /Ringkasan Pembayaran/);
-    assert.match(csvText, /1\. REGISTRASI & STATUS/);
-    assert.match(csvText, /Nomor Registrasi/);
-    assert.match(csvText, /Verifikasi Strava/);
-    assert.match(csvText, /Undangan Grup WA/);
-    assert.match(csvText, /'=CMD\(\) Budi/);
-    assert.match(csvText, /TOTAL PENDAFTAR/);
+    assert.equal(xlsxRes.status, 200);
+    assert.match(xlsxRes.headers.get('content-type') || '', /spreadsheetml\.sheet/);
+    assert.match(xlsxRes.headers.get('content-disposition') || '', /ala-ala-ultra-2027-registrations-\d{4}-\d{2}-\d{2}\.xlsx/);
+    const xlsxBuffer = Buffer.from(await xlsxRes.arrayBuffer());
+    assert.ok(xlsxBuffer.length > 2000, 'workbook buffer should not be empty');
+    assert.equal(xlsxBuffer.subarray(0, 2).toString('latin1'), 'PK', 'xlsx must be a zip archive');
+    assert.equal(Number(xlsxRes.headers.get('content-length')), xlsxBuffer.length);
+
+    const entries = readZipEntries(xlsxBuffer);
+    for (const name of ['[Content_Types].xml', 'xl/workbook.xml', 'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/sheet2.xml']) {
+      assert.ok(entries.has(name), `workbook should contain ${name}`);
+    }
+
+    const workbookXml = entries.get('xl/workbook.xml');
+    assert.match(workbookXml, /name="Ringkasan"/);
+    assert.match(workbookXml, /name="Data Peserta"/);
+
+    const summaryXml = entries.get('xl/worksheets/sheet1.xml');
+    assert.match(summaryXml, /LAPORAN PENDAFTARAN PESERTA/);
+    assert.match(summaryXml, /RINGKASAN STATUS/);
+    assert.match(summaryXml, /RINGKASAN PEMBAYARAN/);
+
+    const dataXml = entries.get('xl/worksheets/sheet2.xml');
+    assert.match(dataXml, /1\. REGISTRASI &amp; STATUS/);
+    assert.match(dataXml, /3\. DATA DIRI PESERTA/);
+    assert.match(dataXml, /Nomor Registrasi/);
+    assert.match(dataXml, /Verifikasi Strava/);
+    assert.match(dataXml, /Undangan Grup WA/);
+    assert.match(dataXml, /TOTAL PENDAFTAR/);
+    assert.match(dataXml, /<mergeCell /, 'grouped header bands should be merged');
+    assert.match(dataXml, /<pane[^>]*state="frozen"/, 'data sheet should freeze the header rows');
+    assert.match(dataXml, /<autoFilter /, 'data sheet should expose a header filter');
+    // Nilai yang diawali "=" tetap ditulis sebagai teks, bukan formula.
+    assert.match(dataXml, /=CMD\(\) Budi/);
+    assert.equal(/<f>/.test(dataXml), false, 'exported cells must not contain formulas');
   });
 
   await t.test('enforces max quota and admin closed toggle', async () => {

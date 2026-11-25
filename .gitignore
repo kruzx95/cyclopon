@@ -72,6 +72,8 @@ traccar_logs/
 # 6. Testing, Diagnostics & Temporary Files
 # ------------------------------------------------------------------------------
 reports/test-report-*.md
+# Contoh berkas Excel hasil ekspor (dibuat ulang oleh scripts/ala-ultra-export-sample.js)
+reports/*.xlsx
 coverage/
 .nyc_output/
 .superpowers/

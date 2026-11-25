@@ -7,6 +7,8 @@ const db = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
 const { determineColorForRole } = require('../lib/constants');
 const { validateStravaUrl } = require('../public/js/lib/utils');
+const { buildAlaUltraReport, renderAlaUltraXlsx } = require('../lib/ala-ultra-export');
+const { XLSX_MIME: XLSX_CONTENT_TYPE } = require('../lib/xlsx');
 
 const publicRouter = express.Router();
 const adminRouter = express.Router();
@@ -163,49 +165,7 @@ function isValidEmail(str) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(str || '').trim());
 }
 
-function escapeCsvCell(val) {
-  const raw = val == null ? '' : String(val);
-  // Mitigate spreadsheet formula injection when opened in Excel / Google Sheets
-  const safe = /^[=+\-@\t\r]/.test(raw) ? `'${raw}` : raw;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
-
-function formatJakartaDateTime(val) {
-  const date = val instanceof Date ? val : (() => {
-    const raw = String(val || '').trim();
-    if (!raw) return null;
-    const iso = raw.includes('T') ? raw : `${raw.replace(' ', 'T')}Z`;
-    const parsed = new Date(iso);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  })();
-  if (!date) return cleanStr(val);
-  try {
-    const parts = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Jakarta',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).formatToParts(date);
-    const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
-    const hh = map.hour === '24' ? '00' : map.hour;
-    return `${map.year}-${map.month}-${map.day} ${hh}:${map.minute} WIB`;
-  } catch {
-    return date.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
-  }
-}
-
-function formatRupiahText(amount) {
-  const n = Number(amount);
-  if (!Number.isFinite(n)) return 'Rp 0';
-  const sign = n < 0 ? '-' : '';
-  const digits = Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return `${sign}Rp ${digits}`;
-}
-
-// ── Public Routes ──────────────────────────────────────────────
+// Public Routes
 
 // GET /api/ala-ultra/info
 publicRouter.get('/info', (_req, res) => {
@@ -413,7 +373,7 @@ publicRouter.post('/register', submitRateLimiter, (req, res) => {
   });
 });
 
-// ── Admin Routes (Race Control) ────────────────────────────────
+// Admin Routes (Race Control)
 
 // GET /api/admin/ala-ultra/config
 adminRouter.get('/config', (_req, res) => {
@@ -693,179 +653,23 @@ adminRouter.delete('/registrations/:id', (req, res) => {
   db.deleteAlaUltraRegistration.run(reg.id);
   res.json({ success: true });
 });
-
-// GET /api/admin/ala-ultra/export.csv
-adminRouter.get('/export.csv', (_req, res) => {
+// GET /api/admin/ala-ultra/export.xlsx
+// Formal Excel workbook: sheet "Ringkasan" (metadata + statistik) dan
+// sheet "Data Peserta" (tabel lengkap, header berkelompok, freeze pane, autofilter).
+adminRouter.get('/export.xlsx', (_req, res) => {
   const rows = db.getAllAlaUltraRegistrations.all().slice().reverse();
   const cfg = db.getAlaUltraConfig.get() || {};
   const linkedEvent = cfg.linked_event_id ? db.getEventById.get(cfg.linked_event_id) : null;
-  const todayWib = getJakartaDateYmd();
 
-  const stats = rows.reduce((acc, r) => {
-    const amount = Number(r.payment_amount) || 0;
-    acc.totalAmount += amount;
-    if (r.registration_status === 'Menunggu') acc.menunggu += 1;
-    else if (r.registration_status === 'Disetujui') {
-      acc.disetujui += 1;
-      acc.approvedAmount += amount;
-    } else if (r.registration_status === 'Ditolak') acc.ditolak += 1;
-    if (r.wa_invite_status === 'Terkirim') acc.waTerkirim += 1;
-    if (r.wa_group_status === 'Sudah Bergabung') acc.sudahGrup += 1;
-    if (r.rider_id) acc.syncedRadar += 1;
-    return acc;
-  }, {
-    menunggu: 0,
-    disetujui: 0,
-    ditolak: 0,
-    waTerkirim: 0,
-    sudahGrup: 0,
-    syncedRadar: 0,
-    approvedAmount: 0,
-    totalAmount: 0
-  });
+  const report = buildAlaUltraReport({ rows, cfg, linkedEvent, exportedAt: new Date() });
+  const buffer = renderAlaUltraXlsx(report);
+  const filename = `ala-ala-ultra-2027-registrations-${getJakartaDateYmd()}.xlsx`;
 
-  const groupRow = [
-    '1. REGISTRASI & STATUS', '', '', '',
-    '2. VERIFIKASI & GRUP WHATSAPP', '', '', '', '', '',
-    '3. DATA DIRI PESERTA', '', '', '', '', '', '', '',
-    '4. KONTAK DARURAT', '', '',
-    '5. SEPEDA & STRAVA', '', '', '', '', '',
-    '6. KESELAMATAN & PERSETUJUAN', '', '', '', '',
-    '7. PEMBAYARAN & CATATAN', '', '', '', ''
-  ];
-
-  const headers = [
-    'No.',
-    'Nomor Registrasi',
-    'Waktu Daftar (WIB)',
-    'Status Pendaftaran',
-    'Verifikasi Data',
-    'Verifikasi Strava',
-    'Verifikasi Pembayaran',
-    'Undangan Grup WA',
-    'Status Grup WA',
-    'Sinkronisasi Radar',
-    'Nama Peserta',
-    'Tanggal Lahir',
-    'Jenis Kelamin',
-    'WhatsApp',
-    'Email',
-    'Kota/Kabupaten Domisili',
-    'Instagram',
-    'Komunitas Sepeda',
-    'Nama Kontak Darurat',
-    'Hubungan Kontak Darurat',
-    'WhatsApp Kontak Darurat',
-    'Jenis Sepeda',
-    'Profil Strava',
-    'Aktivitas Strava Terjauh',
-    'Jarak Terjauh (KM)',
-    'Pernah Event Jarak Jauh',
-    'Nama Event Sebelumnya',
-    'Sepeda Layak Jalan',
-    'Helm & Perlengkapan',
-    'Kondisi Kesehatan / Cedera',
-    'Persetujuan Ketentuan',
-    'Persetujuan Dokumentasi',
-    'Pemilik Rekening Pengirim',
-    'Nominal Pembayaran (Rp)',
-    'Tanggal Pembayaran',
-    'Berkas Bukti Transfer',
-    'Catatan Admin'
-  ];
-
-  const csvRow = (cells) => cells.map(escapeCsvCell).join(',');
-  const quotaLabel = cfg.max_quota != null && Number(cfg.max_quota) > 0
-    ? `${rows.length - stats.ditolak} / ${Number(cfg.max_quota)}`
-    : 'Tidak Dibatasi';
-
-  const lines = [
-    csvRow(['LAPORAN PENDAFTARAN PESERTA - ALA-ALA ULTRA 2027']),
-    csvRow([
-      'Tanggal Ekspor',
-      formatJakartaDateTime(new Date()),
-      'Event Terhubung',
-      linkedEvent ? `${linkedEvent.name} (#${linkedEvent.id})` : 'Belum Ditautkan',
-      'Kuota Aktif',
-      quotaLabel
-    ]),
-    csvRow([
-      'Ringkasan Status',
-      `Total: ${rows.length}`,
-      `Menunggu: ${stats.menunggu}`,
-      `Disetujui: ${stats.disetujui}`,
-      `Ditolak: ${stats.ditolak}`,
-      `Undangan WA Terkirim: ${stats.waTerkirim}`,
-      `Sudah Masuk Grup WA: ${stats.sudahGrup}`,
-      `Sudah Sync Radar: ${stats.syncedRadar}`
-    ]),
-    csvRow([
-      'Ringkasan Pembayaran',
-      `Dana Disetujui: ${formatRupiahText(stats.approvedAmount)}`,
-      `Total Dana Semua Entri: ${formatRupiahText(stats.totalAmount)}`,
-      `Biaya Pendaftaran: ${cfg.fee_amount ? formatRupiahText(cfg.fee_amount) : '-'}`
-    ]),
-    '',
-    csvRow(groupRow),
-    csvRow(headers)
-  ];
-
-  rows.forEach((r, idx) => {
-    const proofName = r.payment_proof_original_name || (r.payment_proof_path ? path.basename(r.payment_proof_path) : '');
-    lines.push(csvRow([
-      idx + 1,
-      r.reg_code,
-      formatJakartaDateTime(r.created_at),
-      r.registration_status,
-      r.verify_data,
-      r.verify_strava,
-      r.verify_payment,
-      r.wa_invite_status,
-      r.wa_group_status,
-      r.rider_id ? `Sudah Sync (#${r.rider_id})` : 'Belum Sync',
-      r.full_name,
-      r.birth_date,
-      r.gender,
-      r.whatsapp,
-      r.email,
-      r.city,
-      r.instagram || '',
-      r.community || '',
-      r.emergency_name,
-      r.emergency_relation,
-      r.emergency_whatsapp,
-      r.bike_type,
-      r.strava_profile_url,
-      r.strava_activity_url,
-      Number(r.longest_distance_km) || 0,
-      r.has_ultra_experience,
-      r.past_events || '',
-      r.bike_roadworthy,
-      r.has_helmet_gear,
-      r.medical_conditions || '',
-      r.terms_agreed,
-      r.media_consent,
-      r.payer_account_name,
-      Number(r.payment_amount) || 0,
-      r.payment_date,
-      proofName,
-      r.admin_notes || ''
-    ]));
-  });
-
-  if (rows.length > 0) {
-    const totalRow = new Array(headers.length).fill('');
-    totalRow[1] = 'TOTAL PENDAFTAR';
-    totalRow[2] = rows.length;
-    totalRow[32] = 'TOTAL NOMINAL (RP)';
-    totalRow[33] = stats.totalAmount;
-    lines.push('');
-    lines.push(csvRow(totalRow));
-  }
-
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="ala-ala-ultra-2027-registrations-${todayWib}.csv"`);
-  res.send('\uFEFF' + lines.join('\r\n'));
+  res.setHeader('Content-Type', XLSX_CONTENT_TYPE);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Length', buffer.length);
+  res.setHeader('Cache-Control', 'no-store');
+  res.end(buffer);
 });
 
 module.exports = {

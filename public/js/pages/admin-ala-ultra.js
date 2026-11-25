@@ -54,7 +54,7 @@ async function renderAdminAlaUltra() {
           <div class="page-header-actions" style="display:flex;gap:8px;flex-wrap:wrap">
             <a href="/ala-ala-ultra" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Lihat Formulir Publik</a>
             <button type="button" id="btnAauRefresh" class="btn btn-outline">Muat Ulang</button>
-            <button type="button" id="btnAauExportCsv" class="btn btn-primary">Export CSV</button>
+            <button type="button" id="btnAauExportExcel" class="btn btn-primary" title="Unduh laporan pendaftaran dalam format Excel (.xlsx)">Export Excel</button>
           </div>
         </div>
 
@@ -924,18 +924,18 @@ async function renderAdminAlaUltra() {
 
   document.getElementById('btnAauRefresh')?.addEventListener('click', loadAllData);
 
-  const exportBtn = document.getElementById('btnAauExportCsv');
+  const exportBtn = document.getElementById('btnAauExportExcel');
   exportBtn?.addEventListener('click', async () => {
     const origText = exportBtn.textContent;
     exportBtn.disabled = true;
-    exportBtn.textContent = 'Mengunduh CSV...';
+    exportBtn.textContent = 'Menyiapkan Excel...';
     try {
-      const res = await fetch('/api/admin/ala-ultra/export.csv', { credentials: 'include' });
-      if (!res.ok) throw new Error('Gagal mengunduh CSV.');
+      const res = await fetch('/api/admin/ala-ultra/export.xlsx', { credentials: 'include' });
+      if (!res.ok) throw new Error('Gagal menyiapkan file Excel.');
       const disposition = res.headers.get('Content-Disposition') || '';
       const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
       const todayFallback = new Date().toISOString().slice(0, 10);
-      const filename = filenameMatch?.[1] || `ala-ala-ultra-2027-registrations-${todayFallback}.csv`;
+      const filename = filenameMatch?.[1] || `ala-ala-ultra-2027-registrations-${todayFallback}.xlsx`;
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
