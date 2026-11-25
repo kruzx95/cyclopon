@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v122';
+const CACHE_NAME = 'cyclopon-v132';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -17,6 +17,7 @@ const SHELL_ASSETS = [
   '/css/results.css',
   '/css/activity.css',
   '/css/register.css',
+  '/css/ala-ultra.css',
   '/css/share.css',
   '/css/install.css',
   '/js/router.js',
@@ -33,6 +34,7 @@ const SHELL_ASSETS = [
   '/js/pages/guide.js',
   '/js/pages/install.js',
   '/js/pages/register.js',
+  '/js/pages/ala-ultra-register.js',
   '/js/pages/rider-login.js',
   '/js/pages/rider-setup.js',
   '/js/pages/rider-cockpit.js',
@@ -43,6 +45,7 @@ const SHELL_ASSETS = [
   '/js/pages/admin-dashboard.js',
   '/js/pages/admin-sos.js',
   '/js/pages/admin-event.js',
+  '/js/pages/admin-ala-ultra.js',
   '/img/traccar-guide/traccar-settings-full.png',
   '/img/traccar-guide/traccar-continuous-tracking.png',
   '/img/traccar-guide/traccar-location-permission.png',

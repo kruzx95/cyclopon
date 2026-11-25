@@ -470,6 +470,118 @@ function promptEventAccess(event, onSuccess, options = {}) {
   });
 }
 
+const STRAVA_WEB_HOSTS = new Set(['strava.com', 'www.strava.com', 'm.strava.com']);
+const STRAVA_APP_HOSTS = new Set(['strava.app.link']);
+
+/**
+ * Strictly validate a Strava profile or activity URL from web browser or Strava mobile share sheet.
+ * Rejects non-Strava hosts, non-HTTPS protocols, userinfo (@) spoofing, and text+URL strings.
+ * @param {string} rawUrl
+ * @param {'profile'|'activity'} kind
+ * @returns {{ valid: boolean, url: string|null, error: string }}
+ */
+function validateStravaUrl(rawUrl, kind = 'profile') {
+  const isActivity = kind === 'activity';
+  const label = isActivity ? 'aktivitas Strava' : 'profil Strava';
+  const example = isActivity
+    ? 'https://www.strava.com/activities/... atau https://strava.app.link/...'
+    : 'https://www.strava.com/athletes/... atau https://strava.app.link/...';
+
+  const trimmed = rawUrl == null ? '' : String(rawUrl).trim();
+  if (!trimmed) {
+    return { valid: false, url: null, error: `Tautan ${label} wajib diisi.` };
+  }
+
+  if (/\s/.test(trimmed)) {
+    return {
+      valid: false,
+      url: null,
+      error: trimmed.includes('http')
+        ? `Tempelkan hanya tautan URL ${label} (mulai dari https://), tanpa teks tambahan.`
+        : `Tautan ${label} tidak boleh mengandung spasi. Contoh: ${example}`
+    };
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return {
+      valid: false,
+      url: null,
+      error: `Format tautan ${label} tidak valid. Gunakan URL lengkap (${example}).`
+    };
+  }
+
+  if (parsed.protocol !== 'https:') {
+    return {
+      valid: false,
+      url: null,
+      error: `Tautan ${label} wajib diawali https:// (bukan http:// atau skema lain).`
+    };
+  }
+
+  if (parsed.username || parsed.password || parsed.port) {
+    return {
+      valid: false,
+      url: null,
+      error: `Tautan ${label} tidak valid. Gunakan domain resmi Strava (${example}).`
+    };
+  }
+
+  const host = parsed.hostname.toLowerCase();
+  const rawSegments = parsed.pathname.split('/').filter(Boolean);
+  if (rawSegments.some(seg => seg === '.' || seg === '..')) {
+    return {
+      valid: false,
+      url: null,
+      error: `Tautan ${label} tidak valid.`
+    };
+  }
+
+  if (STRAVA_APP_HOSTS.has(host)) {
+    if (rawSegments.length !== 1 || !/^[A-Za-z0-9][A-Za-z0-9._-]{1,}$/.test(rawSegments[0])) {
+      return {
+        valid: false,
+        url: null,
+        error: `Tautan share aplikasi Strava tidak lengkap. Salin ulang tautan (contoh: https://strava.app.link/...).`
+      };
+    }
+    return { valid: true, url: parsed.href, error: '' };
+  }
+
+  if (!STRAVA_WEB_HOSTS.has(host)) {
+    return {
+      valid: false,
+      url: null,
+      error: `Tautan harus menggunakan domain resmi Strava, bukan situs lain. Contoh: ${example}`
+    };
+  }
+
+  const rootSeg = (rawSegments[0] || '').toLowerCase();
+  const idSeg = rawSegments[1] || '';
+
+  if (isActivity) {
+    if (rootSeg !== 'activities' || !/^\d+$/.test(idSeg)) {
+      return {
+        valid: false,
+        url: null,
+        error: `Gunakan tautan halaman aktivitas Strava yang valid (contoh: https://www.strava.com/activities/... atau https://strava.app.link/...).`
+      };
+    }
+  } else {
+    if (!['athletes', 'pros'].includes(rootSeg) || !/^[A-Za-z0-9._-]+$/.test(idSeg)) {
+      return {
+        valid: false,
+        url: null,
+        error: `Gunakan tautan profil Strava yang valid (contoh: https://www.strava.com/athletes/... atau https://strava.app.link/...).`
+      };
+    }
+  }
+
+  return { valid: true, url: parsed.href, error: '' };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     showToast,
@@ -485,7 +597,8 @@ if (typeof module !== 'undefined' && module.exports) {
     loadScripts,
     normalizeBattery,
     normalizeSpeedKmh,
-    promptEventAccess
+    promptEventAccess,
+    validateStravaUrl
   };
 }
 

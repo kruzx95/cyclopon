@@ -105,7 +105,6 @@ test('Traffic & Visitor Analytics Engine', async (t) => {
   });
 
   await t.test('GET /api/admin/metrics/event/:id returns live metrics for specific event', async () => {
-    // Create test event
     const eventResult = db.createEvent.run({
       name: 'Metrics Test Event',
       date: '2026-11-23',
@@ -113,19 +112,20 @@ test('Traffic & Visitor Analytics Engine', async (t) => {
     });
     const testEventId = Number(eventResult.lastInsertRowid);
 
-    const res = await fetch(`${baseUrl}/api/admin/metrics/event/${testEventId}`);
-    assert.equal(res.status, 200);
+    try {
+      const res = await fetch(`${baseUrl}/api/admin/metrics/event/${testEventId}`);
+      assert.equal(res.status, 200);
 
-    const data = await res.json();
-    assert.equal(data.success, true);
-    assert.equal(data.eventId, testEventId);
-    assert.equal(typeof data.eventViewers, 'number');
-    assert.equal(typeof data.telemetryRatePerMin, 'number');
-    assert.equal(typeof data.activeRiders, 'number');
-    assert.ok(data.system);
-
-    // Clean up test event
-    db.db.prepare('DELETE FROM events WHERE id = ?').run(testEventId);
+      const data = await res.json();
+      assert.equal(data.success, true);
+      assert.equal(data.eventId, testEventId);
+      assert.equal(typeof data.eventViewers, 'number');
+      assert.equal(typeof data.telemetryRatePerMin, 'number');
+      assert.equal(typeof data.activeRiders, 'number');
+      assert.ok(data.system);
+    } finally {
+      db.db.prepare('DELETE FROM events WHERE id = ?').run(testEventId);
+    }
   });
 
   await t.test('GET /api/admin/metrics/system returns real-time VPS resource metrics', async () => {

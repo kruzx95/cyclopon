@@ -2027,13 +2027,29 @@ a.footer-author-link:active {
 }
 
 /* ── Mobile Responsive Adaptation ── */
+@media (max-width: 1120px) {
+  .nav-actions-group {
+    gap: 14px;
+  }
+}
+
 @media (max-width: 1024px) {
   .brand-spec-label {
     display: none;
   }
 
   .nav-actions-group {
-    gap: 16px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 920px) {
+  .nav-actions-group {
+    display: none !important;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex !important;
   }
 }
 

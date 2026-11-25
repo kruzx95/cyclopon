@@ -87,7 +87,7 @@ app.use((req, res, next) => {
 });
 
 // Ensure directories exist
-['data', 'public/gpx', 'public/uploads/sponsors'].forEach(dir => {
+['data', 'data/ala-ultra-proofs', 'public/gpx', 'public/uploads/sponsors'].forEach(dir => {
   const fullPath = path.join(__dirname, dir);
   if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
 });
@@ -104,6 +104,7 @@ const adminMetricsRoutes = require('./routes/admin-metrics');
 const adminReportsRoutes = require('./routes/admin-reports');
 const osmandRoutes = require('./routes/osmand');
 const ogRoutes = require('./routes/og');
+const alaUltraRoutes = require('./routes/ala-ultra');
 const {
   getOgData,
   getOgMetadata,
@@ -119,6 +120,8 @@ app.use('/osmand', osmandRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/admin/riders', riderRoutes);
+app.use('/api/ala-ultra', alaUltraRoutes.publicRouter);
+app.use('/api/admin/ala-ultra', alaUltraRoutes.adminRouter);
 app.use('/api', alertRoutes);
 app.use('/api', checkpointRoutes);
 app.use('/api', historyRoutes);

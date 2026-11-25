@@ -24,6 +24,11 @@ async function renderRegisterPage(params) {
             <span class="nav-label-short">BERANDA</span>
           </a>
 
+          <a href="/ala-ala-ultra" data-link class="btn-guide-nav" title="Pendaftaran Peserta ALA-ALA ULTRA 2027" aria-label="ALA-ALA ULTRA">
+            <span class="nav-label-full">ALA-ALA ULTRA</span>
+            <span class="nav-label-short">ALA-ALA ULTRA</span>
+          </a>
+
           <a href="/install" data-link class="btn-guide-nav" title="Tutorial Install Aplikasi PWA di HP" aria-label="Install aplikasi">
             <span class="nav-label-full">INSTALL</span>
             <span class="nav-label-short">INSTALL</span>

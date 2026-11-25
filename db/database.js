@@ -139,6 +139,72 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_page_views_date ON page_views(viewed_at);
   CREATE INDEX IF NOT EXISTS idx_page_views_path ON page_views(path);
   CREATE INDEX IF NOT EXISTS idx_page_views_event ON page_views(event_id);
+
+  CREATE TABLE IF NOT EXISTS ala_ultra_config (
+    id              INTEGER PRIMARY KEY CHECK (id = 1),
+    linked_event_id INTEGER REFERENCES events(id) ON DELETE SET NULL,
+    is_open         INTEGER NOT NULL DEFAULT 1,
+    open_date       TEXT DEFAULT '2026-11-30',
+    close_date      TEXT,
+    max_quota       INTEGER,
+    min_strava_km   REAL,
+    fee_amount      TEXT,
+    bank_name       TEXT,
+    account_holder  TEXT,
+    account_number  TEXT,
+    admin_whatsapp  TEXT,
+    wa_group_link   TEXT,
+    refund_policy   TEXT,
+    insurance_note  TEXT,
+    updated_at      TEXT DEFAULT (datetime('now'))
+  );
+  INSERT OR IGNORE INTO ala_ultra_config (id) VALUES (1);
+
+  CREATE TABLE IF NOT EXISTS ala_ultra_registrations (
+    id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+    reg_code                    TEXT NOT NULL UNIQUE,
+    event_id                    INTEGER REFERENCES events(id) ON DELETE SET NULL,
+    rider_id                    INTEGER REFERENCES riders(id) ON DELETE SET NULL,
+    full_name                   TEXT NOT NULL,
+    birth_date                  TEXT NOT NULL,
+    gender                      TEXT NOT NULL,
+    whatsapp                    TEXT NOT NULL,
+    email                       TEXT NOT NULL,
+    city                        TEXT NOT NULL,
+    instagram                   TEXT,
+    community                   TEXT,
+    emergency_name              TEXT NOT NULL,
+    emergency_relation          TEXT NOT NULL,
+    emergency_whatsapp          TEXT NOT NULL,
+    bike_type                   TEXT NOT NULL,
+    strava_profile_url          TEXT NOT NULL,
+    strava_activity_url         TEXT NOT NULL,
+    longest_distance_km         REAL NOT NULL,
+    has_ultra_experience        TEXT NOT NULL,
+    past_events                 TEXT,
+    bike_roadworthy             TEXT NOT NULL,
+    has_helmet_gear             TEXT NOT NULL,
+    medical_conditions          TEXT,
+    terms_agreed                TEXT NOT NULL,
+    media_consent               TEXT NOT NULL,
+    payer_account_name          TEXT NOT NULL,
+    payment_amount              REAL NOT NULL,
+    payment_date                TEXT NOT NULL,
+    payment_proof_path          TEXT NOT NULL,
+    payment_proof_original_name TEXT,
+    payment_proof_mime          TEXT,
+    verify_data                 TEXT NOT NULL DEFAULT 'Pending',
+    verify_strava               TEXT NOT NULL DEFAULT 'Pending',
+    verify_payment              TEXT NOT NULL DEFAULT 'Pending',
+    registration_status         TEXT NOT NULL DEFAULT 'Menunggu',
+    wa_invite_status            TEXT NOT NULL DEFAULT 'Belum Dikirim',
+    wa_group_status             TEXT NOT NULL DEFAULT 'Belum Bergabung',
+    admin_notes                 TEXT DEFAULT '',
+    created_at                  TEXT DEFAULT (datetime('now')),
+    updated_at                  TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_ala_ultra_reg_status ON ala_ultra_registrations(registration_status);
+  CREATE INDEX IF NOT EXISTS idx_ala_ultra_reg_wa ON ala_ultra_registrations(whatsapp);
 `);
 
 // ── Migrations for riders table (phone, token, role) ──
@@ -287,5 +353,63 @@ module.exports = {
   getViewsLast7Days:    db.prepare("SELECT date(viewed_at) as date, COUNT(*) as views, COUNT(DISTINCT ip_hash) as unique_visitors FROM page_views WHERE date(viewed_at) >= date('now', '-6 days') GROUP BY date(viewed_at) ORDER BY date ASC"),
   getTopPagesToday:     db.prepare("SELECT path, COUNT(*) as views, COUNT(DISTINCT ip_hash) as unique_visitors FROM page_views WHERE date(viewed_at) = date('now') GROUP BY path ORDER BY views DESC LIMIT 5"),
   getEventViewsToday:   db.prepare("SELECT event_id, COUNT(*) as views FROM page_views WHERE event_id IS NOT NULL AND date(viewed_at) = date('now') GROUP BY event_id"),
+
+  // ALA-ALA ULTRA 2027 Registration Config & Submissions
+  getAlaUltraConfig: db.prepare('SELECT * FROM ala_ultra_config WHERE id = 1'),
+  updateAlaUltraConfig: db.prepare(`
+    UPDATE ala_ultra_config
+    SET linked_event_id=@linked_event_id,
+        is_open=@is_open,
+        open_date=@open_date,
+        close_date=@close_date,
+        max_quota=@max_quota,
+        min_strava_km=@min_strava_km,
+        fee_amount=@fee_amount,
+        bank_name=@bank_name,
+        account_holder=@account_holder,
+        account_number=@account_number,
+        admin_whatsapp=@admin_whatsapp,
+        wa_group_link=@wa_group_link,
+        refund_policy=@refund_policy,
+        insurance_note=@insurance_note,
+        updated_at=datetime('now')
+    WHERE id = 1
+  `),
+  getAllAlaUltraRegistrations: db.prepare('SELECT * FROM ala_ultra_registrations ORDER BY id DESC'),
+  getAlaUltraRegistrationById: db.prepare('SELECT * FROM ala_ultra_registrations WHERE id = ?'),
+  getMaxAlaUltraRegSeq: db.prepare("SELECT COALESCE(MAX(CAST(SUBSTR(reg_code, 5) AS INTEGER)), 0) as max_seq FROM ala_ultra_registrations WHERE reg_code LIKE 'AAU-%'"),
+  countActiveAlaUltraRegistrations: db.prepare("SELECT COUNT(*) as c FROM ala_ultra_registrations WHERE registration_status != 'Ditolak'"),
+  countApprovedAlaUltraRegistrations: db.prepare("SELECT COUNT(*) as c FROM ala_ultra_registrations WHERE registration_status = 'Disetujui'"),
+  createAlaUltraRegistration: db.prepare(`
+    INSERT INTO ala_ultra_registrations (
+      reg_code, event_id, full_name, birth_date, gender, whatsapp, email, city, instagram, community,
+      emergency_name, emergency_relation, emergency_whatsapp,
+      bike_type, strava_profile_url, strava_activity_url, longest_distance_km, has_ultra_experience, past_events,
+      bike_roadworthy, has_helmet_gear, medical_conditions,
+      terms_agreed, media_consent,
+      payer_account_name, payment_amount, payment_date, payment_proof_path, payment_proof_original_name, payment_proof_mime
+    ) VALUES (
+      @reg_code, @event_id, @full_name, @birth_date, @gender, @whatsapp, @email, @city, @instagram, @community,
+      @emergency_name, @emergency_relation, @emergency_whatsapp,
+      @bike_type, @strava_profile_url, @strava_activity_url, @longest_distance_km, @has_ultra_experience, @past_events,
+      @bike_roadworthy, @has_helmet_gear, @medical_conditions,
+      @terms_agreed, @media_consent,
+      @payer_account_name, @payment_amount, @payment_date, @payment_proof_path, @payment_proof_original_name, @payment_proof_mime
+    )
+  `),
+  updateAlaUltraVerification: db.prepare(`
+    UPDATE ala_ultra_registrations
+    SET verify_data=@verify_data,
+        verify_strava=@verify_strava,
+        verify_payment=@verify_payment,
+        registration_status=@registration_status,
+        wa_invite_status=@wa_invite_status,
+        wa_group_status=@wa_group_status,
+        admin_notes=@admin_notes,
+        updated_at=datetime('now')
+    WHERE id=@id
+  `),
+  linkAlaUltraRider: db.prepare("UPDATE ala_ultra_registrations SET event_id=@event_id, rider_id=@rider_id, updated_at=datetime('now') WHERE id=@id"),
+  deleteAlaUltraRegistration: db.prepare('DELETE FROM ala_ultra_registrations WHERE id = ?'),
 };
 

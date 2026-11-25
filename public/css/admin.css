@@ -2388,3 +2388,375 @@ input[type="time"].input {
     grid-column: 1 / -1;
   }
 }
+
+/* ── ALA-ALA ULTRA Race Control Registration Manager ── */
+.aau-admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.aau-admin-tab {
+  min-height: 44px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #0D1117;
+  background: #FFFFFF;
+  color: #0D1117;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+.aau-admin-tab:hover {
+  background: #F3F4F6;
+}
+.aau-admin-tab.active,
+.aau-admin-tab.active:hover {
+  background: #0D1117;
+  color: #FFFFFF;
+}
+.aau-admin-tab.active:hover {
+  background: #1F2937;
+}
+.aau-admin-tab:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
+}
+
+.aau-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.aau-admin-stat {
+  background: #FFFFFF;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 13px 15px;
+}
+.aau-admin-stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  color: #4B5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.aau-admin-stat-val {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 900;
+  color: #0D1117;
+}
+
+.aau-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.aau-admin-search {
+  flex: 1 1 260px;
+  max-width: 420px;
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1.5px solid #94A3B8;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0D1117;
+  background: #FFFFFF;
+  box-sizing: border-box;
+}
+.aau-admin-search:focus-visible {
+  outline: 3px solid rgba(28, 62, 36, 0.22);
+  border-color: #1C3E24;
+}
+
+.aau-admin-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.aau-admin-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.aau-admin-table th {
+  padding: 10px 12px;
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.aau-admin-table td {
+  padding: 12px 12px;
+  vertical-align: top;
+  font-size: 12.5px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.aau-cell-reg {
+  min-width: 112px;
+  white-space: nowrap;
+}
+.aau-cell-participant {
+  min-width: 175px;
+}
+.aau-cell-bike {
+  min-width: 155px;
+}
+.aau-cell-payment {
+  min-width: 145px;
+  white-space: nowrap;
+}
+.aau-cell-notes {
+  min-width: 110px;
+  max-width: 165px;
+  word-break: break-word;
+}
+
+.aau-strava-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.aau-strava-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #14532D;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.aau-strava-chip:hover {
+  background: #DCFCE7;
+  border-color: #1C3E24;
+  text-decoration: underline;
+}
+
+.aau-verify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 162px;
+}
+.aau-verify-row {
+  display: grid;
+  grid-template-columns: 48px 108px;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.aau-verify-row.is-wa {
+  grid-template-columns: 58px 128px;
+}
+
+.aau-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 116px;
+}
+
+.aau-wa-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 192px;
+}
+
+.aau-actions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 102px;
+}
+
+.aau-admin-select-inline {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1.5px solid #94A3B8;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #0D1117;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.aau-admin-toolbar .aau-admin-select-inline {
+  width: auto;
+  min-height: 38px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+}
+.aau-admin-select-inline:hover {
+  border-color: #475569;
+}
+.aau-admin-select-inline:focus-visible {
+  outline: 2px solid #1C3E24;
+  border-color: #1C3E24;
+}
+
+.aau-btn-compact {
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  width: 100%;
+  justify-content: center;
+}
+.aau-btn-compact.is-inline {
+  width: auto;
+  margin-top: 6px;
+}
+.aau-btn-compact.is-danger {
+  color: #B91C1C;
+  border-color: #FCA5A5;
+}
+.aau-btn-compact.is-danger:hover:not(:disabled) {
+  background: #FEF2F2;
+  border-color: #B91C1C;
+}
+.aau-btn-wa-invite:disabled {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #475569;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .aau-admin-count {
+    margin-left: 0;
+    width: 100%;
+  }
+  .aau-admin-search {
+    max-width: 100%;
+    min-height: 44px;
+  }
+  .aau-admin-toolbar .aau-admin-select-inline,
+  .aau-admin-select-inline,
+  .aau-btn-compact {
+    min-height: 44px;
+  }
+}
+
+.aau-admin-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.aau-admin-pill.is-valid {
+  background: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #6EE7B7;
+}
+.aau-admin-pill.is-warn {
+  background: #FFFBEB;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+}
+.aau-admin-pill.is-bad {
+  background: #FEF2F2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+}
+
+.aau-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.55);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.aau-modal-card {
+  width: 100%;
+  max-width: 720px;
+  max-height: 88vh;
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+.aau-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1.5px solid #E5E7EB;
+  background: #F8FAFC;
+}
+.aau-modal-body {
+  padding: 18px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #0D1117;
+}
+.aau-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 16px;
+}
+.aau-detail-item {
+  background: #F8FAFC;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 8px 11px;
+}
+.aau-detail-lbl {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #4B5563;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.aau-detail-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0D1117;
+  word-break: break-word;
+}
+

@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=107']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=108']);
     renderLanding();
   });
 
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── PWA Install Tutorial Page ──
   Router.register('/install', async () => {
-    await loadPageDeps(['/js/pages/install.js?v=10'], ['/css/install.css?v=3']);
+    await loadPageDeps(['/js/pages/install.js?v=11'], ['/css/install.css?v=3']);
     renderInstallPage();
   });
 
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '/js/lib/card-map.js?v=2',
         '/js/lib/card-templates.js?v=3',
         '/js/lib/card-renderer.js?v=7',
-        '/js/pages/share-card.js?v=15'
+        '/js/pages/share-card.js?v=16'
       ],
       ['/css/share.css?v=8']
     );
@@ -56,11 +56,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Public Event Registration & Rider Guide Tabs ──
   Router.register('/register', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/guide.js?v=102', '/js/pages/register.js?v=99'],
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/guide.js?v=102', '/js/pages/register.js?v=100'],
       ['/css/register.css?v=91']
     );
     renderRegisterPage(params);
   });
+
+  // ── ALA-ALA ULTRA 2027 Dedicated Registration Form ──
+  Router.register('/ala-ala-ultra', async () => {
+    await loadPageDeps(
+      ['/js/lib/utils.js', '/js/pages/ala-ultra-register.js?v=6'],
+      ['/css/ala-ultra.css?v=6']
+    );
+    renderAlaUltraRegisterPage();
+  });
+
+  Router.register('/ala2-ultra', () => Router.navigate('/ala-ala-ultra'));
 
   Router.register('/daftar', () => Router.navigate('/register'));
 
@@ -162,32 +173,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Admin panel ──
   Router.register('/admin', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=90'],
-      ['/css/admin.css?v=89']
+      ['/js/pages/admin-dashboard.js?v=91'],
+      ['/css/admin.css?v=90']
     );
     renderAdminLogin();
   });
 
   Router.register('/admin/dashboard', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=90'],
-      ['/css/admin.css?v=89']
+      ['/js/pages/admin-dashboard.js?v=91'],
+      ['/css/admin.css?v=90']
     );
     renderAdminDashboard();
   });
 
   Router.register('/admin/sos', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-sos.js?v=84'],
-      ['/css/admin.css?v=89']
+      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-sos.js?v=84'],
+      ['/css/admin.css?v=90']
     );
     renderAdminSos();
   });
 
   Router.register('/admin/event-reports', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-event-reports.js?v=85'],
-      ['/css/admin.css?v=89']
+      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event-reports.js?v=85'],
+      ['/css/admin.css?v=90']
     );
     renderAdminEventReports(params);
   });
@@ -198,18 +209,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/logs', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-logs.js?v=86'],
-      ['/css/admin.css?v=89']
+      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-logs.js?v=86'],
+      ['/css/admin.css?v=90']
     );
     renderAdminLogs(params);
   });
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-event.js?v=84'],
-      ['/css/admin.css?v=89']
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event.js?v=84'],
+      ['/css/admin.css?v=90']
     );
     renderAdminEvent(params);
+  });
+
+  Router.register('/admin/ala-ultra', async () => {
+    await loadPageDeps(
+      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-ala-ultra.js?v=7'],
+      ['/css/admin.css?v=92']
+    );
+    renderAdminAlaUltra();
   });
 
   // Init router (resolves current URL)

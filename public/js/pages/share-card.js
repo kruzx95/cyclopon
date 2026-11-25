@@ -44,6 +44,11 @@ function renderSharePage() {
             <span class="nav-label-short">BERANDA</span>
           </a>
 
+          <a href="/ala-ala-ultra" data-link class="btn-guide-nav" title="Pendaftaran Peserta ALA-ALA ULTRA 2027" aria-label="ALA-ALA ULTRA">
+            <span class="nav-label-full">ALA-ALA ULTRA</span>
+            <span class="nav-label-short">ALA-ALA ULTRA</span>
+          </a>
+
           <a href="/share" data-link class="btn-guide-nav active" title="Buat Ride Card peserta event untuk media sosial" aria-label="Buat Ride Card">
             <span class="nav-label-full">RIDE CARD</span>
             <span class="nav-label-short">RIDE CARD</span>
