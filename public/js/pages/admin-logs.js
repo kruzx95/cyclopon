@@ -5,7 +5,7 @@
  */
 
 async function renderAdminLogs(params = {}) {
-  loadCss('/css/admin.css');
+  loadCss('/css/admin.css?v=88');
 
   // Route guard: check if admin is logged in
   const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
@@ -255,11 +255,11 @@ async function renderAdminLogs(params = {}) {
       <div class="print-only-header" style="margin-bottom:24px;border-bottom:2px solid #0D1117;padding-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div>
-            <div style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// CYCLOPON RACE CONTROL</div>
+            <div style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// CYCLOPON RACE CONTROL</div>
             <h1 style="font-size:22px;margin:2px 0;font-weight:900;color:#0D1117">LAPORAN EVALUASI &amp; AUDIT TELEMETRI EVENT</h1>
             <p style="margin:2px 0 0;font-size:12px;color:#4B5563">Rekapitulasi Teknis, Audit Sinyal Peserta, dan Analisis Mitigasi Lapangan</p>
           </div>
-          <div style="text-align:right;font-size:11px;font-family:ui-monospace,monospace;color:#374151">
+          <div style="text-align:right;font-size:11px;font-family:var(--font-mono);color:#374151">
             <div style="font-weight:800;color:#0D1117">DOKUMEN RESMI COMMISSAIRE</div>
             <div>Dicetak: ${new Date().toLocaleString('id-ID')}</div>
           </div>
@@ -270,7 +270,7 @@ async function renderAdminLogs(params = {}) {
       <div class="card" style="margin-bottom:20px;padding:20px 24px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #E5E7EB">
           <div>
-            <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EVENT IDENTIFIER #${ev.id}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EVENT IDENTIFIER #${ev.id}</span>
             <h2 style="font-size:18px;font-weight:900;color:#0D1117;margin:2px 0 4px">${escapeHtml(ev.name)}</h2>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:#6B7280">
               <span>📅 Tanggal: <strong style="color:#0D1117">${ev.date}</strong></span>
@@ -281,8 +281,8 @@ async function renderAdminLogs(params = {}) {
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.06em;text-transform:uppercase">Skor Kesiapan Sistem</div>
-            <div style="font-family:ui-monospace,monospace;font-size:32px;font-weight:900;color:${score >= 85 ? '#047857' : (score >= 70 ? '#D97706' : '#B91C1C')};line-height:1">
+            <div style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.06em;text-transform:uppercase">Skor Kesiapan Sistem</div>
+            <div style="font-family:var(--font-mono);font-size:32px;font-weight:900;color:${score >= 85 ? '#047857' : (score >= 70 ? '#D97706' : '#B91C1C')};line-height:1">
               ${score}<span style="font-size:16px;color:#9CA3AF">/100</span>
             </div>
             <span class="badge ${scoreBadgeClass}" style="margin-top:4px">${scoreLabel}</span>
@@ -322,7 +322,7 @@ async function renderAdminLogs(params = {}) {
       <div class="card" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
           <div>
-            <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// LESSONS LEARNED &amp; PRE-RACE CHECKLIST</span>
+            <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// LESSONS LEARNED &amp; PRE-RACE CHECKLIST</span>
             <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">💡 Temuan &amp; Rekomendasi Pencegahan Masalah</h2>
           </div>
           <span style="font-size:11px;color:#6B7280;font-weight:600">${recs.length} Butir Analisis</span>
@@ -358,7 +358,7 @@ async function renderAdminLogs(params = {}) {
                   <span style="font-size:12px;font-weight:800;color:#111827;display:flex;align-items:center;gap:6px">
                     <span>${icon}</span> ${escapeHtml(r.title)}
                   </span>
-                  <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;border:1px solid;${badgeStyle}">
+                  <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;border:1px solid;${badgeStyle}">
                     ${escapeHtml(r.category)}
                   </span>
                 </div>
@@ -378,7 +378,7 @@ async function renderAdminLogs(params = {}) {
       <div class="card" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
           <div>
-            <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// RIDER TELEMETRY TRANSMISSION AUDIT</span>
+            <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// RIDER TELEMETRY TRANSMISSION AUDIT</span>
             <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">🚴 Audit Sinyal &amp; Blank Spot Per Rider</h2>
           </div>
           <span style="font-size:11px;color:#6B7280;font-weight:600">${riders.length} Peserta Terdaftar</span>
@@ -411,7 +411,7 @@ async function renderAdminLogs(params = {}) {
                 return `
                   <tr>
                     <td>
-                      <span style="font-family:ui-monospace,monospace;font-weight:900;background:#0D1117;color:#FFFFFF;padding:2px 6px;border-radius:4px;font-size:11px">
+                      <span style="font-family:var(--font-mono);font-weight:900;background:#0D1117;color:#FFFFFF;padding:2px 6px;border-radius:4px;font-size:11px">
                         #${escapeHtml(r.bib)}
                       </span>
                     </td>
@@ -421,7 +421,7 @@ async function renderAdminLogs(params = {}) {
                     <td>
                       <span class="badge badge-finished" style="text-transform:uppercase;font-size:10px">${escapeHtml(r.role)}</span>
                     </td>
-                    <td style="font-family:ui-monospace,monospace;font-weight:700">
+                    <td style="font-family:var(--font-mono);font-weight:700">
                       ${r.pings.toLocaleString()} titik
                     </td>
                     <td>
@@ -453,7 +453,7 @@ async function renderAdminLogs(params = {}) {
       <div class="card" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
           <div>
-            <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EMERGENCY SOS INCIDENTS</span>
+            <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EMERGENCY SOS INCIDENTS</span>
             <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">🚨 Kronologi Laporan Darurat &amp; SOS</h2>
           </div>
           <span style="font-size:11px;color:#6B7280;font-weight:600">${alerts.length} Total Laporan</span>
@@ -479,7 +479,7 @@ async function renderAdminLogs(params = {}) {
               <tbody>
                 ${alerts.map(a => `
                   <tr>
-                    <td style="font-family:ui-monospace,monospace;color:#4B5563">
+                    <td style="font-family:var(--font-mono);color:#4B5563">
                       ${a.created_at ? a.created_at.replace('T', ' ').slice(0, 19) : '—'}
                     </td>
                     <td>
@@ -493,7 +493,7 @@ async function renderAdminLogs(params = {}) {
                     <td>
                       ${escapeHtml(a.message || '—')}
                     </td>
-                    <td style="font-family:ui-monospace,monospace;font-size:11px">
+                    <td style="font-family:var(--font-mono);font-size:11px">
                       ${a.latitude && a.longitude ? `${Number(a.latitude).toFixed(5)}, ${Number(a.longitude).toFixed(5)}` : '—'}
                     </td>
                     <td>
@@ -511,7 +511,7 @@ async function renderAdminLogs(params = {}) {
       <div class="card" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
           <div>
-            <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// INFRASTRUCTURE STABILITY SNAPSHOT</span>
+            <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// INFRASTRUCTURE STABILITY SNAPSHOT</span>
             <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">🛡️ Audit Beban Server &amp; Pengunjung Web</h2>
           </div>
         </div>

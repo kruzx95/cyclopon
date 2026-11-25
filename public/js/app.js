@@ -21,46 +21,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=103']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=107']);
     renderLanding();
   });
 
-  // ── Official Guide & Documentation Page ──
-  Router.register('/guide', async () => {
-    await loadPageDeps(['/js/pages/guide.js?v=99']);
-    renderGuide();
-  });
+  // ── Official Guide & Documentation (embedded tab inside /register) ──
+  Router.register('/guide', () => Router.navigate('/register?tab=panduan'));
 
-  Router.register('/panduan', () => Router.navigate('/guide'));
+  Router.register('/panduan', () => Router.navigate('/register?tab=panduan'));
 
   // ── PWA Install Tutorial Page ──
   Router.register('/install', async () => {
-    await loadPageDeps(['/js/pages/install.js?v=6'], ['/css/install.css?v=2']);
+    await loadPageDeps(['/js/pages/install.js?v=10'], ['/css/install.css?v=3']);
     renderInstallPage();
   });
 
   Router.register('/pwa', () => Router.navigate('/install'));
 
-  // ── Poster Gowes Studio (event participant verification + GPX/TCX -> PNG) ──
+  // ── Ride Card Studio (event participant verification + server track/GPX -> PNG) ──
   Router.register('/share', async () => {
     await loadPageDeps(
       [
-        '/js/lib/card-model.js?v=2',
-        '/js/lib/card-map.js',
-        '/js/lib/card-templates.js',
-        '/js/lib/card-renderer.js?v=2',
-        '/js/pages/share-card.js?v=8'
+        '/js/lib/card-model.js?v=5',
+        '/js/lib/card-map.js?v=2',
+        '/js/lib/card-templates.js?v=3',
+        '/js/lib/card-renderer.js?v=7',
+        '/js/pages/share-card.js?v=15'
       ],
-      ['/css/share.css?v=3']
+      ['/css/share.css?v=8']
     );
     renderSharePage();
   });
 
-  // ── Public Event Registration ──
+  // ── Public Event Registration & Rider Guide Tabs ──
   Router.register('/register', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/register.js?v=96'],
-      ['/css/register.css?v=89']
+      ['/js/lib/utils.js', '/js/libs/qrcode.min.js', '/js/pages/guide.js?v=102', '/js/pages/register.js?v=99'],
+      ['/css/register.css?v=91']
     );
     renderRegisterPage(params);
   });
@@ -76,7 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.getElementById('app').innerHTML = `
       <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
-        <div style="font-family:'Inter',system-ui,sans-serif;font-size:28px;font-weight:900;letter-spacing:-0.03em;color:#0D1117;margin-bottom:16px">CYCLOPON</div>
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:16px">
+          <img src="/icons/cyclopon-mark.svg" alt="" width="30" height="30" style="display:block;flex-shrink:0">
+          <span style="font-family:'Barlow','Plus Jakarta Sans',system-ui,sans-serif;font-size:28px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
+        </div>
         <h2 style="font-size:20px;font-weight:800;color:var(--text-primary)">Menghubungkan Akun Rider...</h2>
         <p style="color:var(--text-secondary);font-size:14px;margin-top:6px">Memvalidasi akses Magic Link Anda</p>
       </div>
@@ -105,12 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
   Router.register('/login', () => Router.navigate('/rider'));
 
   Router.register('/rider', async () => {
-    await loadPageDeps(['/js/pages/rider-login.js?v=84'], ['/css/rider.css']);
+    await loadPageDeps(['/js/pages/rider-login.js?v=86'], ['/css/rider.css?v=94']);
     renderRiderLogin();
   });
 
   Router.register('/rider/setup', async () => {
-    await loadPageDeps(['/js/lib/gps-keeper.js?v=2', '/js/pages/rider-setup.js?v=96'], ['/css/rider.css?v=93']);
+    await loadPageDeps(['/js/lib/gps-keeper.js?v=2', '/js/pages/rider-setup.js?v=99'], ['/css/rider.css?v=94']);
     renderRiderSetup();
   });
 
@@ -127,8 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=89'],
-      ['/css/map.css?v=88']
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=90'],
+      ['/css/map.css?v=89']
     );
     renderLiveMap(params);
   });
@@ -136,16 +136,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Event Activity & Rider Roster Page (Kuyy.app Style) ──
   Router.register('/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=91'],
-      ['/css/activity.css?v=88']
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=92'],
+      ['/css/activity.css?v=90']
     );
     renderEventActivity(params);
   });
 
   Router.register('/activities/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=91'],
-      ['/css/activity.css?v=88']
+      ['/js/libs/qrcode.min.js', '/js/pages/event-activity.js?v=92'],
+      ['/css/activity.css?v=90']
     );
     renderEventActivity(params);
   });
@@ -153,8 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Official Event Results & Brevet Certificate ──
   Router.register('/events/:id/results', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/pages/event-results.js?v=85'],
-      ['/css/results.css?v=83']
+      ['/js/lib/utils.js', '/js/pages/event-results.js?v=88'],
+      ['/css/results.css?v=84']
     );
     renderEventResults(params);
   });
@@ -162,32 +162,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Admin panel ──
   Router.register('/admin', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=87'],
-      ['/css/admin.css?v=83']
+      ['/js/pages/admin-dashboard.js?v=90'],
+      ['/css/admin.css?v=89']
     );
     renderAdminLogin();
   });
 
   Router.register('/admin/dashboard', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=87'],
-      ['/css/admin.css?v=83']
+      ['/js/pages/admin-dashboard.js?v=90'],
+      ['/css/admin.css?v=89']
     );
     renderAdminDashboard();
   });
 
   Router.register('/admin/sos', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=87', '/js/pages/admin-sos.js?v=83'],
-      ['/css/admin.css?v=83']
+      ['/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-sos.js?v=84'],
+      ['/css/admin.css?v=89']
     );
     renderAdminSos();
   });
 
   Router.register('/admin/event-reports', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=87', '/js/pages/admin-event-reports.js?v=83'],
-      ['/css/admin.css?v=83']
+      ['/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-event-reports.js?v=85'],
+      ['/css/admin.css?v=89']
     );
     renderAdminEventReports(params);
   });
@@ -198,16 +198,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/logs', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=88', '/js/pages/admin-logs.js?v=85'],
-      ['/css/admin.css?v=85']
+      ['/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-logs.js?v=86'],
+      ['/css/admin.css?v=89']
     );
     renderAdminLogs(params);
   });
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=87', '/js/pages/admin-event.js?v=82'],
-      ['/css/admin.css?v=80']
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=90', '/js/pages/admin-event.js?v=84'],
+      ['/css/admin.css?v=89']
     );
     renderAdminEvent(params);
   });

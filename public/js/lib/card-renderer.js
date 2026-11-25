@@ -403,7 +403,48 @@ function cardApplyMapTreatment(sourceCanvas, mapDef) {
   }
   return sourceCanvas;
 }
-/* ─────────────────────────── Theme 1: Night Neon ─────────────────────────── */
+function cardHasParticipantTime(model) {
+  if (!model || model.isOfficialRoute || !model.hasTime || !model.stats) return false;
+  return (model.stats.movingSec || model.stats.elapsedSec || 0) > 0;
+}
+
+function cardSecondaryCells(model) {
+  const showTime = cardHasParticipantTime(model);
+  const movingSec = model.stats.movingSec || model.stats.elapsedSec;
+  if (showTime && model.hasElevation) {
+    return [
+      { label: 'WAKTU BERGERAK', value: CardModel.formatDuration(movingSec) || '-', unit: '' },
+      { label: 'ELEVASI GAIN', value: String(model.stats.elevGainM), unit: 'M' },
+      { label: 'ELEVASI TURUN', value: String(model.stats.elevLossM), unit: 'M' }
+    ];
+  }
+  if (showTime) {
+    return [
+      { label: 'WAKTU BERGERAK', value: CardModel.formatDuration(movingSec) || '-', unit: '' },
+      { label: 'DURASI TOTAL', value: CardModel.formatDuration(model.stats.elapsedSec || movingSec) || '-', unit: '' },
+      { label: 'TITIK GPS', value: String(model.points.length), unit: 'TITIK' }
+    ];
+  }
+  if (model.hasElevation) {
+    return [
+      { label: 'ELEVASI GAIN', value: String(model.stats.elevGainM), unit: 'M' },
+      { label: 'ELEVASI TURUN', value: String(model.stats.elevLossM), unit: 'M' },
+      { label: 'ELEVASI MAKS', value: String(model.stats.maxEle ?? 0), unit: 'M' }
+    ];
+  }
+  return [
+    { label: 'SUMBER TREK', value: 'RUTE EVENT', unit: '' },
+    { label: 'ELEVASI GAIN', value: '0', unit: 'M' },
+    { label: 'TITIK GPS', value: String(model.points.length), unit: 'TITIK' }
+  ];
+}
+
+function cardHexAlpha(hex, alpha) {
+  const [r, g, b] = cardHexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/* ─────────────────────────── Layout 1: Panel Bottom ─────────────────────────── */
 
 async function drawNightNeon(ctx, size, model, template, metrics, options, report) {
   const { width, height } = size;
@@ -422,15 +463,20 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
   ctx.fillRect(0, 0, width, height);
 
   const bloom = ctx.createRadialGradient(width * 0.7, mapHeight * 0.45, 0, width * 0.7, mapHeight * 0.45, width * 0.95);
-  bloom.addColorStop(0, 'rgba(0,229,255,0.15)');
-  bloom.addColorStop(1, 'rgba(0,229,255,0)');
+  bloom.addColorStop(0, cardHexAlpha(palette.accent, 0.15));
+  bloom.addColorStop(1, cardHexAlpha(palette.accent, 0));
   ctx.fillStyle = bloom;
   ctx.fillRect(0, 0, width, mapHeight + Math.round(120 * base));
 
   const layer = await cardBuildMapLayer(model, {
     width,
     height: mapHeight,
-    padding: Math.round(pad * 1.15),
+    padding: {
+      top: Math.round(pad * 2.3),
+      right: Math.round(pad * 1.15),
+      bottom: Math.round(pad * 1.7),
+      left: Math.round(pad * 1.15)
+    },
     template,
     maxTiles: options.maxTiles,
     timeoutMs: options.timeoutMs,
@@ -447,9 +493,9 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
       ctx.fillRect(0, 0, width, mapHeight);
     }
     const fade = ctx.createLinearGradient(0, mapHeight * 0.5, 0, mapHeight);
-    fade.addColorStop(0, 'rgba(6,10,15,0)');
-    fade.addColorStop(0.7, 'rgba(6,10,15,0.85)');
-    fade.addColorStop(1, 'rgba(6,10,15,1)');
+    fade.addColorStop(0, cardHexAlpha(palette.bgTop, 0));
+    fade.addColorStop(0.7, cardHexAlpha(palette.bgTop, 0.85));
+    fade.addColorStop(1, palette.bgTop);
     ctx.fillStyle = fade;
     ctx.fillRect(0, mapHeight * 0.5, width, mapHeight * 0.5);
     ctx.save();
@@ -459,9 +505,9 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
     cardVignette(ctx, width, mapHeight, 0.35);
     ctx.restore();
   } else {
-    ctx.fillStyle = 'rgba(9,15,21,0.55)';
+    ctx.fillStyle = cardHexAlpha(palette.bgBottom, 0.55);
     ctx.fillRect(0, 0, width, mapHeight);
-    cardDrawGrid(ctx, width, mapHeight, Math.round(96 * base), 'rgba(0,229,255,0.055)');
+    cardDrawGrid(ctx, width, mapHeight, Math.round(96 * base), cardHexAlpha(palette.accent, 0.055));
     cardEchoRoute(ctx, pixels, width / 2, mapHeight / 2, 5, palette.accent);
   }
 
@@ -473,7 +519,7 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
   cardText(ctx, 'CYCLOPON', pad + Math.round(26 * base), brandY, {
     size: 21 * base, weight: 700, stack: label, color: palette.ink, letterSpacing: 6 * base
   });
-  cardText(ctx, 'POSTER GOWES', width - pad, brandY, {
+  cardText(ctx, 'RIDE CARD', width - pad, brandY, {
     size: 18 * base, weight: 600, stack: label, color: palette.muted, align: 'right', letterSpacing: 4 * base
   });
 
@@ -505,17 +551,7 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
   ctx.fillStyle = palette.border;
   ctx.fillRect(pad, ruleY, width - pad * 2, Math.max(1, Math.round(1.5 * base)));
   const metricsY = ruleY + Math.round(58 * base);
-  const cells = [
-    {
-      label: model.hasTime ? 'WAKTU BERGERAK' : 'DURASI',
-      value: model.stats.movingSec || model.stats.elapsedSec
-        ? CardModel.formatDuration(model.stats.movingSec || model.stats.elapsedSec)
-        : '—',
-      unit: ''
-    },
-    { label: 'ELEVASI GAIN', value: String(model.stats.elevGainM), unit: 'M' },
-    { label: 'KECEPATAN RATA-RATA', value: CardModel.formatSpeed(model.stats.avgKmh), unit: 'KM/JAM' }
-  ];
+  const cells = cardSecondaryCells(model);
   const colWidth = (width - pad * 2) / 3;
   cells.forEach((cell, index) => {
     const x = pad + colWidth * index;
@@ -548,9 +584,9 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
       w: width - pad * 2,
       h: Math.round(112 * base)
     }, {
-      color: 'rgba(0,229,255,0.8)',
-      fillTop: 'rgba(0,229,255,0.22)',
-      fillBottom: 'rgba(0,229,255,0)',
+      color: cardHexAlpha(palette.accent, 0.8),
+      fillTop: cardHexAlpha(palette.accent, 0.22),
+      fillBottom: cardHexAlpha(palette.accent, 0),
       lineWidth: Math.max(2, 2.5 * base)
     });
   }
@@ -562,7 +598,7 @@ async function drawNightNeon(ctx, size, model, template, metrics, options, repor
     leftText: model.riderName ? model.riderName.toUpperCase() : 'DIREKAM DENGAN GPS'
   });
 }
-/* ─────────────────────────── Theme 2: Paper Topo ─────────────────────────── */
+/* ─────────────────────────── Layout 2: Editorial ─────────────────────────── */
 
 async function drawPaperTopo(ctx, size, model, template, metrics, options, report) {
   const { width, height } = size;
@@ -579,7 +615,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
   ctx.fillRect(0, 0, width, height);
 
   ctx.save();
-  ctx.fillStyle = 'rgba(43,78,48,0.10)';
+  ctx.fillStyle = cardHexAlpha(palette.accent, 0.10);
   const dotStep = Math.round(28 * base);
   for (let x = dotStep; x < width; x += dotStep) {
     for (let y = dotStep; y < height; y += dotStep) {
@@ -593,7 +629,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
   ctx.strokeStyle = palette.border;
   ctx.lineWidth = Math.max(1, 2 * base);
   ctx.strokeRect(Math.round(26 * base), Math.round(26 * base), width - Math.round(52 * base), height - Math.round(52 * base));
-  ctx.strokeStyle = 'rgba(43,78,48,0.14)';
+  ctx.strokeStyle = cardHexAlpha(palette.accent, 0.14);
   ctx.lineWidth = Math.max(1, base);
   ctx.strokeRect(Math.round(38 * base), Math.round(38 * base), width - Math.round(76 * base), height - Math.round(76 * base));
 
@@ -607,7 +643,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
 
   const titleY = headerY + Math.round(88 * base);
   cardText(ctx, model.title, pad, titleY, {
-    size: metrics.titleFont, weight: 700, stack: display, color: palette.ink, maxWidth: width - pad * 2
+    size: metrics.titleFont, weight: template.typography.weightDisplay || 700, stack: display, color: palette.ink, maxWidth: width - pad * 2
   });
   const subtitleY = titleY + Math.round(46 * base);
   cardText(ctx, model.riderName ? model.riderName.toUpperCase() : `${model.source.toUpperCase()} ROUTE`, pad, subtitleY, {
@@ -634,7 +670,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
   ctx.save();
   cardRoundRectPath(ctx, mapBox.x, mapBox.y, mapBox.w, mapBox.h, metrics.radius);
   ctx.clip();
-  ctx.fillStyle = '#EDE7D9';
+  ctx.fillStyle = palette.mapBg || '#EDE7D9';
   ctx.fillRect(mapBox.x, mapBox.y, mapBox.w, mapBox.h);
 
   ctx.save();
@@ -648,16 +684,16 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
       ctx.fillRect(0, 0, mapBox.w, mapBox.h);
     }
   } else {
-    cardDrawGrid(ctx, mapBox.w, mapBox.h, Math.round(66 * base), 'rgba(43,78,48,0.08)');
+    cardDrawGrid(ctx, mapBox.w, mapBox.h, Math.round(66 * base), cardHexAlpha(palette.accent, 0.08));
     cardEchoRoute(ctx, pixels, mapBox.w / 2, mapBox.h / 2, 6, palette.accent);
   }
 
   const elevation = cardElevationSamples(model, 120);
   if (elevation.length > 4) {
     cardDrawElevation(ctx, elevation, { x: 0, y: mapBox.h * 0.68, w: mapBox.w, h: mapBox.h * 0.26 }, {
-      color: 'rgba(43,78,48,0.35)',
-      fillTop: 'rgba(43,78,48,0.12)',
-      fillBottom: 'rgba(43,78,48,0)',
+      color: cardHexAlpha(palette.accent, 0.35),
+      fillTop: cardHexAlpha(palette.accent, 0.12),
+      fillBottom: cardHexAlpha(palette.accent, 0),
       lineWidth: 2
     });
   }
@@ -684,15 +720,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
   const halfWidth = (width - pad * 2) / 2;
   const cells = [
     { label: 'JARAK', value: CardModel.formatDistance(model.stats.distanceKm), unit: 'KM' },
-    {
-      label: model.hasTime ? 'WAKTU BERGERAK' : 'DURASI',
-      value: model.stats.movingSec || model.stats.elapsedSec
-        ? CardModel.formatDuration(model.stats.movingSec || model.stats.elapsedSec)
-        : '—',
-      unit: ''
-    },
-    { label: 'ELEVASI GAIN', value: String(model.stats.elevGainM), unit: 'M' },
-    { label: 'KECEPATAN RATA-RATA', value: CardModel.formatSpeed(model.stats.avgKmh), unit: 'KM/JAM' }
+    ...cardSecondaryCells(model)
   ];
 
   ctx.fillStyle = palette.border;
@@ -716,7 +744,7 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
       });
     }
     if (column === 0) {
-      ctx.fillStyle = 'rgba(43,78,48,0.12)';
+      ctx.fillStyle = cardHexAlpha(palette.accent, 0.12);
       ctx.fillRect(x + halfWidth - Math.round(12 * base), y + Math.round(6 * base), Math.max(1, base), cellHeight - Math.round(26 * base));
     }
   });
@@ -731,9 +759,9 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
     cardDrawElevation(ctx, cardElevationSamples(model), {
       x: pad, y: sparkTop + Math.round(20 * base), w: width - pad * 2, h: sparkHeight
     }, {
-      color: 'rgba(43,78,48,0.55)',
-      fillTop: 'rgba(43,78,48,0.16)',
-      fillBottom: 'rgba(43,78,48,0)',
+      color: cardHexAlpha(palette.accent, 0.55),
+      fillTop: cardHexAlpha(palette.accent, 0.16),
+      fillBottom: cardHexAlpha(palette.accent, 0),
       lineWidth: Math.max(2, 2.2 * base)
     });
   }
@@ -749,17 +777,17 @@ async function drawPaperTopo(ctx, size, model, template, metrics, options, repor
     });
   }
 
-  ctx.fillStyle = 'rgba(43,78,48,0.14)';
+  ctx.fillStyle = cardHexAlpha(palette.accent, 0.14);
   ctx.fillRect(pad, footerY - Math.round(36 * base), width - pad * 2, Math.max(1, base));
 
   cardDrawFooter(ctx, {
     width, height, pad, base, footerFont: metrics.footerFont,
     stack: label, ink: palette.ink, muted: palette.muted,
     attribution: layer.attribution || 'ROUTE ART · TANPA BASEMAP',
-    leftText: 'CYCLOPON — POSTER GOWES'
+    leftText: 'CYCLOPON · RIDE CARD'
   });
 }
-/* ──────────────────────── Theme 3: Brutalist Mono ──────────────────────── */
+/* ──────────────────────── Layout 3: Brutalist / Blueprint ──────────────────────── */
 
 async function drawBrutalistMono(ctx, size, model, template, metrics, options, report) {
   const { width, height } = size;
@@ -786,8 +814,8 @@ async function drawBrutalistMono(ctx, size, model, template, metrics, options, r
   cardText(ctx, 'CYCLOPON', pad, headerY, {
     size: 22 * base, weight: 700, stack: label, color: palette.ink, letterSpacing: 7 * base
   });
-  cardText(ctx, 'POSTER GOWES / 01', width - pad, headerY, {
-    size: 20 * base, weight: 700, stack: label, color: palette.ink, align: 'right', letterSpacing: 3 * base
+  cardText(ctx, 'RIDE CARD', width - pad, headerY, {
+    size: 20 * base, weight: 700, stack: label, color: palette.accent2 || palette.ink, align: 'right', letterSpacing: 3 * base
   });
   const sportLine = `${(model.riderName || model.source).toUpperCase()} · ${CardModel.formatDateId(model.startedAt) || 'NO DATE'}`;
   cardText(ctx, sportLine, pad, headerY + Math.round(32 * base), {
@@ -805,10 +833,10 @@ async function drawBrutalistMono(ctx, size, model, template, metrics, options, r
   report.usedFallbackMap = false;
 
   ctx.save();
-  ctx.fillStyle = '#FBFAF7';
+  ctx.fillStyle = palette.artBg || '#FBFAF7';
   ctx.fillRect(artBox.x, artBox.y, artBox.w, artBox.h);
   ctx.translate(artBox.x, artBox.y);
-  cardDrawGrid(ctx, artBox.w, artBox.h, Math.round(54 * base), 'rgba(13,17,23,0.07)');
+  cardDrawGrid(ctx, artBox.w, artBox.h, Math.round(54 * base), cardHexAlpha(palette.ink, 0.08));
   cardDrawRoute(ctx, pixels, template.route, base);
   ctx.restore();
 
@@ -842,14 +870,26 @@ async function drawBrutalistMono(ctx, size, model, template, metrics, options, r
   });
   const rowsTop = heroY + Math.round(58 * base);
   const rowHeight = Math.round(56 * base);
+  const showTime = cardHasParticipantTime(model);
   const movingSec = model.stats.movingSec || model.stats.elapsedSec;
-  const rows = [
-    [model.hasTime ? 'MOVING TIME' : 'DURATION', movingSec > 0 ? CardModel.formatDuration(movingSec) : '—'],
-    ['ELEVATION GAIN', `${model.stats.elevGainM} M`],
-    ['AVG SPEED', `${CardModel.formatSpeed(model.stats.avgKmh)} KM/H`],
-    ['MAX SPEED', `${CardModel.formatSpeed(model.stats.maxKmh)} KM/H`],
-    ['TRACK POINTS', String(model.points.length)]
-  ];
+  const rows = [];
+  if (model.isOfficialRoute) {
+    rows.push(['SUMBER TREK', 'RUTE RESMI EVENT']);
+  }
+  if (showTime) {
+    rows.push(['WAKTU BERGERAK', CardModel.formatDuration(movingSec) || '-']);
+    if (model.stats.elapsedSec > movingSec + 60) {
+      rows.push(['DURASI TOTAL', CardModel.formatDuration(model.stats.elapsedSec)]);
+    }
+  }
+  if (model.hasElevation) {
+    rows.push(['ELEVASI GAIN', `${model.stats.elevGainM} M`]);
+    rows.push(['ELEVASI TURUN', `${model.stats.elevLossM} M`]);
+    if (model.stats.maxEle !== null) {
+      rows.push(['ELEVASI MAKS', `${model.stats.maxEle} M`]);
+    }
+  }
+  rows.push(['TITIK GPS', String(model.points.length)]);
 
   rows.forEach((row, index) => {
     const y = rowsTop + index * rowHeight;
@@ -861,7 +901,7 @@ async function drawBrutalistMono(ctx, size, model, template, metrics, options, r
       size: 21 * base, weight: 700, stack: label, color: palette.ink, align: 'right', letterSpacing: 1.5 * base,
       maxWidth: width * 0.4
     });
-    ctx.fillStyle = 'rgba(13,17,23,0.14)';
+    ctx.fillStyle = cardHexAlpha(palette.ink, 0.14);
     ctx.fillRect(pad, y + Math.round(14 * base), width - pad * 2, Math.max(1, Math.round(base * 0.8)));
   });
 
@@ -875,20 +915,22 @@ async function drawBrutalistMono(ctx, size, model, template, metrics, options, r
     cardDrawElevation(ctx, cardElevationSamples(model), {
       x: pad, y: sparkTop + Math.round(18 * base), w: width - pad * 2, h: sparkHeight
     }, {
-      color: 'rgba(13,17,23,0.65)',
-      fillTop: 'rgba(13,17,23,0.14)',
-      fillBottom: 'rgba(13,17,23,0)',
+      color: cardHexAlpha(palette.ink, 0.65),
+      fillTop: cardHexAlpha(palette.ink, 0.14),
+      fillBottom: cardHexAlpha(palette.ink, 0),
       lineWidth: Math.max(2, 2 * base)
     });
   }
 
-  ctx.fillStyle = palette.ink;
+  const footerBg = palette.footerBg || palette.ink;
+  const footerInk = palette.footerInk || '#FFFFFF';
+  ctx.fillStyle = footerBg;
   ctx.fillRect(0, footerTop, width, footerBarH);
-  cardText(ctx, 'CYCLOPON — POSTER GOWES', pad, footerTop + Math.round(footerBarH * 0.62), {
-    size: 18 * base, weight: 700, stack: label, color: '#FFFFFF', letterSpacing: 2.4 * base
+  cardText(ctx, 'CYCLOPON · RIDE CARD', pad, footerTop + Math.round(footerBarH * 0.62), {
+    size: 18 * base, weight: 700, stack: label, color: footerInk, letterSpacing: 2.4 * base
   });
   cardText(ctx, 'ROUTE ART · TANPA BASEMAP', width - pad, footerTop + Math.round(footerBarH * 0.62), {
-    size: 16 * base, stack: label, color: 'rgba(255,255,255,0.72)', align: 'right', letterSpacing: 2 * base
+    size: 16 * base, stack: label, color: cardHexAlpha(footerInk, 0.78), align: 'right', letterSpacing: 2 * base
   });
 }
 
@@ -913,7 +955,7 @@ async function renderActivityCard(input = {}) {
   const size = CardTemplates.getCardSize(input.sizeId);
   const metrics = CardTemplates.metricsFor(size);
 
-  // Make sure the webfont stack (Inter from global.css) is ready before
+  // Make sure the webfont stack (Barlow / Plus Jakarta Sans from index.html) is ready before
   // measuring/drawing text, otherwise the first card would use a fallback face.
   if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
     try {

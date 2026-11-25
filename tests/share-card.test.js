@@ -218,11 +218,25 @@ test('share card — geometry helpers', async (t) => {
     assert.deepEqual(smoothed[smoothed.length - 1], input[2]);
   });
 
-  await t.test('formatCaption mentions title, distance and CycloPon', () => {
+  await t.test('formatCaption mentions title, distance and CycloPon without speed', () => {
     const built = model.buildCardModel({ fileName: 'pagi.gpx', text: GPX_WITH_TIME });
     const caption = model.formatCaption(built);
     assert.match(caption, /^Pagi — 0\.33 km/);
     assert.match(caption, /CycloPon/);
+    assert.equal(/km\/jam/i.test(caption), false, 'caption must not include speed');
+
+    const official = model.buildCardModel({
+      fileName: 'rute.gpx',
+      text: GPX_WITH_TIME,
+      title: 'Event Resmi',
+      isOfficialRoute: true,
+      eventDate: '2026-11-21'
+    });
+    assert.equal(official.isOfficialRoute, true);
+    assert.equal(official.hasTime, false);
+    assert.equal(model.formatDateId(official.startedAt), '21 NOV 2026');
+    const officialCaption = model.formatCaption(official);
+    assert.equal(/\d+m|\d+h|\d+s/.test(officialCaption), false, 'official route fallback caption must not emit author duration');
   });
 });
 test('share card — map projection & tiles', async (t) => {
@@ -287,6 +301,20 @@ test('share card — map projection & tiles', async (t) => {
 
     const projection = cardMap.buildProjection([{ lat: 0, lng: 0 }, { lat: 0.001, lng: 0.001 }], 600, 400, 20, 16, 24);
     assert.equal(cardMap.tilesForProjection(projection, cardMap.getTileProvider('osm')).length, projection.tiles.count);
+
+    // Full-viewport tile coverage check across a tall card canvas
+    const route = [
+      { lat: -7.7829, lng: 110.3671 },
+      { lat: -7.7345, lng: 110.4022 },
+      { lat: -7.7118, lng: 110.3518 }
+    ];
+    const tallProj = cardMap.buildProjection(route, 1080, 1210, { top: 147, right: 74, bottom: 109, left: 74 }, 16, 24);
+    const tilePx = tallProj.tiles.tileSizePx;
+    assert.ok(tallProj.tiles.count <= 24, `expected <= 24 tiles, got ${tallProj.tiles.count}`);
+    assert.ok(tallProj.tiles.minX * tilePx + tallProj.offsetX <= 0, 'mosaic must cover left edge');
+    assert.ok((tallProj.tiles.maxX + 1) * tilePx + tallProj.offsetX >= 1080, 'mosaic must cover right edge');
+    assert.ok(tallProj.tiles.minY * tilePx + tallProj.offsetY <= 0, 'mosaic must cover top edge');
+    assert.ok((tallProj.tiles.maxY + 1) * tilePx + tallProj.offsetY >= 1210, 'mosaic must cover bottom edge');
   });
 
   await t.test('falls back to the next provider when the preferred one fails', async () => {
@@ -376,13 +404,23 @@ test('share card — map projection & tiles', async (t) => {
   });
 });
 test('share card — templates & sizes', async (t) => {
-  await t.test('ships three distinct themes', () => {
-    assert.equal(templates.CARD_TEMPLATES.length, 3);
+  await t.test('ships eight distinct themes across dark, editorial, and offline styles', () => {
+    assert.equal(templates.CARD_TEMPLATES.length, 8);
     const ids = templates.CARD_TEMPLATES.map(template => template.id);
-    assert.deepEqual(ids, ['night-neon', 'paper-topo', 'brutalist-mono']);
-    assert.equal(new Set(templates.CARD_TEMPLATES.map(template => template.palette.bgTop)).size, 3);
-    assert.equal(templates.CARD_TEMPLATES.filter(template => template.map.enabled).length, 2);
+    assert.deepEqual(ids, [
+      'night-neon',
+      'paper-topo',
+      'brutalist-mono',
+      'peloton-emerald',
+      'gravel-clay',
+      'audax-blueprint',
+      'crimson-crit',
+      'dawn-gold'
+    ]);
+    assert.equal(new Set(templates.CARD_TEMPLATES.map(template => template.palette.bgTop)).size, 8);
+    assert.equal(templates.CARD_TEMPLATES.filter(template => template.map.enabled).length, 6);
     assert.equal(templates.getCardTemplate('brutalist-mono').map.enabled, false);
+    assert.equal(templates.getCardTemplate('audax-blueprint').map.enabled, false);
   });
 
   await t.test('exposes Story / Feed / Square at 1080 px wide', () => {
@@ -453,7 +491,7 @@ test('share card — real GPX fixture stays consistent with gpx-utils', async (t
   });
 });
 
-test('share card — Poster Gowes participant metadata & naming', async (t) => {
+test('share card — Ride Card participant metadata & naming', async (t) => {
   await t.test('formatRoleLabel maps rider, sweeper, marshall, medic and defaults to Rider', () => {
     assert.equal(model.formatRoleLabel('rider'), 'Rider');
     assert.equal(model.formatRoleLabel('SWEEPER'), 'Sweeper');
@@ -489,7 +527,7 @@ test('share card — Poster Gowes participant metadata & naming', async (t) => {
     assert.equal(medicMeta.roleLabel, 'Medis');
   });
 
-  await t.test('buildCardModel preserves roleLabel and formatCaption uses Poster gowes wording', () => {
+  await t.test('buildCardModel preserves roleLabel and formatCaption uses Ride card wording', () => {
     const built = model.buildCardModel({
       fileName: 'track.gpx',
       text: GPX_WITH_TIME,
@@ -500,10 +538,15 @@ test('share card — Poster Gowes participant metadata & naming', async (t) => {
     assert.equal(built.title, 'Tour de Gravel 2026');
     assert.equal(built.riderName, 'Agus · BIB #RC-1 · MARSHALL');
     assert.equal(built.roleLabel, 'Marshall');
-    assert.equal(model.formatCaption(null), 'Poster gowes dari CycloPon');
+    assert.equal(model.formatCaption(null), 'Ride card dari CycloPon');
   });
 
-  await t.test('UI labels use POSTER GOWES instead of KARTU AKTIVITAS', () => {
+  await t.test('poster renderer never displays speed metrics', () => {
+    const rendererSrc = fs.readFileSync(path.join(__dirname, '..', 'public/js/lib/card-renderer.js'), 'utf8');
+    assert.equal(/KECEPATAN RATA-RATA|AVG SPEED|MAX SPEED/i.test(rendererSrc), false, 'card-renderer.js must not display speed metrics');
+  });
+
+  await t.test('UI labels use RIDE CARD instead of POSTER GOWES or KARTU AKTIVITAS', () => {
     const root = path.join(__dirname, '..');
     const filesToCheck = [
       'public/index.html',
@@ -515,7 +558,8 @@ test('share card — Poster Gowes participant metadata & naming', async (t) => {
     for (const rel of filesToCheck) {
       const content = fs.readFileSync(path.join(root, rel), 'utf8');
       assert.equal(/KARTU AKTIVITAS/i.test(content), false, `${rel} should not contain KARTU AKTIVITAS`);
-      assert.match(content, /POSTER GOWES/);
+      assert.equal(/POSTER GOWES/i.test(content), false, `${rel} should not contain POSTER GOWES`);
+      assert.match(content, /RIDE CARD/);
     }
   });
 
@@ -566,5 +610,92 @@ test('share card — Poster Gowes participant metadata & naming', async (t) => {
       const content = fs.readFileSync(path.join(root, rel), 'utf8');
       assert.match(content, /href="\/"[^>]*>[\s\S]*?BERANDA/);
     }
+  });
+
+  await t.test('top navigation bars and mobile drawer use concise DAFTAR and RACE CONTROL labels', () => {
+    const root = path.join(__dirname, '..');
+    const navFiles = [
+      'public/index.html',
+      'public/js/pages/landing.js',
+      'public/js/pages/share-card.js',
+      'public/js/pages/install.js'
+    ];
+    for (const rel of navFiles) {
+      const content = fs.readFileSync(path.join(root, rel), 'utf8');
+      assert.match(content, /href="\/register"[^>]*>[\s\S]*?>DAFTAR(?:<\/span>)/);
+      assert.match(content, /href="\/admin"[^>]*>[\s\S]*?>RACE CONTROL(?: ↗)?(?:<\/span>)/);
+      assert.equal(/PANEL PANITIA/.test(content), false, `${rel} should use RACE CONTROL instead of PANEL PANITIA`);
+    }
+  });
+
+  await t.test('buildCardModelFromPoints builds stats from server position_history rows', () => {
+    const built = model.buildCardModelFromPoints({
+      points: [
+        { latitude: -7.7829, longitude: 110.3671, recorded_at: '2026-11-15 06:00:00' },
+        { latitude: -7.7612, longitude: 110.3814, recorded_at: '2026-11-15 06:10:00' },
+        { latitude: -7.7345, longitude: 110.4022, recorded_at: '2026-11-15 06:22:00' }
+      ],
+      source: 'traccar',
+      title: 'CycloPon Gravel Test',
+      riderName: 'Budi · BIB #007 · RIDER',
+      roleLabel: 'Rider'
+    });
+    assert.equal(built.source, 'traccar');
+    assert.equal(built.points.length, 3);
+    assert.ok(built.stats.distanceKm > 5);
+    assert.equal(built.stats.elapsedSec, 1320);
+    assert.equal(built.hasElevation, false);
+    assert.equal(built.title, 'CycloPon Gravel Test');
+  });
+
+  await t.test('share-card auto-loads server history/GPX and Rider Hub + Results link to /share', () => {
+    const root = path.join(__dirname, '..');
+    const shareSrc = fs.readFileSync(path.join(root, 'public/js/pages/share-card.js'), 'utf8');
+    const riderSetupSrc = fs.readFileSync(path.join(root, 'public/js/pages/rider-setup.js'), 'utf8');
+    const resultsSrc = fs.readFileSync(path.join(root, 'public/js/pages/event-results.js'), 'utf8');
+
+    assert.match(shareSrc, /<main class="share-main">/);
+    assert.match(shareSrc, /share-gate-grid/);
+    assert.match(shareSrc, /\/history\?rider_id=/);
+    assert.match(shareSrc, /\/gpx\/download/);
+    assert.match(riderSetupSrc, /href="\/share"/);
+    assert.match(resultsSrc, /href="\/share\?event=\$\{event\.id\}"/);
+  });
+
+  await t.test('mobile footer centers CYCLOPON brand block cleanly', () => {
+    const globalCss = fs.readFileSync(path.join(__dirname, '..', 'public/css/global.css'), 'utf8');
+    assert.match(globalCss, /@media\s*\(max-width:\s*768px\)[\s\S]*?\.footer-brand-info\s*\{[^}]*align-items:\s*center;[^}]*text-align:\s*center;/);
+  });
+
+  await t.test('desktop top header hides brand logo mark while mobile header keeps it visible', () => {
+    const globalCss = fs.readFileSync(path.join(__dirname, '..', 'public/css/global.css'), 'utf8');
+    assert.match(globalCss, /\.landing-nav\s+\.brand-logo-mark\s*\{[^}]*display:\s*none;/);
+    assert.match(globalCss, /@media\s*\(max-width:\s*768px\)[\s\S]*?\.landing-nav\s+\.brand-logo-mark\s*\{[^}]*display:\s*block;/);
+  });
+
+  await t.test('official new CycloPon logo assets exist and are wired into HTML, manifest, SW, and pages', () => {
+    const root = path.join(__dirname, '..');
+    const requiredAssets = [
+      'public/icons/cyclopon-mark.svg',
+      'public/icons/cyclopon-mark-dark.svg',
+      'public/icons/app-icon-192.png',
+      'public/icons/app-icon-512.png',
+      'public/icons/apple-touch-icon.png'
+    ];
+    for (const rel of requiredAssets) {
+      assert.equal(fs.existsSync(path.join(root, rel)), true, `missing logo asset ${rel}`);
+    }
+
+    const indexHtml = fs.readFileSync(path.join(root, 'public/index.html'), 'utf8');
+    const manifestJson = JSON.parse(fs.readFileSync(path.join(root, 'public/manifest.json'), 'utf8'));
+    const swJs = fs.readFileSync(path.join(root, 'public/sw.js'), 'utf8');
+
+    assert.match(indexHtml, /\/icons\/cyclopon-mark\.svg/);
+    assert.match(indexHtml, /\/icons\/apple-touch-icon\.png/);
+    assert.ok(Array.isArray(manifestJson.icons) && manifestJson.icons.length >= 2);
+    assert.ok(manifestJson.icons.some(icon => icon.src === '/icons/app-icon-192.png'));
+    assert.ok(manifestJson.icons.some(icon => icon.src === '/icons/app-icon-512.png'));
+    assert.match(swJs, /\/icons\/cyclopon-mark\.svg/);
+    assert.match(swJs, /\/icons\/app-icon-512\.png/);
   });
 });

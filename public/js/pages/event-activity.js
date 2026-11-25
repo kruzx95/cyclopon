@@ -16,6 +16,7 @@ async function renderEventActivity(params) {
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
           <div class="brand-name-group">
+            <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
             <span class="brand-name">CYCLOPON</span>
           </div>
         </a>
@@ -106,6 +107,7 @@ async function renderEventActivity(params) {
         <!-- ── Pro Editorial Top Nav (Consistent with Beranda) ── -->
         <nav class="landing-nav">
           <a href="/" data-link class="brand-title">
+            <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
             <div class="brand-name-group">
               <span class="brand-name">CYCLOPON</span>
             </div>
@@ -349,6 +351,7 @@ async function renderEventActivity(params) {
           <div class="footer-inner">
             <div class="footer-left">
               <a href="/" data-link class="footer-brand-lockup">
+                <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
                 <div class="footer-brand-info">
                   <span class="footer-brand-title">CYCLOPON</span>
                   <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>

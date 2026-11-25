@@ -19,6 +19,7 @@ function renderInstallPage() {
       <!-- ── Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
+          <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
           </div>
@@ -30,14 +31,9 @@ function renderInstallPage() {
             <span class="nav-label-short">BERANDA</span>
           </a>
 
-          <a href="/share" data-link class="btn-guide-nav" title="Buat poster gowes peserta event untuk media sosial" aria-label="Buat poster gowes">
-            <span class="nav-label-full">POSTER GOWES</span>
-            <span class="nav-label-short">POSTER</span>
-          </a>
-
-          <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
-            <span class="nav-label-full">PANDUAN</span>
-            <span class="nav-label-short">PANDUAN</span>
+          <a href="/share" data-link class="btn-guide-nav" title="Buat Ride Card peserta event untuk media sosial" aria-label="Buat Ride Card">
+            <span class="nav-label-full">RIDE CARD</span>
+            <span class="nav-label-short">RIDE CARD</span>
           </a>
 
           <a href="/install" data-link class="btn-guide-nav active" title="Cara Install Aplikasi CycloPon di HP" aria-label="Install aplikasi">
@@ -45,14 +41,14 @@ function renderInstallPage() {
             <span class="nav-label-short">INSTALL</span>
           </a>
 
-          <a href="/register" data-link class="btn-register-nav" title="Daftar Menjadi Peserta Event" aria-label="Daftar event">
-            <span class="nav-label-full">DAFTAR EVENT</span>
+          <a href="/register" data-link class="btn-register-nav" title="Daftar Menjadi Peserta Event" aria-label="Daftar">
+            <span class="nav-label-full">DAFTAR</span>
             <span class="nav-label-short">DAFTAR</span>
           </a>
 
-          <a href="/admin" data-link class="btn-admin-nav" title="Panel Khusus Panitia Event" aria-label="Panel panitia">
-            <span class="nav-label-full">PANEL PANITIA</span>
-            <span class="nav-label-short">PANITIA</span>
+          <a href="/admin" data-link class="btn-admin-nav" title="Race Control / Panel Khusus Panitia Event" aria-label="Race Control">
+            <span class="nav-label-full">RACE CONTROL</span>
+            <span class="nav-label-short">RACE CONTROL</span>
           </a>
         </div>
 
@@ -72,7 +68,7 @@ function renderInstallPage() {
             <span class="install-eyebrow">⚡ PROGRESSIVE WEB APP (PWA)</span>
             <h1 class="install-hero-title">Pasang CycloPon di <span>Layar Utama HP</span></h1>
             <p class="install-hero-desc">
-              Akses Live Map, Cockpit Rider, dan Poster Gowes langsung seperti aplikasi native tanpa perlu mengunduh lewat Play Store atau App Store. Ringan, cepat, dan layar penuh.
+              Akses Live Map, Cockpit Rider, dan Ride Card langsung seperti aplikasi native tanpa perlu mengunduh lewat Play Store atau App Store. Ringan, cepat, dan layar penuh.
             </p>
             <div class="install-benefits-row">
               <span class="install-benefit-chip">✓ Ukuran &lt; 2 MB</span>
@@ -383,6 +379,7 @@ function renderInstallPage() {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>

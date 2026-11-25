@@ -31,7 +31,7 @@ function renderExistingSession(config) {
   const { rider, event } = config;
   const app = document.getElementById('app');
 
-  const roleBadge = rider.role === 'sweeper' 
+  const roleBadge = rider.role === 'sweeper'
     ? '<span class="badge" style="background:rgba(249,115,22,0.18);color:#C2410C;border:1px solid #F97316">🧹 Sweeper</span>'
     : (rider.role === 'marshall'
       ? '<span class="badge" style="background:rgba(59,130,246,0.18);color:#1D4ED8;border:1px solid #3B82F6">🏍️ Marshall</span>'
@@ -53,8 +53,9 @@ function renderExistingSession(config) {
           <span class="login-live-pill"><span class="pulse-dot"></span> SESI AKTIF</span>
         </div>
         
-        <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center">
-          <span style="font-family:'Inter',system-ui,sans-serif;font-size:24px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
+        <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px">
+          <img src="/icons/cyclopon-mark.svg" alt="" width="24" height="24" style="display:block;flex-shrink:0">
+          <span style="font-family:'Barlow','Plus Jakarta Sans',system-ui,sans-serif;font-size:24px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
         </div>
         <h1 class="login-title">Sesi Aktif Ditemukan</h1>
         <p class="login-subtitle" style="margin-bottom:20px">Anda sudah login pada perangkat ini</p>
@@ -134,8 +135,9 @@ async function renderLoginForm() {
 
         <!-- Header Center -->
         <div class="login-header-center">
-          <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center">
-            <span style="font-family:'Inter',system-ui,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
+          <div style="margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px">
+            <img src="/icons/cyclopon-mark.svg" alt="" width="26" height="26" style="display:block;flex-shrink:0">
+            <span style="font-family:'Barlow','Plus Jakarta Sans',system-ui,sans-serif;font-size:26px;font-weight:900;letter-spacing:-0.03em;color:#0D1117">CYCLOPON</span>
           </div>
           <h1 class="login-title">Akses Peserta &amp; Panitia</h1>
           <p class="login-subtitle">Pilih event resmi dan masukkan nomor BIB &amp; PIN Anda</p>
@@ -160,13 +162,13 @@ async function renderLoginForm() {
               <span class="select-prefix-icon">🏁</span>
               <select class="modern-select" id="eventSelect">
                 ${displayEvents.length
-                  ? displayEvents.map((ev, idx) => `
+      ? displayEvents.map((ev, idx) => `
                       <option value="${ev.id}" ${idx === 0 ? 'selected' : ''}>
                         ${ev.name} (${ev.date}) ${ev.active ? '🟢' : '⚪'}
                       </option>
                     `).join('')
-                  : '<option value="">Belum ada event aktif</option>'
-                }
+      : '<option value="">Belum ada event aktif</option>'
+    }
               </select>
               <span class="select-chevron-icon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -225,16 +227,16 @@ async function renderLoginForm() {
           <!-- Tactical Modern Keypad -->
           <div class="modern-keypad" id="pinKeypad">
             ${[
-              { num: '1', sub: ' ' },
-              { num: '2', sub: 'ABC' },
-              { num: '3', sub: 'DEF' },
-              { num: '4', sub: 'GHI' },
-              { num: '5', sub: 'JKL' },
-              { num: '6', sub: 'MNO' },
-              { num: '7', sub: 'PQRS' },
-              { num: '8', sub: 'TUV' },
-              { num: '9', sub: 'WXYZ' },
-            ].map(k => `
+      { num: '1', sub: ' ' },
+      { num: '2', sub: 'ABC' },
+      { num: '3', sub: 'DEF' },
+      { num: '4', sub: 'GHI' },
+      { num: '5', sub: 'JKL' },
+      { num: '6', sub: 'MNO' },
+      { num: '7', sub: 'PQRS' },
+      { num: '8', sub: 'TUV' },
+      { num: '9', sub: 'WXYZ' },
+    ].map(k => `
               <button type="button" class="pin-key modern-key" data-digit="${k.num}">
                 <span class="key-digit">${k.num}</span>
                 <span class="key-letters">${k.sub}</span>
@@ -442,9 +444,9 @@ async function renderLoginForm() {
 
     try {
       const res = await fetch('/api/auth/rider', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ event_id: Number(eventId), bib, pin, event_pin: eventPin || undefined })
+        body: JSON.stringify({ event_id: Number(eventId), bib, pin, event_pin: eventPin || undefined })
       });
       const data = await res.json();
 
@@ -572,11 +574,11 @@ async function renderLoginForm() {
     btnSubmitReg.textContent = 'Mendaftarkan...';
 
     const event_id = document.getElementById('regEventSelect').value;
-    const role     = document.getElementById('regRoleSelect').value;
-    const bib      = document.getElementById('regBibInput').value.trim();
-    const name     = document.getElementById('regNameInput').value.trim();
-    const phone    = document.getElementById('regPhoneInput').value.trim();
-    const regPin   = document.getElementById('regPinInput').value.trim();
+    const role = document.getElementById('regRoleSelect').value;
+    const bib = document.getElementById('regBibInput').value.trim();
+    const name = document.getElementById('regNameInput').value.trim();
+    const phone = document.getElementById('regPhoneInput').value.trim();
+    const regPin = document.getElementById('regPinInput').value.trim();
     const eventPin = document.getElementById('regEventPinInput')?.value.trim() || '';
 
     if (eventRequiresAccessPin(event_id) && !eventPin) {

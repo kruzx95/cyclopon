@@ -37,8 +37,8 @@ const Router = {
   },
 
   resolve(path) {
-    // Strip query string for matching
-    const cleanPath = path.split('?')[0];
+    // Strip query string and hash fragment for matching
+    const cleanPath = path.split('?')[0].split('#')[0];
 
     // Run registered unmount hooks from previous page
     this.teardown();

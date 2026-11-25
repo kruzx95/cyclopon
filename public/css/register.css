@@ -13,7 +13,7 @@
     linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, #F8FAFC 100%);
   background-size: 20px 20px, 100% 100%;
   color: #0D1117;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
   padding-bottom: 0;
 }
 
@@ -37,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 800;
   color: #1C3E24;
@@ -50,7 +50,7 @@
 }
 
 .register-hero-title {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-display);
   font-size: 28px;
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -64,12 +64,104 @@
 }
 
 .register-hero-desc {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   color: #475569;
   max-width: 580px;
   margin: 0 auto;
   line-height: 1.5;
+}
+
+/* ── Page Tabs (Pendaftaran & Roster | Panduan Pengguna) ── */
+.reg-tabs-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.reg-tab-btn {
+  min-height: 48px;
+  padding: 11px 16px;
+  background: #FFFFFF;
+  border: 2px solid #64748B;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: center;
+  transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reg-tab-btn:hover {
+  border-color: #0D1117;
+  color: #0D1117;
+  background: #F8FAFC;
+}
+
+.reg-tab-btn:active {
+  transform: translateY(1px);
+}
+
+.reg-tab-btn:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
+}
+
+.reg-tab-btn.active {
+  background: #0D1117;
+  border-color: #0D1117;
+  color: #FFFFFF;
+  box-shadow: 3px 3px 0 #1C3E24;
+}
+
+.reg-tab-panel[hidden] {
+  display: none;
+}
+
+.reg-guide-embedded {
+  min-width: 0;
+}
+
+.reg-guide-embedded .guide-hero-inner.guide-embedded-intro {
+  padding: 24px 26px;
+}
+
+.reg-guide-embedded .guide-hero-title {
+  font-size: 26px;
+}
+
+.reg-guide-embedded .guide-nav-bar {
+  top: 72px;
+}
+
+.reg-guide-embedded .store-badge-btn,
+.reg-guide-embedded .btn-callout-action {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.reg-guide-embedded .store-badge-btn:focus-visible,
+.reg-guide-embedded .btn-callout-action:focus-visible,
+.reg-guide-embedded .guide-nav-pill-btn:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reg-tab-btn {
+    transition: none;
+  }
 }
 
 /* ── Form Card ── */
@@ -83,7 +175,7 @@
 }
 
 .form-section-title {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 900;
   letter-spacing: -0.01em;
@@ -102,7 +194,7 @@
 
 .form-label-reg {
   display: block;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 800;
   color: #0D1117;
@@ -160,7 +252,7 @@
   padding: 0 14px 0 42px;
   border: 1.5px solid #CBD5E1;
   border-radius: 9px;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 13.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -198,7 +290,7 @@
 
 .form-input-reg::placeholder {
   color: #94A3B8;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
 }
 
@@ -211,7 +303,7 @@
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 20px;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 12px;
   color: #475569;
   line-height: 1.4;
@@ -224,7 +316,7 @@
   color: #FFFFFF;
   border: 2px solid #0D1117;
   border-radius: 10px;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -374,7 +466,7 @@
 }
 
 .ticket-bib-big {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 38px;
   font-weight: 900;
   color: #0D1117;
@@ -412,7 +504,7 @@
 }
 
 .ticket-pin-val {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 26px;
   font-weight: 900;
   color: #0D1117;
@@ -763,7 +855,7 @@
 }
 
 .param-value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 800;
   color: #0D1117;
@@ -874,7 +966,7 @@
 }
 
 .roster-count-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   background: #1C3E24;
@@ -982,7 +1074,7 @@
 }
 
 .roster-bib-pill {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 900;
   padding: 3px 8px;
@@ -1025,7 +1117,7 @@
 }
 
 .roster-slider-hint {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   color: #475569;
@@ -1076,7 +1168,22 @@
 /* ── Mobile Responsive ── */
 @media (max-width: 640px) {
   .register-container {
-    padding: 20px 14px 0;
+    padding: 20px 14px 24px;
+  }
+  .reg-tabs-bar {
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .reg-tab-btn {
+    padding: 10px 10px;
+    font-size: 12px;
+    gap: 6px;
+  }
+  .reg-guide-embedded .guide-hero-inner.guide-embedded-intro {
+    padding: 18px 16px 18px 20px;
+  }
+  .reg-guide-embedded .guide-hero-title {
+    font-size: 21px;
   }
   .register-card, .reg-success-card, .roster-section {
     padding: 18px 16px;

@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════════
-   CYCLOPON — Poster Gowes Studio (/share)
-   Verified event participants (GPX/TCX) -> social-ready PNG poster.
+   CYCLOPON — Ride Card Studio (/share)
+   Verified event participants (GPX/TCX) -> social-ready PNG ride card.
    ══════════════════════════════════════════════════════════════════════════════ */
 
 .share-page {
@@ -13,61 +13,15 @@
     linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 0%, #F8F8F8 55%);
   background-size: 22px 22px, 100% 100%;
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-/* ── Nav ── */
-.share-nav {
-  width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.share-brand {
-  font-size: 17px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-  color: #0D1117;
-  text-decoration: none;
-}
-
-.share-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.share-nav-link {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: #334338;
-  text-decoration: none;
-  padding: 7px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: 999px;
-  background: #FFFFFF;
-  transition: var(--transition);
-}
-
-.share-nav-link:hover {
-  border-color: #0D1117;
-  color: #0D1117;
-  background: #F2EFE9;
+  font-family: var(--font-sans);
 }
 
 /* ── Hero ── */
 .share-hero {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 18px 24px 6px;
+  padding: 32px 24px 8px;
 }
 
 .share-eyebrow {
@@ -113,19 +67,20 @@
   gap: 7px;
   font-size: 11.5px;
   font-weight: 700;
+  line-height: 1.4;
   color: #1C3E24;
   background: #FFFFFF;
   border: 1.5px dashed #748873;
-  border-radius: 999px;
-  padding: 6px 12px;
+  border-radius: 10px;
+  padding: 7px 12px;
 }
 
 /* ── Workspace ── */
 .share-workspace {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 26px 24px 56px;
+  padding: 24px 24px 56px;
   display: grid;
   grid-template-columns: 372px minmax(0, 1fr);
   gap: 26px;
@@ -151,7 +106,7 @@
   gap: 8px;
   text-align: center;
   padding: 22px 16px;
-  border: 2px dashed #C3BCB0;
+  border: 2px dashed #748873;
   border-radius: 13px;
   background: #FBFAF7;
   cursor: pointer;
@@ -162,7 +117,8 @@
 .share-dropzone:focus-visible {
   border-color: var(--color-primary);
   background: #F3F7F1;
-  outline: none;
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
 }
 
 .share-dropzone.is-dragging {
@@ -205,7 +161,7 @@
 .share-dropzone-hint {
   font-size: 11.5px;
   line-height: 1.5;
-  color: #6F7C70;
+  color: #556157;
   word-break: break-word;
   max-width: 280px;
 }
@@ -234,37 +190,39 @@
   font-weight: 600;
   text-transform: none;
   letter-spacing: 0;
-  color: #6F7C70;
+  color: #556157;
   font-size: 10.5px;
 }
 
 .share-field input {
   width: 100%;
+  min-height: 44px;
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 600;
   color: #0D1117;
   background: #FFFFFF;
-  border: 2px solid var(--border);
+  border: 2px solid #748873;
   border-radius: 10px;
   transition: var(--transition);
 }
 
 .share-field select {
   width: 100%;
+  min-height: 44px;
   padding: 10px 12px;
   font-size: 14px;
   font-weight: 600;
   color: #0D1117;
   background: #FFFFFF;
-  border: 2px solid var(--border);
+  border: 2px solid #748873;
   border-radius: 10px;
   transition: var(--transition);
   font-family: inherit;
 }
 
 .share-field input::placeholder {
-  color: #A7AFA3;
+  color: #556157;
   font-weight: 500;
 }
 
@@ -272,19 +230,31 @@
 .share-field select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(43, 78, 48, 0.12);
+  box-shadow: 0 0 0 3px rgba(43, 78, 48, 0.14);
+}
+
+.share-field input:focus-visible,
+.share-field select:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
 }
 
 /* ── Participant Verification Gate & Locked Identity ── */
 .share-gate-wrap {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 26px 24px 64px;
+  padding: 20px 24px 64px;
+}
+
+.share-gate-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 500px) minmax(0, 1fr);
+  gap: 26px;
+  align-items: start;
 }
 
 .share-gate-card {
-  max-width: 540px;
   background: #FFFFFF;
   border: 2px solid #0D1117;
   border-radius: 16px;
@@ -295,12 +265,51 @@
   gap: 16px;
 }
 
+.share-gate-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #FFFFFF;
+  border: 2px solid #0D1117;
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 #0D1117;
+  padding: 18px;
+}
+
+.share-gate-canvas-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ECEAE3;
+  border: 1.5px solid #D8D3C9;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.share-gate-canvas-wrap canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 430px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 12px 26px -10px rgba(13, 17, 23, 0.35);
+}
+
+.share-gate-preview-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #556157;
+  text-align: center;
+}
+
 .share-gate-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   align-self: flex-start;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -340,9 +349,10 @@
 }
 
 .share-gate-hint {
-  font-size: 11px;
+  margin: 0;
+  font-size: 11.5px;
   line-height: 1.45;
-  color: #6F7C70;
+  color: #556157;
 }
 
 .share-gate-error {
@@ -367,17 +377,26 @@
   justify-content: space-between;
   gap: 10px;
   padding-top: 12px;
-  border-top: 1.5px dashed #D8D3C9;
+  border-top: 1.5px dashed #748873;
   font-size: 12px;
   font-weight: 600;
-  color: #5B6459;
+  color: #556157;
 }
 
 .share-gate-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   color: #1C3E24;
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 2px;
+  border-radius: 4px;
+}
+
+.share-gate-links a:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
 }
 
 .share-verified-box {
@@ -402,7 +421,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -442,12 +461,16 @@
 }
 
 .share-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   background: #FFFFFF;
   border: 1.5px solid #0D1117;
   border-radius: 8px;
-  padding: 5px 10px;
+  padding: 8px 14px;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 800;
   color: #0D1117;
   cursor: pointer;
@@ -457,6 +480,11 @@
 .share-switch-btn:hover {
   background: #0D1117;
   color: #FFFFFF;
+}
+
+.share-switch-btn:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
 }
 
 .share-locked-grid {
@@ -480,7 +508,7 @@
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #6F7C70;
+  color: #556157;
 }
 
 .share-locked-val {
@@ -507,8 +535,8 @@
 }
 
 .share-chips {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -520,9 +548,10 @@
 .share-chip {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 9px 11px;
+  min-height: 50px;
+  padding: 9px 10px;
   text-align: left;
   background: #FFFFFF;
   border: 2px solid var(--border);
@@ -532,9 +561,20 @@
   font-family: inherit;
 }
 
+@media (max-width: 400px) {
+  .share-chips:not(.share-chips-sizes) {
+    grid-template-columns: 1fr;
+  }
+}
+
 .share-chip:hover {
   border-color: #748873;
   background: #F7F6F2;
+}
+
+.share-chip:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
 }
 
 .share-chip[aria-pressed="true"] {
@@ -578,12 +618,13 @@
 .share-chip-text em {
   font-style: normal;
   font-size: 10.5px;
-  color: #6F7C70;
+  color: #556157;
   line-height: 1.35;
 }
 
 .share-chip-compact {
   justify-content: center;
+  min-height: 48px;
   padding: 8px 6px;
   text-align: center;
 }
@@ -614,7 +655,8 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 11px 12px;
+  min-height: 44px;
+  padding: 11px 14px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 800;
@@ -623,6 +665,11 @@
   border: 2px solid #0D1117;
   cursor: pointer;
   transition: var(--transition);
+}
+
+.share-btn:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
 }
 
 .share-btn-primary {
@@ -669,7 +716,7 @@
 .share-tip {
   font-size: 11px;
   line-height: 1.6;
-  color: #6F7C70;
+  color: #556157;
 }
 
 .share-tip strong {
@@ -699,7 +746,7 @@
 }
 
 .share-stage-dim {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   letter-spacing: 0.03em;
   color: #334338;
 }
@@ -769,48 +816,101 @@
 .share-attribution {
   font-size: 10.5px;
   line-height: 1.5;
-  color: #6F7C70;
+  color: #556157;
   text-align: center;
   padding: 0 4px;
 }
 
+.share-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+  background: #FBFAF7;
+  border: 1.5px solid #748873;
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  color: #1C3E24;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.share-reset-btn:hover {
+  background: #E8F5E9;
+  border-color: #1C3E24;
+}
+
+.share-reset-btn:focus-visible {
+  outline: 3px solid #1C3E24;
+  outline-offset: 2px;
+}
+
+.share-reset-btn[hidden] {
+  display: none;
+}
+
 /* ── Responsive ── */
 @media (max-width: 980px) {
-  .share-workspace {
+  .share-workspace,
+  .share-gate-grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
-    padding: 20px 16px 48px;
+    gap: 20px;
+  }
+
+  .share-workspace {
+    padding: 18px 16px 44px;
   }
 
   .share-gate-wrap {
-    padding: 20px 16px 48px;
+    padding: 18px 16px 44px;
   }
 
   .share-hero {
-    padding: 10px 16px 4px;
+    padding: 20px 16px 6px;
   }
 
-  .share-nav {
-    padding: 16px;
-  }
-
-  .share-controls {
+  .share-controls,
+  .share-gate-card,
+  .share-gate-preview {
     box-shadow: 3px 3px 0 #0D1117;
   }
 
-  .share-canvas-frame canvas {
+  .share-canvas-frame canvas,
+  .share-gate-canvas-wrap canvas {
     max-height: 58vh;
   }
 }
 
 @media (max-width: 520px) {
-  .share-nav-link {
-    padding: 6px 9px;
-    font-size: 10px;
+  .share-hero {
+    padding: 18px 14px 4px;
+  }
+
+  .share-workspace {
+    padding: 16px 14px 36px;
+    gap: 18px;
+  }
+
+  .share-gate-wrap {
+    padding: 16px 14px 36px;
+  }
+
+  .share-controls {
+    padding: 16px;
+    gap: 14px;
   }
 
   .share-title {
     font-size: 30px;
+  }
+
+  .share-field input,
+  .share-field select {
+    font-size: 16px;
   }
 
   .share-canvas-frame {
@@ -826,8 +926,10 @@
     grid-template-columns: 1fr;
   }
 
-  .share-gate-card {
-    padding: 18px;
+  .share-gate-card,
+  .share-gate-preview {
+    padding: 18px 16px;
+    gap: 14px;
   }
 
   .share-gate-row {
@@ -838,6 +940,7 @@
 @media (prefers-reduced-motion: reduce) {
   .share-chip,
   .share-btn,
+  .share-reset-btn,
   .share-dropzone,
   .share-canvas-frame canvas {
     transition: none;

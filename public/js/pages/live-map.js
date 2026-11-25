@@ -1,17 +1,17 @@
 async function renderLiveMap(params) {
   loadCss('/css/map.css?v=71');
 
-  const eventId  = params.eventId;
+  const eventId = params.eventId;
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   const hasAdminParam = params.query?.admin === '1' || (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1');
   const hasAdminSession = typeof window !== 'undefined' && Boolean(
     sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser')
   );
   // Panitia / Admin mode on live map is strictly active only when ?admin=1 is explicitly provided
-  const isAdmin  = typeof window !== 'undefined' && Boolean(
+  const isAdmin = typeof window !== 'undefined' && Boolean(
     hasAdminParam && (hasAdminSession || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   );
-  const app      = document.getElementById('app');
+  const app = document.getElementById('app');
 
   // ── Clean & Legal Vector SVGs (Google Maps / Clean Open-Standard Style) ──
   const ICONS = {
@@ -473,8 +473,8 @@ async function renderLiveMap(params) {
   let savedPin = sessionStorage.getItem('event_pin_' + eventId) || '';
 
   function renderSponsorStrip(sponsors) {
-    const strip  = document.getElementById('supporterStrip');
-    const logos  = document.getElementById('supporterStripLogos');
+    const strip = document.getElementById('supporterStrip');
+    const logos = document.getElementById('supporterStripLogos');
     if (!strip || !logos) return;
     if (!sponsors || !sponsors.length) {
       strip.style.display = 'none';
@@ -572,7 +572,7 @@ async function renderLiveMap(params) {
       throw new Error('Event ini dibatasi dengan PIN Akses. Silakan masukkan PIN Akses dari panitia.');
     }
 
-    riders      = await rRes.json();
+    riders = await rRes.json();
     if (!Array.isArray(riders)) riders = [];
     checkpoints = cpRes.ok ? await cpRes.json() : [];
     const initialSplits = spRes.ok ? await spRes.json() : [];
@@ -640,8 +640,8 @@ async function renderLiveMap(params) {
 
   // ── Kilometer Milestone Markers Layer Group (Adaptive Zoom & CycloPon Identity) ──
   const kmMarkersLayerGroup = L.layerGroup().addTo(map);
-  let kmMilestonesData      = [];
-  let showKmMilestones      = true;
+  let kmMilestonesData = [];
+  let showKmMilestones = true;
 
   function updateKmMilestones() {
     if (!kmMarkersLayerGroup) return;
@@ -663,8 +663,8 @@ async function renderLiveMap(params) {
     }
 
     const isZoomedOut = step >= 5;
-    const badgeSize   = isZoomedOut ? 29 : 25;
-    const anchor      = Math.round(badgeSize / 2);
+    const badgeSize = isZoomedOut ? 29 : 25;
+    const anchor = Math.round(badgeSize / 2);
 
     const bounds = map.getBounds().pad(0.25);
     for (let i = 0; i < kmMilestonesData.length; i++) {
@@ -711,7 +711,7 @@ async function renderLiveMap(params) {
   }
 
   // ── Floating Layer Picker Popover Toggle ──
-  const fabLayerToggle  = document.getElementById('fabLayerToggle');
+  const fabLayerToggle = document.getElementById('fabLayerToggle');
   const fabLayerPopover = document.getElementById('fabLayerPopover');
 
   function closeLayerPopover() {
@@ -771,12 +771,12 @@ async function renderLiveMap(params) {
   }
 
   // ── Auto-Mapping Rider & Device State ──
-  const riderById    = {};  // numeric deviceId → rider
-  const bibToRider   = {};  // "001" or "BIB-001" → rider
-  const markerById    = {};  // numeric deviceId → Leaflet marker
-  const progressById  = {};  // numeric deviceId → { progressPct, distanceKm, speed, lastTime }
+  const riderById = {};  // numeric deviceId → rider
+  const bibToRider = {};  // "001" or "BIB-001" → rider
+  const markerById = {};  // numeric deviceId → Leaflet marker
+  const progressById = {};  // numeric deviceId → { progressPct, distanceKm, speed, lastTime }
   const telemetryById = {}; // numeric deviceId → { history: [], movingAvg, currentSpeed, remainingKm, etaTime, etaDuration, etaBadgeClass, isFinished }
-  let searchQuery     = '';
+  let searchQuery = '';
 
   riders.forEach(r => {
     const cleanBib = String(r.bib).trim();
@@ -802,7 +802,7 @@ async function renderLiveMap(params) {
   const mapViewport = document.getElementById('mapViewport');
   const btnToggleSidebar = document.getElementById('btnToggleSidebar');
   const btnMobileCloseSidebar = document.getElementById('btnMobileCloseSidebar');
-  const btnMobileOpenSidebar  = document.getElementById('btnMobileOpenSidebar');
+  const btnMobileOpenSidebar = document.getElementById('btnMobileOpenSidebar');
 
   function setSidebarCollapsed(collapsed) {
     mapViewport.classList.toggle('sidebar-collapsed', collapsed);
@@ -861,7 +861,7 @@ async function renderLiveMap(params) {
         myRiderId = cfg.rider.id;
         myBib = cfg.rider.bib;
       }
-    } catch {}
+    } catch { }
 
     if (!myBib && targetBibParam) {
       myBib = targetBibParam;
@@ -916,17 +916,17 @@ async function renderLiveMap(params) {
 
   // ── Komoot Elevation Drawer & Chart Engine ──
   const btnToggleElevation = document.getElementById('btnToggleElevation');
-  const btnCloseElevation  = document.getElementById('btnCloseElevation');
-  const elevationDrawer    = document.getElementById('elevationDrawer');
-  const mapContainer       = document.getElementById('mapContainer');
-  const canvas             = document.getElementById('elevationCanvas');
-  const tooltip            = document.getElementById('elevTooltip');
+  const btnCloseElevation = document.getElementById('btnCloseElevation');
+  const elevationDrawer = document.getElementById('elevationDrawer');
+  const mapContainer = document.getElementById('mapContainer');
+  const canvas = document.getElementById('elevationCanvas');
+  const tooltip = document.getElementById('elevTooltip');
 
-  let gpxData         = null;
+  let gpxData = null;
   let activeHoverDist = null;
-  let scrubMarker     = null;
-  let routeCoords     = [];
-  let routeKm         = 0;
+  let scrubMarker = null;
+  let routeCoords = [];
+  let routeKm = 0;
 
   const scrubIcon = L.divIcon({
     html: `<div style="
@@ -1075,7 +1075,7 @@ async function renderLiveMap(params) {
     const rect = canvas.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
 
-    canvas.width  = Math.round(rect.width * dpr);
+    canvas.width = Math.round(rect.width * dpr);
     canvas.height = Math.round(rect.height * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -1104,7 +1104,7 @@ async function renderLiveMap(params) {
 
     // ── Horizontal Grid Lines & Elevation Labels ──
     const yTicks = 4;
-    ctx.font = '500 10px Inter, system-ui, sans-serif';
+    ctx.font = '500 10px "Plus Jakarta Sans", system-ui, sans-serif';
     ctx.fillStyle = '#94A3B8';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
@@ -1195,7 +1195,7 @@ async function renderLiveMap(params) {
       ctx.fill();
       ctx.shadowBlur = 0;
 
-      ctx.font = 'bold 9px Inter, system-ui, sans-serif';
+      ctx.font = 'bold 9px "Barlow", "Plus Jakarta Sans", system-ui, sans-serif';
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1243,7 +1243,7 @@ async function renderLiveMap(params) {
         ctx.shadowBlur = 0;
 
         // Summit label tag
-        ctx.font = '900 8.5px Inter, system-ui, sans-serif';
+        ctx.font = '900 8.5px "Barlow", "Plus Jakarta Sans", system-ui, sans-serif';
         ctx.fillStyle = climb.color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
@@ -1279,7 +1279,7 @@ async function renderLiveMap(params) {
       ctx.fill();
 
       // BIB tag above dot
-      ctx.font = '800 9px Inter, system-ui, sans-serif';
+      ctx.font = '800 9px "Barlow", "Plus Jakarta Sans", system-ui, sans-serif';
       ctx.fillStyle = prog.isOffRoute ? '#EF4444' : '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
@@ -1315,7 +1315,7 @@ async function renderLiveMap(params) {
         ctx.shadowBlur = 0;
 
         // Label above
-        ctx.font = '800 9px Inter, system-ui, sans-serif';
+        ctx.font = '800 9px "Barlow", "Plus Jakarta Sans", system-ui, sans-serif';
         ctx.fillStyle = '#334338';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
@@ -1467,7 +1467,7 @@ async function renderLiveMap(params) {
       cotTimer = null;
     }
     if (cotMarker && map) {
-      try { map.removeLayer(cotMarker); } catch (e) {}
+      try { map.removeLayer(cotMarker); } catch (e) { }
       cotMarker = null;
     }
     window.removeEventListener('beforeunload', stopCotTimer);
@@ -1636,7 +1636,7 @@ async function renderLiveMap(params) {
         });
 
         const popupHtml = `
-          <div style="font-family:Inter,sans-serif;min-width:180px">
+          <div style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;min-width:180px">
             <div style="font-size:11px;font-weight:800;color:var(--color-sage);text-transform:uppercase;letter-spacing:0.5px">CHECKPOINT ${idx + 1}</div>
             <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin:4px 0">${cp.name}</div>
             <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);border-top:1px solid var(--border);padding-top:6px;margin-top:6px">
@@ -1823,9 +1823,9 @@ async function renderLiveMap(params) {
   if (event.gpx_path) {
     try {
       const gpxText = await eventFetch(event.gpx_path).then(r => r.text());
-      gpxData       = parseGpxData(gpxText);
-      routeCoords   = gpxData.coords;
-      routeKm       = gpxData.stats.totalKm;
+      gpxData = parseGpxData(gpxText);
+      routeCoords = gpxData.coords;
+      routeKm = gpxData.stats.totalKm;
 
       if (routeCoords.length) {
         // Warm halo/casing — soft cream border so route stands out on any tile layer
@@ -1851,8 +1851,8 @@ async function renderLiveMap(params) {
 
         // Start / Finish button markers — unified cohesive button style
         const startPt = routeCoords[0];
-        const endPt   = routeCoords[routeCoords.length - 1];
-        const isLoop  = Math.abs(startPt[0] - endPt[0]) < 0.0005 && Math.abs(startPt[1] - endPt[1]) < 0.0005;
+        const endPt = routeCoords[routeCoords.length - 1];
+        const isLoop = Math.abs(startPt[0] - endPt[0]) < 0.0005 && Math.abs(startPt[1] - endPt[1]) < 0.0005;
 
         if (isLoop) {
           const loopIcon = L.divIcon({
@@ -2234,21 +2234,21 @@ async function renderLiveMap(params) {
             <div class="popup-cp-title">🚩 CHECKPOINTS & CUT-OFF TIME</div>
             <div class="popup-cp-grid">
               ${checkpoints.map((cp, idx) => {
-                const sp = splitsCache[`${rider.id}_${cp.id}`];
-                if (sp) {
-                  const d = new Date(sp.arrival_time);
-                  const tStr = !isNaN(d.getTime()) ? d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : sp.arrival_time;
-                  const isPass = sp.status === 'IN_TIME';
-                  return `<div class="cp-split-chip ${isPass ? 'split-pass' : 'split-fail'}" title="${cp.name}">
-                    <span>${cp.name.split(' ')[0] || `CP${idx+1}`}: <strong>${tStr}</strong></span>
+      const sp = splitsCache[`${rider.id}_${cp.id}`];
+      if (sp) {
+        const d = new Date(sp.arrival_time);
+        const tStr = !isNaN(d.getTime()) ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : sp.arrival_time;
+        const isPass = sp.status === 'IN_TIME';
+        return `<div class="cp-split-chip ${isPass ? 'split-pass' : 'split-fail'}" title="${cp.name}">
+                    <span>${cp.name.split(' ')[0] || `CP${idx + 1}`}: <strong>${tStr}</strong></span>
                     <span>${isPass ? '✓' : '⚠️ COT'}</span>
                   </div>`;
-                } else {
-                  return `<div class="cp-split-chip split-pending" title="${cp.name}">
-                    <span>${cp.name.split(' ')[0] || `CP${idx+1}`}: ${cp.km_distance}km</span>
+      } else {
+        return `<div class="cp-split-chip split-pending" title="${cp.name}">
+                    <span>${cp.name.split(' ')[0] || `CP${idx + 1}`}: ${cp.km_distance}km</span>
                   </div>`;
-                }
-              }).join('')}
+      }
+    }).join('')}
             </div>
           </div>
         ` : ''}
@@ -2616,7 +2616,7 @@ async function renderLiveMap(params) {
         rankDisplay = 'COT';
         rankClass += ' rank-dnf';
       } else if (raceRank) {
-        rankDisplay = raceRank <= 3 ? ['🥇','🥈','🥉'][raceRank - 1] : `#${raceRank}`;
+        rankDisplay = raceRank <= 3 ? ['🥇', '🥈', '🥉'][raceRank - 1] : `#${raceRank}`;
         if (raceRank <= 3) rankClass += ' top';
       } else {
         rankDisplay = `#${i + 1}`;
@@ -2659,7 +2659,7 @@ async function renderLiveMap(params) {
         let cpDisplayHtml = '';
         if (latSp) {
           const arrD = new Date(latSp.arrival_time);
-          const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
+          const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : latSp.arrival_time;
           const isPass = latSp.status === 'IN_TIME';
           let cleanCpName = (latSp.cp_name || 'CP').replace(/\s*\([^)]*\)/g, '').trim();
           cpDisplayHtml = `
@@ -2783,7 +2783,7 @@ async function renderLiveMap(params) {
         if (cpRow) {
           if (latSp) {
             const arrD = new Date(latSp.arrival_time);
-            const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : latSp.arrival_time;
+            const tStr = !isNaN(arrD.getTime()) ? arrD.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : latSp.arrival_time;
             const isPass = latSp.status === 'IN_TIME';
             let cleanCpName = (latSp.cp_name || 'CP').replace(/\s*\([^)]*\)/g, '').trim();
             cpRow.style.display = 'flex';
@@ -2972,13 +2972,13 @@ async function renderLiveMap(params) {
   }
 
   // ── Active SOS Alerts System ──
-  const emergencyBar        = document.getElementById('liveEmergencyBar');
-  const emergencyText       = document.getElementById('emergencyText');
-  const btnFocusEmergency   = document.getElementById('btnFocusEmergency');
+  const emergencyBar = document.getElementById('liveEmergencyBar');
+  const emergencyText = document.getElementById('emergencyText');
+  const btnFocusEmergency = document.getElementById('btnFocusEmergency');
   const btnResolveEmergency = document.getElementById('btnResolveEmergency');
-  let currentAlerts         = [];
-  let alertMarkers          = {};
-  let notifiedAlertIds      = new Set();
+  let currentAlerts = [];
+  let alertMarkers = {};
+  let notifiedAlertIds = new Set();
 
   function playEmergencyChime() {
     try {
@@ -2996,7 +2996,7 @@ async function renderLiveMap(params) {
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + 0.45);
-    } catch (err) {}
+    } catch (err) { }
   }
 
   async function checkActiveAlerts() {
@@ -3034,7 +3034,7 @@ async function renderLiveMap(params) {
           // Fallback to rider current map marker position if alert coordinates are null
           if (!alertLat || !alertLng) {
             const rm = (a.rider_id && riderMarkers[a.rider_id]) ||
-                       (a.rider_bib && bibToRider[a.rider_bib] && riderMarkers[bibToRider[a.rider_bib].id]);
+              (a.rider_bib && bibToRider[a.rider_bib] && riderMarkers[bibToRider[a.rider_bib].id]);
             if (rm && typeof rm.getLatLng === 'function') {
               const pos = rm.getLatLng();
               alertLat = pos.lat;
@@ -3252,7 +3252,7 @@ async function renderLiveMap(params) {
   function updateReplayCot(targetTimeMs) {
     if (!cotConfig || !cotConfig.enabled || cotConfig.mode === 'off' || !routeCoords || !routeCoords.length || !cotConfig.start_ms || !cotConfig.pace) {
       if (cotMarker && map) {
-        try { map.removeLayer(cotMarker); } catch (e) {}
+        try { map.removeLayer(cotMarker); } catch (e) { }
         cotMarker = null;
       }
       return 0;
@@ -3632,7 +3632,7 @@ async function renderLiveMap(params) {
       historyPollInterval = null;
     }
     if (liveWs) {
-      try { liveWs.close(); } catch (e) {}
+      try { liveWs.close(); } catch (e) { }
       liveWs = null;
     }
     if (cotTimer) {
@@ -3648,7 +3648,7 @@ async function renderLiveMap(params) {
       try {
         const cotRes = await eventFetch(`/api/events/${eventId}/virtual-cot`);
         if (cotRes.ok) cotConfig = await cotRes.json();
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const dot = document.getElementById('liveDot');
@@ -3747,7 +3747,7 @@ async function renderLiveMap(params) {
 
     // Collapse elevation drawer on mobile if open to give full view
     if (isMobile && typeof toggleElevation === 'function') {
-      try { toggleElevation(false); } catch (e) {}
+      try { toggleElevation(false); } catch (e) { }
     }
 
     // 5. Apply first frame and start timer
@@ -3802,7 +3802,7 @@ async function renderLiveMap(params) {
     }
 
     // RISK 1: Re-sync to latest live positions and restore polling + WebSocket
-    syncLatestPositionsFromHistory().catch(() => {});
+    syncLatestPositionsFromHistory().catch(() => { });
     scheduleNextFallbackSync();
     connectWs();
 
@@ -3980,8 +3980,8 @@ async function renderLiveMap(params) {
       const mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
         ? 'video/mp4;codecs=avc1'
         : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-            ? 'video/webm;codecs=vp9'
-            : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : ''));
+          ? 'video/webm;codecs=vp9'
+          : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : ''));
 
       activeScreenRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
 
@@ -4059,7 +4059,7 @@ async function renderLiveMap(params) {
     if (activeScreenRecorder && activeScreenRecorder.state === 'recording') {
       try {
         activeScreenRecorder.stop();
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
@@ -4149,8 +4149,8 @@ async function renderLiveMap(params) {
     const mimeType = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')
       ? 'video/mp4;codecs=avc1'
       : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-          ? 'video/webm;codecs=vp9'
-          : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : ''));
+        ? 'video/webm;codecs=vp9'
+        : (MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : ''));
 
     const stream = canvas.captureStream(30);
     const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
@@ -4471,7 +4471,7 @@ async function renderLiveMap(params) {
   // ── Head-to-Head Comparison State & Engine ──
   let comparingRiderId = null;
 
-  window.triggerCompareRider = function(riderId) {
+  window.triggerCompareRider = function (riderId) {
     if (!comparingRiderId) {
       comparingRiderId = riderId;
       const rA = riders.find(r => r.id === riderId);
@@ -4618,7 +4618,7 @@ async function renderLiveMap(params) {
         liveWsReconnectTimer = null;
       }
       if (liveWs) {
-        try { liveWs.close(); } catch (e) {}
+        try { liveWs.close(); } catch (e) { }
         liveWs = null;
       }
       stopCotTimer();
@@ -4635,9 +4635,9 @@ async function renderLiveMap(params) {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsPin = sessionStorage.getItem('event_pin_' + eventId) || '';
     const wsQuery = `event_id=${eventId}${wsPin ? `&pin=${encodeURIComponent(wsPin)}` : ''}`;
-    const ws    = new WebSocket(`${proto}//${window.location.host}/traccar-ws?${wsQuery}`);
-    liveWs      = ws;
-    const dot   = document.getElementById('liveDot');
+    const ws = new WebSocket(`${proto}//${window.location.host}/traccar-ws?${wsQuery}`);
+    liveWs = ws;
+    const dot = document.getElementById('liveDot');
     const statusText = document.getElementById('liveStatusText');
 
     if (dot) { dot.className = 'live-dot connecting'; dot.classList.remove('pulse'); }
@@ -4650,7 +4650,7 @@ async function renderLiveMap(params) {
       if (statusText) { statusText.textContent = '● LIVE STREAM'; }
       console.log('[LiveMap] WebSocket connected');
       // Backfill any positions missed during disconnect
-      syncLatestPositionsFromHistory().catch(() => {});
+      syncLatestPositionsFromHistory().catch(() => { });
     };
 
     ws.onmessage = e => {
@@ -4660,7 +4660,7 @@ async function renderLiveMap(params) {
 
         // Immediate reaction to emergency SOS alert broadcast
         if (data.type === 'alert' || data.alerts) {
-          checkActiveAlerts().catch(() => {});
+          checkActiveAlerts().catch(() => { });
         }
 
         // 1. Auto-Mapping Traccar Devices to Riders by BIB Number!
@@ -4777,7 +4777,7 @@ async function renderLiveMap(params) {
           attributes: {}
         });
       });
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Trigger position sync fallback only when WebSocket is not actively streaming
@@ -4840,7 +4840,7 @@ async function renderLiveMap(params) {
       liveWsReconnectTimer = null;
     }
     if (liveWs) {
-      try { liveWs.close(); } catch (e) {}
+      try { liveWs.close(); } catch (e) { }
       liveWs = null;
     }
   }, { once: true });

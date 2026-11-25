@@ -12,6 +12,7 @@ async function renderRegisterPage(params) {
       <!-- ── Pro Editorial Top Navigation Bar ── -->
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
+          <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
           </div>
@@ -21,11 +22,6 @@ async function renderRegisterPage(params) {
           <a href="/" data-link class="btn-guide-nav" title="Kembali ke Beranda" aria-label="Beranda">
             <span class="nav-label-full">BERANDA</span>
             <span class="nav-label-short">BERANDA</span>
-          </a>
-
-          <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
-            <span class="nav-label-full">PANDUAN</span>
-            <span class="nav-label-short">PANDUAN</span>
           </a>
 
           <a href="/install" data-link class="btn-guide-nav" title="Tutorial Install Aplikasi PWA di HP" aria-label="Install aplikasi">
@@ -58,6 +54,27 @@ async function renderRegisterPage(params) {
           </p>
         </div>
 
+        <!-- Tab Switcher: Pendaftaran & Roster | Panduan Pengguna -->
+        <div class="reg-tabs-bar" role="tablist" aria-label="Menu daftar event dan panduan">
+          <button type="button" class="reg-tab-btn active" id="tabBtnRegForm" role="tab" aria-selected="true" aria-controls="regTabPanelForm" data-reg-tab="register">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            <span>Pendaftaran &amp; Roster</span>
+          </button>
+          <button type="button" class="reg-tab-btn" id="tabBtnRegGuide" role="tab" aria-selected="false" aria-controls="regTabPanelGuide" data-reg-tab="panduan" tabindex="-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            <span>Panduan Pengguna</span>
+          </button>
+        </div>
+
+        <div id="regTabPanelForm" class="reg-tab-panel" role="tabpanel" aria-labelledby="tabBtnRegForm">
         <!-- Success Result Card (Hidden by default) -->
         <div id="regSuccessCard" class="reg-success-card" style="display:none">
           <div class="reg-success-banner">
@@ -307,6 +324,23 @@ async function renderRegisterPage(params) {
               </div>
             </div>
 
+            <!-- Conditional Event Access PIN (shown only when selected event is locked) -->
+            <div class="form-group-reg" id="regEventPinGroup" style="display:none;margin-bottom:20px">
+              <label class="form-label-reg" for="regEventPin">
+                PIN Akses Event <span class="req">*</span>
+                <span class="hint">(Khusus event yang dikunci panitia)</span>
+              </label>
+              <div class="reg-field-wrap">
+                <span class="reg-field-icon" aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </span>
+                <input type="password" id="regEventPin" class="form-input-reg" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="Masukkan PIN akses dari panitia">
+              </div>
+              <p style="margin:6px 0 0;font-size:11.5px;line-height:1.45;color:#475569">
+                Event ini sedang dikunci panitia. Jika seharusnya terbuka untuk umum, panitia dapat mengosongkan PIN Akses Event di Panel Panitia.
+              </p>
+            </div>
+
             <!-- Privacy Guarantee Banner -->
             <div class="privacy-notice">
               <span style="font-size:16px">🔒</span>
@@ -360,6 +394,9 @@ async function renderRegisterPage(params) {
             <input type="range" id="rosterScrollSlider" class="roster-scroll-slider" min="0" max="100" value="0" aria-label="Geser tabel daftar peserta ke kiri atau kanan">
           </div>
         </div>
+        </div>
+
+        <div id="regTabPanelGuide" class="reg-tab-panel guide-page reg-guide-embedded" role="tabpanel" aria-labelledby="tabBtnRegGuide" hidden></div>
       </div>
 
       <!-- ── Pro Editorial Footer ── -->
@@ -367,6 +404,7 @@ async function renderRegisterPage(params) {
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>
@@ -388,7 +426,7 @@ async function renderRegisterPage(params) {
   `;
 
   // ── Safe HTML Escape Helper ──
-  const escapeHtml = window.escapeHtml || function(str) {
+  const escapeHtml = window.escapeHtml || function (str) {
     if (str == null) return '';
     return String(str)
       .replace(/&/g, '&amp;')
@@ -467,7 +505,7 @@ async function renderRegisterPage(params) {
     const rider = registeredRiderData?.rider || { bib: '001' };
     const traccar = registeredRiderData?.traccar || {};
     const osmandUrl = traccar?.osmandUrl || `${window.location.origin}/api/osmand`;
-    
+
     // Normalize numeric bib to 3 digits (e.g. 001)
     let rawBib = rider.bib != null ? String(rider.bib).trim() : '001';
     const bib = (/^\d+$/.test(rawBib) && rawBib.length < 3) ? rawBib.padStart(3, '0') : rawBib;
@@ -496,7 +534,7 @@ async function renderRegisterPage(params) {
     const btnDeepLink = document.getElementById('btnTraccarDeepLink');
     if (btnDeepLink) {
       btnDeepLink.href = deepLinkUrl;
-      btnDeepLink.onclick = function(e) {
+      btnDeepLink.onclick = function (e) {
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (!isMobile) {
           e.preventDefault();
@@ -522,6 +560,23 @@ async function renderRegisterPage(params) {
     if (elId) elId.textContent = bib;
   }
 
+  const eventPinGroup = document.getElementById('regEventPinGroup');
+  const eventPinInput = document.getElementById('regEventPin');
+
+  function syncRegEventPinField() {
+    if (!eventPinGroup || !eventPinInput) return;
+    const ev = allEvents.find(item => Number(item.id) === Number(eventSelect.value));
+    const required = !!(ev && ev.access_pin_required);
+    eventPinGroup.style.display = required ? 'block' : 'none';
+    eventPinInput.required = required;
+    if (required) {
+      const savedPin = sessionStorage.getItem('event_pin_' + ev.id) || '';
+      if (savedPin && !eventPinInput.value) eventPinInput.value = savedPin;
+    } else {
+      eventPinInput.value = '';
+    }
+  }
+
   // ── Fetch Events ──
   async function loadEvents() {
     try {
@@ -531,6 +586,7 @@ async function renderRegisterPage(params) {
 
       if (!allEvents.length) {
         eventSelect.innerHTML = '<option value="">Belum ada event dibuka</option>';
+        syncRegEventPinField();
         return;
       }
 
@@ -540,13 +596,16 @@ async function renderRegisterPage(params) {
 
       eventSelect.innerHTML = allEvents.map(ev => {
         const isSelected = paramEventId ? ev.id === paramEventId : (ev.active ? true : false);
-        return `<option value="${ev.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(ev.name)} (${escapeHtml(ev.date || 'TBA')})</option>`;
+        const lockLabel = ev.access_pin_required ? ' · Terkunci PIN' : '';
+        return `<option value="${ev.id}" ${isSelected ? 'selected' : ''}>${escapeHtml(ev.name)} (${escapeHtml(ev.date || 'TBA')})${lockLabel}</option>`;
       }).join('');
 
       currentEventId = Number(eventSelect.value) || allEvents[0].id;
+      syncRegEventPinField();
       loadRoster(currentEventId);
     } catch (err) {
       eventSelect.innerHTML = `<option value="">${err.message}</option>`;
+      syncRegEventPinField();
     }
   }
 
@@ -554,7 +613,10 @@ async function renderRegisterPage(params) {
   async function loadRoster(eventId) {
     if (!eventId) return;
     try {
-      const res = await fetch(`/api/events/${eventId}/riders`);
+      const savedPin = sessionStorage.getItem('event_pin_' + eventId) || '';
+      const res = await fetch(`/api/events/${eventId}/riders`, {
+        headers: savedPin ? { 'x-event-pin': savedPin } : {}
+      });
       if (!res.ok) {
         rosterBody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:#DC2626">Akses roster dibatasi panitia.</td></tr>`;
         rosterCountBadge.textContent = '0 Rider';
@@ -614,6 +676,7 @@ async function renderRegisterPage(params) {
   // ── Event Selection Changed ──
   eventSelect.addEventListener('change', () => {
     currentEventId = Number(eventSelect.value);
+    syncRegEventPinField();
     loadRoster(currentEventId);
   });
 
@@ -632,6 +695,8 @@ async function renderRegisterPage(params) {
     const name = document.getElementById('regName').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
     const role = document.getElementById('regRole').value;
+    const eventPin = eventPinInput ? eventPinInput.value.trim() : '';
+    const selectedEvent = allEvents.find(item => Number(item.id) === eventId);
 
     if (!eventId) {
       errMsg.textContent = 'Pilih event terlebih dahulu.';
@@ -648,6 +713,12 @@ async function renderRegisterPage(params) {
       errMsg.style.display = 'block';
       return;
     }
+    if (selectedEvent && selectedEvent.access_pin_required && !eventPin) {
+      errMsg.textContent = 'Event ini terkunci panitia. Masukkan PIN Akses Event dari panitia.';
+      errMsg.style.display = 'block';
+      eventPinInput?.focus();
+      return;
+    }
 
     btnSubmit.disabled = true;
     btnSubmit.innerHTML = `<span>⏳</span> Mendaftarkan...`;
@@ -660,7 +731,8 @@ async function renderRegisterPage(params) {
           event_id: eventId,
           name,
           phone,
-          role
+          role,
+          event_pin: eventPin || undefined
         })
       });
 
@@ -669,6 +741,9 @@ async function renderRegisterPage(params) {
         throw new Error(data.error || 'Pendaftaran gagal. Silakan coba lagi.');
       }
 
+      if (eventPin) {
+        sessionStorage.setItem('event_pin_' + eventId, eventPin);
+      }
       registeredRiderData = data;
 
       // Populate Success Card
@@ -699,14 +774,18 @@ async function renderRegisterPage(params) {
       window.scrollTo({ top: successCard.offsetTop - 40, behavior: 'smooth' });
 
       // Add to current roster list and re-render
-      currentRiders.unshift({
-        id: data.rider.id,
-        bib: data.rider.bib,
-        name: data.rider.name,
-        role: data.rider.role,
-        color: data.rider.color
-      });
-      renderRosterTable(currentRiders);
+      if (eventPin) {
+        loadRoster(eventId);
+      } else {
+        currentRiders.unshift({
+          id: data.rider.id,
+          bib: data.rider.bib,
+          name: data.rider.name,
+          role: data.rider.role,
+          color: data.rider.color
+        });
+        renderRosterTable(currentRiders);
+      }
 
       showToast(`Pendaftaran berhasil! Nomor BIB Anda: #${data.rider.bib}`, 'success');
     } catch (err) {
@@ -750,7 +829,106 @@ async function renderRegisterPage(params) {
     window.scrollTo({ top: formCard.offsetTop - 40, behavior: 'smooth' });
   });
 
+  // ── Tab Switcher (Pendaftaran & Roster <-> Panduan Pengguna) ──
+  const tabBtns = Array.from(document.querySelectorAll('.reg-tab-btn'));
+  const tabPanelForm = document.getElementById('regTabPanelForm');
+  const tabPanelGuide = document.getElementById('regTabPanelGuide');
+  let guideRendered = false;
+
+  function ensureGuideRendered() {
+    if (guideRendered || !tabPanelGuide) return;
+    if (typeof window.renderGuidePanel === 'function') {
+      window.renderGuidePanel(tabPanelGuide, {
+        onOpenRegister: () => {
+          switchRegTab('register', { updateUrl: true });
+          const targetCard = successCard && successCard.style.display !== 'none' ? successCard : formCard;
+          if (targetCard) {
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      });
+      guideRendered = true;
+    }
+  }
+
+  function switchRegTab(tabName, opts = {}) {
+    const isGuide = tabName === 'panduan' || tabName === 'guide';
+    const nextTab = isGuide ? 'panduan' : 'register';
+    const updateUrl = opts.updateUrl !== false;
+
+    tabBtns.forEach(btn => {
+      const active = btn.dataset.regTab === nextTab;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+      btn.setAttribute('tabindex', active ? '0' : '-1');
+    });
+
+    if (tabPanelForm) tabPanelForm.hidden = isGuide;
+    if (tabPanelGuide) tabPanelGuide.hidden = !isGuide;
+
+    if (isGuide) {
+      ensureGuideRendered();
+      document.title = 'Panduan Pengguna - Daftar Event CycloPon';
+      if (typeof tabPanelGuide?._refreshGuideScroll === 'function') {
+        requestAnimationFrame(() => tabPanelGuide._refreshGuideScroll());
+      }
+      if (opts.scrollToSection) {
+        const sec = tabPanelGuide?.querySelector(`#${opts.scrollToSection}`);
+        if (sec) {
+          requestAnimationFrame(() => sec.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+        }
+      }
+    } else {
+      document.title = 'Daftar Event — CycloPon Live Tracker';
+      if (typeof tabPanelGuide?._refreshGuideScroll === 'function') {
+        tabPanelGuide._refreshGuideScroll();
+      }
+      requestAnimationFrame(syncRosterSlider);
+    }
+
+    if (updateUrl && window.history && typeof window.history.replaceState === 'function') {
+      const nextUrl = new URL(window.location.href);
+      if (isGuide) {
+        nextUrl.searchParams.set('tab', 'panduan');
+      } else {
+        nextUrl.searchParams.delete('tab');
+        nextUrl.searchParams.delete('section');
+      }
+      window.history.replaceState({}, '', nextUrl.pathname + nextUrl.search + nextUrl.hash);
+    }
+  }
+
+  tabBtns.forEach((btn, idx) => {
+    btn.addEventListener('click', () => {
+      switchRegTab(btn.dataset.regTab, { updateUrl: true });
+    });
+
+    btn.addEventListener('keydown', (e) => {
+      let targetIdx = null;
+      if (e.key === 'ArrowRight') targetIdx = (idx + 1) % tabBtns.length;
+      else if (e.key === 'ArrowLeft') targetIdx = (idx - 1 + tabBtns.length) % tabBtns.length;
+      else if (e.key === 'Home') targetIdx = 0;
+      else if (e.key === 'End') targetIdx = tabBtns.length - 1;
+
+      if (targetIdx !== null) {
+        e.preventDefault();
+        const targetBtn = tabBtns[targetIdx];
+        targetBtn.focus();
+        switchRegTab(targetBtn.dataset.regTab, { updateUrl: true });
+      }
+    });
+  });
+
   // Initial load
+  const initQuery = params?.query || {};
+  const initUrlParams = new URLSearchParams(window.location.search);
+  const initialTab = initQuery.tab || initUrlParams.get('tab');
+  const initialSection = initQuery.section || initUrlParams.get('section') || (window.location.hash ? window.location.hash.slice(1) : null);
+
+  if (initialTab === 'panduan' || initialTab === 'guide') {
+    switchRegTab('panduan', { updateUrl: false, scrollToSection: initialSection });
+  }
+
   updateTraccarConfig(45);
   loadEvents();
 }

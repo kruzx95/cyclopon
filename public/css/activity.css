@@ -110,7 +110,7 @@
 }
 
 .event-detail-card .dossier-event-location {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
   color: #6B7280;
@@ -200,7 +200,7 @@
 }
 
 .tab-count-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   padding: 2px 7px;
@@ -274,7 +274,7 @@
   border: 1.5px solid #E5E7EB;
   border-radius: 8px;
   padding: 7px 14px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 700;
   color: #4B5563;
@@ -337,7 +337,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 900;
   flex-shrink: 0;
@@ -386,7 +386,7 @@
 }
 
 .bib-pill-small {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   background: #0D1117;
@@ -396,7 +396,7 @@
 }
 
 .role-badge-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 800;
   text-transform: uppercase;
@@ -437,7 +437,7 @@
 }
 
 .status-confirmed-pill {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #1C3E24;
@@ -502,7 +502,7 @@
 }
 
 .cp-mono-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 900;
   background: #0D1117;
@@ -512,7 +512,7 @@
 }
 
 .cp-cot-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11.5px;
   font-weight: 800;
   color: #B91C1C;
@@ -555,7 +555,7 @@
 }
 
 .sticky-info-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 800;
   color: #6B7280;
@@ -761,7 +761,7 @@
   }
 
   .landing-nav .brand-name {
-    font-size: 16px;
+    font-size: 19px;
   }
 
   .activity-nav-actions {

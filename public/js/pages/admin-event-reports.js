@@ -5,7 +5,7 @@
  */
 
 async function renderAdminEventReports(params = {}) {
-  loadCss('/css/admin.css');
+  loadCss('/css/admin.css?v=88');
 
   // 1. Admin Authentication Route Guard
   const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
@@ -148,13 +148,13 @@ async function renderAdminEventReports(params = {}) {
                 
                 <div style="display:flex;flex-direction:column;min-width:85px">
                   <span style="font-size:9px;font-weight:900;color:#2563EB;letter-spacing:0.5px">REPLAY TIME MACHINE</span>
-                  <span id="reportReplayClock" style="font-family:monospace;font-size:14px;font-weight:800;color:#111827">--:--:--</span>
+                  <span id="reportReplayClock" style="font-family:var(--font-mono);font-size:14px;font-weight:800;color:#111827">--:--:--</span>
                 </div>
 
                 <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:180px">
-                  <span id="reportReplayStartTime" style="font-size:11px;font-family:monospace;font-weight:700;color:#6B7280">00:00</span>
+                  <span id="reportReplayStartTime" style="font-size:11px;font-family:var(--font-mono);font-weight:700;color:#6B7280">00:00</span>
                   <input type="range" id="reportReplaySlider" min="0" max="100" value="0" step="0.2" style="flex:1;cursor:pointer;accent-color:#0D1117">
-                  <span id="reportReplayEndTime" style="font-size:11px;font-family:monospace;font-weight:700;color:#6B7280">00:00</span>
+                  <span id="reportReplayEndTime" style="font-size:11px;font-family:var(--font-mono);font-weight:700;color:#6B7280">00:00</span>
                 </div>
 
                 <div style="display:flex;gap:4px;background:#F3F4F6;padding:3px;border-radius:6px;border:1px solid #E5E7EB">
@@ -558,7 +558,7 @@ async function renderAdminEventReports(params = {}) {
       // Build rich popup content with Google Maps navigation link & Trail trace
       const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
       const popupHtml = `
-        <div style="font-family:'Inter',system-ui,sans-serif;padding:6px 4px;min-width:240px">
+        <div style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;padding:6px 4px;min-width:240px">
           <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E5E7EB;padding-bottom:8px;margin-bottom:8px">
             <div>
               <div style="font-weight:800;font-size:14px;color:#111827">#${escapeHtml(rider.bib)} ${escapeHtml(rider.name)}</div>
@@ -576,7 +576,7 @@ async function renderAdminEventReports(params = {}) {
             <div>🔋 Sisa: <strong>${lastPoint.battery != null ? lastPoint.battery + '%' : '-'}</strong></div>
           </div>
 
-          <div style="font-size:11px;background:#F9FAFB;padding:6px 8px;border-radius:6px;color:#4B5563;margin-bottom:12px;font-family:monospace">
+          <div style="font-size:11px;background:#F9FAFB;padding:6px 8px;border-radius:6px;color:#4B5563;margin-bottom:12px;font-family:var(--font-mono)">
             Lat, Lng: ${lat.toFixed(5)}, ${lng.toFixed(5)}
           </div>
 
@@ -773,7 +773,7 @@ async function renderAdminEventReports(params = {}) {
             className: 'custom-rider-icon',
             html: `
               <div style="position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center">
-                <div style="width:30px;height:30px;border-radius:50%;background:${baseColor};border:2px solid #FFFFFF;box-shadow:0 3px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:900;font-size:11px;font-family:monospace">
+                <div style="width:30px;height:30px;border-radius:50%;background:${baseColor};border:2px solid #FFFFFF;box-shadow:0 3px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-weight:900;font-size:11px;font-family:var(--font-mono)">
                   ${escapeHtml(rider.bib)}
                 </div>
               </div>
@@ -973,7 +973,7 @@ async function renderAdminEventReports(params = {}) {
           <td>${speed}</td>
           <td>${batt}</td>
           <td style="font-size:12px;color:#4B5563">${lastClock}</td>
-          <td style="font-family:monospace;font-size:11px;color:#6B7280">${coordsText}</td>
+          <td style="font-family:var(--font-mono);font-size:11px;color:#6B7280">${coordsText}</td>
           <td style="text-align:right">
             <div style="display:inline-flex;gap:6px;justify-content:flex-end">
               ${hasCoords ? `

@@ -334,7 +334,7 @@ function formatParticipantPosterMeta(rider, event) {
 
 function cardTitleFromFileName(fileName) {
   const base = String(fileName || '').replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim();
-  if (!base) return 'Poster Gowes';
+  if (!base) return 'Ride Card';
   const words = base.split(/\s+/).filter(Boolean).map(word => {
     if (/^\d+$/.test(word)) return word;
     return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
@@ -346,22 +346,105 @@ function cardTitleFromFileName(fileName) {
  * Caption text reused by the Web Share sheet and clipboard fallback.
  */
 function formatCaption(model) {
-  if (!model || !model.stats) return 'Poster gowes dari CycloPon';
+  if (!model || !model.stats) return 'Ride card dari CycloPon';
   const parts = [`${formatDistance(model.stats.distanceKm)} km`];
-  const duration = formatDuration(model.stats.movingSec || model.stats.elapsedSec);
-  if (duration) parts.push(duration);
+  if (!model.isOfficialRoute && model.hasTime) {
+    const duration = formatDuration(model.stats.movingSec || model.stats.elapsedSec);
+    if (duration) parts.push(duration);
+  }
   if (model.stats.elevGainM > 0) parts.push(`${model.stats.elevGainM} m elevasi`);
-  if (model.stats.avgKmh) parts.push(`${formatSpeed(model.stats.avgKmh)} km/jam`);
-  const title = model.title || 'Poster Gowes';
+  const title = model.title || 'Ride Card';
   return `${title} — ${parts.join(' · ')}. Dibuat dengan CycloPon 🚴`;
+}
+
+function normalizeTrackPoint(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const lat = Number(raw.lat !== undefined ? raw.lat : raw.latitude);
+  const lng = Number(raw.lng !== undefined ? raw.lng : raw.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return null;
+  }
+
+  const rawEle = raw.ele !== undefined ? raw.ele : raw.elevation;
+  const eleNum = rawEle !== null && rawEle !== undefined && rawEle !== '' ? Number(rawEle) : null;
+  const ele = eleNum !== null && Number.isFinite(eleNum) ? eleNum : null;
+
+  let time = null;
+  const rawTime = raw.time !== undefined ? raw.time : raw.recorded_at;
+  if (typeof rawTime === 'number' && Number.isFinite(rawTime)) {
+    time = rawTime;
+  } else if (typeof rawTime === 'string' && rawTime.trim()) {
+    const trimmed = rawTime.trim();
+    const isoLike = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(trimmed)
+      ? trimmed.replace(' ', 'T') + (/[zZ]|[+-]\d{2}:?\d{2}$/.test(trimmed) ? '' : 'Z')
+      : trimmed;
+    const parsed = Date.parse(isoLike);
+    if (Number.isFinite(parsed)) time = parsed;
+  }
+
+  return { lat, lng, ele, time };
+}
+
+/**
+ * Build a card model from pre-extracted GPS/telemetry points (e.g. server position_history).
+ * @param {{points:Array<object>, source?:string, title?:string, riderName?:string, roleLabel?:string}} input
+ */
+function buildCardModelFromPoints(input = {}) {
+  const {
+    points: rawPoints = [],
+    source = 'gps',
+    title = '',
+    riderName = '',
+    roleLabel = '',
+    isOfficialRoute = false,
+    eventDate = null
+  } = input;
+  const points = (Array.isArray(rawPoints) ? rawPoints : [])
+    .map(normalizeTrackPoint)
+    .filter(Boolean);
+
+  if (points.length < 2) {
+    throw cardError('Trek terlalu pendek. Pastikan data berisi minimal 2 titik koordinat.', ACTIVITY_ERROR_CODES.EMPTY_ACTIVITY);
+  }
+
+  const stats = computeTrackStats(points);
+  const firstTimed = points.find(p => p.time !== null && p.time !== undefined) || null;
+  let startedAt = firstTimed ? new Date(firstTimed.time).toISOString() : null;
+  if (isOfficialRoute) {
+    const parsedEventDate = eventDate ? Date.parse(String(eventDate).trim()) : NaN;
+    startedAt = Number.isFinite(parsedEventDate) ? new Date(parsedEventDate).toISOString() : null;
+  }
+
+  return {
+    source: String(source || 'gps').trim() || 'gps',
+    isOfficialRoute: !!isOfficialRoute,
+    sport: 'Ride',
+    title: String(title || '').trim() || 'CycloPon Ride',
+    riderName: String(riderName || '').trim(),
+    roleLabel: String(roleLabel || '').trim(),
+    startedAt,
+    points,
+    bbox: computeBbox(points),
+    stats,
+    hasTime: !isOfficialRoute && (stats.movingSec > 0 || stats.elapsedSec > 0),
+    hasElevation: stats.maxEle !== null
+  };
 }
 
 /**
  * Build the complete card model from uploaded file text.
- * @param {{fileName?:string, text:string, title?:string, riderName?:string, roleLabel?:string}} input
+ * @param {{fileName?:string, text:string, title?:string, riderName?:string, roleLabel?:string, isOfficialRoute?:boolean, eventDate?:string|null}} input
  */
 function buildCardModel(input = {}) {
-  const { fileName = '', text = '', title = '', riderName = '', roleLabel = '' } = input;
+  const {
+    fileName = '',
+    text = '',
+    title = '',
+    riderName = '',
+    roleLabel = '',
+    isOfficialRoute = false,
+    eventDate = null
+  } = input;
   const format = detectActivityFormat(fileName, text);
   if (!format) {
     throw cardError('Format file tidak dikenali. Gunakan file .gpx atau .tcx.', ACTIVITY_ERROR_CODES.UNSUPPORTED_FORMAT);
@@ -372,22 +455,15 @@ function buildCardModel(input = {}) {
     throw cardError('Trek terlalu pendek. Pastikan file berisi minimal 2 titik koordinat.', ACTIVITY_ERROR_CODES.EMPTY_ACTIVITY);
   }
 
-  const stats = computeTrackStats(points);
-  const firstTimed = points.find(p => p.time !== null && p.time !== undefined) || null;
-
-  return {
-    source: format,
-    sport: 'Ride',
-    title: String(title || '').trim() || cardTitleFromFileName(fileName),
-    riderName: String(riderName || '').trim(),
-    roleLabel: String(roleLabel || '').trim(),
-    startedAt: firstTimed ? new Date(firstTimed.time).toISOString() : null,
+  return buildCardModelFromPoints({
     points,
-    bbox: computeBbox(points),
-    stats,
-    hasTime: stats.movingSec > 0 || stats.elapsedSec > 0,
-    hasElevation: stats.maxEle !== null
-  };
+    source: format,
+    title: String(title || '').trim() || cardTitleFromFileName(fileName),
+    riderName,
+    roleLabel,
+    isOfficialRoute,
+    eventDate
+  });
 }
 
 const CARD_MODEL_API = {
@@ -408,7 +484,8 @@ const CARD_MODEL_API = {
   formatRoleLabel,
   formatParticipantPosterMeta,
   formatCaption,
-  buildCardModel
+  buildCardModel,
+  buildCardModelFromPoints
 };
 
 if (typeof module !== 'undefined' && module.exports) {

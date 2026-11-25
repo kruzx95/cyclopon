@@ -1,6 +1,6 @@
 /* ── Admin SOS Emergency Console ── */
 async function renderAdminSos() {
-  loadCss('/css/admin.css');
+  loadCss('/css/admin.css?v=88');
 
   // Route guard: check if admin is logged in
   const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');

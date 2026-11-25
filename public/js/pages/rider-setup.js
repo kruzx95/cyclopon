@@ -78,7 +78,10 @@ function renderRiderSetup() {
             <span>Beranda</span>
           </a>
           <div class="hub-brand-group">
-            <h1 class="hub-title"><span class="hub-title-main">CYCLOPON</span></h1>
+            <h1 class="hub-title">
+              <img src="/icons/cyclopon-mark.svg" alt="" width="22" height="22" class="brand-logo-mark">
+              <span class="hub-title-main">CYCLOPON</span>
+            </h1>
           </div>
         </div>
         <div class="hub-header-right">
@@ -198,7 +201,7 @@ function renderRiderSetup() {
               <button id="btnCopyTraccarConfig" class="btn-hub-secondary" style="font-size:11px;padding:8px">
                 📋 Salin URL &amp; Device Identifier
               </button>
-              <a href="/guide#traccarGuideSection" data-link class="btn-hub-secondary" style="font-size:11px;padding:8px;text-align:center">
+              <a href="/register?tab=panduan&section=traccarGuideSection" data-link class="btn-hub-secondary" style="font-size:11px;padding:8px;text-align:center">
                 Lihat Panduan Lengkap →
               </a>
             </div>
@@ -274,6 +277,29 @@ function renderRiderSetup() {
             </div>
             <a href="${gpxDownloadHref}" download class="btn-hub-secondary">
               📥 Unduh GPX Rute
+            </a>
+          </div>
+
+          <!-- Action 5: Ride Card -->
+          <div class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="3"/>
+                    <path d="M7 15l3.5-4 3 3.5L16 11l3 4"/>
+                    <circle cx="9" cy="8.5" r="1.2"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag">SIAP POSTING</span>
+              </div>
+              <div class="hub-action-title">Ride Card</div>
+              <p class="hub-action-desc">
+                Buat ride card ringkasan gowes langsung dari jejak event atau file GPX/TCX Anda untuk media sosial.
+              </p>
+            </div>
+            <a href="/share" data-link class="btn-hub-secondary">
+              Buka Studio Ride Card
             </a>
           </div>
 

@@ -548,7 +548,7 @@
   color: #FFFFFF;
   border: 1.5px solid rgba(255, 255, 255, 0.85);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.15);
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.6px;
@@ -2436,7 +2436,7 @@
   text-transform: uppercase;
 }
 .replay-clock {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 15px;
   font-weight: 800;
   color: #F8FAFC;
@@ -2451,7 +2451,7 @@
   font-size: 11px;
   font-weight: 600;
   color: #94A3B8;
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
 }
 .replay-slider {
   flex: 1;

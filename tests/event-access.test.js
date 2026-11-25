@@ -356,6 +356,16 @@ test('Event Access PIN — locked events for trial riders', async (t) => {
     assert.equal(loginRes.status, 200);
   });
 
+  await t.test('register page exposes dynamic event PIN field for locked events', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const registerSrc = fs.readFileSync(path.join(__dirname, '..', 'public/js/pages/register.js'), 'utf8');
+    assert.match(registerSrc, /id="regEventPinGroup"/);
+    assert.match(registerSrc, /id="regEventPin"/);
+    assert.match(registerSrc, /ev\.access_pin_required/);
+    assert.match(registerSrc, /event_pin:\s*eventPin \|\| undefined/);
+  });
+
   await t.test('teardown', async () => {
     db.db.prepare('DELETE FROM events WHERE id = ?').run(eventId);
     if (server) {

@@ -43,7 +43,7 @@
   border-radius: 6px;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #374151;
@@ -64,7 +64,7 @@
   border-radius: 4px;
   background: #EEF4EE;
   border: 1px solid #C8DEC9;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   color: #1C3E24;
@@ -112,7 +112,7 @@
   margin-bottom: 6px;
 }
 .modern-field-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 800;
   color: #4B5563;
@@ -120,7 +120,7 @@
   text-transform: uppercase;
 }
 .label-status-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 9.5px;
   font-weight: 800;
   color: #1C3E24;
@@ -129,7 +129,7 @@
   border-radius: 3px;
 }
 .field-helper-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   color: #9CA3AF;
   font-weight: 600;
@@ -193,7 +193,7 @@
   padding: 10px 12px;
   background: #F3F4F6;
   border-right: 1.5px solid #E5E7EB;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 900;
   color: #0D1117;
@@ -210,7 +210,7 @@
   color: #0D1117;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 .modern-bib-input:focus {
   outline: none;
@@ -235,7 +235,7 @@
   margin-bottom: 8px;
 }
 .pin-counter-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 800;
   color: #6B7280;
@@ -333,14 +333,14 @@
   color: #FFFFFF;
 }
 .key-digit {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 20px;
   font-weight: 800;
   line-height: 1;
   color: #0D1117;
 }
 .key-letters {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 8px;
   font-weight: 700;
   color: #9CA3AF;
@@ -364,7 +364,7 @@
   gap: 5px !important;
   align-items: center !important;
   justify-content: center !important;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+  font-family: var(--font-mono) !important;
   font-size: 13px !important;
   font-weight: 800 !important;
   color: #6B7280 !important;
@@ -427,7 +427,7 @@
   background: #E5E7EB;
 }
 .modern-divider span {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 9.5px;
   font-weight: 800;
   color: #9CA3AF;
@@ -486,7 +486,7 @@
   border-radius: 6px;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #374151;
@@ -518,7 +518,7 @@
   color: #0D1117;
 }
 .hub-title-accent {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #6B7280;
@@ -544,7 +544,7 @@
   color: #FFFFFF;
   padding: 6px 12px;
   border-radius: 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -557,7 +557,7 @@
   box-sizing: border-box;
   padding: 6px 10px;
   border-radius: 6px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -589,7 +589,7 @@
   border-radius: 6px;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #B91C1C;
@@ -632,7 +632,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 14.5px;
   font-weight: 900;
   letter-spacing: -0.02em;
@@ -657,7 +657,7 @@
   text-transform: uppercase;
 }
 .rider-event-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #1C3E24;
@@ -666,7 +666,7 @@
   border-radius: 4px;
 }
 .rider-welcome-meta {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11.5px;
   color: #6B7280;
   margin: 0;
@@ -685,14 +685,14 @@
   flex-direction: column;
 }
 .rider-device-pill .device-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 8.5px;
   font-weight: 800;
   color: #64748B;
   letter-spacing: 0.04em;
 }
 .rider-device-pill .device-val {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 13.5px;
   font-weight: 900;
   color: #0F172A;
@@ -705,7 +705,7 @@
   border: 1px solid #CBD5E1;
   border-radius: 6px;
   padding: 4px 8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #334155;
@@ -761,7 +761,7 @@
   color: #0D1117;
 }
 .hub-card-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 9.5px;
   font-weight: 800;
   color: #1C3E24;
@@ -878,7 +878,7 @@
   color: #0D1117;
 }
 .hub-action-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -1006,14 +1006,14 @@
   border-bottom: none;
 }
 .config-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 800;
   color: #6B7280;
   text-transform: uppercase;
 }
 .config-value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 12.5px;
   font-weight: 800;
   color: #0D1117;
@@ -1058,7 +1058,7 @@
   flex-direction: column;
 }
 .steps-mono-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   color: #6B7280;
@@ -1075,7 +1075,7 @@
   margin: 0;
 }
 .steps-protocol-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 800;
   color: #0D1117;
@@ -1112,7 +1112,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 12.5px;
   font-weight: 900;
   color: #0D1117;
@@ -1192,7 +1192,7 @@
   flex-direction: column;
 }
 .sos-mono-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   color: #DC2626;
@@ -1209,7 +1209,7 @@
   margin: 0;
 }
 .sos-priority-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 900;
   color: #DC2626;
@@ -1258,7 +1258,7 @@
   animation: sosPulse 1.4s infinite ease-in-out;
 }
 .sos-arrow {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-weight: 900;
   font-size: 15px;
   transition: transform 0.15s ease;
@@ -1416,7 +1416,7 @@
   margin-bottom: 12px;
 }
 .screenshot-guide-badge {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 800;
   color: #FFFFFF;
@@ -1544,7 +1544,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 900;
   display: inline-flex;

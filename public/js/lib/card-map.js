@@ -98,13 +98,27 @@ function bboxWorldRect(bbox, zoom) {
   };
 }
 
+function normalizeProjectionPadding(padding) {
+  if (padding && typeof padding === 'object') {
+    return {
+      top: Math.max(0, Number(padding.top) || 0),
+      right: Math.max(0, Number(padding.right) || 0),
+      bottom: Math.max(0, Number(padding.bottom) || 0),
+      left: Math.max(0, Number(padding.left) || 0)
+    };
+  }
+  const p = Math.max(0, Number(padding) || 0);
+  return { top: p, right: p, bottom: p, left: p };
+}
+
 /**
  * Highest zoom where the route still fits inside the padded viewport.
  */
 function chooseZoom(bbox, width, height, padding = 0, maxZoom = 16) {
   if (!bbox) return 1;
-  const availW = Math.max(1, Number(width) - 2 * Number(padding || 0));
-  const availH = Math.max(1, Number(height) - 2 * Number(padding || 0));
+  const pad = normalizeProjectionPadding(padding);
+  const availW = Math.max(1, Number(width) - pad.left - pad.right);
+  const availH = Math.max(1, Number(height) - pad.top - pad.bottom);
   const top = Math.max(1, Math.min(19, Math.floor(maxZoom)));
   for (let zoom = top; zoom >= 1; zoom--) {
     const rect = bboxWorldRect(bbox, zoom);
@@ -128,6 +142,28 @@ function tileRangeForBbox(bbox, zoom) {
   };
 }
 
+/**
+ * Inclusive tile index range at `tileZoom` covering the full canvas viewport `[0..width, 0..height]`
+ * when projected at `routeZoom` with `(offsetX, offsetY)`.
+ */
+function tileRangeForViewport(width, height, offsetX, offsetY, routeZoom, tileZoom = routeZoom) {
+  const maxIndex = Math.pow(2, tileZoom) - 1;
+  const clamp = (value, max) => Math.max(0, Math.min(max, value));
+  const scale = Math.pow(2, routeZoom - tileZoom);
+  const tilePx = CARD_TILE_SIZE * scale;
+  const minX = clamp(Math.floor((0 - offsetX) / tilePx), maxIndex);
+  const maxX = clamp(Math.floor((Math.max(1, width) - 1 - offsetX) / tilePx), maxIndex);
+  const minY = clamp(Math.floor((0 - offsetY) / tilePx), maxIndex);
+  const maxY = clamp(Math.floor((Math.max(1, height) - 1 - offsetY) / tilePx), maxIndex);
+  return {
+    minX, maxX, minY, maxY,
+    cols: maxX - minX + 1,
+    rows: maxY - minY + 1,
+    count: (maxX - minX + 1) * (maxY - minY + 1),
+    tileSizePx: tilePx
+  };
+}
+
 /** Step zoom down until the tile count fits the per-card budget. */
 function fitZoomToTileBudget(bbox, zoom, maxTiles = CARD_MAX_TILES) {
   let z = Math.max(1, Math.min(19, Math.floor(zoom)));
@@ -138,22 +174,32 @@ function fitZoomToTileBudget(bbox, zoom, maxTiles = CARD_MAX_TILES) {
 
 /**
  * Projection shared by the mosaic and the route stroke.
- * The whole route is centred inside the padded viewport at 1:1 tile scale.
+ * The route is centred inside the padded area while basemap tiles fill the full viewport
+ * within `maxTiles` by stepping `tileZoom` down when needed.
  */
 function buildProjection(points, width, height, padding = 0, maxZoom = 16, maxTiles = CARD_MAX_TILES) {
   const bbox = computeCardBbox(points);
   const w = Math.max(1, Math.floor(width));
   const h = Math.max(1, Math.floor(height));
-  const pad = Math.max(0, Number(padding) || 0);
-  const zoom = bbox ? fitZoomToTileBudget(bbox, chooseZoom(bbox, w, h, pad, maxZoom), maxTiles) : 1;
-  const availW = Math.max(1, w - 2 * pad);
-  const availH = Math.max(1, h - 2 * pad);
+  const pad = normalizeProjectionPadding(padding);
+  const zoom = bbox ? chooseZoom(bbox, w, h, pad, maxZoom) : 1;
+  const availW = Math.max(1, w - pad.left - pad.right);
+  const availH = Math.max(1, h - pad.top - pad.bottom);
   const rect = bbox ? bboxWorldRect(bbox, zoom) : { x0: 0, y0: 0, x1: w, y1: h, width: w, height: h };
-  const offsetX = pad + (availW - rect.width) / 2 - rect.x0;
-  const offsetY = pad + (availH - rect.height) / 2 - rect.y0;
+  const offsetX = pad.left + (availW - rect.width) / 2 - rect.x0;
+  const offsetY = pad.top + (availH - rect.height) / 2 - rect.y0;
+
+  const budget = Math.max(1, Math.floor(maxTiles) || CARD_MAX_TILES);
+  let tileZoom = zoom;
+  let tiles = tileRangeForViewport(w, h, offsetX, offsetY, zoom, tileZoom);
+  while (tileZoom > 1 && tiles.count > budget) {
+    tileZoom--;
+    tiles = tileRangeForViewport(w, h, offsetX, offsetY, zoom, tileZoom);
+  }
 
   return {
     zoom,
+    tileZoom,
     bbox,
     rect,
     offsetX,
@@ -161,7 +207,7 @@ function buildProjection(points, width, height, padding = 0, maxZoom = 16, maxTi
     toPixel(lat, lng) {
       return [lngToWorldX(lng, zoom) + offsetX, latToWorldY(lat, zoom) + offsetY];
     },
-    tiles: bbox ? tileRangeForBbox(bbox, zoom) : { minX: 0, maxX: 0, minY: 0, maxY: 0, cols: 1, rows: 1, count: 1 }
+    tiles
   };
 }
 
@@ -190,10 +236,11 @@ function tilesForProjection(projection, provider) {
   const tiles = projection && projection.tiles ? projection.tiles : null;
   if (!tiles) return [];
   const source = provider || CARD_TILE_PROVIDERS.osm;
+  const tileZoom = projection.tileZoom || projection.zoom;
   const list = [];
   for (let x = tiles.minX; x <= tiles.maxX; x++) {
     for (let y = tiles.minY; y <= tiles.maxY; y++) {
-      list.push({ z: projection.zoom, x, y, url: source.url(projection.zoom, x, y) });
+      list.push({ z: tileZoom, x, y, url: source.url(tileZoom, x, y) });
     }
   }
   return list;
@@ -303,13 +350,15 @@ async function drawMosaicForProvider(provider, options) {
   for (const result of results) {
     if (!result) continue;
     const { tile, img } = result;
+    const tileZoom = tile.z || projection.tileZoom || projection.zoom;
+    const drawSize = CARD_TILE_SIZE * Math.pow(2, Math.max(0, (projection.zoom || tileZoom) - tileZoom));
     try {
       ctx.drawImage(
         img,
-        tile.x * CARD_TILE_SIZE + projection.offsetX,
-        tile.y * CARD_TILE_SIZE + projection.offsetY,
-        CARD_TILE_SIZE,
-        CARD_TILE_SIZE
+        tile.x * drawSize + projection.offsetX,
+        tile.y * drawSize + projection.offsetY,
+        drawSize,
+        drawSize
       );
       loaded++;
     } catch (err) {

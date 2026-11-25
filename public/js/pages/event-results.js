@@ -123,6 +123,9 @@ async function renderEventResults(params) {
             </div>
 
             <div class="results-actions">
+              <a href="/share?event=${event.id}" data-link class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Buat Ride Card Peserta">
+                Ride Card
+              </a>
               <button type="button" id="btnDownloadCsv" class="btn btn-outline" style="font-size:13px;padding:9px 16px" title="Ekspor Data Hasil Klasifikasi ke File CSV">
                 📥 &nbsp;Unduh CSV
               </button>
@@ -332,6 +335,7 @@ async function renderEventResults(params) {
           <div class="footer-inner">
             <div class="footer-left">
               <a href="/" data-link class="footer-brand-lockup">
+                <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
                 <div class="footer-brand-info">
                   <span class="footer-brand-title">CYCLOPON</span>
                   <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>

@@ -125,7 +125,7 @@ test('Auth API & Flow Validation', async (t) => {
         assert.equal(loginData.event.name, 'Archived Poster Event');
         assert.ok(loginData.rider.token);
 
-        // Verify token lookup works for Poster Gowes session check
+        // Verify token lookup works for Ride Card session check
         const tokenRes = await fetch(`${baseUrl}/api/auth/token/${encodeURIComponent(loginData.rider.token)}`);
         assert.equal(tokenRes.status, 200);
         const tokenData = await tokenRes.json();

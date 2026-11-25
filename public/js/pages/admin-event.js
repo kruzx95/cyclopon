@@ -1,5 +1,5 @@
 async function renderAdminEvent(params) {
-  loadCss('/css/admin.css');
+  loadCss('/css/admin.css?v=88');
 
   // Route guard: check if admin is logged in
   const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
@@ -10,13 +10,13 @@ async function renderAdminEvent(params) {
   if (!sessionStorage.getItem('adminUser')) sessionStorage.setItem('adminUser', adminUser);
 
   const eventId = params.id;
-  const isNew   = eventId === 'new';
-  const app     = document.getElementById('app');
+  const isNew = eventId === 'new';
+  const app = document.getElementById('app');
 
-  let event       = { name: '', date: new Date().toISOString().slice(0,10), gpx_path: null, active: 1, cot_mode: 'off', access_pin: '' };
-  let riders      = [];
+  let event = { name: '', date: new Date().toISOString().slice(0, 10), gpx_path: null, active: 1, cot_mode: 'off', access_pin: '' };
+  let riders = [];
   let checkpoints = [];
-  let sponsors    = [];
+  let sponsors = [];
 
   if (!isNew) {
     try {
@@ -27,10 +27,10 @@ async function renderAdminEvent(params) {
         fetch(`/api/events/${eventId}/sponsors`, { credentials: 'include' })
       ]);
       if (!evRes.ok) { Router.navigate('/admin/dashboard'); return; }
-      event       = await evRes.json();
-      riders      = rRes.ok ? await rRes.json() : [];
+      event = await evRes.json();
+      riders = rRes.ok ? await rRes.json() : [];
       checkpoints = cpRes.ok ? await cpRes.json() : [];
-      sponsors    = sponRes.ok ? await sponRes.json() : [];
+      sponsors = sponRes.ok ? await sponRes.json() : [];
     } catch { Router.navigate('/admin/dashboard'); return; }
   }
 
@@ -76,7 +76,7 @@ async function renderAdminEvent(params) {
           <div class="card" id="eventLiveMonitorCard" style="margin-bottom:20px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB;flex-wrap:wrap;gap:8px">
               <div>
-                <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// REAL-TIME TELEMETRY &amp; SPECTATOR SURGE</span>
+                <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// REAL-TIME TELEMETRY &amp; SPECTATOR SURGE</span>
                 <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0;display:flex;align-items:center;gap:8px">
                   <span class="live-pulse-dot" style="display:inline-block;width:8px;height:8px;background:#10B981;border-radius:50%"></span>
                   Live Monitoring &amp; Penonton
@@ -116,15 +116,15 @@ async function renderAdminEvent(params) {
         <div class="card" style="margin-bottom:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
             <div>
-              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EVENT ATTRIBUTES</span>
+              <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// EVENT ATTRIBUTES</span>
               <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">Detail Event</h2>
             </div>
             ${!isNew ? `
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <span class="badge ${event.active ? 'badge-active' : 'badge-finished'}">${event.active ? '● EVENT AKTIF' : 'EVENT SELESAI'}</span>
                 ${event.access_pin
-                  ? '<span class="badge badge-medic">🔒 AKSES DIBATASI</span>'
-                  : '<span class="badge badge-active">🔓 AKSES TERBUKA</span>'}
+        ? '<span class="badge badge-medic">🔒 AKSES DIBATASI</span>'
+        : '<span class="badge badge-active">🔓 AKSES TERBUKA</span>'}
               </div>
             ` : ''}
           </div>
@@ -179,11 +179,11 @@ async function renderAdminEvent(params) {
                 <div id="evCotEndPreview" role="status" aria-live="polite"
                      title="Dihitung dari jam mulai + (panjang rute ÷ kecepatan)"
                      style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;height:42px;padding:0 14px;border:1.5px dashed #CBD5E1;border-radius:8px;background:#FFFFFF;transition:background 0.15s ease,border-color 0.15s ease">
-                  <span style="display:inline-flex;align-items:center;gap:7px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280">
+                  <span style="display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:#6B7280">
                     <span aria-hidden="true" style="font-size:13px;opacity:0.85">🕒</span>
                     Estimasi Jam Berakhir
                   </span>
-                  <span id="evCotEndPreviewText" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:14px;font-weight:900;letter-spacing:0.01em;color:#94A3B8">—</span>
+                  <span id="evCotEndPreviewText" style="font-family:var(--font-mono);font-size:14px;font-weight:900;letter-spacing:0.01em;color:#94A3B8">—</span>
                 </div>
               </div>
               <p style="color:#6B7280;font-size:12px;line-height:1.5;margin:8px 0 0">
@@ -200,7 +200,7 @@ async function renderAdminEvent(params) {
                 <input class="input" id="evAccessPin" inputmode="numeric" autocomplete="off" maxlength="8"
                        value="${escapeHtml(event.access_pin || '')}"
                        placeholder="Kosongkan untuk akses terbuka"
-                       style="flex:1;min-width:180px;font-family:ui-monospace,monospace;font-weight:800;letter-spacing:0.12em">
+                       style="flex:1;min-width:180px;font-family:var(--font-mono);font-weight:800;letter-spacing:0.12em">
                 <button class="btn btn-outline" type="button" id="btnGenerateEventPin" style="padding:10px 14px;font-size:12.5px" title="Buat PIN acak 6 digit">
                   🎲 Acak
                 </button>
@@ -232,18 +232,18 @@ async function renderAdminEvent(params) {
         <div class="card" style="margin-bottom:20px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #E5E7EB">
             <div>
-              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// ROUTE &amp; ELEVATION TELEMETRY</span>
+              <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// ROUTE &amp; ELEVATION TELEMETRY</span>
               <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">Rute GPX</h2>
             </div>
             ${event.gpx_path ? '<span class="badge badge-active">TERPASANG</span>' : '<span class="badge badge-medic">BELUM ADA GPX</span>'}
           </div>
           ${event.gpx_path
-            ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
                 <span style="color:#047857;font-size:13px;font-weight:700">✅ GPX sudah di-upload: <code style="background:#F3F4F6;padding:2px 8px;border-radius:4px;color:#0D1117;border:1px solid #E5E7EB">${event.gpx_path}</code></span>
                 <a href="/api/events/${event.id}/gpx/download" download class="btn btn-outline" style="font-size:12px;padding:4px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:5px">📥 Unduh GPX</a>
               </div>`
-            : `<p style="color:#D97706;font-size:13px;font-weight:700;margin-bottom:14px">⚠️ Belum ada file GPX. Upload rute agar tampil di Live Map.</p>`
-          }
+        : `<p style="color:#D97706;font-size:13px;font-weight:700;margin-bottom:14px">⚠️ Belum ada file GPX. Upload rute agar tampil di Live Map.</p>`
+      }
           <label class="gpx-drop-zone" for="gpxFileInput">
             <div style="font-size:32px;margin-bottom:8px">📁</div>
             <p style="font-weight:800;color:#0D1117;margin-bottom:4px">Klik atau drag file .gpx ke sini</p>
@@ -257,7 +257,7 @@ async function renderAdminEvent(params) {
         <div class="card" style="margin-bottom:20px">
           <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
             <div>
-              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// MOVING CUT-OFF</span>
+              <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// MOVING CUT-OFF</span>
               <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
                 Virtual COT — Monitor
               </h2>
@@ -279,7 +279,7 @@ async function renderAdminEvent(params) {
         <div class="card" style="margin-bottom:20px">
           <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
             <div>
-              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// CHRONO &amp; SPLIT MATRIX</span>
+              <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// CHRONO &amp; SPLIT MATRIX</span>
               <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
                 Checkpoints &amp; Cut-Off Time (Audax / Brevet)
                 <span class="badge badge-cyan" style="margin-left:6px">${checkpoints.length}</span>
@@ -311,7 +311,7 @@ async function renderAdminEvent(params) {
         <div class="card" style="margin-bottom:20px">
           <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
             <div>
-              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// SPONSORSHIP &amp; PARTNER LOGOS</span>
+              <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// SPONSORSHIP &amp; PARTNER LOGOS</span>
               <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
                 Logo Sponsor Live Map
                 <span class="badge badge-cyan" id="sponsorCountBadge" style="margin-left:6px">${sponsors.length}</span>
@@ -404,7 +404,7 @@ async function renderAdminEvent(params) {
         <div class="card">
           <div class="page-header" style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #E5E7EB">
             <div>
-              <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// ACCREDITED ROSTER &amp; MARSHALL</span>
+              <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;color:#6B7280;letter-spacing:0.08em">// ACCREDITED ROSTER &amp; MARSHALL</span>
               <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
                 Daftar Rider &amp; Panitia Lapangan
                 <span class="badge badge-cyan" style="margin-left:6px">${riders.length}</span>
@@ -511,25 +511,25 @@ async function renderAdminEvent(params) {
   // ── Event form handler ──
   document.getElementById('eventForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const btn    = document.getElementById('saveEventBtn');
+    const btn = document.getElementById('saveEventBtn');
     btn.textContent = 'Menyimpan...';
-    btn.disabled    = true;
+    btn.disabled = true;
 
     const activeEl = document.querySelector('input[name="evActive"]:checked');
     const body = {
-      name:   document.getElementById('evName').value,
-      date:   document.getElementById('evDate').value,
+      name: document.getElementById('evName').value,
+      date: document.getElementById('evDate').value,
       active: activeEl ? Number(activeEl.value) : 1,
       cot_start_time: document.getElementById('evCotStart')?.value || null,
-      cot_pace:       document.getElementById('evCotPace')?.value || null,
-      cot_mode:       document.getElementById('evCotMode')?.value || 'off',
-      access_pin:     document.getElementById('evAccessPin')?.value.trim() || null
+      cot_pace: document.getElementById('evCotPace')?.value || null,
+      cot_mode: document.getElementById('evCotMode')?.value || 'off',
+      access_pin: document.getElementById('evAccessPin')?.value.trim() || null
     };
 
-    const url    = isNew ? '/api/events/admin' : `/api/events/admin/${eventId}`;
+    const url = isNew ? '/api/events/admin' : `/api/events/admin/${eventId}`;
     const method = isNew ? 'POST' : 'PUT';
 
-    let res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
+    let res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
     let data = await res.json();
 
     // Activation guard: confirm when too many riders would be flagged immediately
@@ -548,7 +548,7 @@ async function renderAdminEvent(params) {
         return;
       }
       body.force = true;
-      res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
+      res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
       data = await res.json();
     }
 
@@ -611,13 +611,13 @@ async function renderAdminEvent(params) {
   if (isNew) return;
 
   // ── Virtual COT monitor ─────────────────────────────────────
-  const cotMonitor   = document.getElementById('cotMonitor');
+  const cotMonitor = document.getElementById('cotMonitor');
   const btnCotRefresh = document.getElementById('btnCotRefresh');
 
   function cotStatCard(label, value, accent) {
     return `
       <div style="border:1px solid #E5E7EB;border-radius:8px;padding:10px 12px;background:#FAFAFA">
-        <div style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#6B7280;letter-spacing:0.08em">${label}</div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;font-weight:800;color:#6B7280;letter-spacing:0.08em">${label}</div>
         <div style="font-size:16px;font-weight:900;color:${accent || '#0D1117'};margin-top:2px">${value}</div>
       </div>`;
   }
@@ -637,10 +637,10 @@ async function renderAdminEvent(params) {
 
     const marker = data.marker || {};
     const statusMap = {
-      MOVING:      ['BERGERAK', '#047857'],
+      MOVING: ['BERGERAK', '#047857'],
       NOT_STARTED: ['BELUM MULAI', '#92400E'],
-      FINISHED:    ['SELESAI', '#374151'],
-      DISABLED:    ['NONAKTIF', '#6B7280']
+      FINISHED: ['SELESAI', '#374151'],
+      DISABLED: ['NONAKTIF', '#6B7280']
     };
     const [statusLabel, statusColor] = statusMap[marker.status] || [marker.status || '—', '#374151'];
     const modeLabel = { off: 'NONAKTIF', dry_run: 'UJI (DRY RUN)', live: 'LIVE' }[marker.mode] || (marker.mode || '—');
@@ -684,8 +684,8 @@ async function renderAdminEvent(params) {
             </td>
             <td>
               ${row.status === 'ACTIVE'
-                ? `<button class="btn btn-outline btn-void-cot" data-rider="${row.rider_id}" data-bib="${escapeHtml(row.bib)}" style="font-size:11.5px;padding:4px 10px">Batalkan</button>`
-                : '—'}
+          ? `<button class="btn btn-outline btn-void-cot" data-rider="${row.rider_id}" data-bib="${escapeHtml(row.bib)}" style="font-size:11.5px;padding:4px 10px">Batalkan</button>`
+          : '—'}
             </td>
           </tr>`).join('');
 
@@ -911,7 +911,7 @@ async function renderAdminEvent(params) {
 
     const formData = new FormData();
     formData.append('gpx', file);
-    const res  = await fetch(`/api/events/admin/${eventId}/gpx`, { method: 'POST', body: formData, credentials: 'include' });
+    const res = await fetch(`/api/events/admin/${eventId}/gpx`, { method: 'POST', body: formData, credentials: 'include' });
     const data = await res.json();
 
     if (res.ok) {
@@ -971,10 +971,10 @@ async function renderAdminEvent(params) {
       btn.textContent = 'Menambahkan...'; btn.disabled = true; errEl.textContent = '';
 
       const body = {
-        name:        document.getElementById('cpName').value.trim(),
+        name: document.getElementById('cpName').value.trim(),
         km_distance: parseFloat(document.getElementById('cpKm').value),
-        open_time:   document.getElementById('cpOpen').value.trim() || null,
-        close_time:  document.getElementById('cpClose').value.trim() || null,
+        open_time: document.getElementById('cpOpen').value.trim() || null,
+        close_time: document.getElementById('cpClose').value.trim() || null,
         order_index: checkpoints.length + 1
       };
 
@@ -1231,20 +1231,20 @@ async function renderAdminEvent(params) {
     document.getElementById('cancelAddRiderBtn').addEventListener('click', () => { container.innerHTML = ''; });
     document.getElementById('addRiderForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const btn  = document.getElementById('addRiderBtn');
+      const btn = document.getElementById('addRiderBtn');
       const errEl = document.getElementById('addRiderError');
       btn.textContent = 'Menyimpan...'; btn.disabled = true; errEl.textContent = '';
 
       const body = {
-        event_id:          eventId,
-        role:              document.getElementById('rRole').value,
-        bib:               document.getElementById('rBib').value.trim(),
-        name:              document.getElementById('rName').value.trim(),
-        phone:             document.getElementById('rPhone').value.trim() || null,
-        pin:               document.getElementById('rPin').value.trim() || null,
+        event_id: eventId,
+        role: document.getElementById('rRole').value,
+        bib: document.getElementById('rBib').value.trim(),
+        name: document.getElementById('rName').value.trim(),
+        phone: document.getElementById('rPhone').value.trim() || null,
+        pin: document.getElementById('rPin').value.trim() || null,
         traccar_device_id: document.getElementById('rDeviceId').value ? Number(document.getElementById('rDeviceId').value) : null
       };
-      const res  = await fetch('/api/admin/riders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
+      const res = await fetch('/api/admin/riders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), credentials: 'include' });
       const data = await res.json();
 
       if (res.ok) {
@@ -1301,7 +1301,7 @@ async function renderAdminEvent(params) {
             badge.textContent = '● KAPASITAS AMAN';
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     };
 
     updateEventMetrics();
@@ -1324,8 +1324,8 @@ function renderSponsorTableRows(sponsors) {
         <td><strong style="color:#0D1117">${escapeHtml(s.name)}</strong></td>
         <td>
           ${safeLink
-            ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" style="color:#2563EB;font-weight:600;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🔗 ${safeLink}</a>`
-            : '<span style="color:#9CA3AF">—</span>'}
+        ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" style="color:#2563EB;font-weight:600;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">🔗 ${safeLink}</a>`
+        : '<span style="color:#9CA3AF">—</span>'}
         </td>
         <td><input type="number" min="0" class="input" style="padding:4px 8px;font-size:12px;width:60px" value="${s.sort_order || 0}" onchange="updateSponsorOrder(${s.id}, this.value, ${s.sort_order || 0})"></td>
         <td><input type="number" min="16" max="200" class="input" style="padding:4px 8px;font-size:12px;width:64px" value="${s.sponsor_logo_size || ''}" placeholder="auto" onchange="updateSponsorSize(${s.id}, this.value)"></td>
@@ -1404,11 +1404,11 @@ function renderCheckpointTableRows(checkpoints) {
   }
   return checkpoints.map((cp, idx) => `
     <tr>
-      <td><span style="font-family:ui-monospace,monospace;font-weight:900;background:#F3F4F6;border:1px solid #0D1117;padding:3px 8px;border-radius:4px;font-size:11px">CP ${String(idx + 1).padStart(2, '0')}</span></td>
+      <td><span style="font-family:var(--font-mono);font-weight:900;background:#F3F4F6;border:1px solid #0D1117;padding:3px 8px;border-radius:4px;font-size:11px">CP ${String(idx + 1).padStart(2, '0')}</span></td>
       <td><strong style="color:#0D1117">${escapeHtml(cp.name)}</strong></td>
       <td><span class="badge badge-cyan">${cp.km_distance} KM</span></td>
-      <td><span style="font-family:ui-monospace,monospace;font-weight:700">${cp.open_time || '—'}</span></td>
-      <td>${cp.close_time ? `<span style="font-family:ui-monospace,monospace;color:#DC2626;font-weight:800">⏱️ ${cp.close_time}</span>` : '—'}</td>
+      <td><span style="font-family:var(--font-mono);font-weight:700">${cp.open_time || '—'}</span></td>
+      <td>${cp.close_time ? `<span style="font-family:var(--font-mono);color:#DC2626;font-weight:800">⏱️ ${cp.close_time}</span>` : '—'}</td>
       <td>
         <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteCheckpoint(${cp.id}, '${cp.name.replace(/'/g, "\\'")}')">
           Hapus
@@ -1454,12 +1454,12 @@ function renderRiderTableRows(riders, eventName) {
 
     return `
       <tr>
-        <td><strong style="font-family:ui-monospace,monospace;font-size:14px;color:#0D1117;background:#F3F4F6;padding:2px 7px;border-radius:4px;border:1px solid #E5E7EB">#${escapeHtml(safeBib)}</strong></td>
+        <td><strong style="font-family:var(--font-mono);font-size:14px;color:#0D1117;background:#F3F4F6;padding:2px 7px;border-radius:4px;border:1px solid #E5E7EB">#${escapeHtml(safeBib)}</strong></td>
         <td>${roleBadge}</td>
         <td><strong style="color:#0D1117">${escapeHtml(safeName)}</strong></td>
-        <td>${safePhone ? `<span style="font-family:ui-monospace,monospace;font-size:12.5px;color:#4B5563">${escapeHtml(safePhone)}</span>` : '<span style="color:#9CA3AF;font-size:12px">—</span>'}</td>
+        <td>${safePhone ? `<span style="font-family:var(--font-mono);font-size:12.5px;color:#4B5563">${escapeHtml(safePhone)}</span>` : '<span style="color:#9CA3AF;font-size:12px">—</span>'}</td>
         <td>
-          <code style="background:#F3F4F6;padding:3px 8px;border-radius:4px;font-size:12.5px;font-weight:900;color:#0D1117;font-family:ui-monospace,monospace;letter-spacing:0.06em;border:1px solid #E5E7EB">
+          <code style="background:#F3F4F6;padding:3px 8px;border-radius:4px;font-size:12.5px;font-weight:900;color:#0D1117;font-family:var(--font-mono);letter-spacing:0.06em;border:1px solid #E5E7EB">
             ${escapeHtml(safePin)}
           </code>
         </td>
@@ -1481,7 +1481,7 @@ function renderRiderTableRows(riders, eventName) {
           </div>
         </td>
         <td><span class="color-swatch" style="background:${escapeHtml(r.color || '#00E5FF')}" title="${escapeHtml(r.color || '')}"></span></td>
-        <td><code style="font-family:ui-monospace,monospace;font-size:11px;color:#6B7280">${escapeHtml(r.traccar_device_id || '—')}</code></td>
+        <td><code style="font-family:var(--font-mono);font-size:11px;color:#6B7280">${escapeHtml(r.traccar_device_id || '—')}</code></td>
         <td>
           <button class="btn btn-danger btn-delete-rider" style="padding:4px 10px;font-size:11px" data-id="${r.id}" data-bib="${escapeHtml(safeBib)}">
             Hapus
@@ -1571,7 +1571,7 @@ function showRiderQrModal(data) {
           <div class="qr-bib-top">
             <div>
               <div class="qr-bib-event-title">${escapeHtml(eventName || 'CYCLOPON LIVE')}</div>
-              <div style="font-size:10px;color:#9CA3AF;font-family:ui-monospace,monospace;font-weight:700">OFFICIAL ATHLETE PASS</div>
+              <div style="font-size:10px;color:#9CA3AF;font-family:var(--font-mono);font-weight:700">OFFICIAL ATHLETE PASS</div>
             </div>
             <span class="badge ${role === 'sweeper' ? 'badge-sweeper' : (role === 'marshall' ? 'badge-marshall' : (role === 'medic' ? 'badge-medic' : 'badge-rider'))}">
               ${roleText}
@@ -1698,41 +1698,41 @@ function showBatchPrintModal(ridersList, eventName) {
     <div class="batch-print-body">
       <div class="batch-print-paper" id="batchPrintPaper">
         <div style="text-align:center;margin-bottom:24px;border-bottom:2px solid #0D1117;padding-bottom:12px">
-          <h1 style="font-family:'Inter',system-ui,sans-serif;font-size:20px;font-weight:900;letter-spacing:-0.02em;margin:0;color:#0D1117;text-transform:uppercase">
+          <h1 style="font-family:'Barlow','Plus Jakarta Sans',system-ui,sans-serif;font-size:20px;font-weight:900;letter-spacing:-0.02em;margin:0;color:#0D1117;text-transform:uppercase">
             ${escapeHtml(eventName || 'CYCLOPON LIVE TRACKING')}
           </h1>
-          <p style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:#4B5563;margin:4px 0 0 0">
+          <p style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:#4B5563;margin:4px 0 0 0">
             KARTU RESMI NOMOR BIB &amp; AKSES QR CODE PELACAK GPS REAL-TIME
           </p>
         </div>
 
         <div class="batch-grid">
           ${ridersList.map(r => {
-            const safeBib = escapeHtml(r.bib || '');
-            const safeName = escapeHtml(r.name || '');
-            const safeRole = r.role || 'rider';
-            const safePin = escapeHtml(r.pin || '1234');
-            const safeToken = r.token || '';
-            const magicUrl = `${window.location.origin}/r/${safeToken}`;
-            const qrSvg = getQrSvgString(magicUrl, 4, 6);
-            const roleLabel = safeRole === 'sweeper' ? 'SWEEPER' : (safeRole === 'marshall' ? 'MARSHALL' : (safeRole === 'medic' ? 'MEDIS' : 'RIDER'));
+    const safeBib = escapeHtml(r.bib || '');
+    const safeName = escapeHtml(r.name || '');
+    const safeRole = r.role || 'rider';
+    const safePin = escapeHtml(r.pin || '1234');
+    const safeToken = r.token || '';
+    const magicUrl = `${window.location.origin}/r/${safeToken}`;
+    const qrSvg = getQrSvgString(magicUrl, 4, 6);
+    const roleLabel = safeRole === 'sweeper' ? 'SWEEPER' : (safeRole === 'marshall' ? 'MARSHALL' : (safeRole === 'medic' ? 'MEDIS' : 'RIDER'));
 
-            return `
+    return `
               <div class="batch-card">
                 <div class="batch-cut-badge">✂️ Gunting di sini</div>
                 
                 <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E5E7EB;padding-bottom:6px;margin-bottom:8px">
-                  <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:900;color:#0D1117;letter-spacing:0.04em">
+                  <span style="font-family:var(--font-mono);font-size:9.5px;font-weight:900;color:#0D1117;letter-spacing:0.04em">
                     ${escapeHtml(eventName || 'CYCLOPON')}
                   </span>
-                  <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:900;padding:2px 6px;border-radius:3px;border:1px solid #0D1117;background:#F3F4F6">
+                  <span style="font-family:var(--font-mono);font-size:9.5px;font-weight:900;padding:2px 6px;border-radius:3px;border:1px solid #0D1117;background:#F3F4F6">
                     ${roleLabel}
                   </span>
                 </div>
 
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
                   <div>
-                    <div style="font-family:ui-monospace,monospace;font-size:32px;font-weight:900;color:#0D1117;line-height:1">
+                    <div style="font-family:var(--font-mono);font-size:32px;font-weight:900;color:#0D1117;line-height:1">
                       #${safeBib}
                     </div>
                     <div style="font-size:14px;font-weight:800;color:#0D1117;margin-top:4px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
@@ -1745,12 +1745,12 @@ function showBatchPrintModal(ridersList, eventName) {
                 </div>
 
                 <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:4px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center;font-size:10px">
-                  <span style="color:#6B7280;font-family:ui-monospace,monospace">Scan kamera HP untuk masuk</span>
-                  <span style="font-family:ui-monospace,monospace;font-weight:900;color:#0D1117">PIN: ${safePin}</span>
+                  <span style="color:#6B7280;font-family:var(--font-mono)">Scan kamera HP untuk masuk</span>
+                  <span style="font-family:var(--font-mono);font-weight:900;color:#0D1117">PIN: ${safePin}</span>
                 </div>
               </div>
             `;
-          }).join('')}
+  }).join('')}
         </div>
       </div>
     </div>

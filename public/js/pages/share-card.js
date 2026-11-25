@@ -1,5 +1,5 @@
 /**
- * /share — Poster Gowes Studio.
+ * /share — Ride Card Studio.
  *
  * Strictly gated to registered CycloPon event participants (rider, sweeper,
  * marshall, medic). Once verified against the server, event title and rider
@@ -11,11 +11,11 @@ function renderSharePage() {
   const app = document.getElementById('app');
   if (!app) return;
   if (!window.CardModel || !window.CardRenderer || !window.CardTemplates) {
-    app.innerHTML = '<div class="share-page"><p class="share-status">Modul poster gagal dimuat. Muat ulang halaman.</p></div>';
+    app.innerHTML = '<div class="share-page"><p class="share-status">Modul Ride Card gagal dimuat. Muat ulang halaman.</p></div>';
     return;
   }
 
-  document.title = 'Poster Gowes — CycloPon Live Tracker';
+  document.title = 'Ride Card — CycloPon Live Tracker';
 
   const templates = window.CardTemplates;
   const cardModel = window.CardModel;
@@ -32,6 +32,7 @@ function renderSharePage() {
     <div class="share-page">
       <nav class="landing-nav">
         <a href="/" data-link class="brand-title">
+          <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
           <div class="brand-name-group">
             <span class="brand-name">CYCLOPON</span>
           </div>
@@ -43,14 +44,9 @@ function renderSharePage() {
             <span class="nav-label-short">BERANDA</span>
           </a>
 
-          <a href="/share" data-link class="btn-guide-nav active" title="Buat poster gowes peserta event untuk media sosial" aria-label="Buat poster gowes">
-            <span class="nav-label-full">POSTER GOWES</span>
-            <span class="nav-label-short">POSTER</span>
-          </a>
-
-          <a href="/guide" data-link class="btn-guide-nav" title="Panduan Lengkap Pengguna &amp; Pesepeda" aria-label="Panduan pengguna">
-            <span class="nav-label-full">PANDUAN</span>
-            <span class="nav-label-short">PANDUAN</span>
+          <a href="/share" data-link class="btn-guide-nav active" title="Buat Ride Card peserta event untuk media sosial" aria-label="Buat Ride Card">
+            <span class="nav-label-full">RIDE CARD</span>
+            <span class="nav-label-short">RIDE CARD</span>
           </a>
 
           <a href="/install" data-link class="btn-guide-nav" title="Tutorial Install Aplikasi PWA di HP" aria-label="Install aplikasi">
@@ -58,14 +54,14 @@ function renderSharePage() {
             <span class="nav-label-short">INSTALL</span>
           </a>
 
-          <a href="/register" data-link class="btn-register-nav" title="Daftar Menjadi Peserta Event" aria-label="Daftar event">
-            <span class="nav-label-full">DAFTAR EVENT</span>
+          <a href="/register" data-link class="btn-register-nav" title="Daftar Menjadi Peserta Event" aria-label="Daftar">
+            <span class="nav-label-full">DAFTAR</span>
             <span class="nav-label-short">DAFTAR</span>
           </a>
 
-          <a href="/admin" data-link class="btn-admin-nav" title="Panel Khusus Panitia Event" aria-label="Panel panitia">
-            <span class="nav-label-full">PANEL PANITIA</span>
-            <span class="nav-label-short">PANITIA</span>
+          <a href="/admin" data-link class="btn-admin-nav" title="Race Control / Panel Khusus Panitia Event" aria-label="Race Control">
+            <span class="nav-label-full">RACE CONTROL</span>
+            <span class="nav-label-short">RACE CONTROL</span>
           </a>
         </div>
 
@@ -78,26 +74,24 @@ function renderSharePage() {
         </button>
       </nav>
 
-      <header class="share-hero">
-        <span class="share-eyebrow">POSTER GOWES PESERTA EVENT</span>
-        <h1 class="share-title">Jejak gowes jadi <span class="share-title-accent">poster siap posting.</span></h1>
-        <p class="share-lede">
-          Khusus peserta terdaftar event CycloPon (Rider, Sweeper, Marshall, &amp; Medis). Verifikasi peserta terlebih dahulu,
-          lalu unggah file GPX atau TCX Anda untuk membuat poster siap posting.
-        </p>
-        <div class="share-privacy">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <span>Khusus peserta event terdaftar · identitas &amp; event terverifikasi</span>
-        </div>
-      </header>
+      <main class="share-main">
+        <header class="share-hero">
+          <span class="share-eyebrow">RIDE CARD</span>
+          <h1 class="share-title">Jejak gowes jadi <span class="share-title-accent">ride card siap posting.</span></h1>
+          <p class="share-lede">
+            Setelah verifikasi peserta, rute atau rekaman GPS event dimuat otomatis. Anda juga bisa menggantinya dengan GPX/TCX pribadi.
+          </p>
+        </header>
 
-      <div id="shareRoot"></div>
+        <div id="shareRoot"></div>
+      </main>
 
       <!-- ── Pro Editorial Footer ── -->
       <footer class="landing-footer">
         <div class="footer-inner">
           <div class="footer-left">
             <a href="/" data-link class="footer-brand-lockup">
+              <img src="/icons/cyclopon-mark.svg" alt="" width="28" height="28" class="brand-logo-mark">
               <div class="footer-brand-info">
                 <span class="footer-brand-title">CYCLOPON</span>
                 <span class="footer-brand-tagline">PRECISION LIVE TELEMETRY FOR CYCLING EVENTS</span>
@@ -122,6 +116,9 @@ function renderSharePage() {
   const state = {
     verified: null,
     model: null,
+    serverModel: null,
+    serverTrackLabel: '',
+    hasCustomFile: false,
     templateId: templates.CARD_TEMPLATES[0].id,
     sizeId: 'story',
     renderSeq: 0,
@@ -168,7 +165,6 @@ function renderSharePage() {
     rootEl.innerHTML = `
       <div class="share-gate-wrap">
         <div class="share-gate-card">
-          <span class="share-gate-badge">VERIFIKASI PESERTA</span>
           <h2 class="share-gate-title">Memeriksa kepesertaan event…</h2>
           <p class="share-gate-desc">Menghubungkan data peserta terdaftar dari server CycloPon.</p>
         </div>
@@ -176,66 +172,118 @@ function renderSharePage() {
     `;
   }
 
+  function renderSamplePoster() {
+    const sampleCanvas = document.getElementById('shareSampleCanvas');
+    if (!sampleCanvas || typeof cardModel.buildCardModelFromPoints !== 'function') return;
+    try {
+      const samplePoints = [
+        { lat: -7.7829, lng: 110.3671, ele: 118, time: Date.parse('2026-11-15T06:00:00Z') },
+        { lat: -7.7612, lng: 110.3814, ele: 146, time: Date.parse('2026-11-15T06:22:00Z') },
+        { lat: -7.7345, lng: 110.4022, ele: 215, time: Date.parse('2026-11-15T06:51:00Z') },
+        { lat: -7.7118, lng: 110.3910, ele: 312, time: Date.parse('2026-11-15T07:24:00Z') },
+        { lat: -7.7284, lng: 110.3595, ele: 245, time: Date.parse('2026-11-15T07:58:00Z') },
+        { lat: -7.7590, lng: 110.3518, ele: 162, time: Date.parse('2026-11-15T08:26:00Z') },
+        { lat: -7.7829, lng: 110.3671, ele: 118, time: Date.parse('2026-11-15T08:48:00Z') }
+      ];
+      const sampleModel = cardModel.buildCardModelFromPoints({
+        points: samplePoints,
+        source: 'sample',
+        title: 'Contoh Event CycloPon',
+        riderName: 'CONTOH PESERTA · BIB #001 · RIDER',
+        roleLabel: 'Rider'
+      });
+      renderer.renderActivityCard({
+        canvas: sampleCanvas,
+        model: sampleModel,
+        templateId: templates.CARD_TEMPLATES[0].id,
+        sizeId: 'portrait',
+        options: { maxTiles: 0 }
+      });
+    } catch (err) {
+      console.warn('[Share] sample poster render skipped:', err);
+    }
+  }
+
   async function renderGateView(noticeMsg = '') {
     if (state.unmounted) return;
     if (state.controller) state.controller.abort();
     state.model = null;
+    state.serverModel = null;
+    state.serverTrackLabel = '';
+    state.hasCustomFile = false;
     state.lastBlob = null;
     state.lastBlobKey = '';
     state.fileName = '';
 
+    const preselectEventId = new URLSearchParams(window.location.search).get('event') || '';
+
     rootEl.innerHTML = `
       <div class="share-gate-wrap">
-        <div class="share-gate-card">
-          <span class="share-gate-badge">VERIFIKASI PESERTA EVENT</span>
-          <h2 class="share-gate-title">Masuk sebagai Peserta Terdaftar</h2>
-          <p class="share-gate-desc">
-            Fitur Poster Gowes hanya tersedia untuk peserta yang terdaftar di event CycloPon
-            (<strong>Rider, Sweeper, Marshall,</strong> &amp; <strong>Tim Medis</strong>).
-          </p>
-
-          <form id="shareVerifyForm" class="share-gate-form">
-            <div class="share-field">
-              <label for="shareVerifyEvent">Pilih Event yang Diikuti</label>
-              <select id="shareVerifyEvent" required>
-                <option value="">Memuat daftar event…</option>
-              </select>
-            </div>
-
-            <div class="share-gate-row">
-              <div class="share-field">
-                <label for="shareVerifyBib">Nomor BIB / Plat</label>
-                <input id="shareVerifyBib" type="text" maxlength="16" placeholder="001 atau SWEEP-01" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase" required>
-              </div>
-              <div class="share-field">
-                <label for="shareVerifyPin">PIN Peserta</label>
-                <input id="shareVerifyPin" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digit PIN" autocomplete="off" required>
-              </div>
-            </div>
-
-            <div class="share-field" id="shareVerifyEventPinGroup" style="display:none">
-              <label for="shareVerifyEventPin">PIN Akses Event <span>dari panitia</span></label>
-              <input id="shareVerifyEventPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN akses event" autocomplete="off">
-            </div>
-
-            <p class="share-gate-hint">
-              PIN peserta default adalah <strong>4 digit terakhir nomor WhatsApp</strong> pendaftaran (atau PIN yang diberikan panitia).
+        <div class="share-gate-grid">
+          <div class="share-gate-card">
+            <h2 class="share-gate-title">Masuk Peserta Event</h2>
+            <p class="share-gate-desc">
+              Pilih event dan masukkan BIB beserta PIN peserta (Rider, Sweeper, Marshall, atau Medis).
             </p>
 
-            <p id="shareVerifyError" class="share-gate-error" role="alert">${escapeHtml(noticeMsg)}</p>
+            <form id="shareVerifyForm" class="share-gate-form">
+              <div class="share-field">
+                <label for="shareVerifyEvent">Pilih Event yang Diikuti</label>
+                <select id="shareVerifyEvent" required>
+                  <option value="">Memuat daftar event…</option>
+                </select>
+              </div>
 
-            <button type="submit" id="shareVerifySubmit" class="share-btn share-btn-primary">
-              <span>Verifikasi &amp; Buka Studio →</span>
-            </button>
-          </form>
+              <div class="share-gate-row">
+                <div class="share-field">
+                  <label for="shareVerifyBib">Nomor BIB / Plat</label>
+                  <input id="shareVerifyBib" type="text" maxlength="16" placeholder="001 atau SWEEP-01" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase" required>
+                </div>
+                <div class="share-field">
+                  <label for="shareVerifyPin">PIN Peserta</label>
+                  <input id="shareVerifyPin" type="password" inputmode="numeric" maxlength="6" placeholder="4-6 digit PIN" autocomplete="off" required>
+                </div>
+              </div>
 
-          <div class="share-gate-links">
-            <span>Belum terdaftar di event? <a href="/register" data-link>Daftar Event</a></span>
-            <span>Punya QR / Magic Link? <a href="/rider" data-link>Login Rider</a></span>
+              <div class="share-field" id="shareVerifyEventPinGroup" style="display:none">
+                <label for="shareVerifyEventPin">PIN Akses Event <span>dari panitia</span></label>
+                <input id="shareVerifyEventPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN akses event" autocomplete="off">
+              </div>
+
+              <p class="share-gate-hint">
+                PIN default peserta adalah <strong>4 digit terakhir nomor WhatsApp</strong> pendaftaran.
+              </p>
+
+              <p id="shareVerifyError" class="share-gate-error" role="alert">${escapeHtml(noticeMsg)}</p>
+
+              <button type="submit" id="shareVerifySubmit" class="share-btn share-btn-primary">
+                <span>Verifikasi &amp; Buka Studio →</span>
+              </button>
+            </form>
+
+            <div class="share-gate-links">
+              <span>Belum terdaftar? <a href="/register" data-link>Daftar Event</a></span>
+              <span>Punya QR / Magic Link? <a href="/rider" data-link>Login Rider</a></span>
+            </div>
           </div>
+
+          <aside class="share-gate-preview" aria-label="Contoh tampilan Ride Card">
+            <div class="share-stage-bar">
+              <span>PRATINJAU RIDE CARD</span>
+              <span class="share-stage-dim">CONTOH</span>
+            </div>
+            <div class="share-gate-canvas-wrap">
+              <canvas id="shareSampleCanvas" width="1080" height="1350" aria-label="Contoh hasil Ride Card CycloPon"></canvas>
+            </div>
+            <p class="share-gate-preview-note">
+              Contoh tampilan Ride Card. Jejak GPS atau rute event Anda akan dimuat otomatis setelah verifikasi.
+            </p>
+          </aside>
         </div>
       </div>
     `;
+
+    renderSamplePoster();
 
     const eventSelect = document.getElementById('shareVerifyEvent');
     const bibInput = document.getElementById('shareVerifyBib');
@@ -257,9 +305,11 @@ function renderSharePage() {
     if (state.unmounted) return;
 
     if (events.length) {
+      const hasPreselect = preselectEventId && events.some(ev => String(ev.id) === String(preselectEventId));
       eventSelect.innerHTML = events.map((ev, idx) => {
         const statusLabel = ev.active ? 'Aktif' : 'Selesai';
-        return `<option value="${ev.id}" ${idx === 0 ? 'selected' : ''}>${escapeHtml(ev.name)} (${escapeHtml(ev.date || 'TBA')}) · ${statusLabel}</option>`;
+        const selected = hasPreselect ? String(ev.id) === String(preselectEventId) : idx === 0;
+        return `<option value="${ev.id}" ${selected ? 'selected' : ''}>${escapeHtml(ev.name)} (${escapeHtml(ev.date || 'TBA')}) · ${statusLabel}</option>`;
       }).join('');
     } else {
       eventSelect.innerHTML = '<option value="">Belum ada event tersedia</option>';
@@ -354,6 +404,9 @@ function renderSharePage() {
     const { rider, event } = state.verified;
     const meta = cardModel.formatParticipantPosterMeta(rider, event);
     const roleBadge = ROLE_BADGES[meta.roleKey] || ROLE_BADGES.rider;
+    state.serverModel = null;
+    state.serverTrackLabel = '';
+    state.hasCustomFile = false;
 
     rootEl.innerHTML = `
       <div class="share-workspace">
@@ -378,14 +431,15 @@ function renderSharePage() {
             </div>
           </div>
 
-          <div class="share-dropzone" id="shareDropzone" role="button" tabindex="0" aria-label="Unggah file GPX atau TCX">
+          <div class="share-dropzone" id="shareDropzone" role="button" tabindex="0" aria-label="Unggah atau ganti dengan file GPX atau TCX pribadi">
             <input type="file" id="shareFileInput" accept=".gpx,.tcx,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden>
             <span class="share-dropzone-icon" aria-hidden="true">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 18v2h16v-2"/></svg>
             </span>
-            <p class="share-dropzone-title">Tarik file GPX/TCX ke sini atau <span>pilih file</span></p>
-            <p class="share-dropzone-hint" id="shareFileHint">.GPX / .TCX · maks 25 MB · rekaman dari Strava, Garmin, Wahoo, atau HP</p>
+            <p class="share-dropzone-title">Ganti dengan file GPX/TCX pribadi atau <span>pilih file</span></p>
+            <p class="share-dropzone-hint" id="shareFileHint">Otomatis memakai jejak event dari server. Unggah .GPX/.TCX jika ingin pakai rekaman Strava/Garmin/Wahoo pribadi.</p>
           </div>
+          <button type="button" id="shareResetTrackBtn" class="share-reset-btn" hidden>Kembali ke Trek Event</button>
 
           <div class="share-block">
             <span class="share-block-label">Tema</span>
@@ -408,10 +462,9 @@ function renderSharePage() {
             </button>
           </div>
 
-          <p class="share-status" id="shareStatus" role="status">Belum ada file diunggah.</p>
+          <p class="share-status" id="shareStatus" role="status">Memuat jejak gowes dari server event…</p>
           <p class="share-tip">
-            Tema <strong>Brutalist Mono</strong> tetap utuh tanpa internet. Tema berpeta mengambil ubin
-            OpenStreetMap langsung ke perangkat Anda (maks 24 ubin per poster).
+            Tema tanpa peta (<strong>Brutalist Mono</strong> &amp; <strong>Audax Blueprint</strong>) tetap utuh tanpa internet. Tema berpeta mengambil ubin OpenStreetMap langsung ke perangkat Anda (maks 24 ubin).
           </p>
         </section>
 
@@ -421,10 +474,9 @@ function renderSharePage() {
             <span class="share-stage-dim" id="shareStageDim">1080 × 1920</span>
           </div>
           <div class="share-canvas-frame" id="shareCanvasFrame" aria-busy="false">
-            <canvas id="shareCanvas" width="1080" height="1920" aria-label="Pratinjau poster gowes"></canvas>
+            <canvas id="shareCanvas" width="1080" height="1920" aria-label="Pratinjau Ride Card"></canvas>
             <div class="share-canvas-placeholder" id="shareCanvasPlaceholder">
-              <span class="share-canvas-placeholder-icon" aria-hidden="true">🚴</span>
-              <span>Unggah file GPX/TCX untuk melihat poster</span>
+              <span id="shareCanvasPlaceholderText">Memuat jejak gowes dari server event…</span>
             </div>
           </div>
           <p class="share-attribution" id="shareAttribution">Peta © OpenStreetMap contributors</p>
@@ -435,6 +487,7 @@ function renderSharePage() {
     const byId = (id) => document.getElementById(id);
     const switchBtn = byId('shareSwitchBtn');
     const dropzone = byId('shareDropzone');
+    const resetTrackBtn = byId('shareResetTrackBtn');
     const fileInput = byId('shareFileInput');
     const fileHint = byId('shareFileHint');
     const themeChips = byId('shareThemeChips');
@@ -445,6 +498,7 @@ function renderSharePage() {
     const stageDim = byId('shareStageDim');
     const frame = byId('shareCanvasFrame');
     const placeholder = byId('shareCanvasPlaceholder');
+    const placeholderText = byId('shareCanvasPlaceholderText');
     const canvas = byId('shareCanvas');
     const attributionEl = byId('shareAttribution');
 
@@ -484,25 +538,28 @@ function renderSharePage() {
       canvas.style.aspectRatio = size.ratio;
     }
 
-    function setBusy(busy) {
+    function setBusy(busy, customMessage) {
       frame.setAttribute('aria-busy', busy ? 'true' : 'false');
       frame.classList.toggle('is-busy', busy);
       const hasModel = !!state.model;
       downloadBtn.disabled = !hasModel || busy;
       shareBtn.disabled = !hasModel || busy;
       if (busy) {
-        statusEl.textContent = 'Menyiapkan peta dan menggambar poster…';
+        statusEl.textContent = customMessage || 'Menyiapkan peta dan menggambar poster…';
         return;
       }
       if (!state.model) {
-        statusEl.textContent = 'Belum ada file diunggah.';
+        statusEl.textContent = customMessage || 'Belum ada file diunggah.';
         return;
       }
       const stats = state.model.stats;
       const parts = [`${cardModel.formatDistance(stats.distanceKm)} km`];
-      const duration = cardModel.formatDuration(stats.movingSec || stats.elapsedSec);
-      if (duration) parts.push(duration);
+      if (!state.model.isOfficialRoute && state.model.hasTime) {
+        const duration = cardModel.formatDuration(stats.movingSec || stats.elapsedSec);
+        if (duration) parts.push(duration);
+      }
       if (stats.elevGainM > 0) parts.push(`${stats.elevGainM} m gain`);
+      if (state.model.isOfficialRoute) parts.push('Rute event');
       statusEl.textContent = `Siap dibagikan · ${parts.join(' · ')}`;
     }
 
@@ -536,11 +593,11 @@ function renderSharePage() {
         placeholder.classList.add('is-hidden');
 
         if (result.usedFallbackMap) {
-          attributionEl.textContent = 'Basemap tidak tersedia — poster memakai route art lokal.';
+          attributionEl.textContent = 'Basemap tidak tersedia. Poster memakai route art lokal.';
         } else if (result.attribution) {
           attributionEl.textContent = `Peta ${result.attribution}`;
         } else {
-          attributionEl.textContent = 'Tema tanpa basemap · route art digambar dari file Anda.';
+          attributionEl.textContent = 'Tema tanpa basemap · route art digambar dari data trek Anda.';
         }
       } catch (err) {
         if (seq !== state.renderSeq || state.unmounted) return;
@@ -549,6 +606,85 @@ function renderSharePage() {
       } finally {
         if (seq === state.renderSeq) setBusy(false);
       }
+    }
+
+    function applyServerModel(parsed, kindLabel) {
+      state.model = parsed;
+      state.serverModel = parsed;
+      state.serverTrackLabel = kindLabel;
+      state.hasCustomFile = false;
+      state.fileName = kindLabel === 'history' ? 'jejak-gps-event' : 'rute-event.gpx';
+      state.lastBlob = null;
+      state.lastBlobKey = '';
+      dropzone.classList.remove('has-file');
+      resetTrackBtn.hidden = true;
+      const sourceText = kindLabel === 'history' ? 'Rekaman GPS event' : 'Rute resmi event';
+      fileHint.innerHTML = `<strong>${escapeHtml(sourceText)}</strong> · ${parsed.points.length.toLocaleString('id-ID')} titik · ${cardModel.formatDistance(parsed.stats.distanceKm)} km. Unggah GPX/TCX jika ingin ganti.`;
+      drawPreview();
+    }
+
+    async function loadServerTrack() {
+      if (state.unmounted || !state.verified) return;
+      setBusy(true, 'Memuat jejak gowes dari server event…');
+
+      const headers = {};
+      if (rider.token) headers['x-rider-token'] = rider.token;
+      const savedPin = sessionStorage.getItem('event_pin_' + event.id) || (event.access_pin ? String(event.access_pin) : '');
+      if (savedPin) headers['x-event-pin'] = savedPin;
+
+      // 1. Prefer rider's recorded GPS history from this event
+      if (typeof cardModel.buildCardModelFromPoints === 'function') {
+        try {
+          const histRes = await fetch(`/api/events/${encodeURIComponent(event.id)}/history?rider_id=${encodeURIComponent(rider.id)}&limit=10000`, { headers });
+          if (state.unmounted || state.hasCustomFile) return;
+          if (histRes.ok) {
+            const rows = await histRes.json();
+            if (Array.isArray(rows) && rows.length >= 2) {
+              const parsed = cardModel.buildCardModelFromPoints({
+                points: rows,
+                source: 'traccar',
+                title: meta.title,
+                riderName: meta.riderName,
+                roleLabel: meta.roleLabel
+              });
+              applyServerModel(parsed, 'history');
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('[Share] history track fallback skipped:', err);
+        }
+      }
+
+      if (state.unmounted || state.hasCustomFile) return;
+
+      // 2. Fall back to the event's official GPX route
+      try {
+        const gpxRes = await fetch(`/api/events/${encodeURIComponent(event.id)}/gpx/download`, { headers });
+        if (state.unmounted || state.hasCustomFile) return;
+        if (gpxRes.ok) {
+          const gpxText = await gpxRes.text();
+          if (gpxText && gpxText.trim()) {
+            const parsed = cardModel.buildCardModel({
+              fileName: `${event.name || 'event-route'}.gpx`,
+              text: gpxText,
+              title: meta.title,
+              riderName: meta.riderName,
+              roleLabel: meta.roleLabel,
+              isOfficialRoute: true,
+              eventDate: event.date || null
+            });
+            applyServerModel(parsed, 'gpx');
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('[Share] event GPX fallback skipped:', err);
+      }
+
+      if (state.unmounted || state.hasCustomFile) return;
+      placeholderText.textContent = 'Event ini belum memiliki jejak GPS atau rute GPX. Unggah file .gpx/.tcx Anda.';
+      setBusy(false, 'Belum ada trek di server. Unggah file .gpx atau .tcx Anda.');
     }
 
     function loadFile(file) {
@@ -577,31 +713,34 @@ function renderSharePage() {
           });
 
           state.model = parsed;
+          state.hasCustomFile = true;
           state.fileName = file.name;
           state.lastBlob = null;
           state.lastBlobKey = '';
 
           dropzone.classList.add('has-file');
+          if (state.serverModel) resetTrackBtn.hidden = false;
           fileHint.innerHTML = `<strong>${escapeHtml(file.name)}</strong> · ${parsed.points.length.toLocaleString('id-ID')} titik · ${cardModel.formatDistance(parsed.stats.distanceKm)} km`;
           drawPreview();
         } catch (err) {
-          state.model = null;
-          dropzone.classList.remove('has-file');
-          setBusy(false);
           showToast(err && err.message ? err.message : 'File tidak bisa dibaca.', 'error');
+          if (!state.model) {
+            dropzone.classList.remove('has-file');
+            setBusy(false, 'Gagal membaca file. Coba file .gpx atau .tcx lain.');
+          }
         }
       };
       reader.readAsText(file);
     }
 
     function fileNameForExport() {
-      const slug = String(meta.title || 'poster-gowes')
+      const slug = String(meta.title || 'ride-card')
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
-        .slice(0, 40) || 'poster-gowes';
+        .slice(0, 40) || 'ride-card';
       const size = templates.getCardSize(state.sizeId);
-      return `CycloPon_Poster_${slug}_${size.width}x${size.height}.png`;
+      return `CycloPon_RideCard_${slug}_${size.width}x${size.height}.png`;
     }
 
     async function getPngBlob() {
@@ -691,6 +830,11 @@ function renderSharePage() {
       renderGateView();
     });
 
+    resetTrackBtn.addEventListener('click', () => {
+      if (!state.serverModel) return;
+      applyServerModel(state.serverModel, state.serverTrackLabel || 'history');
+    });
+
     dropzone.addEventListener('click', () => fileInput.click());
     dropzone.addEventListener('keydown', (event) => {
       if (event.key === 'Enter' || event.key === ' ') {
@@ -747,7 +891,7 @@ function renderSharePage() {
 
     renderChips();
     updateStageMeta();
-    setBusy(false);
+    loadServerTrack();
   }
 
   async function init() {

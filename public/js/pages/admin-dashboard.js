@@ -9,22 +9,38 @@ function setupAdminDrawer() {
 
   function openDrawer() {
     drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    hamburger.setAttribute('aria-expanded', 'true');
     if (overlay) overlay.classList.add('show');
     document.body.style.overflow = 'hidden';
+    if (closeBtn) closeBtn.focus();
   }
-  function closeDrawer() {
+  function closeDrawer(restoreFocus = false) {
     drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    hamburger.setAttribute('aria-expanded', 'false');
     if (overlay) overlay.classList.remove('show');
     document.body.style.overflow = '';
+    if (restoreFocus && hamburger.isConnected) hamburger.focus();
   }
 
   hamburger.onclick = openDrawer;
-  if (closeBtn) closeBtn.onclick = closeDrawer;
-  if (overlay)  overlay.onclick = closeDrawer;
+  if (closeBtn) closeBtn.onclick = () => closeDrawer(true);
+  if (overlay)  overlay.onclick = () => closeDrawer(true);
 
   drawer.querySelectorAll('a[data-link]').forEach(link => {
-    link.onclick = closeDrawer;
+    link.onclick = () => closeDrawer(false);
   });
+
+  if (window._adminDrawerEscHandler) {
+    document.removeEventListener('keydown', window._adminDrawerEscHandler);
+  }
+  window._adminDrawerEscHandler = (e) => {
+    if (e.key === 'Escape' && drawer.classList.contains('open')) {
+      closeDrawer(true);
+    }
+  };
+  document.addEventListener('keydown', window._adminDrawerEscHandler);
 }
 window.setupAdminDrawer = setupAdminDrawer;
 
@@ -39,6 +55,42 @@ function adminSidebar(activeKey) {
     }
   } catch {}
 
+  const safeAdminName = typeof escapeHtml === 'function' ? escapeHtml(adminName) : String(adminName);
+
+  const navIcons = {
+    dashboard: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>',
+    sos: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    reports: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
+    logs: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+    home: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>',
+    shield: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
+    bell: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>',
+    logout: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>'
+  };
+
+  const navItemsHtml = `
+    <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
+      ${navIcons.dashboard}
+      <span>Dashboard</span>
+    </a>
+    <a href="/admin/sos" data-link class="${activeKey === 'sos' ? 'active' : ''}" style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:10px">${navIcons.sos}<span>Pusat SOS</span></span>
+      <span class="sidebar-sos-badge" style="display:none">0 SOS</span>
+    </a>
+    <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
+      ${navIcons.reports}
+      <span>Laporan &amp; Riwayat Event</span>
+    </a>
+    <a href="/admin/logs" data-link class="${activeKey === 'logs' ? 'active' : ''}">
+      ${navIcons.logs}
+      <span>Log &amp; Rekap Event</span>
+    </a>
+    <a href="/" data-link>
+      ${navIcons.home}
+      <span>Beranda</span>
+    </a>
+  `;
+
   // Auto-bind drawer after DOM paint
   setTimeout(() => {
     if (typeof setupAdminDrawer === 'function') setupAdminDrawer();
@@ -48,11 +100,14 @@ function adminSidebar(activeKey) {
     <!-- ── Mobile Top Bar (visible on mobile only) ── -->
     <div class="admin-mobile-topbar">
       <div style="display:flex;align-items:center;gap:8px">
-        <a href="/" data-link class="admin-mobile-brand">CYCLOPON</a>
-        <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:900;background:#0D1117;color:#FFFFFF;padding:2px 6px;border-radius:4px;letter-spacing:0.04em">RC-OPS</span>
+        <a href="/" data-link class="admin-mobile-brand">
+          <img src="/icons/cyclopon-mark.svg" alt="" width="22" height="22" class="brand-logo-mark">
+          <span>CYCLOPON</span>
+        </a>
+        <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;background:#0D1117;color:#FFFFFF;padding:2px 6px;border-radius:4px;letter-spacing:0.04em">RC-OPS</span>
       </div>
-      <button class="admin-hamburger" id="adminHamburger" aria-label="Buka menu navigasi" title="Menu Navigasi">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <button type="button" class="admin-hamburger" id="adminHamburger" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="adminDrawer" title="Menu Navigasi">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
         </svg>
       </button>
@@ -62,41 +117,36 @@ function adminSidebar(activeKey) {
     <div class="admin-drawer-overlay" id="adminDrawerOverlay"></div>
 
     <!-- ── Mobile Slide-Out Drawer ── -->
-    <div class="admin-drawer" id="adminDrawer">
+    <div class="admin-drawer" id="adminDrawer" role="dialog" aria-modal="true" aria-label="Menu Admin" aria-hidden="true">
       <div class="admin-drawer-header">
         <div>
-          <span style="font-family:ui-monospace,monospace;font-size:9.5px;font-weight:800;color:#6B7280;display:block;letter-spacing:0.08em">// RACE CONTROL</span>
-          <span class="admin-drawer-brand">CYCLOPON</span>
+          <span style="font-family:var(--font-mono);font-size:9.5px;font-weight:700;color:#6B7280;display:block;letter-spacing:0.08em">// RACE CONTROL</span>
+          <span class="admin-drawer-brand">
+            <img src="/icons/cyclopon-mark.svg" alt="" width="22" height="22" class="brand-logo-mark">
+            <span>CYCLOPON</span>
+          </span>
         </div>
-        <button class="admin-drawer-close" id="adminDrawerClose" aria-label="Tutup menu">✕</button>
+        <button type="button" class="admin-drawer-close" id="adminDrawerClose" aria-label="Tutup menu">✕</button>
       </div>
       <div class="admin-drawer-user">
-        <span style="font-size:14px">🛡️</span>
-        <span style="font-family:ui-monospace,monospace;font-size:12px;font-weight:800;color:#0D1117;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${adminName}</span>
+        <div class="sidebar-user-avatar">${navIcons.shield}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-mono);font-size:9.5px;color:#6B7280;font-weight:700;letter-spacing:0.04em">ACCREDITATION</div>
+          <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0D1117;font-weight:800;font-size:12.5px">${safeAdminName}</div>
+        </div>
       </div>
       <nav class="admin-drawer-nav">
-        <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
-          <span>📊</span> Dashboard
-        </a>
-        <a href="/admin/sos" data-link class="${activeKey === 'sos' ? 'active' : ''}" style="justify-content:space-between">
-          <span style="display:flex;align-items:center;gap:8px">🚨 Pusat SOS</span>
-          <span class="sidebar-sos-badge" style="display:none">0 SOS</span>
-        </a>
-        <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
-          <span>📑</span> Laporan &amp; Riwayat Event
-        </a>
-        <a href="/admin/logs" data-link class="${activeKey === 'logs' ? 'active' : ''}">
-          <span>📋</span> Log &amp; Rekap Event
-        </a>
-        <a href="/" data-link>
-          <span>🏠</span> Beranda
-        </a>
+        ${navItemsHtml}
       </nav>
       <div class="admin-drawer-footer">
-        <button onclick="AdminSosMonitor.requestNotificationPermission()" class="admin-drawer-logout btn-sos-notif" style="margin-bottom:8px">
-          🔔 Aktifkan Notifikasi SOS
+        <button type="button" onclick="AdminSosMonitor.requestNotificationPermission()" class="admin-drawer-notif btn-sos-notif">
+          ${navIcons.bell}
+          <span>Aktifkan Notifikasi SOS</span>
         </button>
-        <button onclick="logoutAdmin()" class="admin-drawer-logout">🚪 Keluar (Logout)</button>
+        <button type="button" onclick="logoutAdmin()" class="admin-drawer-logout">
+          ${navIcons.logout}
+          <span>Keluar (Logout)</span>
+        </button>
       </div>
     </div>
 
@@ -105,39 +155,31 @@ function adminSidebar(activeKey) {
       <div class="sidebar-logo">
         <div style="margin-bottom:8px">
           <span class="sidebar-logo-tag" style="margin-bottom:2px">// RACE CONTROL</span>
-          <h2 style="margin:0;font-size:18px">CYCLOPON</h2>
+          <h2 style="margin:0;font-size:19px">
+            <img src="/icons/cyclopon-mark.svg" alt="" width="22" height="22" class="brand-logo-mark">
+            <span>CYCLOPON</span>
+          </h2>
         </div>
         <small>COMMISSAIRE PANEL</small>
       </div>
       <div class="sidebar-user">
-        <div class="sidebar-user-avatar">🛡️</div>
+        <div class="sidebar-user-avatar">${navIcons.shield}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-family:ui-monospace,monospace;font-size:9.5px;color:#6B7280;font-weight:800;letter-spacing:0.04em">ACCREDITATION</div>
-          <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0D1117;font-weight:800;font-size:12.5px">${adminName}</div>
+          <div style="font-family:var(--font-mono);font-size:9.5px;color:#6B7280;font-weight:700;letter-spacing:0.04em">ACCREDITATION</div>
+          <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0D1117;font-weight:800;font-size:12.5px">${safeAdminName}</div>
         </div>
       </div>
       <nav class="sidebar-nav">
-        <a href="/admin/dashboard" data-link class="${activeKey === 'dashboard' ? 'active' : ''}">
-          <span style="display:flex;align-items:center;gap:8px">📊 Dashboard</span>
-        </a>
-        <a href="/admin/sos" data-link class="${activeKey === 'sos' ? 'active' : ''}" style="justify-content:space-between">
-          <span style="display:flex;align-items:center;gap:8px">🚨 Pusat SOS</span>
-          <span class="sidebar-sos-badge" style="display:none">0 SOS</span>
-        </a>
-        <a href="/admin/event-reports" data-link class="${activeKey === 'reports' ? 'active' : ''}">
-          <span style="display:flex;align-items:center;gap:8px">📑 Laporan &amp; Riwayat Event</span>
-        </a>
-        <a href="/admin/logs" data-link class="${activeKey === 'logs' ? 'active' : ''}">
-          <span style="display:flex;align-items:center;gap:8px">📋 Log &amp; Rekap Event</span>
-        </a>
-        <a href="/" data-link>🏠 &nbsp;Beranda</a>
+        ${navItemsHtml}
       </nav>
       <div class="sidebar-footer">
-        <button onclick="AdminSosMonitor.requestNotificationPermission()" class="btn-logout btn-sos-notif" style="margin-bottom:8px;background:#FEF2F2;color:#B91C1C;border-color:#FCA5A5" aria-label="Aktifkan notifikasi SOS">
-          🔔 Aktifkan Notifikasi SOS
+        <button type="button" onclick="AdminSosMonitor.requestNotificationPermission()" class="btn-sos-notif" style="margin-bottom:8px" aria-label="Aktifkan notifikasi SOS">
+          ${navIcons.bell}
+          <span>Aktifkan Notifikasi SOS</span>
         </button>
-        <button onclick="logoutAdmin()" class="btn-logout" aria-label="Keluar dari akun admin">
-          🚪 Keluar (Logout)
+        <button type="button" onclick="logoutAdmin()" class="btn-logout" aria-label="Keluar dari akun admin">
+          ${navIcons.logout}
+          <span>Keluar (Logout)</span>
         </button>
       </div>
     </aside>
@@ -724,7 +766,7 @@ window.logoutAdmin = logoutAdmin;
 
 /* ── Admin Login ── */
 function renderAdminLogin() {
-  loadCss('/css/admin.css');
+  loadCss('/css/admin.css?v=88');
 
   // Stop any lingering background intervals from dashboard
   stopAdminBackgroundTasks();
@@ -774,6 +816,10 @@ function renderAdminLogin() {
 
         <!-- Header Center -->
         <div style="margin-bottom:22px">
+          <div style="display:inline-flex;align-items:center;gap:8px;margin-bottom:8px">
+            <img src="/icons/cyclopon-mark.svg" alt="" width="24" height="24" style="display:block;flex-shrink:0">
+            <span style="font-family:var(--font-display);font-size:20px;font-weight:900;color:#0D1117;letter-spacing:-0.03em">CYCLOPON</span>
+          </div>
           <span class="login-pass-tag">// COMMISSAIRE ACCREDITATION PASS</span>
           <h1 style="font-size:22px;font-weight:900;color:#0D1117;letter-spacing:-0.03em;line-height:1.2;text-transform:uppercase;margin:4px 0">Akses Administrator</h1>
           <p style="font-size:13px;color:#4B5563;margin:0">Masuk ke panel Race Control &amp; Manajemen Event</p>
@@ -781,14 +827,14 @@ function renderAdminLogin() {
 
         <form id="adminLoginForm">
           <div style="margin-bottom:14px">
-            <label for="adminEmail" style="display:block;font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">USERNAME / EMAIL</label>
+            <label for="adminEmail" style="display:block;font-family:var(--font-mono);font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">USERNAME / EMAIL</label>
             <div class="admin-input-group">
               <span class="admin-input-icon">👤</span>
               <input class="admin-input-field" type="text" id="adminEmail" placeholder="Username atau email admin" required autocomplete="username">
             </div>
           </div>
           <div style="margin-bottom:16px">
-            <label for="adminPassword" style="display:block;font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">PASSWORD</label>
+            <label for="adminPassword" style="display:block;font-family:var(--font-mono);font-size:11px;font-weight:800;color:#6B7280;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:6px">PASSWORD</label>
             <div class="admin-input-group">
               <span class="admin-input-icon">🔒</span>
               <input class="admin-input-field" type="password" id="adminPassword" placeholder="••••••••" required autocomplete="current-password">
@@ -846,7 +892,7 @@ function renderAdminLogin() {
 
 /* ── Admin Dashboard ── */
 async function renderAdminDashboard() {
-  loadCss('/css/admin.css');
+  loadCss('/css/admin.css?v=88');
 
   // Route guard: check if admin is logged in
   const user = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
@@ -883,7 +929,7 @@ async function renderAdminDashboard() {
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span class="live-pulse-dot" id="trafficLivePulse"></span>
-              <span id="trafficLiveBadge" style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#047857">SINKRONISASI REALTIME...</span>
+              <span id="trafficLiveBadge" style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:#047857">SINKRONISASI REALTIME...</span>
             </div>
           </div>
           <div class="traffic-metrics-grid">
@@ -911,18 +957,18 @@ async function renderAdminDashboard() {
           <div class="traffic-sub-bar" id="trafficSurgeBar" style="border-top:1px solid #E5E7EB;margin-top:14px;padding-top:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
             <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px">
               <span style="display:inline-flex;align-items:center;gap:5px;color:#0D1117;font-weight:700" title="Batas teknis izin koneksi sistem operasi dibuka hingga 65.535 socket agar server tidak memblokir penonton di angka default 1.024. Daya tahan riil bergantung pada RAM/CPU VPS.">
-                🛡️ <span>Plafon Socket OS:</span> <code style="font-family:ui-monospace,monospace;color:#047857;background:#ECFDF5;padding:1px 6px;border-radius:4px;border:1px solid #A7F3D0">65.535 FD</code>
+                🛡️ <span>Plafon Socket OS:</span> <code style="font-family:var(--font-mono);color:#047857;background:#ECFDF5;padding:1px 6px;border-radius:4px;border:1px solid #A7F3D0">65.535 FD</code>
               </span>
               <span style="color:#64748B">·</span>
               <span style="display:inline-flex;align-items:center;gap:5px;color:#0D1117;font-weight:700" title="Jumlah titik koordinat GPS yang diterima server per menit (t/m = titik per menit)">
-                📡 <span>Update GPS:</span> <span id="metricTelemetryRate" style="color:#0284C7;font-family:ui-monospace,monospace;font-weight:800">-- titik/mnt</span>
+                📡 <span>Update GPS:</span> <span id="metricTelemetryRate" style="color:#0284C7;font-family:var(--font-mono);font-weight:800">-- titik/mnt</span>
               </span>
               <span style="color:#64748B">·</span>
               <span style="display:inline-flex;align-items:center;gap:5px;color:#0D1117;font-weight:700" title="Jumlah rider yang GPS-nya terdeteksi aktif mengirim sinyal dalam 5 menit terakhir">
-                🚴 <span>Rider Mengirim Sinyal:</span> <span id="metricActiveRiders" style="color:#0D1117;font-family:ui-monospace,monospace;font-weight:800">-- online</span>
+                🚴 <span>Rider Mengirim Sinyal:</span> <span id="metricActiveRiders" style="color:#0D1117;font-family:var(--font-mono);font-weight:800">-- online</span>
               </span>
             </div>
-            <div id="metricSurgeBadge" style="font-family:ui-monospace,monospace;font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0">
+            <div id="metricSurgeBadge" style="font-family:var(--font-mono);font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0">
               ✓ KAPASITAS AMAN (NORMAL)
             </div>
           </div>
@@ -946,7 +992,7 @@ async function renderAdminDashboard() {
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span class="live-pulse-dot" id="systemLivePulse"></span>
-              <span id="systemHealthBadge" style="font-family:ui-monospace,monospace;font-size:11px;font-weight:800;color:#047857">SISTEM NORMAL (OPTIMAL)</span>
+              <span id="systemHealthBadge" style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:#047857">SISTEM NORMAL (OPTIMAL)</span>
             </div>
           </div>
           <div class="system-metrics-grid">
@@ -1002,7 +1048,7 @@ async function renderAdminDashboard() {
               <span style="font-size:22px">🔬</span>
               <div>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:900;color:#6B7280">// PRE-DEPLOYMENT TRIAL</span>
+                  <span style="font-family:var(--font-mono);font-size:10px;font-weight:900;color:#6B7280">// PRE-DEPLOYMENT TRIAL</span>
                   <span id="diagnosticStatusBadge" class="diagnostic-badge status-idle">MEMERIKSA LAPORAN...</span>
                 </div>
                 <h2 style="font-size:15px;font-weight:900;color:#0D1117;text-transform:uppercase;letter-spacing:-0.02em;margin:2px 0 0 0">
@@ -1059,9 +1105,9 @@ async function renderAdminDashboard() {
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:900;color:#6B7280">// EVENT LIST</span>
+            <span style="font-family:var(--font-mono);font-size:11px;font-weight:900;color:#6B7280">// EVENT LIST</span>
             <h2 style="font-size:16px;font-weight:900;color:#0D1117;margin:0;text-transform:uppercase">Daftar Event Balapan</h2>
-            <span id="activeRidersIndicator" style="display:none;font-family:ui-monospace,monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px"></span>
+            <span id="activeRidersIndicator" style="display:none;font-family:var(--font-mono);font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px"></span>
           </div>
         </div>
 

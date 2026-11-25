@@ -1,9 +1,14 @@
-const CACHE_NAME = 'cyclopon-v105';
+const CACHE_NAME = 'cyclopon-v122';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
   '/',
   '/index.html',
+  '/icons/cyclopon-mark.svg',
+  '/icons/cyclopon-mark-dark.svg',
+  '/icons/app-icon-192.png',
+  '/icons/app-icon-512.png',
+  '/icons/apple-touch-icon.png',
   '/css/global.css',
   '/css/admin.css',
   '/css/rider.css',

@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>CycloPon — Live GPS Tracker & Telemetry Matrix Balap Sepeda</title>
-  <meta name="description" content="Platform pemantau posisi GPS live, radar rute, kecepatan, split checkpoint Cut-Off-Time (COT), dan leaderboard resmi balap sepeda secara real-time.">
+  <meta name="description"
+    content="Platform pemantau posisi GPS live, radar rute, kecepatan, split checkpoint Cut-Off-Time (COT), dan leaderboard resmi balap sepeda secara real-time.">
   <meta name="theme-color" content="#FFFFFF">
 
   <!-- Open Graph / Facebook / WhatsApp -->
@@ -12,7 +14,8 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cyclopon.my.id/">
   <meta property="og:title" content="🚴 CycloPon — Live GPS Tracker & Telemetry Matrix Balap Sepeda">
-  <meta property="og:description" content="Platform pemantau posisi GPS live, radar rute, kecepatan, split checkpoint Cut-Off-Time (COT), dan leaderboard resmi balap sepeda secara real-time.">
+  <meta property="og:description"
+    content="Platform pemantau posisi GPS live, radar rute, kecepatan, split checkpoint Cut-Off-Time (COT), dan leaderboard resmi balap sepeda secara real-time.">
   <meta property="og:image" content="https://cyclopon.my.id/api/og/home.png">
   <meta property="og:image:secure_url" content="https://cyclopon.my.id/api/og/home.png">
   <meta property="og:image:type" content="image/png">
@@ -23,12 +26,21 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://cyclopon.my.id/">
   <meta name="twitter:title" content="🚴 CycloPon — Live GPS Tracker & Telemetry Matrix Balap Sepeda">
-  <meta name="twitter:description" content="Platform pemantau posisi GPS live, radar rute, kecepatan, split checkpoint Cut-Off-Time (COT), dan leaderboard resmi balap sepeda secara real-time.">
+  <meta name="twitter:description"
+    content="Platform pemantau posisi GPS live, radar rute, kecepatan, split checkpoint Cut-Off-Time (COT), dan leaderboard resmi balap sepeda secara real-time.">
   <meta name="twitter:image" content="https://cyclopon.my.id/api/og/home.png">
 
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="/css/global.css?v=104">
+  <link rel="icon" type="image/svg+xml" href="/icons/cyclopon-mark.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/app-icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Barlow:wght@600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/global.css?v=109">
 </head>
+
 <body>
   <div id="app"></div>
 
@@ -38,6 +50,7 @@
     <aside class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <div class="mobile-nav-brand">
+          <img src="/icons/cyclopon-mark.svg" alt="" width="24" height="24" class="brand-logo-mark">
           <span class="mobile-nav-title">CYCLOPON</span>
         </div>
         <button type="button" class="mobile-nav-close" aria-label="Tutup menu">✕</button>
@@ -48,23 +61,19 @@
           <span class="mobile-nav-item-desc">Halaman utama &amp; daftar event aktif</span>
         </a>
         <a href="/share" data-link class="mobile-nav-item">
-          <span class="mobile-nav-item-title">POSTER GOWES</span>
-          <span class="mobile-nav-item-desc">Poster jejak &amp; elevasi GPX/TCX peserta event</span>
-        </a>
-        <a href="/guide" data-link class="mobile-nav-item">
-          <span class="mobile-nav-item-title">PANDUAN</span>
-          <span class="mobile-nav-item-desc">Panduan lengkap pesepeda &amp; GPS</span>
+          <span class="mobile-nav-item-title">RIDE CARD</span>
+          <span class="mobile-nav-item-desc">Ride card jejak &amp; elevasi GPX/TCX peserta event</span>
         </a>
         <a href="/install" data-link class="mobile-nav-item">
           <span class="mobile-nav-item-title">INSTALL APLIKASI</span>
           <span class="mobile-nav-item-desc">Tutorial pasang PWA ke layar utama HP</span>
         </a>
         <a href="/register" data-link class="mobile-nav-item">
-          <span class="mobile-nav-item-title">DAFTAR EVENT</span>
-          <span class="mobile-nav-item-desc">Pendaftaran peserta &amp; nomor BIB</span>
+          <span class="mobile-nav-item-title">DAFTAR</span>
+          <span class="mobile-nav-item-desc">Pendaftaran peserta, nomor BIB &amp; panduan</span>
         </a>
         <a href="/admin" data-link class="mobile-nav-item">
-          <span class="mobile-nav-item-title">PANEL PANITIA ↗</span>
+          <span class="mobile-nav-item-title">RACE CONTROL ↗</span>
           <span class="mobile-nav-item-desc">Portal manajemen event &amp; telemetri</span>
         </a>
       </nav>
@@ -74,9 +83,9 @@
     </aside>
   </div>
 
-  <script src="/js/router.js?v=70"></script>
+  <script src="/js/router.js?v=71"></script>
   <script src="/js/lib/utils.js?v=71"></script>
-  <script src="/js/app.js?v=125"></script>
+  <script src="/js/app.js?v=128"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
@@ -88,4 +97,5 @@
     }
   </script>
 </body>
+
 </html>
