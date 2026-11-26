@@ -5,7 +5,7 @@ async function renderAdminEvent(params) {
     try { activeAdminCpWs.close(); } catch {}
     activeAdminCpWs = null;
   }
-  loadCss('/css/admin.css?v=93');
+  loadCss('/css/admin.css?v=94');
 
   // Route guard: check if admin is logged in
   const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
@@ -339,8 +339,8 @@ async function renderAdminEvent(params) {
 
               <div id="cpSplitsSummaryBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
 
-              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-                <label for="cpSplitSearchInput" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Cari BIB atau nama peserta</label>
+              <div style="position:relative;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+                <label for="cpSplitSearchInput" style="position:absolute;top:0;left:0;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">Cari BIB atau nama peserta</label>
                 <input type="text" id="cpSplitSearchInput" class="input" placeholder="Cari BIB atau nama peserta..." style="max-width:240px;padding:8px 12px;font-size:12.5px;min-height:40px">
                 <div style="display:flex;gap:6px;flex-wrap:wrap" id="cpSplitFilterGroup">
                   <button type="button" class="tbl-filter-pill active" data-split-filter="all">Semua</button>

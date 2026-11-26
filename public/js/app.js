@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Router.register('/admin', async () => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js?v=91'],
-      ['/css/admin.css?v=90']
+      ['/css/admin.css?v=94']
     );
     renderAdminLogin();
   });
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Router.register('/admin/dashboard', async () => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js?v=91'],
-      ['/css/admin.css?v=90']
+      ['/css/admin.css?v=94']
     );
     renderAdminDashboard();
   });
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Router.register('/admin/sos', async () => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-sos.js?v=84'],
-      ['/css/admin.css?v=90']
+      ['/css/admin.css?v=94']
     );
     renderAdminSos();
   });
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Router.register('/admin/event-reports', async (params) => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event-reports.js?v=85'],
-      ['/css/admin.css?v=90']
+      ['/css/admin.css?v=94']
     );
     renderAdminEventReports(params);
   });
@@ -221,15 +221,15 @@ document.addEventListener('DOMContentLoaded', () => {
   Router.register('/admin/logs', async (params) => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-logs.js?v=86'],
-      ['/css/admin.css?v=90']
+      ['/css/admin.css?v=94']
     );
     renderAdminLogs(params);
   });
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event.js?v=90'],
-      ['/css/admin.css?v=93']
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event.js?v=91'],
+      ['/css/admin.css?v=94']
     );
     renderAdminEvent(params);
   });
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
   Router.register('/admin/ala-ultra', async () => {
     await loadPageDeps(
       ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-ala-ultra.js?v=7'],
-      ['/css/admin.css?v=92']
+      ['/css/admin.css?v=94']
     );
     renderAdminAlaUltra();
   });
