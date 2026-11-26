@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v132';
+const CACHE_NAME = 'cyclopon-v133';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -29,6 +29,8 @@ const SHELL_ASSETS = [
   '/js/lib/card-templates.js',
   '/js/lib/card-renderer.js',
   '/js/libs/html2canvas.min.js',
+  '/js/libs/jsqr.min.js',
+  '/js/lib/qr-scanner.js',
   '/js/app.js',
   '/js/pages/landing.js',
   '/js/pages/guide.js',
@@ -38,6 +40,7 @@ const SHELL_ASSETS = [
   '/js/pages/rider-login.js',
   '/js/pages/rider-setup.js',
   '/js/pages/rider-cockpit.js',
+  '/js/pages/cp-checkin.js',
   '/js/pages/live-map.js',
   '/js/pages/event-results.js',
   '/js/pages/event-activity.js',

@@ -121,16 +121,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   Router.register('/rider/setup', async () => {
-    await loadPageDeps(['/js/lib/gps-keeper.js?v=2', '/js/pages/rider-setup.js?v=99'], ['/css/rider.css?v=94']);
+    await loadPageDeps(
+      ['/js/lib/gps-keeper.js?v=2', '/js/libs/jsqr.min.js', '/js/lib/qr-scanner.js?v=4', '/js/pages/rider-setup.js?v=100'],
+      ['/css/rider.css?v=96']
+    );
     renderRiderSetup();
   });
 
   Router.register('/rider/cockpit', async () => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/lib/gps-keeper.js?v=2', '/js/pages/rider-cockpit.js?v=102'],
-      ['/css/cockpit.css?v=102']
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/lib/gps-keeper.js?v=2', '/js/libs/jsqr.min.js', '/js/lib/qr-scanner.js?v=4', '/js/pages/rider-cockpit.js?v=103'],
+      ['/css/cockpit.css?v=103', '/css/rider.css?v=96']
     );
     renderRiderCockpit();
+  });
+
+  Router.register('/cp/:token', async (params) => {
+    await loadPageDeps(
+      ['/js/lib/qr-scanner.js?v=4', '/js/pages/cp-checkin.js?v=4'],
+      ['/css/rider.css?v=96']
+    );
+    renderCpCheckinPage(params);
   });
 
   Router.register('/cockpit', () => Router.navigate('/rider/cockpit'));
@@ -138,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=90'],
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=91'],
       ['/css/map.css?v=89']
     );
     renderLiveMap(params);
@@ -164,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Official Event Results & Brevet Certificate ──
   Router.register('/events/:id/results', async (params) => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/pages/event-results.js?v=88'],
+      ['/js/lib/utils.js', '/js/pages/event-results.js?v=89'],
       ['/css/results.css?v=84']
     );
     renderEventResults(params);
@@ -217,8 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event.js?v=84'],
-      ['/css/admin.css?v=90']
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event.js?v=90'],
+      ['/css/admin.css?v=93']
     );
     renderAdminEvent(params);
   });

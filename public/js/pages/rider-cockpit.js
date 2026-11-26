@@ -182,15 +182,24 @@ async function renderRiderCockpit() {
           </button>
         </div>
 
-        <!-- Baris 3: Menu Alat & Kontrol (3 Kolom Luas) -->
+        <!-- Baris 3: Menu Alat & Kontrol -->
         <div class="cockpit-tools-row">
-          <button id="btnToggleTheme" class="cockpit-pill-btn tool-btn" title="Ganti Mode Terang / Gelap">
+          <button type="button" id="btnCockpitCpScan" class="cockpit-pill-btn tool-btn" title="Scan QR Check-In Pos Kontrol">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7"/>
+              <rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/>
+              <path d="M14 14h3v3h-3zM17 17h4v4h-4z"/>
+            </svg>
+            <span id="cockpitCpScanLabel">Scan CP</span>
+          </button>
+          <button type="button" id="btnToggleTheme" class="cockpit-pill-btn tool-btn" title="Ganti Mode Terang / Gelap">
             <span id="themeIcon">☀️</span> <span id="themeText">Terang</span>
           </button>
-          <button id="btnToggleFullscreen" class="cockpit-pill-btn tool-btn" title="Layar Penuh (Fullscreen)">
+          <button type="button" id="btnToggleFullscreen" class="cockpit-pill-btn tool-btn" title="Layar Penuh (Fullscreen)">
             <span>⛶</span> <span>Fullscreen</span>
           </button>
-          <button id="btnCockpitLogout" class="cockpit-pill-btn tool-btn danger" title="Keluar / Logout">
+          <button type="button" id="btnCockpitLogout" class="cockpit-pill-btn tool-btn danger" title="Keluar / Logout">
             <span>🚪</span> <span>Keluar</span>
           </button>
         </div>
@@ -380,6 +389,7 @@ async function renderRiderCockpit() {
   let routeClimbs = [];
   let totalElevGain = 0;
   let checkpoints = [];
+  let riderSplits = [];
   let totalKm = 0;
   let currentLat = null;
   let currentLng = null;
@@ -505,13 +515,21 @@ async function renderRiderCockpit() {
   try {
     const cockpitEventPin = sessionStorage.getItem('event_pin_' + event.id) || '';
     const cockpitEventHeaders = cockpitEventPin ? { 'x-event-pin': cockpitEventPin } : {};
-    const [eventRes, cpRes] = await Promise.all([
+    const [eventRes, cpRes, splitRes] = await Promise.all([
       fetch(`/api/events/${event.id}`).then(r => r.json()).catch(() => null),
-      fetch(`/api/events/${event.id}/checkpoints`, { headers: cockpitEventHeaders }).then(r => r.json()).catch(() => [])
+      fetch(`/api/events/${event.id}/checkpoints`, { headers: cockpitEventHeaders }).then(r => r.json()).catch(() => []),
+      fetch(`/api/riders/${rider.id}/splits`, { headers: cockpitEventHeaders }).then(r => r.json()).catch(() => [])
     ]);
 
     if (cpRes && Array.isArray(cpRes)) {
       checkpoints = cpRes.sort((a, b) => a.km_distance - b.km_distance);
+    }
+    if (splitRes && Array.isArray(splitRes)) {
+      riderSplits = splitRes;
+    }
+    const scanLabel = document.getElementById('cockpitCpScanLabel');
+    if (scanLabel && checkpoints.length) {
+      scanLabel.textContent = `Scan CP (${riderSplits.length}/${checkpoints.length})`;
     }
 
     if (eventRes && eventRes.gpx_path) {
@@ -989,6 +1007,28 @@ async function renderRiderCockpit() {
   // Dismiss Checkpoint Proximity banner button
   document.getElementById('btnDismissProximityAlert')?.addEventListener('click', () => {
     document.getElementById('cockpitCpProximityAlert')?.classList.remove('active');
+  });
+
+  // ── Scan QR Checkpoint from Cockpit ──
+  document.getElementById('btnCockpitCpScan')?.addEventListener('click', () => {
+    if (typeof window.openCpQrScanner !== 'function') {
+      showToast('Komponen scanner belum siap. Muat ulang halaman.', 'error');
+      return;
+    }
+    window.openCpQrScanner({
+      riderConfig: config,
+      checkpoints,
+      existingSplits: riderSplits,
+      onCheckInSuccess: (data) => {
+        if (data && data.split && !riderSplits.some(s => Number(s.checkpoint_id) === Number(data.split.checkpoint_id))) {
+          riderSplits.push(data.split);
+          const scanLabel = document.getElementById('cockpitCpScanLabel');
+          if (scanLabel && checkpoints.length) {
+            scanLabel.textContent = `Scan CP (${riderSplits.length}/${checkpoints.length})`;
+          }
+        }
+      }
+    });
   });
 
   // ── Auto & Manual Dark / Light Mode ──

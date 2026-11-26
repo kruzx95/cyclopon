@@ -71,18 +71,20 @@ function calculateEventResults(eventId) {
 
   const results = riders.map(rider => {
     const riderSplits = splits.filter(s => s.rider_id === rider.id);
+    const verifiedSplits = riderSplits.filter(s => s.verification_status !== 'PENDING_VERIFY');
+    const pendingVerifyCount = riderSplits.length - verifiedSplits.length;
     const riderAlerts = alerts.filter(a => a.rider_id === rider.id);
     const history = historyByRider.get(rider.id) || [];
 
-    const clearedCpCount = riderSplits.length;
-    const hasOverCot = riderSplits.some(s => s.status === 'OVER_COT');
+    const clearedCpCount = verifiedSplits.length;
+    const hasOverCot = verifiedSplits.some(s => s.status === 'OVER_COT');
 
     // Distance computation
     let distanceKm = 0;
     if (history.length > 0) {
       distanceKm = Math.max(...history.map(h => h.distance_km || 0));
-    } else if (riderSplits.length > 0) {
-      distanceKm = Math.max(...riderSplits.map(s => s.checkpoint_km || 0));
+    } else if (verifiedSplits.length > 0) {
+      distanceKm = Math.max(...verifiedSplits.map(s => s.checkpoint_km || 0));
     }
     distanceKm = Math.round(distanceKm * 10) / 10;
 
@@ -161,6 +163,7 @@ function calculateEventResults(eventId) {
       distance_km: distanceKm,
       avg_speed: avgSpeed,
       checkpoints_cleared: clearedCpCount,
+      pending_verification_count: pendingVerifyCount,
       total_checkpoints: totalCps,
       splits: riderSplits,
       alerts_count: riderAlerts.length

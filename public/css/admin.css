@@ -2258,11 +2258,47 @@ input[type="time"].input {
 
 /* ── Print Media Query for Clean Paper Output ── */
 @media print {
-  body * {
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    overflow: visible !important;
+  }
+  body.printing-batch-modal > *:not(#batchPrintModal),
+  body:has(#batchPrintModal) > *:not(#batchPrintModal) {
+    display: none !important;
+  }
+  body.printing-batch-modal #batchPrintModal,
+  body:has(#batchPrintModal) #batchPrintModal,
+  body.printing-batch-modal .batch-print-body,
+  body:has(#batchPrintModal) .batch-print-body,
+  body.printing-batch-modal #batchPrintPaper,
+  body:has(#batchPrintModal) #batchPrintPaper {
+    display: block !important;
+    position: static !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+  body.printing-batch-modal #batchPrintPaper *,
+  body:has(#batchPrintModal) #batchPrintPaper * {
+    visibility: visible !important;
+  }
+  body:not(.printing-batch-modal):not(:has(#batchPrintModal)) * {
     visibility: hidden;
   }
-  #batchPrintPaper, #batchPrintPaper *,
-  #logsContainer, #logsContainer * {
+  body:not(.printing-batch-modal):not(:has(#batchPrintModal)) #logsContainer,
+  body:not(.printing-batch-modal):not(:has(#batchPrintModal)) #logsContainer * {
     visibility: visible;
   }
   .print-only-header,
@@ -2275,27 +2311,11 @@ input[type="time"].input {
     top: 0;
     width: 100% !important;
   }
-  #batchPrintPaper {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-  }
-  #batchPrintModal, .batch-print-body {
-    position: static !important;
-    background: transparent !important;
-    padding: 0 !important;
-    overflow: visible !important;
-  }
   .batch-print-toolbar {
     display: none !important;
   }
   .batch-card {
+    break-inside: avoid !important;
     page-break-inside: avoid !important;
     margin-bottom: 16px !important;
   }

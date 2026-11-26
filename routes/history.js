@@ -68,7 +68,7 @@ router.get('/events/:id/positions/latest', requireEventAccessForHistory, (req, r
       let isFinished = false;
 
       if (totalCps > 0) {
-        const clearedCps = splits.filter(s => s.rider_id === row.rider_id).length;
+        const clearedCps = splits.filter(s => s.rider_id === row.rider_id && s.verification_status !== 'PENDING_VERIFY').length;
         if (clearedCps >= totalCps) isFinished = true;
       } else if (eventDist > 0) {
         if (maxKm >= (eventDist * 0.95)) isFinished = true;

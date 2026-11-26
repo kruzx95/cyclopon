@@ -1,5 +1,11 @@
+let activeAdminCpWs = null;
+
 async function renderAdminEvent(params) {
-  loadCss('/css/admin.css?v=88');
+  if (activeAdminCpWs) {
+    try { activeAdminCpWs.close(); } catch {}
+    activeAdminCpWs = null;
+  }
+  loadCss('/css/admin.css?v=93');
 
   // Route guard: check if admin is logged in
   const adminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
@@ -16,20 +22,23 @@ async function renderAdminEvent(params) {
   let event = { name: '', date: new Date().toISOString().slice(0, 10), gpx_path: null, active: 1, cot_mode: 'off', access_pin: '' };
   let riders = [];
   let checkpoints = [];
+  let splits = [];
   let sponsors = [];
 
   if (!isNew) {
     try {
-      const [evRes, rRes, cpRes, sponRes] = await Promise.all([
+      const [evRes, rRes, cpRes, spRes, sponRes] = await Promise.all([
         fetch(`/api/events/admin/${eventId}`, { credentials: 'include' }),
         fetch(`/api/admin/riders/events/${eventId}`, { credentials: 'include' }),
         fetch(`/api/events/${eventId}/checkpoints`, { credentials: 'include' }),
+        fetch(`/api/events/${eventId}/splits`, { credentials: 'include' }),
         fetch(`/api/events/${eventId}/sponsors`, { credentials: 'include' })
       ]);
       if (!evRes.ok) { Router.navigate('/admin/dashboard'); return; }
       event = await evRes.json();
       riders = rRes.ok ? await rRes.json() : [];
       checkpoints = cpRes.ok ? await cpRes.json() : [];
+      splits = spRes.ok ? await spRes.json() : [];
       sponsors = sponRes.ok ? await sponRes.json() : [];
     } catch { Router.navigate('/admin/dashboard'); return; }
   }
@@ -286,9 +295,16 @@ async function renderAdminEvent(params) {
               </h2>
               <p style="color:#6B7280;font-size:12px;margin-top:2px;margin-bottom:0">Pos pemeriksaan, water station, dan batas waktu tempuh resmi</p>
             </div>
-            <button class="btn btn-primary" style="font-size:12.5px;padding:7px 14px" id="btnShowAddCp">
-              + Tambah Checkpoint
-            </button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              ${checkpoints.length ? `
+                <button type="button" class="btn btn-outline" style="font-size:12.5px;padding:7px 14px" id="btnPrintAllCpQr">
+                  Cetak Semua QR Pos
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-primary" style="font-size:12.5px;padding:7px 14px" id="btnShowAddCp">
+                + Tambah Checkpoint
+              </button>
+            </div>
           </div>
 
           <div id="addCpContainer"></div>
@@ -305,6 +321,38 @@ async function renderAdminEvent(params) {
               </tbody>
             </table>
           </div>
+
+          ${checkpoints.length ? `
+            <div id="cpSplitsMonitorSection" style="margin-top:22px;padding-top:18px;border-top:1.5px solid #E5E7EB">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                <div>
+                  <h3 style="font-size:14px;font-weight:900;color:#0D1117;text-transform:uppercase;margin:0">
+                    Monitor Check-In Peserta
+                    <span id="cpLiveWsPill" style="display:none;margin-left:8px;font-family:var(--font-mono);font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:4px;background:#ECFDF5;color:#047857;border:1px solid #047857">LIVE</span>
+                  </h3>
+                  <p style="color:#4B5563;font-size:12px;margin:2px 0 0 0">Pantau peserta yang sudah melakukan scan QR atau catat manual jika HP peserta terkendala</p>
+                </div>
+                <button type="button" class="btn btn-outline" id="btnRefreshCpSplits" style="font-size:12px;padding:7px 12px;min-height:40px">
+                  Muat Ulang Check-In
+                </button>
+              </div>
+
+              <div id="cpSplitsSummaryBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+                <label for="cpSplitSearchInput" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Cari BIB atau nama peserta</label>
+                <input type="text" id="cpSplitSearchInput" class="input" placeholder="Cari BIB atau nama peserta..." style="max-width:240px;padding:8px 12px;font-size:12.5px;min-height:40px">
+                <div style="display:flex;gap:6px;flex-wrap:wrap" id="cpSplitFilterGroup">
+                  <button type="button" class="tbl-filter-pill active" data-split-filter="all">Semua</button>
+                  <button type="button" class="tbl-filter-pill" data-split-filter="checked">Sudah Scan</button>
+                  <button type="button" class="tbl-filter-pill" data-split-filter="pending">Belum Scan</button>
+                  <button type="button" class="tbl-filter-pill" id="btnFilterNeedsVerify" data-split-filter="needs_verify">Perlu Verifikasi (0)</button>
+                </div>
+              </div>
+
+              <div class="table-responsive-wrapper" id="cpSplitsMatrixContainer"></div>
+            </div>
+          ` : ''}
         </div>
 
         <!-- Sponsor & Partner Logos (Live Map) -->
@@ -936,22 +984,37 @@ async function renderAdminEvent(params) {
         <form id="addCpForm">
           <div class="form-row">
             <div class="form-group">
-              <label>Nama Checkpoint / Pos</label>
+              <label for="cpName">Nama Checkpoint / Pos</label>
               <input class="input" id="cpName" placeholder="Contoh: CP 1 Waduk Cirata" required>
             </div>
             <div class="form-group">
-              <label>Target KM (dari Start)</label>
+              <label for="cpKm">Target KM (dari Start)</label>
               <input class="input" id="cpKm" type="number" step="0.1" placeholder="62.5" required min="0">
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Jam Buka (Opsional, cth: 06:30)</label>
+              <label for="cpOpen">Jam Buka (Opsional, cth: 06:30)</label>
               <input class="input" id="cpOpen" placeholder="06:30">
             </div>
             <div class="form-group">
-              <label>Jam Tutup / Cut-Off Time (Opsional, cth: 10:30)</label>
+              <label for="cpClose">Jam Tutup / Cut-Off Time (Opsional, cth: 10:30)</label>
               <input class="input" id="cpClose" placeholder="10:30">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cpCoords">Koordinat Pos (Opsional, Paste dari Google Maps)</label>
+              <input class="input" id="cpCoords" placeholder="-6.721401, 107.351245">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                <button type="button" class="btn btn-outline" id="btnUseCurrentGeoCp" style="padding:5px 10px;font-size:11.5px;min-height:36px">Ambil Lokasi Saya</button>
+                <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" id="linkPreviewCpMap" class="btn btn-outline" style="padding:5px 10px;font-size:11.5px;min-height:36px;text-decoration:none;display:inline-flex;align-items:center">Cek di Google Maps</a>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="cpRadius">Kunci Radius Check-In (Meter)</label>
+              <input class="input" id="cpRadius" type="number" min="0" max="50000" step="50" placeholder="500">
+              <small style="display:block;margin-top:4px;color:#4B5563;font-size:11.5px">Aktif bila koordinat diisi. Isi 0 untuk tanpa kunci radius (disarankan 300-500 m).</small>
             </div>
           </div>
           <p id="addCpError" style="color:var(--color-red);font-size:13px;min-height:18px;margin-bottom:10px"></p>
@@ -963,6 +1026,47 @@ async function renderAdminEvent(params) {
       </div>
     `;
 
+    const coordsInput = document.getElementById('cpCoords');
+    const radiusInput = document.getElementById('cpRadius');
+    const previewLink = document.getElementById('linkPreviewCpMap');
+
+    function syncPreviewAndRadius() {
+      const val = coordsInput.value.trim();
+      const match = /(-?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)/.exec(val);
+      if (match) {
+        previewLink.href = `https://www.google.com/maps?q=${encodeURIComponent(match[1] + ',' + match[2])}`;
+        if (radiusInput.value === '') radiusInput.value = '500';
+      } else {
+        previewLink.href = 'https://www.google.com/maps';
+      }
+    }
+    coordsInput.addEventListener('input', syncPreviewAndRadius);
+
+    document.getElementById('btnUseCurrentGeoCp').addEventListener('click', () => {
+      if (!('geolocation' in navigator)) {
+        showToast('Browser tidak mendukung geolokasi.', 'error');
+        return;
+      }
+      const geoBtn = document.getElementById('btnUseCurrentGeoCp');
+      geoBtn.disabled = true;
+      geoBtn.textContent = 'Mengambil GPS...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          coordsInput.value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+          syncPreviewAndRadius();
+          geoBtn.disabled = false;
+          geoBtn.textContent = 'Ambil Lokasi Saya';
+          showToast('Koordinat GPS saat ini diisi.', 'success');
+        },
+        () => {
+          geoBtn.disabled = false;
+          geoBtn.textContent = 'Ambil Lokasi Saya';
+          showToast('Gagal mengambil GPS. Pastikan izin lokasi aktif.', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    });
+
     document.getElementById('cancelAddCp').addEventListener('click', () => { container.innerHTML = ''; });
     document.getElementById('addCpForm').addEventListener('submit', async e => {
       e.preventDefault();
@@ -970,11 +1074,15 @@ async function renderAdminEvent(params) {
       const errEl = document.getElementById('addCpError');
       btn.textContent = 'Menambahkan...'; btn.disabled = true; errEl.textContent = '';
 
+      const rawCoords = coordsInput.value.trim();
+      const rawRadius = radiusInput.value.trim();
       const body = {
         name: document.getElementById('cpName').value.trim(),
         km_distance: parseFloat(document.getElementById('cpKm').value),
         open_time: document.getElementById('cpOpen').value.trim() || null,
         close_time: document.getElementById('cpClose').value.trim() || null,
+        coords: rawCoords || null,
+        radius_meters: rawCoords && rawRadius !== '' ? Number(rawRadius) : null,
         order_index: checkpoints.length + 1
       };
 
@@ -994,6 +1102,359 @@ async function renderAdminEvent(params) {
         btn.textContent = 'Tambah Checkpoint'; btn.disabled = false;
       }
     });
+  });
+
+  document.getElementById('btnPrintAllCpQr')?.addEventListener('click', () => {
+    showBatchCpQrModal(checkpoints, event.name);
+  });
+
+  // ── Live Check-In Monitor & Manual Fallback ──
+  let splitFilterMode = 'all';
+  let splitSearchQuery = '';
+  let adminCpWs = null;
+  let adminCpMounted = true;
+
+  function formatAdminSplitWib(val) {
+    if (!val) return '-';
+    const raw = String(val).trim();
+    if (!raw.includes('T') && !raw.includes('-')) return raw;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    try {
+      return d.toLocaleTimeString('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }) + ' WIB';
+    } catch {
+      return raw;
+    }
+  }
+
+  function renderAdminSplitsMatrix() {
+    const summaryEl = document.getElementById('cpSplitsSummaryBar');
+    const matrixEl = document.getElementById('cpSplitsMatrixContainer');
+    if (!summaryEl || !matrixEl || !checkpoints.length) return;
+
+    const splitLookup = new Map();
+    const countByCp = new Map();
+    let pendingVerifyTotal = 0;
+    splits.forEach(s => {
+      splitLookup.set(`${s.rider_id}_${s.checkpoint_id}`, s);
+      countByCp.set(Number(s.checkpoint_id), (countByCp.get(Number(s.checkpoint_id)) || 0) + 1);
+      if (s.verification_status === 'PENDING_VERIFY') pendingVerifyTotal++;
+    });
+
+    const verifyFilterBtn = document.getElementById('btnFilterNeedsVerify');
+    if (verifyFilterBtn) {
+      verifyFilterBtn.textContent = `Perlu Verifikasi (${pendingVerifyTotal})`;
+      verifyFilterBtn.style.borderColor = pendingVerifyTotal > 0 ? '#966025' : '';
+      verifyFilterBtn.style.color = pendingVerifyTotal > 0 && !verifyFilterBtn.classList.contains('active') ? '#78350F' : '';
+    }
+
+    const participantRiders = riders.filter(r => !r.role || r.role === 'rider');
+    const totalParticipants = participantRiders.length;
+
+    summaryEl.innerHTML = checkpoints.map((cp, idx) => {
+      const scannedCount = countByCp.get(Number(cp.id)) || 0;
+      const cpNum = `CP ${String(idx + 1).padStart(2, '0')}`;
+      return `
+        <div style="background:#F8FAFC;border:1px solid #D0C9BF;border-radius:8px;padding:8px 12px;font-size:12px;display:inline-flex;align-items:center;gap:8px">
+          <span style="font-family:var(--font-mono);font-weight:900;color:#0D1117">${cpNum}</span>
+          <span style="color:#334338;font-weight:700">${escapeHtml(cp.name)}:</span>
+          <strong style="font-family:var(--font-mono);color:#2B4E30">${scannedCount} / ${totalParticipants}</strong>
+        </div>
+      `;
+    }).join('');
+
+    const q = splitSearchQuery.trim().toLowerCase();
+    const filteredRiders = participantRiders.filter(r => {
+      if (q) {
+        const bibMatch = String(r.bib || '').toLowerCase().includes(q);
+        const nameMatch = String(r.name || '').toLowerCase().includes(q);
+        if (!bibMatch && !nameMatch) return false;
+      }
+      const riderSplitsList = checkpoints.map(cp => splitLookup.get(`${r.id}_${cp.id}`)).filter(Boolean);
+      const clearedCount = riderSplitsList.length;
+      const hasPendingVerify = riderSplitsList.some(s => s.verification_status === 'PENDING_VERIFY');
+      if (splitFilterMode === 'checked') return clearedCount > 0;
+      if (splitFilterMode === 'pending') return clearedCount < checkpoints.length;
+      if (splitFilterMode === 'needs_verify') return hasPendingVerify;
+      return true;
+    });
+
+    if (!participantRiders.length) {
+      matrixEl.innerHTML = '<div style="text-align:center;color:#4B5563;padding:20px;font-size:13px">Belum ada peserta terdaftar di event ini.</div>';
+      return;
+    }
+
+    if (!filteredRiders.length) {
+      matrixEl.innerHTML = '<div style="text-align:center;color:#4B5563;padding:20px;font-size:13px">Tidak ada peserta yang sesuai filter pencarian.</div>';
+      return;
+    }
+
+    matrixEl.innerHTML = `
+      <table class="rider-table">
+        <thead>
+          <tr>
+            <th>BIB</th>
+            <th>Peserta</th>
+            ${checkpoints.map((cp, idx) => `<th>CP ${String(idx + 1).padStart(2, '0')} · ${escapeHtml(cp.name)}</th>`).join('')}
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filteredRiders.map(r => {
+            let cleared = 0;
+            const cells = checkpoints.map(cp => {
+              const sp = splitLookup.get(`${r.id}_${cp.id}`);
+              if (sp) {
+                cleared++;
+                const isPendingVerify = sp.verification_status === 'PENDING_VERIFY';
+                const isOver = sp.status === 'OVER_COT';
+                const srcTag = sp.source === 'qr_scan' ? 'QR' : 'ADMIN';
+                const distLabel = sp.distance_meters != null
+                  ? (sp.distance_meters >= 1000 ? `${(sp.distance_meters / 1000).toFixed(2)} km` : `${Math.round(sp.distance_meters)} m`)
+                  : null;
+                const reasonText = sp.flag_reason === 'GPS_REQUIRED'
+                  ? 'Tanpa GPS'
+                  : (distLabel ? `Jarak: ${distLabel}` : '');
+                return `
+                  <td>
+                    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+                      <span style="font-family:var(--font-mono);font-size:12px;font-weight:800;color:#0D1117">${escapeHtml(formatAdminSplitWib(sp.arrival_time))}</span>
+                      <span style="font-family:var(--font-mono);font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px;background:${isPendingVerify || isOver ? '#966025' : '#047857'};color:#FFFFFF">
+                        ${isPendingVerify ? 'PERLU VERIFIKASI' : `${isOver ? 'OVER COT' : 'LOLOS'} · ${srcTag}`}
+                      </span>
+                      ${reasonText ? `<span style="font-family:var(--font-mono);font-size:10px;color:#4B5563">${escapeHtml(reasonText)}</span>` : ''}
+                      ${isPendingVerify ? `
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">
+                          <button type="button" class="btn btn-primary btn-approve-split" data-split-id="${sp.id}" style="padding:3px 8px;font-size:10.5px;min-height:30px;background:#2B4E30;border-color:#2B4E30">
+                            Setujui
+                          </button>
+                          <button type="button" class="btn btn-danger btn-reject-split" data-split-id="${sp.id}" style="padding:3px 8px;font-size:10.5px;min-height:30px">
+                            Tolak
+                          </button>
+                        </div>
+                      ` : ''}
+                    </div>
+                  </td>
+                `;
+              }
+              return `
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span style="font-size:11.5px;color:#6B7280;font-weight:600">Belum</span>
+                    <button type="button" class="btn btn-outline btn-admin-manual-split" data-rider-id="${r.id}" data-cp-id="${cp.id}" style="padding:4px 8px;font-size:11px;min-height:32px">
+                      Catat
+                    </button>
+                  </div>
+                </td>
+              `;
+            }).join('');
+
+            return `
+              <tr>
+                <td><span style="font-family:var(--font-mono);font-weight:900">#${escapeHtml(r.bib)}</span></td>
+                <td><strong>${escapeHtml(r.name)}</strong></td>
+                ${cells}
+                <td><span style="font-family:var(--font-mono);font-weight:800;color:${cleared === checkpoints.length ? '#047857' : '#0D1117'}">${cleared}/${checkpoints.length}</span></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  async function refreshAdminSplits() {
+    try {
+      const res = await fetch(`/api/events/${eventId}/splits`, { credentials: 'include' });
+      if (res.ok) {
+        splits = await res.json();
+        renderAdminSplitsMatrix();
+      }
+    } catch {}
+  }
+
+  if (!isNew && checkpoints.length) {
+    renderAdminSplitsMatrix();
+
+    document.getElementById('btnRefreshCpSplits')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btnRefreshCpSplits');
+      if (btn) { btn.disabled = true; btn.textContent = 'Memuat...'; }
+      await refreshAdminSplits();
+      if (btn) { btn.disabled = false; btn.textContent = 'Muat Ulang Check-In'; }
+    });
+
+    document.getElementById('cpSplitSearchInput')?.addEventListener('input', (e) => {
+      splitSearchQuery = e.target.value || '';
+      renderAdminSplitsMatrix();
+    });
+
+    document.getElementById('cpSplitFilterGroup')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-split-filter]');
+      if (!btn) return;
+      splitFilterMode = btn.dataset.splitFilter;
+      document.querySelectorAll('#cpSplitFilterGroup .tbl-filter-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAdminSplitsMatrix();
+    });
+
+    document.getElementById('cpSplitsMatrixContainer')?.addEventListener('click', async (e) => {
+      const approveBtn = e.target.closest('.btn-approve-split');
+      if (approveBtn) {
+        const splitId = Number(approveBtn.dataset.splitId);
+        approveBtn.disabled = true;
+        approveBtn.textContent = '...';
+        try {
+          const res = await fetch(`/api/events/${eventId}/splits/${splitId}/approve`, {
+            method: 'PUT',
+            credentials: 'include'
+          });
+          if (!res.ok) throw new Error('Gagal menyetujui check-in.');
+          showToast('Check-in peserta disetujui.', 'success');
+          await refreshAdminSplits();
+        } catch (err) {
+          showToast(err.message || 'Gagal menyetujui check-in.', 'error');
+          approveBtn.disabled = false;
+          approveBtn.textContent = 'Setujui';
+        }
+        return;
+      }
+
+      const rejectBtn = e.target.closest('.btn-reject-split');
+      if (rejectBtn) {
+        const splitId = Number(rejectBtn.dataset.splitId);
+        if (!confirm('Tolak dan hapus catatan check-in ini? Status peserta akan kembali ke Belum.')) return;
+        rejectBtn.disabled = true;
+        rejectBtn.textContent = '...';
+        try {
+          const res = await fetch(`/api/events/${eventId}/splits/${splitId}`, {
+            method: 'DELETE',
+            credentials: 'include'
+          });
+          if (!res.ok) throw new Error('Gagal menolak check-in.');
+          showToast('Check-in ditolak dan dihapus.', 'info');
+          await refreshAdminSplits();
+        } catch (err) {
+          showToast(err.message || 'Gagal menolak check-in.', 'error');
+          rejectBtn.disabled = false;
+          rejectBtn.textContent = 'Tolak';
+        }
+        return;
+      }
+
+      const btn = e.target.closest('.btn-admin-manual-split');
+      if (!btn) return;
+      const rId = Number(btn.dataset.riderId);
+      const cId = Number(btn.dataset.cpId);
+      const riderObj = riders.find(r => r.id === rId);
+      const cpObj = checkpoints.find(c => c.id === cId);
+      if (!riderObj || !cpObj) return;
+      if (!confirm(`Catat check-in manual untuk #${riderObj.bib} ${riderObj.name} di ${cpObj.name} pada waktu sekarang?`)) return;
+
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        const res = await fetch(`/api/events/${eventId}/splits`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            rider_id: rId,
+            checkpoint_id: cId,
+            arrival_time: new Date().toISOString()
+          })
+        });
+        if (!res.ok) throw new Error('Gagal mencatat check-in manual.');
+        showToast(`Check-in #${riderObj.bib} di ${cpObj.name} tercatat.`, 'success');
+        await refreshAdminSplits();
+      } catch (err) {
+        showToast(err.message || 'Gagal mencatat check-in.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Catat';
+      }
+    });
+
+    try {
+      const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      adminCpWs = new WebSocket(`${wsProto}//${window.location.host}/traccar-ws?event_id=${eventId}`);
+      activeAdminCpWs = adminCpWs;
+      adminCpWs.onopen = () => {
+        const pill = document.getElementById('cpLiveWsPill');
+        if (pill && adminCpMounted) pill.style.display = 'inline-block';
+      };
+      adminCpWs.onmessage = (ev) => {
+        if (!adminCpMounted) return;
+        try {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === 'checkpoint_split' && msg.split && Number(msg.event_id) === Number(eventId)) {
+            const sp = msg.split;
+            const existingIdx = splits.findIndex(s => Number(s.rider_id) === Number(sp.rider_id) && Number(s.checkpoint_id) === Number(sp.checkpoint_id));
+            if (existingIdx >= 0) splits[existingIdx] = sp;
+            else splits.push(sp);
+            renderAdminSplitsMatrix();
+            const isPend = sp.verification_status === 'PENDING_VERIFY';
+            showToast(
+              `${isPend ? 'Perlu Verifikasi' : 'Scan CP'}: #${sp.rider_bib || ''} ${sp.rider_name || ''} di ${sp.checkpoint_name || 'CP'} (${formatAdminSplitWib(sp.arrival_time)})`,
+              isPend || sp.status === 'OVER_COT' ? 'warning' : 'success'
+            );
+          } else if (msg.type === 'checkpoint_split_removed' && Number(msg.event_id) === Number(eventId)) {
+            splits = splits.filter(s => Number(s.id) !== Number(msg.split_id));
+            renderAdminSplitsMatrix();
+          }
+        } catch {}
+      };
+      adminCpWs.onclose = () => {
+        if (activeAdminCpWs === adminCpWs) activeAdminCpWs = null;
+        const pill = document.getElementById('cpLiveWsPill');
+        if (pill) pill.style.display = 'none';
+      };
+    } catch {}
+
+    if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
+      Router.onUnmount(() => {
+        adminCpMounted = false;
+        if (adminCpWs) {
+          try { adminCpWs.close(); } catch {}
+          if (activeAdminCpWs === adminCpWs) activeAdminCpWs = null;
+          adminCpWs = null;
+        }
+      });
+    }
+  }
+
+  document.getElementById('cpTableBody')?.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.btn-cp-edit');
+    if (editBtn) {
+      const cpId = Number(editBtn.dataset.cpId);
+      const cp = checkpoints.find(c => c.id === cpId);
+      if (cp) {
+        showEditCheckpointModal(cp, eventId, () => renderAdminEvent({ id: eventId }));
+      }
+      return;
+    }
+    const qrBtn = e.target.closest('.btn-cp-qr');
+    if (qrBtn) {
+      const cpId = Number(qrBtn.dataset.cpId);
+      const idx = checkpoints.findIndex(c => c.id === cpId);
+      if (idx >= 0) {
+        showCheckpointQrModal(checkpoints[idx], idx, eventId, event.name, (updatedCp) => {
+          checkpoints[idx] = updatedCp;
+          const tbody = document.getElementById('cpTableBody');
+          if (tbody) tbody.innerHTML = renderCheckpointTableRows(checkpoints);
+        });
+      }
+      return;
+    }
+    const delBtn = e.target.closest('.btn-cp-delete');
+    if (delBtn) {
+      const cpId = Number(delBtn.dataset.cpId);
+      const cp = checkpoints.find(c => c.id === cpId);
+      if (cp) deleteCheckpoint(cp.id, cp.name);
+    }
   });
 
   // ── Sponsor management handler ──
@@ -1402,20 +1863,199 @@ function renderCheckpointTableRows(checkpoints) {
   if (!checkpoints.length) {
     return '<tr><td colspan="6" style="text-align:center;color:#6B7280;padding:24px;font-weight:600">Belum ada checkpoint. Tambahkan checkpoint untuk memantau COT!</td></tr>';
   }
-  return checkpoints.map((cp, idx) => `
+  return checkpoints.map((cp, idx) => {
+    const hasCoords = cp.latitude != null && cp.longitude != null;
+    const coordStr = hasCoords ? `${Number(cp.latitude).toFixed(5)}, ${Number(cp.longitude).toFixed(5)}` : null;
+    const radiusStr = hasCoords && cp.radius_meters ? `Radius: ${cp.radius_meters} m` : (hasCoords ? 'Tanpa kunci radius' : 'Koordinat belum diisi');
+    return `
     <tr>
       <td><span style="font-family:var(--font-mono);font-weight:900;background:#F3F4F6;border:1px solid #0D1117;padding:3px 8px;border-radius:4px;font-size:11px">CP ${String(idx + 1).padStart(2, '0')}</span></td>
-      <td><strong style="color:#0D1117">${escapeHtml(cp.name)}</strong></td>
-      <td><span class="badge badge-cyan">${cp.km_distance} KM</span></td>
-      <td><span style="font-family:var(--font-mono);font-weight:700">${cp.open_time || '—'}</span></td>
-      <td>${cp.close_time ? `<span style="font-family:var(--font-mono);color:#DC2626;font-weight:800">⏱️ ${cp.close_time}</span>` : '—'}</td>
       <td>
-        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="deleteCheckpoint(${cp.id}, '${cp.name.replace(/'/g, "\\'")}')">
-          Hapus
-        </button>
+        <strong style="color:#0D1117">${escapeHtml(cp.name)}</strong>
+        ${cp.qr_token ? `<div style="font-family:var(--font-mono);font-size:10.5px;color:#4B5563;margin-top:2px">Kode QR: ${escapeHtml(cp.qr_token)}</div>` : ''}
+        <div style="font-family:var(--font-mono);font-size:10.5px;color:${hasCoords && cp.radius_meters ? '#2B4E30' : '#4B5563'};margin-top:2px">
+          ${coordStr ? `${escapeHtml(coordStr)} · ${escapeHtml(radiusStr)}` : escapeHtml(radiusStr)}
+        </div>
+      </td>
+      <td><span class="badge badge-cyan">${cp.km_distance} KM</span></td>
+      <td><span style="font-family:var(--font-mono);font-weight:700">${cp.open_time || '-'}</span></td>
+      <td>${cp.close_time ? `<span style="font-family:var(--font-mono);color:#DC2626;font-weight:800">${cp.close_time} WIB</span>` : '-'}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" class="btn btn-outline btn-cp-edit" data-cp-id="${cp.id}" style="padding:6px 10px;font-size:11.5px;min-height:36px">
+            Edit
+          </button>
+          <button type="button" class="btn btn-outline btn-cp-qr" data-cp-id="${cp.id}" style="padding:6px 10px;font-size:11.5px;min-height:36px">
+            QR Pos
+          </button>
+          <button type="button" class="btn btn-danger btn-cp-delete" data-cp-id="${cp.id}" style="padding:6px 10px;font-size:11.5px;min-height:36px">
+            Hapus
+          </button>
+        </div>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
+}
+
+function showEditCheckpointModal(cp, eventId, onSaved) {
+  const oldModal = document.getElementById('editCpModal');
+  if (oldModal) oldModal.remove();
+
+  const initialCoords = (cp.latitude != null && cp.longitude != null)
+    ? `${cp.latitude}, ${cp.longitude}`
+    : '';
+
+  const modal = document.createElement('div');
+  modal.id = 'editCpModal';
+  modal.className = 'qr-modal-overlay';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'editCpModalTitle');
+  modal.innerHTML = `
+    <div class="qr-modal-card" style="max-width:520px">
+      <div class="qr-modal-header">
+        <h3 class="qr-modal-title" id="editCpModalTitle">Edit Checkpoint</h3>
+        <button type="button" class="qr-modal-close" id="btnCloseEditCpModal" aria-label="Tutup dialog edit checkpoint">✕</button>
+      </div>
+      <form id="editCpForm" style="padding:20px">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editCpName">Nama Checkpoint / Pos</label>
+            <input class="input" id="editCpName" value="${escapeHtml(cp.name)}" required>
+          </div>
+          <div class="form-group">
+            <label for="editCpKm">Target KM</label>
+            <input class="input" id="editCpKm" type="number" step="0.1" min="0" value="${cp.km_distance}" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editCpOpen">Jam Buka</label>
+            <input class="input" id="editCpOpen" value="${escapeHtml(cp.open_time || '')}" placeholder="06:30">
+          </div>
+          <div class="form-group">
+            <label for="editCpClose">Batas COT</label>
+            <input class="input" id="editCpClose" value="${escapeHtml(cp.close_time || '')}" placeholder="10:30">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label for="editCpCoords">Koordinat Pos (Lat, Lng dari Google Maps)</label>
+          <input class="input" id="editCpCoords" value="${escapeHtml(initialCoords)}" placeholder="-6.721401, 107.351245">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <button type="button" class="btn btn-outline" id="btnEditUseGeo" style="padding:5px 10px;font-size:11.5px;min-height:36px">Ambil Lokasi Saya</button>
+            <a href="${initialCoords ? `https://www.google.com/maps?q=${encodeURIComponent(initialCoords)}` : 'https://www.google.com/maps'}" target="_blank" rel="noopener noreferrer" id="linkEditPreviewMap" class="btn btn-outline" style="padding:5px 10px;font-size:11.5px;min-height:36px;text-decoration:none;display:inline-flex;align-items:center">Cek di Google Maps</a>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label for="editCpRadius">Kunci Radius Check-In (Meter)</label>
+          <input class="input" id="editCpRadius" type="number" min="0" max="50000" step="50" value="${cp.radius_meters != null ? cp.radius_meters : ''}" placeholder="500">
+          <small style="display:block;margin-top:4px;color:#4B5563;font-size:11.5px">Aktif bila koordinat diisi. Isi 0 atau kosongkan untuk tanpa kunci radius.</small>
+        </div>
+        <p id="editCpError" style="color:var(--color-red);font-size:13px;min-height:18px;margin-bottom:10px"></p>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn btn-outline" id="btnCancelEditCp" style="min-height:44px">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveEditCp" style="min-height:44px">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const coordsInput = modal.querySelector('#editCpCoords');
+  const radiusInput = modal.querySelector('#editCpRadius');
+  const mapLink = modal.querySelector('#linkEditPreviewMap');
+
+  function syncEditGeo() {
+    const val = coordsInput.value.trim();
+    const m = /(-?\d{1,2}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)/.exec(val);
+    if (m) {
+      mapLink.href = `https://www.google.com/maps?q=${encodeURIComponent(m[1] + ',' + m[2])}`;
+      if (radiusInput.value === '') radiusInput.value = '500';
+    } else {
+      mapLink.href = 'https://www.google.com/maps';
+    }
+  }
+  coordsInput.addEventListener('input', syncEditGeo);
+
+  modal.querySelector('#btnEditUseGeo').addEventListener('click', () => {
+    if (!('geolocation' in navigator)) {
+      showToast('Browser tidak mendukung geolokasi.', 'error');
+      return;
+    }
+    const geoBtn = modal.querySelector('#btnEditUseGeo');
+    geoBtn.disabled = true;
+    geoBtn.textContent = 'Mengambil GPS...';
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        coordsInput.value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+        syncEditGeo();
+        geoBtn.disabled = false;
+        geoBtn.textContent = 'Ambil Lokasi Saya';
+      },
+      () => {
+        geoBtn.disabled = false;
+        geoBtn.textContent = 'Ambil Lokasi Saya';
+        showToast('Gagal mengambil lokasi GPS.', 'error');
+      },
+      { enableHighAccuracy: true, timeout: 6000 }
+    );
+  });
+
+  const closeModal = () => {
+    document.removeEventListener('keydown', onEsc);
+    modal.remove();
+  };
+  const onEsc = (e) => {
+    if (e.key === 'Escape') closeModal();
+  };
+  document.addEventListener('keydown', onEsc);
+
+  modal.querySelector('#btnCloseEditCpModal').addEventListener('click', closeModal);
+  modal.querySelector('#btnCancelEditCp').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  modal.querySelector('#editCpForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const saveBtn = modal.querySelector('#btnSaveEditCp');
+    const errEl = modal.querySelector('#editCpError');
+    errEl.textContent = '';
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Menyimpan...';
+
+    const rawCoords = coordsInput.value.trim();
+    const rawRadius = radiusInput.value.trim();
+
+    try {
+      const res = await fetch(`/api/events/${eventId}/checkpoints/${cp.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: modal.querySelector('#editCpName').value.trim(),
+          km_distance: parseFloat(modal.querySelector('#editCpKm').value),
+          open_time: modal.querySelector('#editCpOpen').value.trim() || null,
+          close_time: modal.querySelector('#editCpClose').value.trim() || null,
+          coords: rawCoords || null,
+          radius_meters: rawCoords && rawRadius !== '' ? Number(rawRadius) : null
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Gagal memperbarui checkpoint.');
+      }
+      closeModal();
+      showToast('Checkpoint diperbarui.', 'success');
+      if (typeof onSaved === 'function') onSaved(data.checkpoint);
+    } catch (err) {
+      errEl.textContent = err.message || 'Gagal memperbarui checkpoint.';
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Simpan Perubahan';
+    }
+  });
 }
 
 async function deleteCheckpoint(cpId, name) {
@@ -1764,8 +2404,331 @@ function showBatchPrintModal(ridersList, eventName) {
   });
 }
 
+function showCheckpointQrModal(cp, idx, eventId, eventName, onRotated) {
+  if (!cp || !cp.qr_token) {
+    showToast('Token QR checkpoint belum tersedia. Muat ulang halaman.', 'error');
+    return;
+  }
+
+  const oldModal = document.getElementById('cpQrModal');
+  if (oldModal) oldModal.remove();
+
+  const cpCodeLabel = `CP ${String(idx + 1).padStart(2, '0')}`;
+  let currentCp = { ...cp };
+  const getCheckinUrl = (token) => `${window.location.origin}/cp/${token}`;
+
+  const modal = document.createElement('div');
+  modal.id = 'cpQrModal';
+  modal.className = 'qr-modal-overlay';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'cpQrModalTitle');
+  modal.innerHTML = `
+    <div class="qr-modal-card">
+      <div class="qr-modal-header">
+        <h3 class="qr-modal-title" id="cpQrModalTitle">
+          POSTER QR CHECK-IN POS
+        </h3>
+        <button type="button" class="qr-modal-close" id="btnCloseCpQrModal" aria-label="Tutup dialog QR checkpoint">✕</button>
+      </div>
+
+      <div class="qr-pass-container">
+        <div class="qr-bib-card">
+          <div class="qr-bib-top">
+            <div>
+              <div class="qr-bib-event-title">${escapeHtml(eventName || 'CYCLOPON EVENT')}</div>
+              <div style="font-size:10.5px;color:#4B5563;font-family:var(--font-mono);font-weight:700">SELF CHECK-IN POINT</div>
+            </div>
+            <span style="font-family:var(--font-mono);font-weight:900;background:#111815;color:#FFFFFF;padding:4px 10px;border-radius:6px;font-size:11.5px">${cpCodeLabel}</span>
+          </div>
+
+          <div class="qr-bib-rider-name" style="font-size:19px;margin-bottom:4px">${escapeHtml(currentCp.name)}</div>
+          <div style="font-family:var(--font-mono);font-size:12px;font-weight:800;color:#2B4E30;margin-bottom:14px">
+            JARAK TARGET: ${currentCp.km_distance} KM
+          </div>
+
+          <div class="qr-image-wrapper" id="cpQrCanvasContainer"></div>
+
+          <p style="font-size:12px;color:#334338;margin:0 0 12px 0;line-height:1.45">
+            Scan QR ini dari halaman Cockpit, Rider Hub, atau kamera HP untuk mencatat waktu kedatangan di pos ini.
+          </p>
+
+          <div class="qr-credentials-strip">
+            <div class="qr-cred-item">
+              <span class="qr-cred-label">KODE POS</span>
+              <span class="qr-cred-value" id="cpQrTokenText">${escapeHtml(currentCp.qr_token)}</span>
+            </div>
+            <div style="width:1px;height:24px;background:#D0C9BF"></div>
+            <div class="qr-cred-item">
+              <span class="qr-cred-label">JAM BUKA</span>
+              <span class="qr-cred-value">${escapeHtml(currentCp.open_time || '-')}</span>
+            </div>
+            <div style="width:1px;height:24px;background:#D0C9BF"></div>
+            <div class="qr-cred-item">
+              <span class="qr-cred-label">BATAS COT</span>
+              <span class="qr-cred-value" style="color:${currentCp.close_time ? '#B91C1C' : '#0D1117'}">${escapeHtml(currentCp.close_time ? currentCp.close_time + ' WIB' : '-')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qr-modal-actions" style="flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" id="btnDownloadCpQrPng" style="flex:1;min-width:130px;font-size:12px;padding:9px 12px;min-height:44px">
+          Unduh Poster PNG
+        </button>
+        <button type="button" class="btn btn-outline" id="btnCopyCpQrUrl" style="font-size:12px;padding:9px 12px;min-height:44px">
+          Salin Link
+        </button>
+        <button type="button" class="btn btn-outline" id="btnPrintSingleCpQr" style="font-size:12px;padding:9px 12px;min-height:44px">
+          Cetak
+        </button>
+        <button type="button" class="btn btn-outline" id="btnRotateCpQr" style="font-size:12px;padding:9px 12px;min-height:44px;color:#B91C1C;border-color:#FCA5A5">
+          Ganti QR
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  let qrCanvas = null;
+  function renderQrPreview() {
+    const container = modal.querySelector('#cpQrCanvasContainer');
+    container.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    const url = getCheckinUrl(currentCp.qr_token);
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(url);
+      qr.make();
+      qr.renderToCanvas(canvas, 6, 8);
+      canvas.style.maxWidth = '190px';
+      canvas.style.maxHeight = '190px';
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      container.appendChild(canvas);
+      qrCanvas = canvas;
+    } catch (err) {
+      container.innerHTML = getQrSvgString(url, 5, 8);
+      qrCanvas = null;
+    }
+    const tokenEl = modal.querySelector('#cpQrTokenText');
+    if (tokenEl) tokenEl.textContent = currentCp.qr_token;
+  }
+
+  renderQrPreview();
+
+  const closeModal = () => {
+    document.removeEventListener('keydown', onEsc);
+    modal.remove();
+  };
+  const onEsc = (e) => {
+    if (e.key === 'Escape') closeModal();
+  };
+  document.addEventListener('keydown', onEsc);
+
+  modal.querySelector('#btnCloseCpQrModal').addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  modal.querySelector('#btnCopyCpQrUrl').addEventListener('click', () => {
+    const url = getCheckinUrl(currentCp.qr_token);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast(`Link check-in ${cpCodeLabel} disalin.`, 'success');
+      }).catch(() => prompt('Salin link check-in:', url));
+    } else {
+      prompt('Salin link check-in:', url);
+    }
+  });
+
+  modal.querySelector('#btnDownloadCpQrPng').addEventListener('click', () => {
+    try {
+      const poster = document.createElement('canvas');
+      poster.width = 720;
+      poster.height = 920;
+      const ctx = poster.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, poster.width, poster.height);
+
+      ctx.strokeStyle = '#111815';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(24, 24, poster.width - 48, poster.height - 48);
+
+      ctx.fillStyle = '#111815';
+      ctx.fillRect(24, 24, poster.width - 48, 96);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText((eventName || 'CYCLOPON EVENT').toUpperCase().slice(0, 38), 52, 66);
+      ctx.font = 'bold 16px monospace';
+      ctx.fillStyle = '#E5E0D8';
+      ctx.fillText(`${cpCodeLabel}  |  TARGET ${currentCp.km_distance} KM`, 52, 98);
+
+      ctx.fillStyle = '#111815';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 34px sans-serif';
+      ctx.fillText(currentCp.name.slice(0, 32), poster.width / 2, 185);
+
+      if (qrCanvas) {
+        ctx.drawImage(qrCanvas, (poster.width - 440) / 2, 225, 440, 440);
+      }
+
+      ctx.font = 'bold 20px monospace';
+      ctx.fillStyle = '#2B4E30';
+      ctx.fillText(`KODE POS: ${currentCp.qr_token}`, poster.width / 2, 715);
+
+      ctx.font = '600 18px sans-serif';
+      ctx.fillStyle = '#334338';
+      ctx.fillText(`Buka: ${currentCp.open_time || '-'}   |   Batas COT: ${currentCp.close_time ? currentCp.close_time + ' WIB' : '-'}`, poster.width / 2, 760);
+
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillStyle = '#111815';
+      ctx.fillText('Scan QR dari Rider Hub, Cockpit, atau kamera HP untuk check-in', poster.width / 2, 825);
+
+      const link = document.createElement('a');
+      link.download = `QR_${cpCodeLabel.replace(/\s+/g, '')}_${currentCp.name.replace(/\s+/g, '_')}.png`;
+      link.href = poster.toDataURL('image/png');
+      link.click();
+      showToast(`Poster QR ${cpCodeLabel} diunduh.`, 'success');
+    } catch {
+      showToast('Gagal mengunduh poster QR.', 'error');
+    }
+  });
+
+  modal.querySelector('#btnPrintSingleCpQr').addEventListener('click', () => {
+    showBatchCpQrModal([currentCp], eventName, idx);
+  });
+
+  modal.querySelector('#btnRotateCpQr').addEventListener('click', async () => {
+    if (!confirm(`Ganti kode QR untuk "${currentCp.name}"? Poster QR yang sudah dicetak sebelumnya tidak akan berlaku lagi.`)) return;
+    const btn = modal.querySelector('#btnRotateCpQr');
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+    try {
+      const res = await fetch(`/api/events/${eventId}/checkpoints/${currentCp.id}/regenerate-qr`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (!res.ok || !data.checkpoint) {
+        throw new Error(data.error || 'Gagal mengganti kode QR.');
+      }
+      currentCp = data.checkpoint;
+      renderQrPreview();
+      if (typeof onRotated === 'function') onRotated(currentCp);
+      showToast('Kode QR checkpoint diperbarui.', 'success');
+    } catch (err) {
+      showToast(err.message || 'Gagal mengganti kode QR.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Ganti QR';
+    }
+  });
+}
+
+function showBatchCpQrModal(cpList, eventName, startIndex = 0) {
+  if (!cpList || !cpList.length) {
+    showToast('Belum ada checkpoint untuk dicetak.', 'error');
+    return;
+  }
+
+  const oldModal = document.getElementById('batchPrintModal');
+  if (oldModal) oldModal.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'batchPrintModal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.innerHTML = `
+    <div class="batch-print-toolbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div>
+          <strong style="font-size:14px;letter-spacing:0.02em;text-transform:uppercase">Cetak Poster QR Checkpoint</strong>
+          <div style="font-size:11px;color:#9CA3AF">${escapeHtml(eventName || 'Event')} (${cpList.length} Pos)</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button type="button" class="btn" id="btnExecutePrintCp" style="padding:8px 16px;font-size:12px;font-weight:800;min-height:44px;background:#2B4E30;color:#FFFFFF;border:1.5px solid #748873;cursor:pointer">
+          Print / Simpan PDF
+        </button>
+        <button type="button" class="btn" id="btnCloseBatchCpPrint" style="padding:8px 14px;font-size:12px;font-weight:800;min-height:44px;background:#FFFFFF;color:#0D1117;border:1.5px solid #FFFFFF;cursor:pointer">
+          Tutup
+        </button>
+      </div>
+    </div>
+
+    <div class="batch-print-body">
+      <div class="batch-print-paper" id="batchPrintPaper">
+        <div style="text-align:center;margin-bottom:24px;border-bottom:2px solid #0D1117;padding-bottom:12px">
+          <h1 style="font-family:'Barlow','Plus Jakarta Sans',system-ui,sans-serif;font-size:20px;font-weight:900;letter-spacing:-0.02em;margin:0;color:#0D1117;text-transform:uppercase">
+            ${escapeHtml(eventName || 'CYCLOPON CHECKPOINT')}
+          </h1>
+          <p style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:#4B5563;margin:4px 0 0 0">
+            POSTER QR SELF CHECK-IN POS KONTROL
+          </p>
+        </div>
+
+        <div class="batch-grid" style="${cpList.length === 1 ? 'grid-template-columns:1fr;max-width:460px;margin:0 auto' : ''}">
+          ${cpList.map((cp, i) => {
+            const cpNum = String(startIndex + i + 1).padStart(2, '0');
+            const checkinUrl = `${window.location.origin}/cp/${cp.qr_token}`;
+            const qrSvg = getQrSvgString(checkinUrl, 5, 6);
+            return `
+              <div class="batch-card" style="text-align:center;padding:20px">
+                <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #0D1117;padding-bottom:8px;margin-bottom:12px">
+                  <span style="font-family:var(--font-mono);font-size:12px;font-weight:900;background:#0D1117;color:#FFFFFF;padding:3px 9px;border-radius:4px">
+                    CP ${cpNum}
+                  </span>
+                  <span style="font-family:var(--font-mono);font-size:12px;font-weight:800;color:#2B4E30">
+                    ${cp.km_distance} KM
+                  </span>
+                </div>
+                <div style="font-size:18px;font-weight:900;color:#0D1117;margin-bottom:12px">
+                  ${escapeHtml(cp.name)}
+                </div>
+                <div style="width:170px;height:170px;margin:0 auto 12px;background:#FFFFFF;border:1.5px solid #0D1117;border-radius:8px;padding:6px;display:flex;align-items:center;justify-content:center">
+                  ${qrSvg}
+                </div>
+                <div style="font-family:var(--font-mono);font-size:11px;font-weight:800;color:#0D1117;margin-bottom:6px">
+                  KODE: ${escapeHtml(cp.qr_token || '')}
+                </div>
+                <div style="font-size:11px;color:#334338;border-top:1px dashed #D0C9BF;padding-top:8px">
+                  Buka: <strong>${escapeHtml(cp.open_time || '-')}</strong> · COT: <strong>${escapeHtml(cp.close_time ? cp.close_time + ' WIB' : '-')}</strong>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.classList.add('printing-batch-modal');
+  document.body.appendChild(modal);
+
+  const closePrint = () => {
+    document.body.classList.remove('printing-batch-modal');
+    document.removeEventListener('keydown', onEsc);
+    modal.remove();
+  };
+  const onEsc = (e) => {
+    if (e.key === 'Escape') closePrint();
+  };
+  document.addEventListener('keydown', onEsc);
+
+  modal.querySelector('#btnCloseBatchCpPrint').addEventListener('click', closePrint);
+  modal.querySelector('#btnExecutePrintCp').addEventListener('click', () => {
+    document.body.classList.add('printing-batch-modal');
+    window.print();
+  });
+}
+
 window.showRiderQrModal = showRiderQrModal;
 window.showBatchPrintModal = showBatchPrintModal;
+window.showCheckpointQrModal = showCheckpointQrModal;
+window.showBatchCpQrModal = showBatchCpQrModal;
 window.deleteRider = deleteRider;
 window.deleteCheckpoint = deleteCheckpoint;
 window.copyMagicLink = copyMagicLink;

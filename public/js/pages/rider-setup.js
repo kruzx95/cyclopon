@@ -280,7 +280,31 @@ function renderRiderSetup() {
             </a>
           </div>
 
-          <!-- Action 5: Ride Card -->
+          <!-- Action 5: Check-In QR Checkpoint -->
+          <div class="hub-action-card fade-in">
+            <div class="hub-action-top">
+              <div class="hub-action-header-row">
+                <div class="hub-action-badge emerald">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <path d="M14 14h3v3h-3zM17 17h4v4h-4zM14 20h2"/>
+                  </svg>
+                </div>
+                <span class="hub-action-tag emerald" id="hubCpProgressTag">SELF CHECK-IN</span>
+              </div>
+              <div class="hub-action-title">Scan QR Checkpoint</div>
+              <p class="hub-action-desc">
+                Pindai poster QR di setiap pos kontrol (CP) untuk mencatat waktu tiba dan status Cut-Off Time secara mandiri.
+              </p>
+            </div>
+            <button type="button" id="btnOpenHubCpScanner" class="btn-hub-primary" style="min-height:44px;cursor:pointer">
+              Buka Pemindai QR CP
+            </button>
+          </div>
+
+          <!-- Action 6: Ride Card -->
           <div class="hub-action-card fade-in">
             <div class="hub-action-top">
               <div class="hub-action-header-row">
@@ -393,6 +417,54 @@ function renderRiderSetup() {
       </div>
     </div>
   `;
+
+  // ── Self Check-In QR Checkpoint Loader & Trigger ──
+  let hubCheckpoints = [];
+  let hubSplits = [];
+  const cpTagEl = document.getElementById('hubCpProgressTag');
+  const btnOpenCpScan = document.getElementById('btnOpenHubCpScanner');
+
+  function updateHubCpTag() {
+    if (!cpTagEl) return;
+    if (hubCheckpoints.length > 0) {
+      cpTagEl.textContent = `${hubSplits.length} / ${hubCheckpoints.length} POS SELESAI`;
+    } else {
+      cpTagEl.textContent = 'SELF CHECK-IN';
+    }
+  }
+
+  (async () => {
+    try {
+      const headers = setupPin ? { 'x-event-pin': setupPin } : {};
+      const [cpRes, spRes] = await Promise.all([
+        fetch(`/api/events/${event.id}/checkpoints`, { headers }).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`/api/riders/${rider.id}/splits`, { headers }).then(r => r.ok ? r.json() : []).catch(() => [])
+      ]);
+      hubCheckpoints = Array.isArray(cpRes) ? cpRes : [];
+      hubSplits = Array.isArray(spRes) ? spRes : [];
+      updateHubCpTag();
+    } catch {}
+  })();
+
+  if (btnOpenCpScan) {
+    btnOpenCpScan.addEventListener('click', () => {
+      if (typeof window.openCpQrScanner !== 'function') {
+        showToast('Komponen scanner belum siap. Muat ulang halaman.', 'error');
+        return;
+      }
+      window.openCpQrScanner({
+        riderConfig: config,
+        checkpoints: hubCheckpoints,
+        existingSplits: hubSplits,
+        onCheckInSuccess: (data) => {
+          if (data && data.split && !hubSplits.some(s => Number(s.checkpoint_id) === Number(data.split.checkpoint_id))) {
+            hubSplits.push(data.split);
+            updateHubCpTag();
+          }
+        }
+      });
+    });
+  }
 
   // ── Logout rider ──
   document.getElementById('btnRiderLogout').addEventListener('click', () => {

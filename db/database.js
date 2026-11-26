@@ -50,26 +50,34 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS checkpoints (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_id     INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    name         TEXT NOT NULL,
-    km_distance  REAL NOT NULL,
-    open_time    TEXT,
-    close_time   TEXT,
-    latitude     REAL,
-    longitude    REAL,
-    order_index  INTEGER DEFAULT 0,
-    created_at   TEXT DEFAULT (datetime('now'))
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id      INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    name          TEXT NOT NULL,
+    km_distance   REAL NOT NULL,
+    open_time     TEXT,
+    close_time    TEXT,
+    latitude      REAL,
+    longitude     REAL,
+    radius_meters INTEGER,
+    order_index   INTEGER DEFAULT 0,
+    qr_token      TEXT,
+    created_at    TEXT DEFAULT (datetime('now'))
   );
 
   CREATE TABLE IF NOT EXISTS rider_splits (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_id       INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    rider_id       INTEGER NOT NULL REFERENCES riders(id) ON DELETE CASCADE,
-    checkpoint_id  INTEGER NOT NULL REFERENCES checkpoints(id) ON DELETE CASCADE,
-    arrival_time   TEXT NOT NULL,
-    status         TEXT DEFAULT 'IN_TIME',
-    created_at     TEXT DEFAULT (datetime('now')),
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id            INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    rider_id            INTEGER NOT NULL REFERENCES riders(id) ON DELETE CASCADE,
+    checkpoint_id       INTEGER NOT NULL REFERENCES checkpoints(id) ON DELETE CASCADE,
+    arrival_time        TEXT NOT NULL,
+    status              TEXT DEFAULT 'IN_TIME',
+    source              TEXT DEFAULT 'admin',
+    check_in_lat        REAL,
+    check_in_lng        REAL,
+    distance_meters     REAL,
+    verification_status TEXT DEFAULT 'VERIFIED',
+    flag_reason         TEXT,
+    created_at          TEXT DEFAULT (datetime('now')),
     UNIQUE(rider_id, checkpoint_id)
   );
 
@@ -226,7 +234,18 @@ try { db.exec("ALTER TABLE events ADD COLUMN sponsor_strip_bg TEXT DEFAULT 'whit
 try { db.exec("ALTER TABLE events ADD COLUMN sponsor_strip_label TEXT DEFAULT 'Didukung oleh';"); } catch (e) {}
 try { db.exec("ALTER TABLE events ADD COLUMN sponsor_strip_label_color TEXT DEFAULT '#64748B';"); } catch (e) {}
 
-// Populate tokens for any existing riders that lack tokens
+// ── Migrations for checkpoints & rider_splits (Self Check-In QR & Radius) ──
+try { db.exec("ALTER TABLE checkpoints ADD COLUMN qr_token TEXT;"); } catch (e) {}
+try { db.exec("ALTER TABLE checkpoints ADD COLUMN radius_meters INTEGER;"); } catch (e) {}
+try { db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_checkpoints_qr_token ON checkpoints(qr_token);"); } catch (e) {}
+try { db.exec("ALTER TABLE rider_splits ADD COLUMN source TEXT DEFAULT 'admin';"); } catch (e) {}
+try { db.exec("ALTER TABLE rider_splits ADD COLUMN check_in_lat REAL;"); } catch (e) {}
+try { db.exec("ALTER TABLE rider_splits ADD COLUMN check_in_lng REAL;"); } catch (e) {}
+try { db.exec("ALTER TABLE rider_splits ADD COLUMN distance_meters REAL;"); } catch (e) {}
+try { db.exec("ALTER TABLE rider_splits ADD COLUMN verification_status TEXT DEFAULT 'VERIFIED';"); } catch (e) {}
+try { db.exec("ALTER TABLE rider_splits ADD COLUMN flag_reason TEXT;"); } catch (e) {}
+
+// Populate tokens for any existing riders and checkpoints that lack tokens
 try {
   const crypto = require('crypto');
   const missingTokens = db.prepare("SELECT id FROM riders WHERE token IS NULL").all();
@@ -237,7 +256,17 @@ try {
     });
     updateTx(missingTokens);
   }
+  const missingCpTokens = db.prepare("SELECT id FROM checkpoints WHERE qr_token IS NULL").all();
+  if (missingCpTokens.length > 0) {
+    const setCpToken = db.prepare("UPDATE checkpoints SET qr_token = ? WHERE id = ?");
+    const updateCpTx = db.transaction((rows) => {
+      for (const cp of rows) setCpToken.run(crypto.randomBytes(6).toString('hex'), cp.id);
+    });
+    updateCpTx(missingCpTokens);
+  }
 } catch (e) {}
+
+const _createCheckpointStmt = db.prepare('INSERT INTO checkpoints (event_id, name, km_distance, open_time, close_time, latitude, longitude, radius_meters, order_index, qr_token) VALUES (@event_id, @name, @km_distance, @open_time, @close_time, @latitude, @longitude, @radius_meters, @order_index, @qr_token)');
 
 const _createRiderStmt = db.prepare(`
   INSERT INTO riders (event_id, bib, name, pin, phone, token, role, traccar_device_id, color)
@@ -293,16 +322,39 @@ module.exports = {
   resolveAlert:           db.prepare('UPDATE alerts SET resolved = 1 WHERE id = ?'),
 
   // Checkpoints
-  createCheckpoint:      db.prepare('INSERT INTO checkpoints (event_id, name, km_distance, open_time, close_time, latitude, longitude, order_index) VALUES (@event_id, @name, @km_distance, @open_time, @close_time, @latitude, @longitude, @order_index)'),
-  getCheckpointById:     db.prepare('SELECT * FROM checkpoints WHERE id = ?'),
-  getCheckpointsByEvent: db.prepare('SELECT * FROM checkpoints WHERE event_id = ? ORDER BY km_distance ASC'),
-  deleteCheckpoint:      db.prepare('DELETE FROM checkpoints WHERE id = ?'),
+  createCheckpoint: {
+    run(data) {
+      const crypto = require('crypto');
+      return _createCheckpointStmt.run({
+        event_id:      Number(data.event_id),
+        name:          data.name,
+        km_distance:   Number(data.km_distance),
+        open_time:     data.open_time || null,
+        close_time:    data.close_time || null,
+        latitude:      data.latitude != null ? Number(data.latitude) : null,
+        longitude:     data.longitude != null ? Number(data.longitude) : null,
+        radius_meters: data.radius_meters != null && Number(data.radius_meters) > 0 ? Math.round(Number(data.radius_meters)) : null,
+        order_index:   data.order_index != null ? Number(data.order_index) : 0,
+        qr_token:      data.qr_token ? String(data.qr_token).trim() : crypto.randomBytes(6).toString('hex')
+      });
+    }
+  },
+  updateCheckpoint:       db.prepare('UPDATE checkpoints SET name=@name, km_distance=@km_distance, open_time=@open_time, close_time=@close_time, latitude=@latitude, longitude=@longitude, radius_meters=@radius_meters WHERE id=@id AND event_id=@event_id'),
+  getCheckpointById:      db.prepare('SELECT * FROM checkpoints WHERE id = ?'),
+  getCheckpointByQrToken: db.prepare('SELECT * FROM checkpoints WHERE qr_token = ?'),
+  getCheckpointsByEvent:  db.prepare('SELECT * FROM checkpoints WHERE event_id = ? ORDER BY km_distance ASC'),
+  updateCheckpointQrToken: db.prepare('UPDATE checkpoints SET qr_token = ? WHERE id = ? AND event_id = ?'),
+  deleteCheckpoint:       db.prepare('DELETE FROM checkpoints WHERE id = ?'),
 
   // Rider Splits (COT)
-  recordSplit:      db.prepare('INSERT INTO rider_splits (event_id, rider_id, checkpoint_id, arrival_time, status) VALUES (@event_id, @rider_id, @checkpoint_id, @arrival_time, @status) ON CONFLICT(rider_id, checkpoint_id) DO UPDATE SET arrival_time=excluded.arrival_time, status=excluded.status'),
-  getSplitById:     db.prepare('SELECT * FROM rider_splits WHERE id = ?'),
-  getSplitsByEvent: db.prepare('SELECT s.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color, c.name as checkpoint_name, c.km_distance as checkpoint_km, c.close_time as checkpoint_cot FROM rider_splits s JOIN riders r ON s.rider_id = r.id JOIN checkpoints c ON s.checkpoint_id = c.id WHERE s.event_id = ? ORDER BY c.km_distance ASC, s.arrival_time ASC'),
-  getSplitsByRider: db.prepare('SELECT s.*, c.name as checkpoint_name, c.km_distance as checkpoint_km, c.close_time as checkpoint_cot FROM rider_splits s JOIN checkpoints c ON s.checkpoint_id = c.id WHERE s.rider_id = ? ORDER BY c.km_distance ASC'),
+  recordSplit:                  db.prepare("INSERT INTO rider_splits (event_id, rider_id, checkpoint_id, arrival_time, status, verification_status, flag_reason) VALUES (@event_id, @rider_id, @checkpoint_id, @arrival_time, @status, 'VERIFIED', NULL) ON CONFLICT(rider_id, checkpoint_id) DO UPDATE SET arrival_time=excluded.arrival_time, status=excluded.status, verification_status='VERIFIED', flag_reason=NULL"),
+  insertCheckinSplitIfAbsent:   db.prepare('INSERT OR IGNORE INTO rider_splits (event_id, rider_id, checkpoint_id, arrival_time, status, source, check_in_lat, check_in_lng, distance_meters, verification_status, flag_reason) VALUES (@event_id, @rider_id, @checkpoint_id, @arrival_time, @status, @source, @check_in_lat, @check_in_lng, @distance_meters, @verification_status, @flag_reason)'),
+  approveSplit:                 db.prepare("UPDATE rider_splits SET verification_status = 'VERIFIED', flag_reason = NULL WHERE id = ? AND event_id = ?"),
+  deleteSplitById:              db.prepare('DELETE FROM rider_splits WHERE id = ? AND event_id = ?'),
+  getSplitById:                 db.prepare('SELECT * FROM rider_splits WHERE id = ?'),
+  getSplitByRiderAndCheckpoint: db.prepare('SELECT s.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color, c.name as checkpoint_name, c.km_distance as checkpoint_km, c.close_time as checkpoint_cot FROM rider_splits s JOIN riders r ON s.rider_id = r.id JOIN checkpoints c ON s.checkpoint_id = c.id WHERE s.rider_id = ? AND s.checkpoint_id = ?'),
+  getSplitsByEvent:             db.prepare('SELECT s.*, r.bib as rider_bib, r.name as rider_name, r.color as rider_color, c.name as checkpoint_name, c.km_distance as checkpoint_km, c.close_time as checkpoint_cot FROM rider_splits s JOIN riders r ON s.rider_id = r.id JOIN checkpoints c ON s.checkpoint_id = c.id WHERE s.event_id = ? ORDER BY c.km_distance ASC, s.arrival_time ASC'),
+  getSplitsByRider:             db.prepare('SELECT s.*, c.name as checkpoint_name, c.km_distance as checkpoint_km, c.close_time as checkpoint_cot FROM rider_splits s JOIN checkpoints c ON s.checkpoint_id = c.id WHERE s.rider_id = ? ORDER BY c.km_distance ASC'),
 
   // Position History (Replay & Time Machine)
   recordPositionHistory: db.prepare('INSERT INTO position_history (event_id, rider_id, latitude, longitude, speed, distance_km, recorded_at) VALUES (@event_id, @rider_id, @latitude, @longitude, @speed, @distance_km, @recorded_at)'),

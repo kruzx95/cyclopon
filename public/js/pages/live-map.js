@@ -2237,11 +2237,15 @@ async function renderLiveMap(params) {
       const sp = splitsCache[`${rider.id}_${cp.id}`];
       if (sp) {
         const d = new Date(sp.arrival_time);
-        const tStr = !isNaN(d.getTime()) ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : sp.arrival_time;
-        const isPass = sp.status === 'IN_TIME';
-        return `<div class="cp-split-chip ${isPass ? 'split-pass' : 'split-fail'}" title="${cp.name}">
-                    <span>${cp.name.split(' ')[0] || `CP${idx + 1}`}: <strong>${tStr}</strong></span>
-                    <span>${isPass ? '✓' : '⚠️ COT'}</span>
+        const tStr = !isNaN(d.getTime())
+          ? d.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })
+          : sp.arrival_time;
+        const isPendingVerify = sp.verification_status === 'PENDING_VERIFY';
+        const isPass = !isPendingVerify && sp.status === 'IN_TIME';
+        const qrMark = sp.source === 'qr_scan' ? ' · QR' : '';
+        return `<div class="cp-split-chip ${isPass ? 'split-pass' : 'split-fail'}" title="${escapeHtml(cp.name)}">
+                    <span>${escapeHtml(cp.name.split(' ')[0] || `CP${idx + 1}`)}: <strong>${escapeHtml(tStr)}</strong>${qrMark}</span>
+                    <span>${isPendingVerify ? '⏳' : (isPass ? '✓' : '⚠️ COT')}</span>
                   </div>`;
       } else {
         return `<div class="cp-split-chip split-pending" title="${cp.name}">
@@ -4661,6 +4665,21 @@ async function renderLiveMap(params) {
         // Immediate reaction to emergency SOS alert broadcast
         if (data.type === 'alert' || data.alerts) {
           checkActiveAlerts().catch(() => { });
+        }
+
+        // Immediate reaction to self check-in QR checkpoint split
+        if (data.type === 'checkpoint_split' && data.split && Number(data.event_id) === Number(eventId)) {
+          const sp = data.split;
+          splitsCache[`${sp.rider_id}_${sp.checkpoint_id}`] = sp;
+          const d = new Date(sp.arrival_time);
+          const wibStr = !isNaN(d.getTime())
+            ? d.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false }) + ' WIB'
+            : sp.arrival_time;
+          const isPendingVerify = sp.verification_status === 'PENDING_VERIFY';
+          const statusMsg = isPendingVerify ? 'Menunggu Verifikasi' : (sp.status === 'OVER_COT' ? 'Melebihi COT' : 'Lolos COT');
+          showToast(`Check-In QR: #${sp.rider_bib || ''} ${sp.rider_name || ''} di ${sp.checkpoint_name || 'CP'} (${wibStr}, ${statusMsg})`, isPendingVerify || sp.status === 'OVER_COT' ? 'warning' : 'success');
+        } else if (data.type === 'checkpoint_split_removed' && Number(data.event_id) === Number(eventId)) {
+          delete splitsCache[`${data.rider_id}_${data.checkpoint_id}`];
         }
 
         // 1. Auto-Mapping Traccar Devices to Riders by BIB Number!

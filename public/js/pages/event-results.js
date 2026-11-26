@@ -3,6 +3,24 @@
  * Athletic Minimalist Pro Aesthetic (Rapha / Pas Normal Studios / Strava PRO)
  */
 
+function formatSplitArrivalWib(val) {
+  if (!val) return '--:--';
+  const raw = String(val).trim();
+  if (!raw.includes('T') && !raw.includes('-')) return raw;
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  try {
+    return d.toLocaleTimeString('id-ID', {
+      timeZone: 'Asia/Jakarta',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }) + ' WIB';
+  } catch {
+    return raw;
+  }
+}
+
 async function renderEventResults(params) {
   const eventId = params.id || params.eventId;
   const app = document.getElementById('app');
@@ -305,14 +323,16 @@ async function renderEventResults(params) {
                                     <div class="split-item-km">${s.checkpoint_km ? s.checkpoint_km + ' KM' : '-- KM'}</div>
                                     <div class="split-item-time">
                                       <span class="lbl">Tiba:</span>
-                                      <span class="val">${escapeHtml(s.arrival_time || '--:--')}</span>
+                                      <span class="val">${escapeHtml(formatSplitArrivalWib(s.arrival_time))}${s.source === 'qr_scan' ? ' (QR)' : ''}</span>
                                     </div>
                                     <div class="split-item-cot">
                                       <span class="lbl">Batas COT:</span>
                                       <span class="val">${escapeHtml(s.checkpoint_cot || '--:--')}</span>
                                     </div>
                                     <div class="split-item-status">
-                                      ${s.status === 'OVER_COT' ? '⚠️ MELEBIHI COT' : '✓ LOLOS COT'}
+                                      ${s.verification_status === 'PENDING_VERIFY'
+                                        ? '⏳ MENUNGGU VERIFIKASI'
+                                        : (s.status === 'OVER_COT' ? '⚠️ MELEBIHI COT' : '✓ LOLOS COT')}
                                     </div>
                                   </div>
                                 `).join('')}
@@ -565,7 +585,7 @@ async function renderEventResults(params) {
                         <div class="stamp-check">${s.status === 'OVER_COT' ? '⚠️' : '✓'}</div>
                         <div class="stamp-info">
                           <div class="stamp-name">${escapeHtml(s.checkpoint_name || 'CP')}</div>
-                          <div class="stamp-time">${escapeHtml(s.checkpoint_km ? s.checkpoint_km + ' KM · ' : '')}${escapeHtml(s.arrival_time)}</div>
+                          <div class="stamp-time">${escapeHtml(s.checkpoint_km ? s.checkpoint_km + ' KM · ' : '')}${escapeHtml(formatSplitArrivalWib(s.arrival_time))}</div>
                         </div>
                       </div>
                     `).join('')}
