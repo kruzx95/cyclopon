@@ -1611,28 +1611,32 @@ async function renderLiveMap(params) {
       if (lat != null && lng != null) {
         const cpIcon = L.divIcon({
           html: `
-            <div class="cp-map-marker" style="
-              background: rgba(255, 255, 255, 0.96);
-              border: 2px solid var(--color-sage);
-              color: var(--color-sage);
-              padding: 3px 8px;
-              border-radius: 6px;
-              font-size: 11px;
-              font-weight: 800;
-              white-space: nowrap;
-              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-              display: flex;
-              align-items: center;
-              gap: 4px;
-              cursor: pointer;
-            ">
-              <span>🚩</span>
-              <span>${cp.name}</span>
-              <span style="color:#FFF;background:var(--color-sage);padding:1px 5px;border-radius:4px;font-size:10px">${cp.km_distance}K</span>
+            <div style="transform: translate(-50%, -50%); width: max-content;">
+              <div class="cp-map-marker" style="
+                background: #FFFFFF;
+                border: 2px solid #2B4E30;
+                color: #111815;
+                padding: 3px 8px;
+                border-radius: 6px;
+                font-size: 11px;
+                font-weight: 800;
+                white-space: nowrap;
+                width: max-content;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                cursor: pointer;
+              ">
+                <span>🚩</span>
+                <span>${escapeHtml(cp.name)}</span>
+                <span style="color:#FFFFFF;background:#2B4E30;padding:1px 5px;border-radius:4px;font-size:10px">${cp.km_distance}K</span>
+              </div>
             </div>
           `,
           className: '',
-          iconAnchor: [30, 14]
+          iconSize: null,
+          iconAnchor: [0, 0]
         });
 
         const popupHtml = `
@@ -2234,6 +2238,11 @@ async function renderLiveMap(params) {
             <div class="popup-cp-title">🚩 CHECKPOINTS & CUT-OFF TIME</div>
             <div class="popup-cp-grid">
               ${checkpoints.map((cp, idx) => {
+      const rawCpName = String(cp.name || '').trim();
+      const cpNumMatch = rawCpName.match(/^cp\s*[-_#:]?\s*(\d+)/i);
+      const cpChipLabel = cpNumMatch
+        ? `CP ${cpNumMatch[1]}`
+        : (rawCpName ? `CP ${idx + 1} · ${rawCpName.slice(0, 10)}` : `CP ${idx + 1}`);
       const sp = splitsCache[`${rider.id}_${cp.id}`];
       if (sp) {
         const d = new Date(sp.arrival_time);
@@ -2244,12 +2253,12 @@ async function renderLiveMap(params) {
         const isPass = !isPendingVerify && sp.status === 'IN_TIME';
         const qrMark = sp.source === 'qr_scan' ? ' · QR' : '';
         return `<div class="cp-split-chip ${isPass ? 'split-pass' : 'split-fail'}" title="${escapeHtml(cp.name)}">
-                    <span>${escapeHtml(cp.name.split(' ')[0] || `CP${idx + 1}`)}: <strong>${escapeHtml(tStr)}</strong>${qrMark}</span>
+                    <span>${escapeHtml(cpChipLabel)}: <strong>${escapeHtml(tStr)}</strong>${qrMark}</span>
                     <span>${isPendingVerify ? '⏳' : (isPass ? '✓' : '⚠️ COT')}</span>
                   </div>`;
       } else {
-        return `<div class="cp-split-chip split-pending" title="${cp.name}">
-                    <span>${cp.name.split(' ')[0] || `CP${idx + 1}`}: ${cp.km_distance}km</span>
+        return `<div class="cp-split-chip split-pending" title="${escapeHtml(cp.name)}">
+                    <span>${escapeHtml(cpChipLabel)}: ${cp.km_distance}km</span>
                   </div>`;
       }
     }).join('')}

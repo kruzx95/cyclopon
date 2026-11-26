@@ -2281,6 +2281,7 @@
 
 /* ── Checkpoints & Audax Cut-Off Time (COT) ── */
 .cp-map-marker {
+  width: max-content;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .cp-map-marker:hover {
@@ -2330,8 +2331,10 @@
   color: #F87171;
 }
 .cp-split-chip.split-pending {
-  color: var(--text-secondary);
-  opacity: 0.6;
+  color: #334338;
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  opacity: 1;
 }
 
 .cp-pill {
