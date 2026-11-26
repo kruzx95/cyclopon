@@ -2,7 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
-const { requireEventAccess } = require('../lib/event-access');
+const { requireEventAccess, getClientIp } = require('../lib/event-access');
 
 const requireEventAccessForAlerts = requireEventAccess();
 
@@ -25,7 +25,7 @@ const sosCleanupTimer = setInterval(() => {
 if (sosCleanupTimer.unref) sosCleanupTimer.unref();
 
 function sosRateLimiter(req, res, next) {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const ip = getClientIp(req);
   const now = Date.now();
   let record = sosRateMap.get(ip);
   if (!record || (now - record.resetTime > 60000)) {

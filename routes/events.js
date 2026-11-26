@@ -281,8 +281,14 @@ router.post('/:id/verify-pin', (req, res) => {
   const ip = getClientIp(req);
   const { pin } = req.body || {};
 
-  // A correct PIN is always accepted, so a throttled spectator who finally
-  // receives the right PIN is not locked out for the rest of the window.
+  if (isThrottled(ip, event.id)) {
+    res.set('Retry-After', String(getThrottleRetryAfterSeconds(ip, event.id)));
+    return res.status(429).json({
+      success: false,
+      error: 'Terlalu banyak percobaan PIN akses. Coba lagi beberapa menit lagi.'
+    });
+  }
+
   if (pin && verifyAccessPin(event, pin)) {
     clearFailedAttempts(ip, event.id);
     return res.json({ success: true, access_pin_required: true });
@@ -537,7 +543,13 @@ router.post('/admin/:id/gpx', requireAdminAuth, upload.single('gpx'), (req, res)
   if (!req.file) return res.status(400).json({ error: 'File GPX tidak ditemukan dalam request' });
 
   const tempPath = req.file.path;
-  const targetPath = path.join(gpxDir, `${req.params.id}.gpx`);
+  const eventId = Number(req.params.id);
+  const event = Number.isInteger(eventId) && eventId > 0 ? db.getEventById.get(eventId) : null;
+  if (!event) {
+    try { fs.unlinkSync(tempPath); } catch (e) {}
+    return res.status(404).json({ error: 'Event tidak ditemukan' });
+  }
+  const targetPath = path.join(gpxDir, `${event.id}.gpx`);
 
   try {
     // 1. Verify file content contains valid GPX tags
@@ -552,10 +564,10 @@ router.post('/admin/:id/gpx', requireAdminAuth, upload.single('gpx'), (req, res)
     fs.copyFileSync(tempPath, targetPath);
     try { fs.unlinkSync(tempPath); } catch (e) {}
 
-    const gpxUrl = `/gpx/${req.params.id}.gpx`;
-    db.updateEventGpx.run(gpxUrl, req.params.id);
+    const gpxUrl = `/gpx/${event.id}.gpx`;
+    db.updateEventGpx.run(gpxUrl, event.id);
     eventDistanceCache.clear();
-    virtualCot.invalidateEvaluation(req.params.id);
+    virtualCot.invalidateEvaluation(event.id);
 
     res.json({ success: true, gpx_path: gpxUrl });
   } catch (err) {

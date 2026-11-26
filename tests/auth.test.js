@@ -196,10 +196,62 @@ test('Auth API & Flow Validation', async (t) => {
       assert.equal(data.success, true);
       assert.equal(data.user.email, 'racecontrol_official');
     } finally {
-      process.env.NODE_ENV = origEnv;
-      process.env.ADMIN_USER = origUser;
-      process.env.ADMIN_PASSWORD = origPass;
+      if (origEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = origEnv;
+      if (origUser === undefined) delete process.env.ADMIN_USER;
+      else process.env.ADMIN_USER = origUser;
+      if (origPass === undefined) delete process.env.ADMIN_PASSWORD;
+      else process.env.ADMIN_PASSWORD = origPass;
     }
+  });
+
+  await t.test('POST /api/auth/admin/logout revokes cookie session on server', async () => {
+    const loginRes = await fetch(`${baseUrl}/api/auth/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin', password: 'admin' })
+    });
+    assert.equal(loginRes.status, 200);
+    const setCookie = loginRes.headers.get('set-cookie') || '';
+    const cookieMatch = setCookie.match(/cyclopon_admin=([^;]+)/);
+    assert.ok(cookieMatch, 'Should set cyclopon_admin cookie');
+    const cookieHeader = `cyclopon_admin=${cookieMatch[1]}`;
+
+    const beforeLogout = await fetch(`${baseUrl}/api/auth/admin/session`, {
+      headers: { 'Cookie': cookieHeader }
+    });
+    assert.equal((await beforeLogout.json()).ok, true);
+
+    const logoutRes = await fetch(`${baseUrl}/api/auth/admin/logout`, {
+      method: 'POST',
+      headers: { 'Cookie': cookieHeader }
+    });
+    assert.equal(logoutRes.status, 200);
+
+    const afterLogout = await fetch(`${baseUrl}/api/auth/admin/session`, {
+      headers: { 'Cookie': cookieHeader }
+    });
+    assert.equal((await afterLogout.json()).ok, false, 'Cookie should be revoked after logout');
+  });
+
+  await t.test('X-Forwarded-For spoofing does not bypass rider PIN brute-force protection', async () => {
+    const { eventId1 } = t.context;
+    let blocked = false;
+    for (let i = 0; i < 10; i++) {
+      const res = await fetch(`${baseUrl}/api/auth/rider`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Forwarded-For': `10.0.0.${i + 1}, 203.0.113.5`
+        },
+        body: JSON.stringify({ event_id: eventId1, bib: '001', pin: `999${i}` })
+      });
+      if (res.status === 429) {
+        blocked = true;
+        break;
+      }
+    }
+    assert.equal(blocked, true, 'Spoofed X-Forwarded-For headers must still hit 429 lockout');
   });
 
   await t.test('teardown', async () => {

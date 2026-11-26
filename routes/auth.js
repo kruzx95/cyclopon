@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/database');
 const fetch = require('node-fetch');
-const { generateAdminSession, verifyAdminSession, safeStringCompare } = require('../lib/admin-auth');
-const { isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
+const { generateAdminSession, revokeAdminSession, verifyAdminSession, safeStringCompare } = require('../lib/admin-auth');
+const { isAccessPinRequired, verifyAccessPin, getClientIp } = require('../lib/event-access');
 const { determineColorForRole } = require('../lib/constants');
 
 // Brute-force protection for 4-digit rider PIN logins
@@ -52,10 +52,10 @@ router.post('/rider', (req, res) => {
     return res.status(400).json({ error: 'BIB dan PIN wajib diisi' });
   }
 
-  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const clientIp = getClientIp(req);
   const cleanBib = String(bib).trim();
   const cleanPin = String(pin).trim();
-  const attemptKey = `${clientIp}_${cleanBib}`;
+  const attemptKey = `${clientIp}_${cleanBib.toUpperCase()}`;
 
   // Check brute force failure count (max 8 failures in 15 minutes)
   const now = Date.now();
@@ -120,8 +120,34 @@ router.post('/rider', (req, res) => {
   });
 });
 
+// Lightweight rate limiter for public token lookups (30 req / minute per IP)
+const tokenLookupRateMap = new Map();
+const tokenLookupCleanupTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of tokenLookupRateMap.entries()) {
+    if (now - record.resetTime > 60000) tokenLookupRateMap.delete(ip);
+  }
+}, 60000);
+if (tokenLookupCleanupTimer.unref) tokenLookupCleanupTimer.unref();
+
+function tokenLookupRateLimiter(req, res, next) {
+  const ip = getClientIp(req);
+  const now = Date.now();
+  let record = tokenLookupRateMap.get(ip);
+  if (!record || now - record.resetTime > 60000) {
+    record = { count: 1, resetTime: now };
+    tokenLookupRateMap.set(ip, record);
+  } else {
+    record.count++;
+  }
+  if (record.count > 30) {
+    return res.status(429).json({ error: 'Terlalu banyak permintaan tautan. Coba lagi sebentar.' });
+  }
+  next();
+}
+
 // GET /api/auth/token/:token — Magic Link instant login without typing BIB or PIN
-router.get('/token/:token', (req, res) => {
+router.get('/token/:token', tokenLookupRateLimiter, (req, res) => {
   const { token } = req.params;
   if (!token) {
     return res.status(400).json({ error: 'Token akses wajib disertakan' });
@@ -168,7 +194,7 @@ const cleanupInterval = setInterval(() => {
 if (cleanupInterval.unref) cleanupInterval.unref();
 
 function registerRateLimiter(req, res, next) {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const ip = getClientIp(req);
   const now = Date.now();
   let record = registrationRateMap.get(ip);
   if (!record || now - record.resetTime > 60000) {
@@ -282,7 +308,7 @@ router.post('/admin/login', async (req, res) => {
     return res.status(400).json({ error: 'Email dan password wajib diisi' });
   }
 
-  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const clientIp = getClientIp(req);
   const now = Date.now();
   const adminRecord = adminLoginAttempts.get(clientIp);
   if (adminRecord && (now - adminRecord.firstAttempt <= 15 * 60 * 1000) && adminRecord.failures >= 5) {
@@ -305,7 +331,7 @@ router.post('/admin/login', async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Cegah penggunaan password default 'admin' saat mode production aktif di VPS
-  if (isProduction && (adminPass === 'admin' || password === 'admin')) {
+  if (isProduction && password === 'admin') {
     recordFailedAdminAttempt();
     console.error('[SECURITY ALERT] Login admin ditolak: Penggunaan password default "admin" dilarang pada mode production!');
     return res.status(403).json({
@@ -319,6 +345,13 @@ router.post('/admin/login', async (req, res) => {
     : (safeStringCompare(email, adminUser) || email === 'admin' || email === 'admin@example.com' || email === 'admin@cyclopon.local');
 
   if (isUserMatch) {
+    if (isProduction && adminPass === 'admin') {
+      recordFailedAdminAttempt();
+      console.error('[SECURITY ALERT] Login admin ditolak: Penggunaan password default "admin" dilarang pada mode production!');
+      return res.status(403).json({
+        error: 'Akses ditolak: Password default ("admin") dinonaktifkan di VPS/Production. Silakan perbarui ADMIN_PASSWORD di .env.'
+      });
+    }
     if (safeStringCompare(password, adminPass)) {
       adminLoginAttempts.delete(clientIp);
       const session = generateAdminSession();
@@ -332,7 +365,6 @@ router.post('/admin/login', async (req, res) => {
       });
       return res.json({
         success: true,
-        token: session.token,
         user: { id: 1, name: 'Admin CycloPon', email: adminUser, administrator: true }
       });
     } else {
@@ -354,6 +386,12 @@ router.post('/admin/login', async (req, res) => {
       return res.status(401).json({ error: 'Login gagal. Kredensial tidak valid.' });
     }
 
+    const data = await response.json();
+    if (!data || data.administrator !== true) {
+      recordFailedAdminAttempt();
+      return res.status(403).json({ error: 'Akses ditolak: Akun Traccar bukan administrator.' });
+    }
+
     // Forward the Set-Cookie header so browser stores the Traccar session
     const cookies = response.headers.raw()['set-cookie'];
     if (cookies) res.setHeader('Set-Cookie', cookies);
@@ -369,8 +407,7 @@ router.post('/admin/login', async (req, res) => {
       path: '/'
     });
 
-    const data = await response.json();
-    res.json({ success: true, token: session.token, user: data });
+    res.json({ success: true, user: data });
   } catch (err) {
     recordFailedAdminAttempt();
     res.status(503).json({ error: 'Layanan server autentikasi tidak dapat dijangkau saat ini.' });
@@ -386,9 +423,21 @@ router.get('/admin/session', (req, res) => {
   res.json({ ok: !!isValid });
 });
 
-// POST /api/auth/admin/logout — clear admin session
-router.post('/admin/logout', (_req, res) => {
-  res.clearCookie('cyclopon_admin', { path: '/' });
+// POST /api/auth/admin/logout — revoke admin token and clear cookies
+router.post('/admin/logout', (req, res) => {
+  const cookieToken = req.cookies?.cyclopon_admin;
+  const headerToken = req.headers['authorization']?.replace(/^Bearer\s+/i, '') || req.headers['x-admin-token'];
+  if (cookieToken) revokeAdminSession(cookieToken);
+  if (headerToken) revokeAdminSession(headerToken);
+
+  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+  res.clearCookie('cyclopon_admin', {
+    httpOnly: true,
+    secure: isHttps,
+    sameSite: 'lax',
+    path: '/'
+  });
+  res.clearCookie('JSESSIONID', { path: '/' });
   res.json({ success: true });
 });
 

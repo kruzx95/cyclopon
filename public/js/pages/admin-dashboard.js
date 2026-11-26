@@ -426,8 +426,8 @@ const AdminSosMonitor = {
 
     const latest = alerts[0];
     const riderDisplay = latest.rider_name
-      ? `BIB #${latest.rider_bib || '-'} &bull; ${escapeHtml(latest.rider_name)}`
-      : `BIB #${latest.rider_bib || 'Rider'}`;
+      ? `BIB #${escapeHtml(latest.rider_bib || '-')} &bull; ${escapeHtml(latest.rider_name)}`
+      : `BIB #${escapeHtml(latest.rider_bib || 'Rider')}`;
     const typeLabel = escapeHtml(sosTypeLabel(latest.type));
     const alertMsg = escapeHtml(sosDisplayMessage(latest));
     const extraCount = alerts.length > 1 ? ` (+${alerts.length - 1} SOS lainnya)` : '';
@@ -776,11 +776,10 @@ function renderAdminLogin() {
   // Stop any lingering background intervals from dashboard
   stopAdminBackgroundTasks();
 
-  // If already logged in and not currently logging out, verify session with server first before redirecting to dashboard
+  // If already logged in and not currently logging out, verify cookie session with server first before redirecting to dashboard
   const user = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser');
-  const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
 
-  if (user && token && !window._isLoggingOut) {
+  if (user && !window._isLoggingOut) {
     fetch('/api/auth/admin/session', { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
@@ -877,10 +876,8 @@ function renderAdminLogin() {
       if (res.ok) {
         sessionStorage.setItem('adminUser', JSON.stringify(data.user));
         localStorage.setItem('adminUser', JSON.stringify(data.user));
-        if (data.token) {
-          sessionStorage.setItem('adminToken', data.token);
-          localStorage.setItem('adminToken', data.token);
-        }
+        sessionStorage.removeItem('adminToken');
+        localStorage.removeItem('adminToken');
         Router.navigate('/admin/dashboard');
       } else {
         errEl.textContent = data.error || 'Login gagal.';
@@ -1663,12 +1660,20 @@ async function renderAdminDashboard() {
              href="/watch/${ev.id}?admin=1" target="_blank" rel="noopener">🗺️ Live Map</a>
           <a class="btn btn-outline" style="font-size:12px;padding:7px 14px"
              href="/events/${ev.id}/results" target="_blank" rel="noopener">🏆 Hasil &amp; Brevet</a>
-          <button class="btn btn-outline" style="font-size:12px;padding:7px 12px;color:#DC2626;border-color:#FCA5A5"
-                  onclick="confirmDeleteEvent(${ev.id}, '${escapeHtml(ev.name).replace(/'/g, "\\'")}')"
+          <button type="button" class="btn btn-outline btn-delete-event" style="font-size:12px;padding:7px 12px;color:#DC2626;border-color:#FCA5A5"
+                  data-event-id="${ev.id}" data-event-name="${escapeHtml(ev.name)}"
                   title="Hapus Event Ini">🗑️ Hapus</button>
         </div>
       </div>
     `).join('');
+    if (!grid.dataset.deleteBound) {
+      grid.dataset.deleteBound = '1';
+      grid.addEventListener('click', (e) => {
+        const delBtn = e.target.closest('.btn-delete-event');
+        if (!delBtn) return;
+        confirmDeleteEvent(Number(delBtn.dataset.eventId), delBtn.dataset.eventName || '');
+      });
+    }
   } catch (err) {
     document.getElementById('eventsGrid').innerHTML =
       `<p style="color:var(--color-red)">Gagal memuat event: ${err.message}</p>`;

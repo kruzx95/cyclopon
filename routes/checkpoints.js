@@ -3,20 +3,40 @@ const express = require('express');
 const router  = express.Router();
 const db      = require('../db/database');
 const { requireAdminAuth, isAdminRequest } = require('../lib/admin-auth');
-const { requireEventAccess, isAccessPinRequired, verifyAccessPin } = require('../lib/event-access');
+const { requireEventAccess, isAccessPinRequired, verifyAccessPin, getClientIp } = require('../lib/event-access');
 
 const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
 const FRESH_TELEMETRY_MAX_AGE_MS = 2 * 60 * 1000;
 
 // Brute-force protection for inline BIB + PIN check-ins (max 8 failures / 15 min)
 const checkinPinAttempts = new Map();
+const cpPublicRequests = new Map();
 const checkinCleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, record] of checkinPinAttempts.entries()) {
     if (now - record.firstAttempt > 15 * 60 * 1000) checkinPinAttempts.delete(key);
   }
-}, 5 * 60 * 1000);
+  for (const [ip, record] of cpPublicRequests.entries()) {
+    if (now - record.resetTime > 60000) cpPublicRequests.delete(ip);
+  }
+}, 60 * 1000);
 if (checkinCleanupTimer.unref) checkinCleanupTimer.unref();
+
+function cpPublicRateLimiter(req, res, next) {
+  const ip = getClientIp(req);
+  const now = Date.now();
+  let rec = cpPublicRequests.get(ip);
+  if (!rec || now - rec.resetTime > 60000) {
+    rec = { count: 1, resetTime: now };
+    cpPublicRequests.set(ip, rec);
+  } else {
+    rec.count++;
+  }
+  if (rec.count > 60) {
+    return res.status(429).json({ error: 'Terlalu banyak permintaan check-in. Coba lagi sebentar.' });
+  }
+  next();
+}
 
 const requireEventAccessForEvent = requireEventAccess();
 // Unknown rider ids resolve to no event; pass through so the handler answers
@@ -268,7 +288,7 @@ router.delete('/checkpoints/:id', requireAdminAuth, (req, res) => {
 // ── Self-Supported Rider QR Check-In ──
 
 // GET /api/checkpoints/lookup/:qrToken — public checkpoint metadata for /cp/:qrToken landing
-router.get('/checkpoints/lookup/:qrToken', (req, res) => {
+router.get('/checkpoints/lookup/:qrToken', cpPublicRateLimiter, (req, res) => {
   const token = extractCpToken(req.params.qrToken);
   if (!token) {
     return res.status(400).json({ error: 'Kode QR Checkpoint tidak valid' });
@@ -311,7 +331,7 @@ router.get('/checkpoints/lookup/:qrToken', (req, res) => {
 });
 
 // POST /api/checkpoints/checkin — rider self check-in by scanning checkpoint QR
-router.post('/checkpoints/checkin', (req, res) => {
+router.post('/checkpoints/checkin', cpPublicRateLimiter, (req, res) => {
   const rawQr = req.body.qr_token || req.body.code || req.body.url;
   const qrToken = extractCpToken(rawQr);
   if (!qrToken) {
@@ -352,8 +372,8 @@ router.post('/checkpoints/checkin', (req, res) => {
       return res.status(401).json({ error: 'Silakan login dengan nomor BIB dan PIN untuk check-in' });
     }
 
-    const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
-    const attemptKey = `${clientIp}_${cp.event_id}_${cleanBib}`;
+    const clientIp = getClientIp(req);
+    const attemptKey = `${clientIp}_${cp.event_id}_${cleanBib.toUpperCase()}`;
     const nowMs = Date.now();
     const attemptRecord = checkinPinAttempts.get(attemptKey);
     if (attemptRecord && (nowMs - attemptRecord.firstAttempt <= 15 * 60 * 1000) && attemptRecord.failures >= 8) {

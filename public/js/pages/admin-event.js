@@ -141,7 +141,7 @@ async function renderAdminEvent(params) {
             <div class="form-row">
               <div class="form-group">
                 <label for="evName">Nama Event</label>
-                <input class="input" id="evName" value="${event.name}" placeholder="Gran Fondo Bandung 2026" required>
+                <input class="input" id="evName" value="${escapeHtml(event.name || '')}" placeholder="Gran Fondo Bandung 2026" required>
               </div>
               <div class="form-group">
                 <label for="evDate">Tanggal</label>
@@ -248,7 +248,7 @@ async function renderAdminEvent(params) {
           </div>
           ${event.gpx_path
         ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-                <span style="color:#047857;font-size:13px;font-weight:700">✅ GPX sudah di-upload: <code style="background:#F3F4F6;padding:2px 8px;border-radius:4px;color:#0D1117;border:1px solid #E5E7EB">${event.gpx_path}</code></span>
+                <span style="color:#047857;font-size:13px;font-weight:700">✅ GPX sudah di-upload: <code style="background:#F3F4F6;padding:2px 8px;border-radius:4px;color:#0D1117;border:1px solid #E5E7EB">${escapeHtml(event.gpx_path)}</code></span>
                 <a href="/api/events/${event.id}/gpx/download" download class="btn btn-outline" style="font-size:12px;padding:4px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:5px">📥 Unduh GPX</a>
               </div>`
         : `<p style="color:#D97706;font-size:13px;font-weight:700;margin-bottom:14px">⚠️ Belum ada file GPX. Upload rute agar tampil di Live Map.</p>`
@@ -1878,8 +1878,8 @@ function renderCheckpointTableRows(checkpoints) {
         </div>
       </td>
       <td><span class="badge badge-cyan">${cp.km_distance} KM</span></td>
-      <td><span style="font-family:var(--font-mono);font-weight:700">${cp.open_time || '-'}</span></td>
-      <td>${cp.close_time ? `<span style="font-family:var(--font-mono);color:#DC2626;font-weight:800">${cp.close_time} WIB</span>` : '-'}</td>
+      <td><span style="font-family:var(--font-mono);font-weight:700">${escapeHtml(cp.open_time || '-')}</span></td>
+      <td>${cp.close_time ? `<span style="font-family:var(--font-mono);color:#DC2626;font-weight:800">${escapeHtml(cp.close_time)} WIB</span>` : '-'}</td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button type="button" class="btn btn-outline btn-cp-edit" data-cp-id="${cp.id}" style="padding:6px 10px;font-size:11.5px;min-height:36px">

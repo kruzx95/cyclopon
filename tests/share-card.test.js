@@ -612,20 +612,23 @@ test('share card — Ride Card participant metadata & naming', async (t) => {
     }
   });
 
-  await t.test('top navigation bars and mobile drawer use concise DAFTAR and RACE CONTROL labels', () => {
+  await t.test('top navigation bars and mobile drawer hide RACE CONTROL link and app.js exposes secret admin triggers', () => {
     const root = path.join(__dirname, '..');
     const navFiles = [
       'public/index.html',
       'public/js/pages/landing.js',
       'public/js/pages/share-card.js',
-      'public/js/pages/install.js'
+      'public/js/pages/install.js',
+      'public/js/pages/ala-ultra-register.js'
     ];
     for (const rel of navFiles) {
       const content = fs.readFileSync(path.join(root, rel), 'utf8');
       assert.match(content, /href="\/register"[^>]*>[\s\S]*?>DAFTAR(?:<\/span>)/);
-      assert.match(content, /href="\/admin"[^>]*>[\s\S]*?>RACE CONTROL(?: ↗)?(?:<\/span>)/);
-      assert.equal(/PANEL PANITIA/.test(content), false, `${rel} should use RACE CONTROL instead of PANEL PANITIA`);
+      assert.equal(/href="\/admin"/.test(content), false, `${rel} should keep /admin hidden from public navigation`);
     }
+    const appSrc = fs.readFileSync(path.join(root, 'public/js/app.js'), 'utf8');
+    assert.match(appSrc, /initAdminAccessTriggers/);
+    assert.match(appSrc, /Router\.navigate\('\/admin'\)/);
   });
 
   await t.test('buildCardModelFromPoints builds stats from server position_history rows', () => {

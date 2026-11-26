@@ -213,36 +213,9 @@ function loadScripts(srcs) {
                             url.includes('/api/events/admin') ||
                             url.includes('/api/auth/admin/session');
 
-    const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
-
-    if (adminToken && isAdminEndpoint) {
+    if (isAdminEndpoint) {
       init = Object.assign({}, init);
       init.credentials = 'include';
-
-      if (!init.headers) {
-        init.headers = { 'Authorization': `Bearer ${adminToken}`, 'x-admin-token': adminToken };
-      } else if (init.headers instanceof Headers) {
-        if (!init.headers.has('Authorization')) {
-          init.headers.set('Authorization', `Bearer ${adminToken}`);
-        }
-        if (!init.headers.has('x-admin-token')) {
-          init.headers.set('x-admin-token', adminToken);
-        }
-      } else if (Array.isArray(init.headers)) {
-        if (!init.headers.some(([k]) => k.toLowerCase() === 'authorization')) {
-          init.headers.push(['Authorization', `Bearer ${adminToken}`]);
-        }
-        if (!init.headers.some(([k]) => k.toLowerCase() === 'x-admin-token')) {
-          init.headers.push(['x-admin-token', adminToken]);
-        }
-      } else {
-        if (!init.headers['Authorization'] && !init.headers['authorization']) {
-          init.headers['Authorization'] = `Bearer ${adminToken}`;
-        }
-        if (!init.headers['x-admin-token'] && !init.headers['X-Admin-Token']) {
-          init.headers['x-admin-token'] = adminToken;
-        }
-      }
     }
 
     const res = await _origFetch(resource, init);
@@ -250,7 +223,7 @@ function loadScripts(srcs) {
     // If server responds 401 on an admin endpoint, gracefully notify user & redirect to login
     if (res.status === 401 && isAdminEndpoint && !url.includes('/api/auth/admin/login')) {
       if (window._isLoggingOut) return res;
-      console.warn('[Admin Auth] Session token invalid or expired on server.');
+      console.warn('[Admin Auth] Session invalid or expired on server.');
       sessionStorage.removeItem('adminUser');
       localStorage.removeItem('adminUser');
       sessionStorage.removeItem('adminToken');

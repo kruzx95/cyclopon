@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Landing page ──
   Router.register('/', async () => {
-    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=108']);
+    await loadPageDeps(['/js/lib/gpx-utils.js', '/js/pages/landing.js?v=109']);
     renderLanding();
   });
 
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── PWA Install Tutorial Page ──
   Router.register('/install', async () => {
-    await loadPageDeps(['/js/pages/install.js?v=11'], ['/css/install.css?v=3']);
+    await loadPageDeps(['/js/pages/install.js?v=12'], ['/css/install.css?v=3']);
     renderInstallPage();
   });
 
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '/js/lib/card-map.js?v=2',
         '/js/lib/card-templates.js?v=3',
         '/js/lib/card-renderer.js?v=7',
-        '/js/pages/share-card.js?v=16'
+        '/js/pages/share-card.js?v=17'
       ],
       ['/css/share.css?v=8']
     );
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── ALA-ALA ULTRA 2027 Dedicated Registration Form ──
   Router.register('/ala-ala-ultra', async () => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/pages/ala-ultra-register.js?v=6'],
+      ['/js/lib/utils.js', '/js/pages/ala-ultra-register.js?v=7'],
       ['/css/ala-ultra.css?v=6']
     );
     renderAlaUltraRegisterPage();
@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Live map (public) ──
   Router.register('/watch/:eventId', async (params) => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=92'],
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/pages/live-map.js?v=94'],
       ['/css/map.css?v=90']
     );
     renderLiveMap(params);
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Admin panel ──
   Router.register('/admin', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=91'],
+      ['/js/pages/admin-dashboard.js?v=92'],
       ['/css/admin.css?v=94']
     );
     renderAdminLogin();
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/dashboard', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=91'],
+      ['/js/pages/admin-dashboard.js?v=92'],
       ['/css/admin.css?v=94']
     );
     renderAdminDashboard();
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/sos', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-sos.js?v=84'],
+      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-sos.js?v=84'],
       ['/css/admin.css?v=94']
     );
     renderAdminSos();
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/event-reports', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event-reports.js?v=85'],
+      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-event-reports.js?v=85'],
       ['/css/admin.css?v=94']
     );
     renderAdminEventReports(params);
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/logs', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-logs.js?v=86'],
+      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-logs.js?v=86'],
       ['/css/admin.css?v=94']
     );
     renderAdminLogs(params);
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-event.js?v=91'],
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-event.js?v=93'],
       ['/css/admin.css?v=94']
     );
     renderAdminEvent(params);
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/ala-ultra', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=91', '/js/pages/admin-ala-ultra.js?v=7'],
+      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-ala-ultra.js?v=7'],
       ['/css/admin.css?v=94']
     );
     renderAdminAlaUltra();
@@ -285,4 +285,53 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('popstate', closeDrawer);
   }
   initMobileNav();
+
+  /**
+   * Hidden Race Control access for standalone PWA / desktop without cluttering public nav:
+   * 1) Tap logo CYCLOPON 5x quickly (< 650ms gap). First click from sub-pages still returns to /.
+   * 2) Keyboard shortcut Ctrl+Shift+A (or Cmd+Shift+A on macOS).
+   */
+  function initAdminAccessTriggers() {
+    let logoTapCount = 0;
+    let lastLogoTapAt = 0;
+
+    function openAdminFromTrigger() {
+      const drawer = document.getElementById('mobileNavDrawer');
+      if (drawer && drawer.classList.contains('is-open')) {
+        drawer.classList.remove('is-open');
+        drawer.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('mobile-drawer-open');
+      }
+      Router.navigate('/admin');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (window.location.pathname.startsWith('/admin')) return;
+      const logoEl = e.target.closest('.brand-title, .footer-brand-lockup, .mobile-nav-brand');
+      if (!logoEl) return;
+
+      const now = Date.now();
+      logoTapCount = (now - lastLogoTapAt <= 650) ? (logoTapCount + 1) : 1;
+      lastLogoTapAt = now;
+
+      if (logoTapCount >= 5) {
+        logoTapCount = 0;
+        lastLogoTapAt = 0;
+        e.preventDefault();
+        e.stopPropagation();
+        openAdminFromTrigger();
+      }
+    }, true);
+
+    document.addEventListener('keydown', (e) => {
+      if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey) return;
+      if (String(e.key || '').toLowerCase() !== 'a') return;
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (window.location.pathname.startsWith('/admin')) return;
+      e.preventDefault();
+      openAdminFromTrigger();
+    });
+  }
+  initAdminAccessTriggers();
 });

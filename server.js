@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const compression = require('compression');
 const db = require('./db/database');
 const { enqueuePageView } = require('./lib/traffic-queue');
-const { requireEventAccess } = require('./lib/event-access');
+const { requireEventAccess, getClientIp } = require('./lib/event-access');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -63,7 +63,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 app.use((req, res, next) => {
   if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
     try {
-      const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+      const clientIp = getClientIp(req);
       const ipHash = crypto.createHash('sha256').update(clientIp).digest('hex').substring(0, 16);
       const userAgent = (req.headers['user-agent'] || '').substring(0, 150);
 

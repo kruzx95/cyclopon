@@ -5,6 +5,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const db = require('../db/database');
 const { requireAdminAuth } = require('../lib/admin-auth');
+const { getClientIp } = require('../lib/event-access');
 const { determineColorForRole } = require('../lib/constants');
 const { validateStravaUrl } = require('../public/js/lib/utils');
 const { buildAlaUltraReport, renderAlaUltraXlsx } = require('../lib/ala-ultra-export');
@@ -58,7 +59,7 @@ const rateCleanupTimer = setInterval(() => {
 if (rateCleanupTimer.unref) rateCleanupTimer.unref();
 
 function submitRateLimiter(req, res, next) {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const ip = getClientIp(req);
   const now = Date.now();
   let rec = submitRateMap.get(ip);
   if (!rec || now - rec.resetTime > 60000) {

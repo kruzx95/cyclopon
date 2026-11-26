@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const db = require('../db/database');
 const app = require('../server');
+const { clearFailedAttempts } = require('../lib/event-access');
 
 test('Event Access PIN — locked events for trial riders', async (t) => {
   let server;
@@ -275,7 +276,17 @@ test('Event Access PIN — locked events for trial riders', async (t) => {
     assert.equal(lastRes.status, 429);
     assert.ok(Number(lastRes.headers.get('retry-after')) > 0);
 
-    // The correct PIN is still accepted and clears the throttle counter.
+    // Once throttled, even a subsequent attempt is blocked with 429 until reset.
+    const blockedRes = await fetch(`${baseUrl}/api/events/${eventId}/verify-pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: '654321' })
+    });
+    assert.equal(blockedRes.status, 429);
+
+    clearFailedAttempts('127.0.0.1', eventId);
+    clearFailedAttempts('::ffff:127.0.0.1', eventId);
+    clearFailedAttempts('::1', eventId);
     const correctRes = await fetch(`${baseUrl}/api/events/${eventId}/verify-pin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

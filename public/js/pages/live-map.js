@@ -7,9 +7,9 @@ async function renderLiveMap(params) {
   const hasAdminSession = typeof window !== 'undefined' && Boolean(
     sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser')
   );
-  // Panitia / Admin mode on live map is strictly active only when ?admin=1 is explicitly provided
+  // Panitia / Admin mode on live map is strictly active only when ?admin=1 and an admin session exist
   const isAdmin = typeof window !== 'undefined' && Boolean(
-    hasAdminParam && (hasAdminSession || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    hasAdminParam && hasAdminSession
   );
   const app = document.getElementById('app');
 
@@ -1642,10 +1642,10 @@ async function renderLiveMap(params) {
         const popupHtml = `
           <div style="font-family:'Plus Jakarta Sans',system-ui,sans-serif;min-width:180px">
             <div style="font-size:11px;font-weight:800;color:var(--color-sage);text-transform:uppercase;letter-spacing:0.5px">CHECKPOINT ${idx + 1}</div>
-            <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin:4px 0">${cp.name}</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin:4px 0">${escapeHtml(cp.name)}</div>
             <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);border-top:1px solid var(--border);padding-top:6px;margin-top:6px">
               <span>Jarak: <strong style="color:var(--color-sage)">${cp.km_distance} km</strong></span>
-              <span>COT: <strong style="color:var(--color-red)">${cp.close_time || '—'}</strong></span>
+              <span>COT: <strong style="color:var(--color-red)">${escapeHtml(cp.close_time || '—')}</strong></span>
             </div>
           </div>
         `;
@@ -3028,7 +3028,7 @@ async function renderLiveMap(params) {
         if (emergencyBar) emergencyBar.style.display = 'flex';
         if (emergencyText) {
           emergencyText.innerHTML = `
-            <strong>#${topAlert.rider_bib || '?'} ${topAlert.rider_name || 'Rider'}</strong>
+            <strong>#${escapeHtml(topAlert.rider_bib || '?')} ${escapeHtml(topAlert.rider_name || 'Rider')}</strong>
             — ${escapeHtml(sosTypeLabel(topAlert.type))}: ${escapeHtml(sosDisplayMessage(topAlert))}
             <span style="opacity:0.75;margin-left:4px">(${formatTimeAgo(topAlert.created_at)})</span>
           `;

@@ -50,11 +50,6 @@ function renderInstallPage() {
             <span class="nav-label-full">DAFTAR</span>
             <span class="nav-label-short">DAFTAR</span>
           </a>
-
-          <a href="/admin" data-link class="btn-admin-nav" title="Race Control / Panel Khusus Panitia Event" aria-label="Race Control">
-            <span class="nav-label-full">RACE CONTROL</span>
-            <span class="nav-label-short">RACE CONTROL</span>
-          </a>
         </div>
 
         <button type="button" class="mobile-menu-btn" aria-label="Buka menu navigasi" aria-expanded="false">
