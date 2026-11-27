@@ -205,7 +205,7 @@
           const isPendingVerify = sp.verification_status === 'PENDING_VERIFY';
           const isOver = sp.status === 'OVER_COT';
           const pillCls = isPendingVerify || isOver ? 'over' : 'ok';
-          const pillText = isPendingVerify ? 'VERIFIKASI' : (isOver ? 'OVER COT' : 'LOLOS COT');
+          const pillText = isPendingVerify ? 'VERIFIKASI' : (isOver ? 'OVER COT' : 'BERHASIL');
           return `
             <div class="cp-check-item ${isPendingVerify || isOver ? 'is-over' : 'is-done'}">
               <div class="cp-check-main">

@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/rider/setup', async () => {
     await loadPageDeps(
-      ['/js/lib/gps-keeper.js?v=2', '/js/libs/jsqr.min.js', '/js/lib/qr-scanner.js?v=4', '/js/pages/rider-setup.js?v=100'],
+      ['/js/lib/gps-keeper.js?v=2', '/js/libs/jsqr.min.js', '/js/lib/qr-scanner.js?v=5', '/js/pages/rider-setup.js?v=100'],
       ['/css/rider.css?v=96']
     );
     renderRiderSetup();
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/rider/cockpit', async () => {
     await loadPageDeps(
-      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/lib/gps-keeper.js?v=2', '/js/libs/jsqr.min.js', '/js/lib/qr-scanner.js?v=4', '/js/pages/rider-cockpit.js?v=103'],
+      ['/js/lib/gpx-utils.js', '/js/lib/utils.js', '/js/lib/gps-keeper.js?v=2', '/js/libs/jsqr.min.js', '/js/lib/qr-scanner.js?v=5', '/js/pages/rider-cockpit.js?v=103'],
       ['/css/cockpit.css?v=103', '/css/rider.css?v=96']
     );
     renderRiderCockpit();
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/cp/:token', async (params) => {
     await loadPageDeps(
-      ['/js/lib/qr-scanner.js?v=4', '/js/pages/cp-checkin.js?v=4'],
+      ['/js/lib/qr-scanner.js?v=5', '/js/pages/cp-checkin.js?v=4'],
       ['/css/rider.css?v=96']
     );
     renderCpCheckinPage(params);
