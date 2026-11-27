@@ -51,7 +51,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: process.env.NODE_ENV === 'production' ? '1h' : 0,
   etag: true,
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) {
+    if (filePath.endsWith('.html') || path.basename(filePath) === 'sw.js') {
       res.setHeader('Cache-Control', 'no-cache');
     } else if (/\.(css|js|svg|png|jpg|jpeg|gif|webp|woff2|woff|ttf|ico)$/i.test(filePath)) {
       res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
@@ -155,6 +155,7 @@ app.use((req, res, next) => {
         const homeData = getHomeOgData();
         const meta = getHomeOgMetadata(homeData, host, protocol);
         const html = injectOgMeta(getCachedIndexHtml(), meta);
+        res.set('Cache-Control', 'no-cache');
         return res.status(200).type('html').send(html);
       } catch (err) {
         // Fallback to static index.html on error
@@ -171,6 +172,7 @@ app.use((req, res, next) => {
         if (ogData && ogData.event) {
           const meta = getOgMetadata(ogData, host, protocol);
           const html = injectOgMeta(getCachedIndexHtml(), meta);
+          res.set('Cache-Control', 'no-cache');
           return res.status(200).type('html').send(html);
         }
       } catch (err) {
@@ -178,6 +180,7 @@ app.use((req, res, next) => {
       }
     }
 
+    res.set('Cache-Control', 'no-cache');
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   } else {
     next();

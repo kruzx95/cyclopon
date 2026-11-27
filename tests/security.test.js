@@ -122,6 +122,26 @@ test('Production Security Hardening & Headers', async (t) => {
     assert.equal(authRes.status, 201, 'Should allow authorized access with valid admin key');
   });
 
+  await t.test('extracts Cloudflare client IP safely and serves sw.js/HTML with no-cache', async () => {
+    const { getClientIp } = require('../lib/event-access');
+    assert.equal(
+      getClientIp({ headers: { 'cf-connecting-ip': '180.244.10.25', 'cf-ray': 'abc123-SIN' }, ip: '172.71.0.1' }),
+      '180.244.10.25'
+    );
+    assert.equal(
+      getClientIp({ headers: { 'cf-connecting-ip': 'not-an-ip', 'cf-ray': 'abc123-SIN' }, ip: '172.71.0.1' }),
+      '172.71.0.1'
+    );
+
+    const swRes = await fetch(`${baseUrl}/sw.js`);
+    assert.equal(swRes.status, 200);
+    assert.equal(swRes.headers.get('cache-control'), 'no-cache');
+
+    const homeRes = await fetch(`${baseUrl}/`);
+    assert.equal(homeRes.status, 200);
+    assert.equal(homeRes.headers.get('cache-control'), 'no-cache');
+  });
+
   await t.test('teardown', async () => {
     if (testEventId) {
       db.db.prepare('DELETE FROM events WHERE id = ?').run(testEventId);
