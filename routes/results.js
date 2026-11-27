@@ -6,6 +6,19 @@ const virtualCot = require('../lib/virtual-cot');
 
 const requireEventAccessForResults = requireEventAccess();
 
+const getHistoryStatsByEventStmt = db.db.prepare(`
+  SELECT
+    rider_id,
+    COUNT(*) AS point_count,
+    MAX(COALESCE(distance_km, 0)) AS max_distance_km,
+    AVG(CASE WHEN speed > 2 THEN speed END) AS avg_moving_speed,
+    MIN(recorded_at) AS first_recorded_at,
+    MAX(recorded_at) AS last_recorded_at
+  FROM position_history
+  WHERE event_id = ?
+  GROUP BY rider_id
+`);
+
 /**
  * Helper to compute seconds difference between ISO timestamp or HH:MM:SS strings
  */
@@ -55,17 +68,10 @@ function calculateEventResults(eventId) {
     db.getActiveVirtualDnfByEvent.all(eventId).map(row => [row.rider_id, row])
   );
 
-  // Eliminate N+1 query: Fetch all event history once and group by rider in-memory
-  const allHistory = db.getHistoryByEvent.all(eventId);
-  const historyByRider = new Map();
-  for (const h of allHistory) {
-    let arr = historyByRider.get(h.rider_id);
-    if (!arr) {
-      arr = [];
-      historyByRider.set(h.rider_id, arr);
-    }
-    arr.push(h);
-  }
+  // Aggregate per-rider telemetry in SQLite to avoid loading full history rows into JS
+  const historyStatsByRider = new Map(
+    getHistoryStatsByEventStmt.all(eventId).map(row => [row.rider_id, row])
+  );
 
   const totalCps = checkpoints.length;
 
@@ -74,15 +80,15 @@ function calculateEventResults(eventId) {
     const verifiedSplits = riderSplits.filter(s => s.verification_status !== 'PENDING_VERIFY');
     const pendingVerifyCount = riderSplits.length - verifiedSplits.length;
     const riderAlerts = alerts.filter(a => a.rider_id === rider.id);
-    const history = historyByRider.get(rider.id) || [];
+    const historyStats = historyStatsByRider.get(rider.id);
 
     const clearedCpCount = verifiedSplits.length;
     const hasOverCot = verifiedSplits.some(s => s.status === 'OVER_COT');
 
     // Distance computation
     let distanceKm = 0;
-    if (history.length > 0) {
-      distanceKm = Math.max(...history.map(h => h.distance_km || 0));
+    if (historyStats && historyStats.point_count > 0) {
+      distanceKm = Number(historyStats.max_distance_km || 0);
     } else if (verifiedSplits.length > 0) {
       distanceKm = Math.max(...verifiedSplits.map(s => s.checkpoint_km || 0));
     }
@@ -90,18 +96,15 @@ function calculateEventResults(eventId) {
 
     // Speed computation
     let avgSpeed = 0;
-    if (history.length > 0) {
-      const moving = history.filter(h => h.speed > 2);
-      if (moving.length > 0) {
-        avgSpeed = Math.round((moving.reduce((sum, h) => sum + h.speed, 0) / moving.length) * 10) / 10;
-      }
+    if (historyStats && historyStats.avg_moving_speed != null) {
+      avgSpeed = Math.round(Number(historyStats.avg_moving_speed) * 10) / 10;
     }
 
     // Time computation
     let elapsedSeconds = null;
-    if (history.length >= 2) {
-      const tStart = new Date(history[0].recorded_at).getTime();
-      const tEnd = new Date(history[history.length - 1].recorded_at).getTime();
+    if (historyStats && historyStats.point_count >= 2) {
+      const tStart = new Date(historyStats.first_recorded_at).getTime();
+      const tEnd = new Date(historyStats.last_recorded_at).getTime();
       if (!isNaN(tStart) && !isNaN(tEnd) && tEnd >= tStart) {
         elapsedSeconds = Math.floor((tEnd - tStart) / 1000);
       }

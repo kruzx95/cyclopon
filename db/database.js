@@ -9,6 +9,7 @@ const db = new Database(path.join(dbDir, 'cyclopon.db'));
 
 // Enable WAL mode for better concurrent reads
 db.pragma('journal_mode = WAL');
+db.pragma('busy_timeout = 5000');
 db.pragma('foreign_keys = ON');
 db.pragma('synchronous = NORMAL');
 db.pragma('cache_size = -64000');

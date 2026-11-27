@@ -1586,7 +1586,7 @@ async function renderLiveMap(params) {
   }
 
   refreshVirtualCot();
-  cotTimer = setInterval(refreshVirtualCot, 8000);
+  cotTimer = setInterval(refreshVirtualCot, 20000);
   window.addEventListener('beforeunload', stopCotTimer);
 
   // ── Checkpoint Markers & Cut-Off Time (COT) Engine ──
@@ -3135,7 +3135,10 @@ async function renderLiveMap(params) {
 
   let alertCheckInterval = null;
   checkActiveAlerts();
-  alertCheckInterval = setInterval(checkActiveAlerts, 5000);
+  alertCheckInterval = setInterval(() => {
+    if (liveWs && liveWs.readyState === WebSocket.OPEN) return;
+    checkActiveAlerts();
+  }, 10000);
 
   // ── Time Machine Replay Engine State & Lifecycle ──
   let isReplayActive = false;
@@ -3822,7 +3825,7 @@ async function renderLiveMap(params) {
     // Restore live Virtual COT timer & marker
     refreshVirtualCot();
     if (!cotTimer) {
-      cotTimer = setInterval(refreshVirtualCot, 8000);
+      cotTimer = setInterval(refreshVirtualCot, 20000);
     }
     const btnMobileSidebar = document.getElementById('btnMobileOpenSidebar');
     if (isMobile && btnMobileSidebar) btnMobileSidebar.style.display = 'inline-flex';
@@ -4662,8 +4665,9 @@ async function renderLiveMap(params) {
       if (dot) { dot.className = 'live-dot pulse'; }
       if (statusText) { statusText.textContent = '● LIVE STREAM'; }
       console.log('[LiveMap] WebSocket connected');
-      // Backfill any positions missed during disconnect
+      // Backfill any positions or alerts missed during disconnect
       syncLatestPositionsFromHistory().catch(() => { });
+      checkActiveAlerts().catch(() => { });
     };
 
     ws.onmessage = e => {
@@ -4671,8 +4675,8 @@ async function renderLiveMap(params) {
       try {
         const data = JSON.parse(e.data);
 
-        // Immediate reaction to emergency SOS alert broadcast
-        if (data.type === 'alert' || data.alerts) {
+        // Immediate reaction to emergency SOS alert create/resolve broadcast
+        if (data.type === 'alert' || data.type === 'alert_resolved' || data.alerts) {
           checkActiveAlerts().catch(() => { });
         }
 
@@ -4863,6 +4867,7 @@ async function renderLiveMap(params) {
       clearInterval(alertCheckInterval);
       alertCheckInterval = null;
     }
+    stopCotTimer();
     if (liveWsReconnectTimer) {
       clearTimeout(liveWsReconnectTimer);
       liveWsReconnectTimer = null;

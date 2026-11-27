@@ -25,6 +25,33 @@ function calcHaversineKm(lat1, lon1, lat2, lon2) {
 // In-memory cache for last coordinates and odometer distance to prevent DB hammering
 const lastCoords = new Map(); // rider_id -> { lat, lon, totalKm, lastTime }
 
+// Pre-compiled statements to avoid SQL re-preparation on every GPS ping
+const findRiderByEventStmt = db.db.prepare(`
+  SELECT * FROM riders 
+  WHERE event_id = ? AND (
+    bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ?
+    OR traccar_device_id = ?
+    OR id = ?
+  )
+  ORDER BY id DESC
+  LIMIT 1
+`);
+
+const findRiderGlobalStmt = db.db.prepare(`
+  SELECT r.* FROM riders r
+  JOIN events e ON r.event_id = e.id
+  WHERE r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ?
+     OR r.traccar_device_id = ?
+     OR r.id = ?
+  ORDER BY CASE WHEN e.active = 1 THEN 0 ELSE 1 END, e.created_at DESC, r.id DESC
+  LIMIT 1
+`);
+
+const getAllRidersStmt = db.db.prepare('SELECT * FROM riders');
+const getLastDistanceByRiderStmt = db.db.prepare(
+  'SELECT distance_km FROM position_history WHERE rider_id = ? ORDER BY id DESC LIMIT 1'
+);
+
 /**
  * Universal OsmAnd / Traccar Client Protocol Handler
  * Accepts GET and POST from Traccar Client app (Android / iOS)
@@ -77,16 +104,7 @@ async function handleOsmandPosition(req, res) {
     try {
       if (targetEventId && Number.isInteger(targetEventId)) {
         // Scoped lookup strictly to specified event
-        rider = db.db.prepare(`
-          SELECT * FROM riders 
-          WHERE event_id = ? AND (
-            bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ? OR bib = ?
-            OR traccar_device_id = ?
-            OR id = ?
-          )
-          ORDER BY id DESC
-          LIMIT 1
-        `).get(
+        rider = findRiderByEventStmt.get(
           targetEventId,
           cleanDev,
           devStr,
@@ -99,15 +117,7 @@ async function handleOsmandPosition(req, res) {
         );
       } else {
         // Fallback: check active events first, then newest
-        rider = db.db.prepare(`
-          SELECT r.* FROM riders r
-          JOIN events e ON r.event_id = e.id
-          WHERE r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ? OR r.bib = ?
-             OR r.traccar_device_id = ?
-             OR r.id = ?
-          ORDER BY CASE WHEN e.active = 1 THEN 0 ELSE 1 END, e.created_at DESC, r.id DESC
-          LIMIT 1
-        `).get(
+        rider = findRiderGlobalStmt.get(
           cleanDev,
           devStr,
           `BIB-${cleanDev}`,
@@ -125,7 +135,7 @@ async function handleOsmandPosition(req, res) {
     // If still not found, check if there's only 1 rider in the system (testing convenience)
     if (!rider) {
       try {
-        const allRiders = db.db.prepare('SELECT * FROM riders').all();
+        const allRiders = getAllRidersStmt.all();
         if (allRiders && allRiders.length === 1) {
           rider = allRiders[0];
         }
@@ -165,9 +175,7 @@ async function handleOsmandPosition(req, res) {
       }
     } else {
       try {
-        const lastRow = db.db.prepare(
-          'SELECT distance_km FROM position_history WHERE rider_id = ? ORDER BY id DESC LIMIT 1'
-        ).get(rider.id);
+        const lastRow = getLastDistanceByRiderStmt.get(rider.id);
         totalDistKm = lastRow && lastRow.distance_km ? Number(lastRow.distance_km) : 0;
       } catch (e) {
         totalDistKm = 0;

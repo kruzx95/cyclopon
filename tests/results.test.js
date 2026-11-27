@@ -86,15 +86,24 @@ test('Official Results & CSV Export API', async (t) => {
       status: 'IN_TIME'
     });
 
-    // 5. Add position history for telemetry/speed/distance calculation
+    // 5. Add position history (including a stationary stop <= 2 km/h that must not drag avg_speed)
     db.recordPositionHistory.run({
       event_id: eventId,
       rider_id: riderId1,
       latitude: -6.70,
       longitude: 107.30,
       speed: 25.5,
-      distance_km: 100.0,
+      distance_km: 10.0,
       recorded_at: '2026-10-20T06:00:00Z'
+    });
+    db.recordPositionHistory.run({
+      event_id: eventId,
+      rider_id: riderId1,
+      latitude: -6.80,
+      longitude: 107.45,
+      speed: 0.5,
+      distance_km: 50.0,
+      recorded_at: '2026-10-20T08:15:00Z'
     });
     db.recordPositionHistory.run({
       event_id: eventId,
@@ -137,6 +146,9 @@ test('Official Results & CSV Export API', async (t) => {
     assert.equal(r1.bib, '101');
     assert.equal(r1.checkpoints_cleared, 2);
     assert.equal(r1.total_checkpoints, 2);
+    assert.equal(r1.distance_km, 100);
+    assert.equal(r1.avg_speed, 26.8);
+    assert.equal(r1.elapsed_seconds, 23400);
     assert.ok(r1.elapsed_time);
     assert.ok(Array.isArray(r1.splits));
     assert.equal(r1.splits.length, 2);

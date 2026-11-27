@@ -181,6 +181,18 @@ router.put('/alerts/:id/resolve', requireAdminAuth, (req, res) => {
   db.resolveAlert.run(id);
   const updated = db.getAlertById.get(id);
   res.json({ success: true, alert: updated });
+
+  if (typeof wsBroadcastFn === 'function' && updated && updated.event_id != null) {
+    try {
+      wsBroadcastFn(JSON.stringify({
+        type: 'alert_resolved',
+        alert_id: id,
+        alert: updated
+      }), updated.event_id);
+    } catch (wsErr) {
+      console.warn('[Alerts] Gagal broadcast WebSocket resolve SOS:', wsErr.message);
+    }
+  }
 });
 
 module.exports = router;

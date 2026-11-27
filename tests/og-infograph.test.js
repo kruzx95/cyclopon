@@ -2,7 +2,9 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
 const db = require('../db/database');
+const app = require('../server');
 const FastCanvas = require('../lib/fast-canvas');
 const {
   getOgData,
@@ -143,6 +145,34 @@ describe('Social Media Infograph & Open Graph Engine', () => {
     assert.ok(homeMeta.title.includes('CycloPon'));
     assert.equal(homeMeta.imageUrl, 'https://cyclopon.my.id/api/og/home.png');
     assert.equal(homeMeta.pageUrl, 'https://cyclopon.my.id/');
+  });
+
+  test('OG PNG HTTP endpoint caches rendered buffer across repeated requests', async () => {
+    let server;
+    let baseUrl;
+    await new Promise((resolve) => {
+      server = http.createServer(app);
+      server.listen(0, () => {
+        baseUrl = `http://127.0.0.1:${server.address().port}`;
+        resolve();
+      });
+    });
+
+    try {
+      const res1 = await fetch(`${baseUrl}/api/og/events/${testEventId}.png?bib=${testRiderBib}`);
+      assert.equal(res1.status, 200);
+      assert.equal(res1.headers.get('content-type'), 'image/png');
+      const buf1 = Buffer.from(await res1.arrayBuffer());
+
+      const res2 = await fetch(`${baseUrl}/api/og/events/${testEventId}.png?bib=${testRiderBib}`);
+      assert.equal(res2.status, 200);
+      const buf2 = Buffer.from(await res2.arrayBuffer());
+
+      assert.deepEqual(buf1, buf2);
+      assert.deepEqual(buf1.subarray(0, 8), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 
   test('teardown test event', () => {

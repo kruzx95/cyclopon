@@ -9,6 +9,29 @@ const {
   generateHomeOgPng
 } = require('../lib/og-infograph');
 
+const HOME_OG_CACHE_TTL_MS = 30 * 1000;
+const EVENT_OG_CACHE_TTL_MS = 15 * 1000;
+const OG_CACHE_MAX_ENTRIES = 100;
+const ogOutputCache = new Map();
+
+function getCachedOgOutput(key, ttlMs) {
+  const entry = ogOutputCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.at >= ttlMs) {
+    ogOutputCache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function setCachedOgOutput(key, value) {
+  if (ogOutputCache.size >= OG_CACHE_MAX_ENTRIES) {
+    const oldestKey = ogOutputCache.keys().next().value;
+    if (oldestKey !== undefined) ogOutputCache.delete(oldestKey);
+  }
+  ogOutputCache.set(key, { at: Date.now(), value });
+}
+
 function escapeHtml(value) {
   if (value == null) return '';
   return String(value)
@@ -223,15 +246,25 @@ function handleHomeOgImageRequest(req, res, forceFormat = null) {
     else format = 'png';
   }
 
-  const data = getHomeOgData();
+  const cacheKey = `home:${format}`;
+  const cached = getCachedOgOutput(cacheKey, HOME_OG_CACHE_TTL_MS);
   res.set('Cache-Control', 'public, max-age=30, s-maxage=60');
+
+  if (cached) {
+    res.set('Content-Type', format === 'svg' ? 'image/svg+xml; charset=utf-8' : 'image/png');
+    return res.send(cached);
+  }
+
+  const data = getHomeOgData();
 
   if (format === 'svg') {
     const svg = generateHomeOgSvg(data);
+    setCachedOgOutput(cacheKey, svg);
     res.set('Content-Type', 'image/svg+xml; charset=utf-8');
     return res.send(svg);
   } else {
     const png = generateHomeOgPng(data);
+    setCachedOgOutput(cacheKey, png);
     res.set('Content-Type', 'image/png');
     return res.send(png);
   }
@@ -249,11 +282,6 @@ function handleOgImageRequest(req, res, forceFormat = null) {
     return res.status(400).send('Invalid event ID');
   }
 
-  const data = getOgData(eventId, bib);
-  if (!data || !data.event) {
-    return res.status(404).send('Event not found');
-  }
-
   // Determine format: forceFormat param -> URL path extension -> query param -> default to PNG
   let format = forceFormat;
   if (!format) {
@@ -264,15 +292,31 @@ function handleOgImageRequest(req, res, forceFormat = null) {
     }
   }
 
+  const normalizedBib = bib ? String(bib).trim().toLowerCase() : '';
+  const cacheKey = `event:${Number(eventId)}:${normalizedBib}:${format}`;
+  const cached = getCachedOgOutput(cacheKey, EVENT_OG_CACHE_TTL_MS);
+  if (cached) {
+    res.set('Cache-Control', 'public, max-age=15, s-maxage=30');
+    res.set('Content-Type', format === 'svg' ? 'image/svg+xml; charset=utf-8' : 'image/png');
+    return res.send(cached);
+  }
+
+  const data = getOgData(eventId, bib);
+  if (!data || !data.event) {
+    return res.status(404).send('Event not found');
+  }
+
   // Cache header: cache for 15s in CDN / browser, allow fresh telemetry
   res.set('Cache-Control', 'public, max-age=15, s-maxage=30');
 
   if (format === 'svg') {
     const svg = generateOgSvg(data);
+    setCachedOgOutput(cacheKey, svg);
     res.set('Content-Type', 'image/svg+xml; charset=utf-8');
     return res.send(svg);
   } else {
     const png = generateOgPng(data);
+    setCachedOgOutput(cacheKey, png);
     res.set('Content-Type', 'image/png');
     return res.send(png);
   }
