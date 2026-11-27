@@ -275,7 +275,7 @@ function renderAlaUltraRegisterPage() {
       <section class="aau-dossier-banner" aria-labelledby="aauFormTitle">
         <div class="aau-banner-artwork">
           <img
-            src="/uploads/ala%20ala%20ultra/ala-ala%202027%20color%20transparent.png"
+            src="/img/ala-ala-ultra/ala-ala-2027-color-transparent.png"
             alt="ALA-ALA ULTRA 2027 - Tasikmalaya Ultra Cycling Wanna Be 130 KM 2.200 m Elevation Gain, SUDDENLY.CC"
             width="2138"
             height="1074"

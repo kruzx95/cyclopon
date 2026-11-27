@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyclopon-v138';
+const CACHE_NAME = 'cyclopon-v139';
 
 // Core shell assets to cache on install
 const SHELL_ASSETS = [
@@ -49,6 +49,7 @@ const SHELL_ASSETS = [
   '/js/pages/admin-sos.js',
   '/js/pages/admin-event.js',
   '/js/pages/admin-ala-ultra.js',
+  '/img/ala-ala-ultra/ala-ala-2027-color-transparent.png',
   '/img/traccar-guide/traccar-settings-full.png',
   '/img/traccar-guide/traccar-continuous-tracking.png',
   '/img/traccar-guide/traccar-location-permission.png',
