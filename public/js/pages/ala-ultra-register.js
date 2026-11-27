@@ -1002,18 +1002,33 @@ function renderAlaUltraRegisterPage() {
 
     // Wire events for active step
     const formEl = document.getElementById('aauRegForm');
+    let draftSaveTimer = null;
+    const scheduleDraftSave = () => {
+      if (draftSaveTimer) clearTimeout(draftSaveTimer);
+      draftSaveTimer = setTimeout(() => {
+        draftSaveTimer = null;
+        syncInputsFromDom();
+        saveDraft();
+      }, 250);
+    };
+    const flushDraftSave = () => {
+      if (draftSaveTimer) {
+        clearTimeout(draftSaveTimer);
+        draftSaveTimer = null;
+      }
+      syncInputsFromDom();
+      saveDraft();
+    };
 
-    formEl?.addEventListener('input', () => {
-      syncInputsFromDom();
-      saveDraft();
-    });
-    formEl?.addEventListener('change', () => {
-      syncInputsFromDom();
-      saveDraft();
-    });
+    formEl?.addEventListener('input', scheduleDraftSave);
+    formEl?.addEventListener('change', flushDraftSave);
 
     document.getElementById('btnAauResetDraft')?.addEventListener('click', () => {
       if (!confirm('Kosongkan seluruh isian formulir dan mulai ulang dari Section 1?')) return;
+      if (draftSaveTimer) {
+        clearTimeout(draftSaveTimer);
+        draftSaveTimer = null;
+      }
       clearDraft();
       state.step = 1;
       state.maxReached = 1;
@@ -1069,7 +1084,7 @@ function renderAlaUltraRegisterPage() {
       btn.addEventListener('click', () => {
         const target = Number(btn.dataset.jumpStep);
         if (!target || target > state.maxReached) return;
-        syncInputsFromDom();
+        flushDraftSave();
         state.errorMsg = '';
         state.fieldErrors = {};
         state.step = target;
@@ -1080,7 +1095,7 @@ function renderAlaUltraRegisterPage() {
     });
 
     document.getElementById('btnAauPrev')?.addEventListener('click', () => {
-      syncInputsFromDom();
+      flushDraftSave();
       state.errorMsg = '';
       state.fieldErrors = {};
       state.step = Math.max(1, state.step - 1);
@@ -1090,6 +1105,10 @@ function renderAlaUltraRegisterPage() {
     });
 
     document.getElementById('btnAauNext')?.addEventListener('click', () => {
+      if (draftSaveTimer) {
+        clearTimeout(draftSaveTimer);
+        draftSaveTimer = null;
+      }
       const err = validateCurrentSection();
       if (state.blockedReason) {
         render();

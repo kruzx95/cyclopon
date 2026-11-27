@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── ALA-ALA ULTRA 2027 Dedicated Registration Form ──
   Router.register('/ala-ala-ultra', async () => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/pages/ala-ultra-register.js?v=9'],
+      ['/js/lib/utils.js', '/js/pages/ala-ultra-register.js?v=10'],
       ['/css/ala-ultra.css?v=6']
     );
     renderAlaUltraRegisterPage();
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Admin panel ──
   Router.register('/admin', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=92'],
+      ['/js/pages/admin-dashboard.js?v=93'],
       ['/css/admin.css?v=94']
     );
     renderAdminLogin();
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/dashboard', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=92'],
+      ['/js/pages/admin-dashboard.js?v=93'],
       ['/css/admin.css?v=94']
     );
     renderAdminDashboard();
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/sos', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-sos.js?v=84'],
+      ['/js/pages/admin-dashboard.js?v=93', '/js/pages/admin-sos.js?v=84'],
       ['/css/admin.css?v=94']
     );
     renderAdminSos();
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/event-reports', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-event-reports.js?v=85'],
+      ['/js/pages/admin-dashboard.js?v=93', '/js/pages/admin-event-reports.js?v=85'],
       ['/css/admin.css?v=94']
     );
     renderAdminEventReports(params);
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/logs', async (params) => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-logs.js?v=86'],
+      ['/js/pages/admin-dashboard.js?v=93', '/js/pages/admin-logs.js?v=86'],
       ['/css/admin.css?v=94']
     );
     renderAdminLogs(params);
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/events/:id', async (params) => {
     await loadPageDeps(
-      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-event.js?v=93'],
+      ['/js/libs/qrcode.min.js', '/js/pages/admin-dashboard.js?v=93', '/js/pages/admin-event.js?v=93'],
       ['/css/admin.css?v=94']
     );
     renderAdminEvent(params);
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/ala-ultra', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-ala-ultra.js?v=9'],
+      ['/js/pages/admin-dashboard.js?v=93', '/js/pages/admin-ala-ultra.js?v=9'],
       ['/css/admin.css?v=94']
     );
     renderAdminAlaUltra();

@@ -227,24 +227,31 @@ router.get('/event/:id', (req, res) => {
 router.get('/event-logs', (req, res) => {
   try {
     const events = db.getAllEvents.all() || [];
+    const pingsByEvent = new Map();
+    const alertsByEvent = new Map();
+    const ridersByEvent = new Map();
+    try {
+      for (const r of db.db.prepare('SELECT event_id, COUNT(*) as c FROM position_history GROUP BY event_id').all()) {
+        pingsByEvent.set(Number(r.event_id), Number(r.c) || 0);
+      }
+      for (const r of db.db.prepare('SELECT event_id, COUNT(*) as c FROM alerts GROUP BY event_id').all()) {
+        alertsByEvent.set(Number(r.event_id), Number(r.c) || 0);
+      }
+      for (const r of db.db.prepare('SELECT event_id, COUNT(*) as c FROM riders GROUP BY event_id').all()) {
+        ridersByEvent.set(Number(r.event_id), Number(r.c) || 0);
+      }
+    } catch (e) {}
+
     const list = events.map(ev => {
-      let pings = 0;
-      let alertsCount = 0;
-      try {
-        const pRow = db.db.prepare('SELECT COUNT(*) as c FROM position_history WHERE event_id = ?').get(ev.id);
-        if (pRow) pings = Number(pRow.c) || 0;
-        const aRow = db.db.prepare('SELECT COUNT(*) as c FROM alerts WHERE event_id = ?').get(ev.id);
-        if (aRow) alertsCount = Number(aRow.c) || 0;
-      } catch (e) {}
-      const ridersCount = (db.getRidersByEvent.all(ev.id) || []).length;
+      const eid = Number(ev.id);
       return {
         id: ev.id,
         name: ev.name,
         date: ev.date,
         active: ev.active,
-        ridersCount,
-        pings,
-        alertsCount
+        ridersCount: ridersByEvent.get(eid) || 0,
+        pings: pingsByEvent.get(eid) || 0,
+        alertsCount: alertsByEvent.get(eid) || 0
       };
     });
     res.json({ success: true, events: list });

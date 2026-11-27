@@ -1129,10 +1129,25 @@ async function renderAdminDashboard() {
   AdminSosMonitor.init();
 
   // ── Real-Time Traffic Metrics Polling ──
+  function stopTrafficInterval() {
+    if (trafficInterval) {
+      clearInterval(trafficInterval);
+      trafficInterval = null;
+    }
+    if (window._adminTrafficInterval) {
+      clearInterval(window._adminTrafficInterval);
+      window._adminTrafficInterval = null;
+    }
+  }
+
   async function fetchTrafficMetrics() {
     if (window._isLoggingOut) return;
     if (!window.location.pathname.startsWith('/admin') || window.location.pathname === '/admin' || !sessionStorage.getItem('adminUser')) {
       stopAdminBackgroundTasks();
+      return;
+    }
+    if (!window.location.pathname.startsWith('/admin/dashboard')) {
+      stopTrafficInterval();
       return;
     }
     try {
@@ -1342,9 +1357,13 @@ async function renderAdminDashboard() {
     }
   }
 
+  stopTrafficInterval();
   fetchTrafficMetrics();
   trafficInterval = setInterval(fetchTrafficMetrics, 5000);
   window._adminTrafficInterval = trafficInterval;
+  if (typeof Router !== 'undefined' && typeof Router.onUnmount === 'function') {
+    Router.onUnmount(stopTrafficInterval);
+  }
 
   // ── Pre-Deployment Diagnostic Report Controller ──
   let cachedReportData = null;

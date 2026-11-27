@@ -225,19 +225,18 @@ function buildCotPreview(eventId, cotFields) {
 
 // GET /api/events — list all events
 router.get('/', (_req, res) => {
-  const countStmt = db.db.prepare('SELECT COUNT(*) as c FROM riders WHERE event_id = ?');
-  const events = db.getAllEvents.all().map(ev => {
-    let riderCount = 0;
-    try {
-      const row = countStmt.get(ev.id);
-      if (row) riderCount = Number(row.c) || 0;
-    } catch {}
-    return {
-      ...sanitizeEvent(ev),
-      distance_km: getEventDistanceKm(ev),
-      rider_count: riderCount
-    };
-  });
+  const riderCounts = new Map();
+  try {
+    const countRows = db.db.prepare('SELECT event_id, COUNT(*) as c FROM riders GROUP BY event_id').all();
+    for (const row of countRows) {
+      riderCounts.set(Number(row.event_id), Number(row.c) || 0);
+    }
+  } catch {}
+  const events = db.getAllEvents.all().map(ev => ({
+    ...sanitizeEvent(ev),
+    distance_km: getEventDistanceKm(ev),
+    rider_count: riderCounts.get(Number(ev.id)) || 0
+  }));
   res.json(events);
 });
 

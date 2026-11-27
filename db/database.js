@@ -96,6 +96,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_history_event_time ON position_history(event_id, recorded_at);
   CREATE INDEX IF NOT EXISTS idx_history_rider ON position_history(rider_id, recorded_at);
   CREATE INDEX IF NOT EXISTS idx_history_event_rider_id ON position_history(event_id, rider_id, id);
+  CREATE INDEX IF NOT EXISTS idx_history_recorded_at ON position_history(recorded_at);
 
   -- Virtual COT: permanent record of riders left behind by the moving marker
   CREATE TABLE IF NOT EXISTS virtual_dnf (
