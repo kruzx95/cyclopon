@@ -273,52 +273,66 @@ function renderAlaUltraRegisterPage() {
 
     return `
       <section class="aau-dossier-banner" aria-labelledby="aauFormTitle">
-        <div class="aau-dossier-intro">
-          <div class="aau-org-line">
-            <span class="aau-org-tag">SUDDENLY.CC</span>
-            <span class="aau-status-badge ${isOpen ? 'is-open' : 'is-closed'}">
-              <span class="aau-status-dot" aria-hidden="true"></span>
-              <span>${escapeHtml(statusLabel)}</span>
-            </span>
-          </div>
-
-          <h1 class="aau-hero-title" id="aauFormTitle">ALA-ALA ULTRA 2027 - FORMULIR PENDAFTARAN PESERTA</h1>
-
-          <div class="aau-intro-copy">
-            <p>Selamat datang di ALA-ALA ULTRA 2027!</p>
-            <p>ALA-ALA ULTRA merupakan kegiatan bersepeda jarak jauh yang akan diselenggarakan di ${escapeHtml(eventLocation)}.</p>
-            <p>Bagi teman-teman yang ingin menguji kemampuan, ketahanan fisik, dan pengalaman bersepeda, inilah kesempatan untuk menjadi bagian dari ALA-ALA ULTRA.</p>
-          </div>
+        <div class="aau-banner-artwork">
+          <img
+            src="/uploads/ala%20ala%20ultra/ala-ala%202027%20color%20transparent.png"
+            alt="ALA-ALA ULTRA 2027 - Tasikmalaya Ultra Cycling Wanna Be 130 KM 2.200 m Elevation Gain, SUDDENLY.CC"
+            width="2138"
+            height="1074"
+            fetchpriority="high"
+            decoding="async"
+            class="aau-banner-artwork-img"
+          >
         </div>
 
-        <aside class="aau-dossier-specs" aria-label="Informasi Event">
-          <h2 class="aau-specs-heading">INFORMASI EVENT</h2>
-          <dl class="aau-specs-list">
-            <div class="aau-spec-row">
-              <dt>Hari/Tanggal</dt>
-              <dd>${escapeHtml(eventDateLabel)}</dd>
+        <div class="aau-dossier-body">
+          <div class="aau-dossier-intro">
+            <div class="aau-org-line">
+              <span class="aau-org-tag">SUDDENLY.CC</span>
+              <span class="aau-status-badge ${isOpen ? 'is-open' : 'is-closed'}">
+                <span class="aau-status-dot" aria-hidden="true"></span>
+                <span>${escapeHtml(statusLabel)}</span>
+              </span>
             </div>
-            <div class="aau-spec-row">
-              <dt>Jarak</dt>
-              <dd class="mono">${escapeHtml(eventDistance)}</dd>
+
+            <h1 class="aau-hero-title" id="aauFormTitle">ALA-ALA ULTRA 2027 - FORMULIR PENDAFTARAN PESERTA</h1>
+
+            <div class="aau-intro-copy">
+              <p>Selamat datang di ALA-ALA ULTRA 2027!</p>
+              <p>ALA-ALA ULTRA merupakan kegiatan bersepeda jarak jauh yang akan diselenggarakan di ${escapeHtml(eventLocation)}.</p>
+              <p>Bagi teman-teman yang ingin menguji kemampuan, ketahanan fisik, dan pengalaman bersepeda, inilah kesempatan untuk menjadi bagian dari ALA-ALA ULTRA.</p>
             </div>
-            <div class="aau-spec-row">
-              <dt>Total Elevasi</dt>
-              <dd class="mono">${escapeHtml(eventElevation)}</dd>
-            </div>
-            <div class="aau-spec-row">
-              <dt>Lokasi</dt>
-              <dd>${escapeHtml(eventLocation)}</dd>
-            </div>
-            <div class="aau-spec-row">
-              <dt>Pendaftaran Dibuka</dt>
-              <dd>${escapeHtml(openDateDisplay)}</dd>
-            </div>
-            ${closeDateRow}
-            ${quotaRow}
-            ${minKmRow}
-          </dl>
-        </aside>
+          </div>
+
+          <aside class="aau-dossier-specs" aria-label="Informasi Event">
+            <h2 class="aau-specs-heading">INFORMASI EVENT</h2>
+            <dl class="aau-specs-list">
+              <div class="aau-spec-row">
+                <dt>Hari/Tanggal</dt>
+                <dd>${escapeHtml(eventDateLabel)}</dd>
+              </div>
+              <div class="aau-spec-row">
+                <dt>Jarak</dt>
+                <dd class="mono">${escapeHtml(eventDistance)}</dd>
+              </div>
+              <div class="aau-spec-row">
+                <dt>Total Elevasi</dt>
+                <dd class="mono">${escapeHtml(eventElevation)}</dd>
+              </div>
+              <div class="aau-spec-row">
+                <dt>Lokasi</dt>
+                <dd>${escapeHtml(eventLocation)}</dd>
+              </div>
+              <div class="aau-spec-row">
+                <dt>Pendaftaran Dibuka</dt>
+                <dd>${escapeHtml(openDateDisplay)}</dd>
+              </div>
+              ${closeDateRow}
+              ${quotaRow}
+              ${minKmRow}
+            </dl>
+          </aside>
+        </div>
       </section>
 
       <div class="aau-notice-box">
