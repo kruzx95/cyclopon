@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── ALA-ALA ULTRA 2027 Dedicated Registration Form ──
   Router.register('/ala-ala-ultra', async () => {
     await loadPageDeps(
-      ['/js/lib/utils.js', '/js/pages/ala-ultra-register.js?v=7'],
+      ['/js/lib/utils.js', '/js/pages/ala-ultra-register.js?v=9'],
       ['/css/ala-ultra.css?v=6']
     );
     renderAlaUltraRegisterPage();
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   Router.register('/admin/ala-ultra', async () => {
     await loadPageDeps(
-      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-ala-ultra.js?v=7'],
+      ['/js/pages/admin-dashboard.js?v=92', '/js/pages/admin-ala-ultra.js?v=9'],
       ['/css/admin.css?v=94']
     );
     renderAdminAlaUltra();

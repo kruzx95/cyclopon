@@ -127,13 +127,21 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
         account_number: '1234567890',
         admin_whatsapp: '08111111111',
         wa_group_link: 'https://chat.whatsapp.com/SecretInviteToken123',
-        refund_policy: 'Kesempatan perbaiki link Strava 2x24 jam.'
+        refund_policy: 'Kesempatan perbaiki link Strava 2x24 jam.',
+        event_date_label: 'Minggu, 24 Januari 2027',
+        event_distance: '150 KM',
+        event_elevation: '2.500 Meter',
+        event_location: 'Garut'
       })
     });
     assert.equal(putRes.status, 200);
     const putData = await putRes.json();
     assert.equal(putData.success, true);
     assert.equal(putData.config.bank_name, 'BCA');
+    assert.equal(putData.config.event_date_label, 'Minggu, 24 Januari 2027');
+    assert.equal(putData.config.event_distance, '150 KM');
+    assert.equal(putData.config.event_elevation, '2.500 Meter');
+    assert.equal(putData.config.event_location, 'Garut');
 
     const pubRes = await fetch(`${baseUrl}/api/ala-ultra/info`);
     assert.equal(pubRes.status, 200);
@@ -141,6 +149,10 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
     assert.equal(pubData.bank_name, 'BCA');
     assert.equal(pubData.fee_amount, '250000');
     assert.equal(pubData.min_strava_km, 100);
+    assert.equal(pubData.event_date_label, 'Minggu, 24 Januari 2027');
+    assert.equal(pubData.event_distance, '150 KM');
+    assert.equal(pubData.event_elevation, '2.500 Meter');
+    assert.equal(pubData.event_location, 'Garut');
     assert.equal(pubData.can_register, true);
     assert.equal(pubData.wa_group_link, undefined, 'WA group invite link must stay hidden from GET /info before registration');
   });
@@ -217,7 +229,7 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
     assert.equal(regRes.status, 201);
     const regData = await regRes.json();
     assert.equal(regData.success, true);
-    assert.equal(regData.wa_group_link, 'https://chat.whatsapp.com/SecretInviteToken123');
+    assert.equal(regData.wa_group_link, undefined, 'WA group invite link must stay hidden after registration until admin approves');
     assert.match(regData.registration.reg_code, /^AAU-\d{3,}$/);
     const regId = regData.registration.id;
     createdRegIds.push(regId);
@@ -350,6 +362,8 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
     assert.equal(closedInfo.bank_name, 'BCA');
     assert.equal(closedInfo.fee_amount, '250000');
     assert.equal(closedInfo.account_number, '1234567890');
+    assert.equal(closedInfo.event_location, 'Garut');
+    assert.equal(closedInfo.event_distance, '150 KM');
   });
 
   await t.test('header navigation, route, exact copy, and antislop compliance checks pass', () => {
@@ -368,6 +382,7 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
 
     const regPage = fs.readFileSync(path.join(ROOT, 'public/js/pages/ala-ultra-register.js'), 'utf8');
     assert.equal(/—/.test(regPage), false, 'ala-ultra-register.js must not contain em dashes (R-02)');
+    assert.equal(/Gabung Grup WhatsApp Peserta/.test(regPage), false, 'public confirmation must not expose direct WhatsApp group join button');
     assert.match(regPage, /ALA-ALA ULTRA 2027 - FORMULIR PENDAFTARAN PESERTA/);
     assert.match(regPage, /SECTION 4 - KESELAMATAN DAN PERLENGKAPAN/);
     assert.match(regPage, /3\. Apakah ada kondisi kesehatan/);
@@ -400,7 +415,11 @@ test('ALA-ALA ULTRA 2027 Registration & Race Control Flow', async (t) => {
         admin_whatsapp: origConfig.admin_whatsapp ?? null,
         wa_group_link: origConfig.wa_group_link ?? null,
         refund_policy: origConfig.refund_policy ?? null,
-        insurance_note: origConfig.insurance_note ?? null
+        insurance_note: origConfig.insurance_note ?? null,
+        event_date_label: origConfig.event_date_label ?? 'Minggu, 17 Januari 2027',
+        event_distance: origConfig.event_distance ?? '130 KM',
+        event_elevation: origConfig.event_elevation ?? '2.200 Meter',
+        event_location: origConfig.event_location ?? 'Tasikmalaya'
       });
     }
     await new Promise(resolve => server.close(resolve));

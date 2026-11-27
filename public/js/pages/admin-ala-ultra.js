@@ -329,6 +329,8 @@ async function renderAdminAlaUltra() {
       return;
     }
 
+    const eventLocation = state.config?.event_location || 'Tasikmalaya';
+    const eventDateLabel = state.config?.event_date_label || 'Minggu, 17 Januari 2027';
     const msg = [
       `Halo ${reg.full_name},`,
       `Selamat, pendaftaran Anda untuk ALA-ALA ULTRA 2027 (Nomor Registrasi: ${reg.reg_code}) telah DISETUJUI oleh panitia SUDDENLY.CC.`,
@@ -336,7 +338,7 @@ async function renderAdminAlaUltra() {
       `Silakan bergabung ke grup WhatsApp resmi peserta melalui tautan berikut:`,
       groupLink,
       '',
-      `Sampai bertemu di Tasikmalaya pada Minggu, 17 Januari 2027.`
+      `Sampai bertemu di ${eventLocation} pada ${eventDateLabel}.`
     ].join('\n');
 
     window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
@@ -654,6 +656,10 @@ async function renderAdminAlaUltra() {
       close_date: document.getElementById('cfgCloseDate').value || null,
       max_quota: document.getElementById('cfgMaxQuota').value || null,
       min_strava_km: document.getElementById('cfgMinStrava').value || null,
+      event_date_label: document.getElementById('cfgEventDateLabel').value,
+      event_distance: document.getElementById('cfgEventDistance').value,
+      event_elevation: document.getElementById('cfgEventElevation').value,
+      event_location: document.getElementById('cfgEventLocation').value,
       fee_amount: document.getElementById('cfgFeeAmount').value,
       bank_name: document.getElementById('cfgBankName').value,
       account_holder: document.getElementById('cfgAccountHolder').value,
@@ -734,6 +740,30 @@ async function renderAdminAlaUltra() {
         </div>
 
         <div style="border-top:1px dashed #CBD5E1;margin:18px 0;padding-top:16px">
+          <h3 style="font-size:14px;font-weight:900;color:#0D1117;margin:0 0 12px">Informasi Event (Ditampilkan di Kartu Informasi Form Publik)</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfgEventDateLabel">Hari / Tanggal Event</label>
+              <input class="input" type="text" id="cfgEventDateLabel" maxlength="120" value="${escapeHtml(cfg.event_date_label || 'Minggu, 17 Januari 2027')}" placeholder="Contoh: Minggu, 17 Januari 2027">
+            </div>
+            <div class="form-group">
+              <label for="cfgEventLocation">Lokasi Event</label>
+              <input class="input" type="text" id="cfgEventLocation" maxlength="120" value="${escapeHtml(cfg.event_location || 'Tasikmalaya')}" placeholder="Contoh: Tasikmalaya">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cfgEventDistance">Jarak</label>
+              <input class="input" type="text" id="cfgEventDistance" maxlength="60" value="${escapeHtml(cfg.event_distance || '130 KM')}" placeholder="Contoh: 130 KM">
+            </div>
+            <div class="form-group">
+              <label for="cfgEventElevation">Total Elevasi</label>
+              <input class="input" type="text" id="cfgEventElevation" maxlength="60" value="${escapeHtml(cfg.event_elevation || '2.200 Meter')}" placeholder="Contoh: 2.200 Meter">
+            </div>
+          </div>
+        </div>
+
+        <div style="border-top:1px dashed #CBD5E1;margin:18px 0;padding-top:16px">
           <h3 style="font-size:14px;font-weight:900;color:#0D1117;margin:0 0 12px">Informasi Pembayaran (Ditampilkan di Section 6)</h3>
           <div class="form-row">
             <div class="form-group">
@@ -767,7 +797,7 @@ async function renderAdminAlaUltra() {
             <div class="form-group">
               <label for="cfgWaGroupLink">Tautan Grup WhatsApp Resmi Peserta</label>
               <input class="input" type="url" id="cfgWaGroupLink" value="${escapeHtml(cfg.wa_group_link || '')}" placeholder="https://chat.whatsapp.com/...">
-              <div style="font-size:11px;color:#4B5563;margin-top:4px">Ditampilkan sebagai tombol Gabung Grup setelah peserta selesai mendaftar &amp; dipakai untuk tombol Kirim Undangan WA.</div>
+              <div style="font-size:11px;color:#4B5563;margin-top:4px">Dipakai untuk tombol Kirim Undangan WA kepada peserta yang sudah lolos verifikasi (tidak ditampilkan di halaman publik setelah mendaftar).</div>
             </div>
           </div>
 

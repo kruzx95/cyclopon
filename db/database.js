@@ -165,6 +165,10 @@ db.exec(`
     wa_group_link   TEXT,
     refund_policy   TEXT,
     insurance_note  TEXT,
+    event_date_label TEXT DEFAULT 'Minggu, 17 Januari 2027',
+    event_distance  TEXT DEFAULT '130 KM',
+    event_elevation TEXT DEFAULT '2.200 Meter',
+    event_location  TEXT DEFAULT 'Tasikmalaya',
     updated_at      TEXT DEFAULT (datetime('now'))
   );
   INSERT OR IGNORE INTO ala_ultra_config (id) VALUES (1);
@@ -245,6 +249,12 @@ try { db.exec("ALTER TABLE rider_splits ADD COLUMN check_in_lng REAL;"); } catch
 try { db.exec("ALTER TABLE rider_splits ADD COLUMN distance_meters REAL;"); } catch (e) {}
 try { db.exec("ALTER TABLE rider_splits ADD COLUMN verification_status TEXT DEFAULT 'VERIFIED';"); } catch (e) {}
 try { db.exec("ALTER TABLE rider_splits ADD COLUMN flag_reason TEXT;"); } catch (e) {}
+
+// ── Migrations for ala_ultra_config (Event Info fields) ──
+try { db.exec("ALTER TABLE ala_ultra_config ADD COLUMN event_date_label TEXT DEFAULT 'Minggu, 17 Januari 2027';"); } catch (e) {}
+try { db.exec("ALTER TABLE ala_ultra_config ADD COLUMN event_distance TEXT DEFAULT '130 KM';"); } catch (e) {}
+try { db.exec("ALTER TABLE ala_ultra_config ADD COLUMN event_elevation TEXT DEFAULT '2.200 Meter';"); } catch (e) {}
+try { db.exec("ALTER TABLE ala_ultra_config ADD COLUMN event_location TEXT DEFAULT 'Tasikmalaya';"); } catch (e) {}
 
 // Populate tokens for any existing riders and checkpoints that lack tokens
 try {
@@ -425,6 +435,10 @@ module.exports = {
         wa_group_link=@wa_group_link,
         refund_policy=@refund_policy,
         insurance_note=@insurance_note,
+        event_date_label=@event_date_label,
+        event_distance=@event_distance,
+        event_elevation=@event_elevation,
+        event_location=@event_location,
         updated_at=datetime('now')
     WHERE id = 1
   `),

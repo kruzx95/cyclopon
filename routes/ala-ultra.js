@@ -137,6 +137,10 @@ function buildPublicConfigPayload() {
     admin_whatsapp: cfg.admin_whatsapp || null,
     refund_policy: cfg.refund_policy || null,
     insurance_note: cfg.insurance_note || null,
+    event_date_label: cfg.event_date_label || 'Minggu, 17 Januari 2027',
+    event_distance: cfg.event_distance || '130 KM',
+    event_elevation: cfg.event_elevation || '2.200 Meter',
+    event_location: cfg.event_location || 'Tasikmalaya',
     registered_count: activeCount,
     approved_count: approvedCount,
     ...avail
@@ -350,13 +354,9 @@ publicRouter.post('/register', submitRateLimiter, (req, res) => {
       });
 
       const created = insertTx();
-      const latestCfg = db.getAlaUltraConfig.get() || {};
-      const rawGroupLink = cleanStr(latestCfg.wa_group_link, 500);
-      const waGroupLink = isValidHttpUrl(rawGroupLink) ? rawGroupLink : null;
 
       return res.status(201).json({
         success: true,
-        wa_group_link: waGroupLink,
         registration: {
           id: created.id,
           reg_code: created.reg_code,
@@ -388,6 +388,10 @@ adminRouter.get('/config', (_req, res) => {
   res.json({
     config: {
       ...cfg,
+      event_date_label: cfg.event_date_label || 'Minggu, 17 Januari 2027',
+      event_distance: cfg.event_distance || '130 KM',
+      event_elevation: cfg.event_elevation || '2.200 Meter',
+      event_location: cfg.event_location || 'Tasikmalaya',
       is_open: Number(cfg.is_open) === 1
     },
     events
@@ -482,7 +486,11 @@ function handleUpdateConfig(req, res) {
     admin_whatsapp: pickText('admin_whatsapp', 30),
     wa_group_link: waGroupLink,
     refund_policy: pickText('refund_policy', 600),
-    insurance_note: pickText('insurance_note', 600)
+    insurance_note: pickText('insurance_note', 600),
+    event_date_label: pickText('event_date_label', 120) || 'Minggu, 17 Januari 2027',
+    event_distance: pickText('event_distance', 60) || '130 KM',
+    event_elevation: pickText('event_elevation', 60) || '2.200 Meter',
+    event_location: pickText('event_location', 120) || 'Tasikmalaya'
   });
 
   const updated = db.getAlaUltraConfig.get();

@@ -29,16 +29,6 @@ function renderAlaUltraRegisterPage() {
     return raw;
   }
 
-  function safeHttpUrl(str) {
-    if (!str) return null;
-    try {
-      const parsed = new URL(String(str).trim());
-      return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname ? parsed.href : null;
-    } catch {
-      return null;
-    }
-  }
-
   function formatDateDisplay(ymd, fallback) {
     if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return fallback || 'TBA';
     try {
@@ -76,7 +66,6 @@ function renderAlaUltraRegisterPage() {
     hasSavedDraft: false,
     blockedReason: null, // 'safety' | 'terms' | null
     submittedReg: null,
-    submittedWaGroupLink: null,
     submitting: false,
     errorMsg: '',
     fieldErrors: {},
@@ -277,6 +266,11 @@ function renderAlaUltraRegisterPage() {
       ? `<div class="aau-spec-row"><dt>Syarat Minimal Strava</dt><dd class="mono">${Number(cfg.min_strava_km)} KM</dd></div>`
       : '';
 
+    const eventDateLabel = cfg?.event_date_label || 'Minggu, 17 Januari 2027';
+    const eventDistance = cfg?.event_distance || '130 KM';
+    const eventElevation = cfg?.event_elevation || '2.200 Meter';
+    const eventLocation = cfg?.event_location || 'Tasikmalaya';
+
     return `
       <section class="aau-dossier-banner" aria-labelledby="aauFormTitle">
         <div class="aau-dossier-intro">
@@ -292,7 +286,7 @@ function renderAlaUltraRegisterPage() {
 
           <div class="aau-intro-copy">
             <p>Selamat datang di ALA-ALA ULTRA 2027!</p>
-            <p>ALA-ALA ULTRA merupakan kegiatan bersepeda jarak jauh yang akan diselenggarakan di Tasikmalaya.</p>
+            <p>ALA-ALA ULTRA merupakan kegiatan bersepeda jarak jauh yang akan diselenggarakan di ${escapeHtml(eventLocation)}.</p>
             <p>Bagi teman-teman yang ingin menguji kemampuan, ketahanan fisik, dan pengalaman bersepeda, inilah kesempatan untuk menjadi bagian dari ALA-ALA ULTRA.</p>
           </div>
         </div>
@@ -302,19 +296,19 @@ function renderAlaUltraRegisterPage() {
           <dl class="aau-specs-list">
             <div class="aau-spec-row">
               <dt>Hari/Tanggal</dt>
-              <dd>Minggu, 17 Januari 2027</dd>
+              <dd>${escapeHtml(eventDateLabel)}</dd>
             </div>
             <div class="aau-spec-row">
               <dt>Jarak</dt>
-              <dd class="mono">130 KM</dd>
+              <dd class="mono">${escapeHtml(eventDistance)}</dd>
             </div>
             <div class="aau-spec-row">
               <dt>Total Elevasi</dt>
-              <dd class="mono">2.200 Meter</dd>
+              <dd class="mono">${escapeHtml(eventElevation)}</dd>
             </div>
             <div class="aau-spec-row">
               <dt>Lokasi</dt>
-              <dd>Tasikmalaya</dd>
+              <dd>${escapeHtml(eventLocation)}</dd>
             </div>
             <div class="aau-spec-row">
               <dt>Pendaftaran Dibuka</dt>
@@ -781,7 +775,6 @@ function renderAlaUltraRegisterPage() {
       }
 
       state.submittedReg = data.registration;
-      state.submittedWaGroupLink = data.wa_group_link || null;
       clearDraft();
       if (state.proofPreviewUrl) {
         URL.revokeObjectURL(state.proofPreviewUrl);
@@ -832,34 +825,6 @@ function renderAlaUltraRegisterPage() {
 
     // 3. Confirmation Screen (Bagian C exact wording)
     if (state.submittedReg) {
-      const safeGroupUrl = safeHttpUrl(state.submittedWaGroupLink);
-      const joinGroupBoxHtml = safeGroupUrl
-        ? `
-          <div class="aau-group-join-box" id="aauGroupJoinBox">
-            <div class="aau-group-join-info">
-              <div class="aau-group-join-title">Grup WhatsApp Resmi Peserta</div>
-              <p class="aau-group-join-desc">Klik tombol berikut untuk bergabung ke grup peserta ALA-ALA ULTRA 2027.</p>
-            </div>
-            <a href="${escapeHtml(safeGroupUrl)}" target="_blank" rel="noopener noreferrer" class="aau-btn-primary aau-btn-join-group" id="btnAauJoinGroup">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-              </svg>
-              <span>Gabung Grup WhatsApp Peserta</span>
-            </a>
-          </div>
-        `
-        : `
-          <div class="aau-group-join-box is-pending" id="aauGroupJoinBox">
-            <div class="aau-group-join-info">
-              <div class="aau-group-join-title">Grup WhatsApp Resmi Peserta</div>
-              <p class="aau-group-join-desc">Tautan grup WhatsApp belum tersedia saat ini. Panitia akan mengirimkan undangan ke nomor WhatsApp yang Anda daftarkan.</p>
-            </div>
-          </div>
-        `;
-
       rootEl.innerHTML = `
         ${bannerHtml}
         <section class="aau-state-card" aria-live="polite">
@@ -890,11 +855,9 @@ function renderAlaUltraRegisterPage() {
             <p><strong>SUDDENLY.CC</strong></p>
           </div>
 
-          ${joinGroupBoxHtml}
-
-          <div class="aau-form-actions" style="border-top:none;padding-top:0;margin-top:0">
+          <div class="aau-form-actions" style="border-top:none;padding-top:8px;margin-top:0">
             <a href="/" data-link class="aau-btn-secondary">Kembali ke Beranda</a>
-            <button type="button" class="${safeGroupUrl ? 'aau-btn-secondary' : 'aau-btn-primary'}" id="btnAauResetForm">Daftarkan Peserta Lain</button>
+            <button type="button" class="aau-btn-primary" id="btnAauResetForm">Daftarkan Peserta Lain</button>
           </div>
         </section>
       `;
@@ -902,7 +865,6 @@ function renderAlaUltraRegisterPage() {
       document.getElementById('btnAauResetForm')?.addEventListener('click', () => {
         clearDraft();
         state.submittedReg = null;
-        state.submittedWaGroupLink = null;
         state.step = 1;
         state.maxReached = 1;
         state.blockedReason = null;
@@ -948,12 +910,14 @@ function renderAlaUltraRegisterPage() {
     // 5. Blocked Branching Screen (Section 4 Safety "Tidak" or Section 5 "Saya tidak setuju.")
     if (state.blockedReason) {
       const isTerms = state.blockedReason === 'terms';
+      const eventDistance = state.config?.event_distance || '130 KM';
+      const eventElevation = state.config?.event_elevation || '2.200 Meter';
       const title = isTerms
         ? 'Pendaftaran Tidak Dapat Dilanjutkan'
         : 'Persyaratan Keselamatan Belum Terpenuhi';
       const msg = isTerms
         ? 'Persetujuan seluruh ketentuan merupakan syarat pendaftaran ALA-ALA ULTRA 2027.'
-        : 'Demi keselamatan di rute 130 KM dengan total elevasi 2.200 meter, sepeda harus dalam kondisi layak jalan dan peserta wajib memiliki helm serta perlengkapan keselamatan sebelum melanjutkan pendaftaran dan pembayaran.';
+        : `Demi keselamatan di rute ${eventDistance} dengan total elevasi ${eventElevation}, sepeda harus dalam kondisi layak jalan dan peserta wajib memiliki helm serta perlengkapan keselamatan sebelum melanjutkan pendaftaran dan pembayaran.`;
 
       rootEl.innerHTML = `
         ${bannerHtml}
