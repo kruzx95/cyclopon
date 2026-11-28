@@ -1,5 +1,5 @@
 async function renderLiveMap(params) {
-  loadCss('/css/map.css?v=71');
+  loadCss('/css/map.css?v=94');
 
   const eventId = params.eventId;
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -94,12 +94,14 @@ async function renderLiveMap(params) {
           <a href="/" data-link class="header-back-btn" title="Kembali ke Beranda" aria-label="Kembali ke Beranda">
             <span class="back-arrow" aria-hidden="true">←</span>
           </a>
-          <a href="/" data-link class="header-logo" title="Kembali ke Beranda CycloPon">
-            <span class="logo-text">CYCLOPON</span>
-          </a>
-          <div class="event-info-cluster">
-            <h1 class="header-event-title" id="eventBadge">Memuat Event...</h1>
-            <span class="header-event-stats" id="eventStats">Menghitung...</span>
+          <div class="header-title-stack">
+            <a href="/" data-link class="header-logo" title="Kembali ke Beranda CycloPon">
+              <span class="logo-text">CYCLOPON</span>
+            </a>
+            <div class="event-info-cluster">
+              <h1 class="header-event-title" id="eventBadge">Memuat Event...</h1>
+              <span class="header-event-stats" id="eventStats">Menghitung...</span>
+            </div>
           </div>
           ${isAdmin ? `
             <span class="badge badge-admin-mode" style="background:#0D1117;color:#FFF;border:1.5px solid #0D1117;font-size:10px;padding:3px 8px;border-radius:4px;font-weight:900;letter-spacing:0.06em;font-family:monospace">🛡️ PANITIA</span>
@@ -341,6 +343,9 @@ async function renderLiveMap(params) {
             ${ICONS.leaderboard} Leaderboard
           </button>
 
+          <!-- ── 1-Handed Mobile Rider Detail Sheet ── -->
+          <div id="mobileRiderSheet" class="mobile-rider-sheet" role="dialog" aria-label="Detail Rider" aria-hidden="true"></div>
+
           <!-- ── Active Pocket Mode Keep-Alive Floating Indicator ── -->
           <div id="riderPocketActivePill" class="rider-pocket-floating-pill" style="display:none">
             <div class="pocket-pill-info">
@@ -520,6 +525,9 @@ async function renderLiveMap(params) {
     if (!strip) return;
     if (window.innerWidth <= 768) {
       strip.style.bottom = '';
+      if (typeof updateFloatingControlsBottom === 'function') {
+        updateFloatingControlsBottom();
+      }
       return;
     }
 
@@ -800,18 +808,50 @@ async function renderLiveMap(params) {
 
   // ── Sidebar Toggle & Fit Route Handlers ──
   const mapViewport = document.getElementById('mapViewport');
+  const mapContainer = document.getElementById('mapContainer');
+  const elevationDrawer = document.getElementById('elevationDrawer');
+  const mobileRiderSheet = document.getElementById('mobileRiderSheet');
   const btnToggleSidebar = document.getElementById('btnToggleSidebar');
   const btnMobileCloseSidebar = document.getElementById('btnMobileCloseSidebar');
   const btnMobileOpenSidebar = document.getElementById('btnMobileOpenSidebar');
+  let activeMobileSheetRiderId = null;
+  let isReplayActive = false;
+
+  function isMobileViewport() {
+    return window.innerWidth <= 768;
+  }
+
+  function closeMobileRiderSheet() {
+    activeMobileSheetRiderId = null;
+    if (mobileRiderSheet) {
+      mobileRiderSheet.classList.remove('open');
+      mobileRiderSheet.setAttribute('aria-hidden', 'true');
+    }
+    if (mapContainer) {
+      mapContainer.classList.remove('rider-sheet-open');
+    }
+    if (btnMobileOpenSidebar) {
+      const isCollapsed = mapViewport.classList.contains('sidebar-collapsed');
+      btnMobileOpenSidebar.style.display = (isCollapsed && isMobileViewport() && !isReplayActive) ? 'inline-flex' : 'none';
+    }
+    updateFloatingControlsBottom();
+  }
+
+  function updateFloatingControlsBottom() {
+    const stack = document.getElementById('mapFloatingStack');
+    if (stack) stack.style.bottom = '';
+  }
 
   function setSidebarCollapsed(collapsed) {
     mapViewport.classList.toggle('sidebar-collapsed', collapsed);
     mapViewport.classList.toggle('sidebar-open', !collapsed);
     if (btnToggleSidebar) btnToggleSidebar.classList.toggle('active', !collapsed);
+    const sheetOpen = mapContainer && mapContainer.classList.contains('rider-sheet-open');
     if (btnMobileOpenSidebar) {
-      btnMobileOpenSidebar.style.display = (collapsed && window.innerWidth <= 768) ? 'inline-flex' : 'none';
+      btnMobileOpenSidebar.style.display = (collapsed && isMobileViewport() && !sheetOpen && !isReplayActive) ? 'inline-flex' : 'none';
     }
     updateSponsorPosition();
+    updateFloatingControlsBottom();
     setTimeout(() => {
       map.invalidateSize();
       redrawElevationChart();
@@ -833,21 +873,30 @@ async function renderLiveMap(params) {
 
   if (btnMobileOpenSidebar) {
     btnMobileOpenSidebar.addEventListener('click', () => {
+      closeMobileRiderSheet();
       setSidebarCollapsed(false);
     });
   }
 
   // ── Auto-collapse Leaderboard on Mobile (Full-Screen Map Priority) ──
-  if (window.innerWidth <= 768) {
+  if (isMobileViewport()) {
     setSidebarCollapsed(true);
   }
 
   window.addEventListener('resize', () => {
+    const sheetOpen = mapContainer && mapContainer.classList.contains('rider-sheet-open');
     if (btnMobileOpenSidebar) {
       const isCollapsed = mapViewport.classList.contains('sidebar-collapsed');
-      btnMobileOpenSidebar.style.display = (isCollapsed && window.innerWidth <= 768) ? 'inline-flex' : 'none';
+      btnMobileOpenSidebar.style.display = (isCollapsed && isMobileViewport() && !sheetOpen && !isReplayActive) ? 'inline-flex' : 'none';
+    }
+    if (!isMobileViewport() && activeMobileSheetRiderId != null) {
+      const riderId = activeMobileSheetRiderId;
+      closeMobileRiderSheet();
+      const m = markerById[riderId];
+      if (m) m.openPopup();
     }
     updateSponsorPosition();
+    updateFloatingControlsBottom();
   });
 
   let polylineBounds = null;
@@ -917,8 +966,6 @@ async function renderLiveMap(params) {
   // ── Komoot Elevation Drawer & Chart Engine ──
   const btnToggleElevation = document.getElementById('btnToggleElevation');
   const btnCloseElevation = document.getElementById('btnCloseElevation');
-  const elevationDrawer = document.getElementById('elevationDrawer');
-  const mapContainer = document.getElementById('mapContainer');
   const canvas = document.getElementById('elevationCanvas');
   const tooltip = document.getElementById('elevTooltip');
 
@@ -942,6 +989,9 @@ async function renderLiveMap(params) {
 
   function toggleElevation(show) {
     const isVisible = typeof show === 'boolean' ? show : elevationDrawer.classList.contains('collapsed');
+    if (isVisible && isMobileViewport()) {
+      closeMobileRiderSheet();
+    }
     elevationDrawer.classList.toggle('collapsed', !isVisible);
     mapContainer.classList.toggle('elev-open', isVisible);
     if (btnToggleElevation) btnToggleElevation.classList.toggle('active', isVisible);
@@ -949,6 +999,7 @@ async function renderLiveMap(params) {
       setTimeout(redrawElevationChart, 50);
     }
     updateSponsorPosition();
+    updateFloatingControlsBottom();
   }
 
   if (btnToggleElevation) btnToggleElevation.addEventListener('click', () => toggleElevation());
@@ -2350,6 +2401,7 @@ async function renderLiveMap(params) {
       }
       marker = L.marker(latlng, { icon: updatedIcon });
       marker._iconKey = iconKey;
+      marker._riderId = canonicalId;
       marker.bindPopup(popupHtml, {
         autoPan: false,
         closeButton: true,
@@ -2358,6 +2410,7 @@ async function renderLiveMap(params) {
       });
       clusterGroup.addLayer(marker);
     }
+    marker._riderId = canonicalId;
 
     markerById[canonicalId] = marker;
     if (rider.traccar_device_id) {
@@ -2391,7 +2444,200 @@ async function renderLiveMap(params) {
     };
 
     handleTargetRiderFocus(rider, latlng, telem, calc);
+    if (activeMobileSheetRiderId === canonicalId && isMobileViewport()) {
+      renderMobileRiderSheet(canonicalId);
+    }
     updateLeaderboard();
+  }
+
+  function panMarkerToVisibleCenter(m, options = {}) {
+    if (!m || !map) return;
+    const latlng = m.getLatLng();
+    if (!latlng) return;
+
+    const targetZoom = options.zoom != null ? options.zoom : map.getZoom();
+    const mapSize = map.getSize();
+    const markerPt = map.project(latlng, targetZoom);
+    let offsetY = 0;
+
+    if (isMobileViewport() && mapContainer && mapContainer.classList.contains('rider-sheet-open')) {
+      const sheetH = (mobileRiderSheet && mobileRiderSheet.offsetHeight) ? mobileRiderSheet.offsetHeight : 250;
+      offsetY = Math.round(sheetH / 2);
+    } else if (!isMobileViewport() && options.isDesktopPopup !== false) {
+      const elevH = (elevationDrawer && !elevationDrawer.classList.contains('collapsed'))
+        ? (elevationDrawer.offsetHeight || 200)
+        : 0;
+      const availH = Math.max(240, mapSize.y - elevH);
+      offsetY = -Math.min(135, Math.max(64, Math.round(availH * 0.22)));
+    }
+
+    const centerPt = L.point(markerPt.x, markerPt.y + offsetY);
+    const centerLatLng = map.unproject(centerPt, targetZoom);
+    map.setView(centerLatLng, targetZoom, { animate: options.animate !== false });
+  }
+
+  function renderMobileRiderSheet(riderId) {
+    if (!mobileRiderSheet) return;
+    const rider = riderById[riderId];
+    if (!rider) return;
+
+    const telem = telemetryById[rider.id] || {};
+    const prog = progressById[rider.id] || {};
+    const status = getRiderStatus(prog.lastTime || null);
+    const displayKm = prog.distanceKm != null ? prog.distanceKm : (telem.totalTraveledKm || 0);
+    const progressPct = prog.progressPct != null ? prog.progressPct : 0;
+    const remainingKm = prog.remainingKm != null ? prog.remainingKm : (telem.remainingKm || 0);
+    const isFinished = !!(prog.isFinished || telem.isFinished);
+    const isOffRoute = !isFinished && !!(prog.isOffRoute || telem.isOffRoute);
+    const deviationMeters = prog.deviationMeters || telem.deviationMeters || 0;
+    const batteryLevel = prog.batteryLevel != null ? prog.batteryLevel : telem.batteryLevel;
+
+    const prevCpEl = mobileRiderSheet.querySelector('.sheet-cp-grid');
+    const prevCpScroll = prevCpEl ? prevCpEl.scrollLeft : 0;
+
+    const roleChip = rider.role === 'sweeper'
+      ? '<span class="sheet-role-badge role-sweeper">SWEEPER</span>'
+      : (rider.role === 'marshall'
+        ? '<span class="sheet-role-badge role-marshall">MARSHALL</span>'
+        : (rider.role === 'medic'
+          ? '<span class="sheet-role-badge role-medic">MEDIS</span>'
+          : ''));
+
+    const batChip = batteryLevel != null
+      ? `<span class="battery-pill ${batteryLevel < 20 ? 'battery-low' : 'battery-good'}">${batteryLevel < 20 ? '🪫' : '🔋'} ${batteryLevel}%</span>`
+      : '';
+
+    const cpHtml = (checkpoints && checkpoints.length) ? `
+      <div class="sheet-cp-section">
+        <div class="sheet-cp-title">🚩 CHECKPOINTS &amp; CUT-OFF TIME</div>
+        <div class="sheet-cp-grid">
+          ${checkpoints.map((cp, idx) => {
+      const rawCpName = String(cp.name || '').trim();
+      const cpNumMatch = rawCpName.match(/^cp\s*[-_#:]?\s*(\d+)/i);
+      const cpChipLabel = cpNumMatch
+        ? `CP ${cpNumMatch[1]}`
+        : (rawCpName ? `CP ${idx + 1} · ${rawCpName.slice(0, 10)}` : `CP ${idx + 1}`);
+      const sp = splitsCache[`${rider.id}_${cp.id}`];
+      if (sp) {
+        const d = new Date(sp.arrival_time);
+        const tStr = !isNaN(d.getTime())
+          ? d.toLocaleTimeString('id-ID', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', hour12: false })
+          : sp.arrival_time;
+        const isPendingVerify = sp.verification_status === 'PENDING_VERIFY';
+        const isPass = !isPendingVerify && sp.status === 'IN_TIME';
+        const qrMark = sp.source === 'qr_scan' ? ' · QR' : '';
+        return `<div class="cp-split-chip ${isPass ? 'split-pass' : 'split-fail'}" title="${escapeHtml(cp.name)}">
+                  <span>${escapeHtml(cpChipLabel)}: <strong>${escapeHtml(tStr)}</strong>${qrMark}</span>
+                  <span>${isPendingVerify ? '⏳' : (isPass ? '✓' : '⚠️ COT')}</span>
+                </div>`;
+      }
+      return `<div class="cp-split-chip split-pending" title="${escapeHtml(cp.name)}">
+                <span>${escapeHtml(cpChipLabel)}: ${cp.km_distance}km</span>
+              </div>`;
+    }).join('')}
+        </div>
+      </div>
+    ` : '';
+
+    const bibBg = rider.color || '#FFE600';
+    let bibFg = '#0D1117';
+    if (bibBg.startsWith('#') && bibBg.length === 7) {
+      const r = parseInt(bibBg.slice(1, 3), 16) || 0;
+      const g = parseInt(bibBg.slice(3, 5), 16) || 0;
+      const b = parseInt(bibBg.slice(5, 7), 16) || 0;
+      const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+      bibFg = yiq >= 150 ? '#0D1117' : '#FFFFFF';
+    }
+
+    mobileRiderSheet.innerHTML = `
+      <div class="sheet-grab-bar" aria-hidden="true"></div>
+      <div class="sheet-header">
+        <div class="sheet-rider-identity">
+          <div class="sheet-bib-badge" style="background:${bibBg};color:${bibFg}">${escapeHtml(rider.bib)}</div>
+          <div class="sheet-name-col">
+            <div class="sheet-rider-name">${escapeHtml(rider.name)} ${roleChip}</div>
+            <div class="sheet-meta-row">
+              <span class="popup-status-badge" style="background:${status.color}22;color:${status.color};border:1px solid ${status.color}55">
+                ${status.dot} ${status.text}
+              </span>
+              ${batChip}
+              <span class="sheet-update-age">Update: <strong>${formatTimeAgo(prog.lastTime || null)}</strong></span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="sheet-close-btn" id="btnCloseRiderSheet" title="Tutup detail rider" aria-label="Tutup detail rider">✕</button>
+      </div>
+
+      ${isOffRoute ? `
+        <div class="sheet-offroute-banner">
+          ⚠️ Keluar dari rute resmi (+${deviationMeters} m)
+        </div>
+      ` : ''}
+
+      <div class="sheet-metrics-grid">
+        <div class="sheet-metric-box">
+          <div class="popup-metric-label">📏 Jarak Ditempuh</div>
+          <div class="popup-metric-value">${displayKm} <span class="popup-metric-unit">km</span></div>
+          <div class="popup-metric-sub">${progressPct}% dari total rute</div>
+        </div>
+        <div class="sheet-metric-box">
+          <div class="popup-metric-label">🎯 ${isFinished ? 'Status Rute' : 'Sisa Jarak'}</div>
+          <div class="popup-metric-value">${isFinished ? 'FINISH' : `${remainingKm} <span class="popup-metric-unit">km</span>`}</div>
+          <div class="popup-metric-sub">${isFinished ? 'Tiba di garis finish' : (isOffRoute ? `⚠️ Deviasi +${deviationMeters}m` : 'Sesuai rute resmi')}</div>
+        </div>
+      </div>
+
+      ${cpHtml}
+
+      <div class="sheet-actions-bar">
+        <button type="button" class="sheet-action-btn sheet-btn-list" id="btnSheetOpenList">
+          ${ICONS.leaderboard} Daftar
+        </button>
+        <a href="/api/og/preview/${eventId}?bib=${encodeURIComponent(rider.bib)}" target="_blank" class="sheet-action-btn sheet-btn-og">
+          🖼️ Info Graph
+        </a>
+        <button type="button" class="sheet-action-btn sheet-btn-share" id="btnSheetShareRider">
+          🔗 Bagikan
+        </button>
+      </div>
+    `;
+
+    const nextCpEl = mobileRiderSheet.querySelector('.sheet-cp-grid');
+    if (nextCpEl && prevCpScroll > 0) {
+      nextCpEl.scrollLeft = prevCpScroll;
+    }
+
+    mobileRiderSheet.querySelector('#btnCloseRiderSheet')?.addEventListener('click', () => {
+      closeMobileRiderSheet();
+    });
+    mobileRiderSheet.querySelector('#btnSheetOpenList')?.addEventListener('click', () => {
+      closeMobileRiderSheet();
+      setSidebarCollapsed(false);
+    });
+    mobileRiderSheet.querySelector('#btnSheetShareRider')?.addEventListener('click', () => {
+      window.shareRiderLink(rider.bib, rider.name);
+    });
+  }
+
+  function openMobileRiderSheet(riderId) {
+    if (!mobileRiderSheet || !riderById[riderId]) return;
+    activeMobileSheetRiderId = riderId;
+    if (elevationDrawer && !elevationDrawer.classList.contains('collapsed')) {
+      toggleElevation(false);
+    }
+    if (mapViewport && !mapViewport.classList.contains('sidebar-collapsed')) {
+      setSidebarCollapsed(true);
+    }
+    renderMobileRiderSheet(riderId);
+    if (mapContainer) {
+      mapContainer.classList.add('rider-sheet-open');
+    }
+    mobileRiderSheet.classList.add('open');
+    mobileRiderSheet.setAttribute('aria-hidden', 'false');
+    if (btnMobileOpenSidebar) {
+      btnMobileOpenSidebar.style.display = 'none';
+    }
+    updateFloatingControlsBottom();
   }
 
   // ── Target Rider Focus & Tracking State ──
@@ -2399,6 +2645,7 @@ async function renderLiveMap(params) {
   let targetRider = null;
   let isAutoFollowing = false;
   let targetTrailPolyline = null;
+  let suppressNextMapClick = false;
   const targetTrailCoords = [];
 
   function clearTargetTrail() {
@@ -2414,13 +2661,33 @@ async function renderLiveMap(params) {
     clearTargetTrail();
     targetRider = r;
     isAutoFollowing = true;
+    const focusZoom = Math.max(map.getZoom(), 17);
+    const wasSidebarOpen = mapViewport && !mapViewport.classList.contains('sidebar-collapsed');
     const m = markerById[r.id] || (r.traccar_device_id && markerById[r.traccar_device_id]);
     if (m) {
-      map.setView(m.getLatLng(), 16);
-      m.openPopup();
+      if (isMobileViewport()) {
+        suppressNextMapClick = true;
+        setTimeout(() => { suppressNextMapClick = false; }, 100);
+        openMobileRiderSheet(r.id);
+        panMarkerToVisibleCenter(m, { zoom: focusZoom, isMobileSheet: true });
+        if (wasSidebarOpen) {
+          setTimeout(() => {
+            if (isLiveMapMounted && activeMobileSheetRiderId === r.id) {
+              map.invalidateSize({ animate: false });
+              panMarkerToVisibleCenter(m, { zoom: focusZoom, isMobileSheet: true });
+            }
+          }, 330);
+        }
+      } else {
+        m._skipNextPopupPan = true;
+        panMarkerToVisibleCenter(m, { zoom: focusZoom, isDesktopPopup: true });
+        m.openPopup();
+      }
       if (m.getLatLng()) {
         targetTrailCoords.push(m.getLatLng());
       }
+    } else if (isMobileViewport()) {
+      openMobileRiderSheet(r.id);
     }
     updateLeaderboard();
   }
@@ -2450,7 +2717,12 @@ async function renderLiveMap(params) {
     }
 
     if (isAutoFollowing && latlng) {
-      map.panTo(latlng, { animate: true, duration: 0.5 });
+      const m = markerById[rider.id];
+      if (m && ((isMobileViewport() && activeMobileSheetRiderId === rider.id) || (!isMobileViewport() && m.isPopupOpen()))) {
+        panMarkerToVisibleCenter(m, { zoom: map.getZoom(), animate: true });
+      } else {
+        map.panTo(latlng, { animate: true, duration: 0.5 });
+      }
     }
   }
 
@@ -2665,7 +2937,6 @@ async function renderLiveMap(params) {
         card.className = `leaderboard-item ${isTarget ? 'focused-rider' : ''}`;
         card.onclick = () => {
           activateTargetRider(e.rider);
-          panToRider(riderId);
         };
         const rSplits = checkpoints ? checkpoints.map(cp => splitsCache[`${e.rider.id}_${cp.id}`]).filter(Boolean) : [];
         const latSp = rSplits.length ? rSplits[rSplits.length - 1] : null;
@@ -2937,11 +3208,45 @@ async function renderLiveMap(params) {
     }
   });
 
+  // Intercept rider marker popup openings:
+  // - On mobile, show 1-handed bottom Rider Detail Sheet instead of floating popup
+  // - On desktop, auto-zoom and pan marker slightly down so the full popup fits cleanly inside viewport
+  map.on('popupopen', e => {
+    const src = e.popup && e.popup._source;
+    if (!src || !src._riderId) return;
+    if (isMobileViewport()) {
+      map.closePopup(e.popup);
+      const rider = riderById[src._riderId];
+      if (rider) activateTargetRider(rider);
+      return;
+    }
+    if (src._skipNextPopupPan) {
+      src._skipNextPopupPan = false;
+      return;
+    }
+    const focusZoom = Math.max(map.getZoom(), 17);
+    panMarkerToVisibleCenter(src, { zoom: focusZoom, isDesktopPopup: true });
+  });
+
+  map.on('click', () => {
+    if (suppressNextMapClick) return;
+    if (isMobileViewport() && activeMobileSheetRiderId != null) {
+      closeMobileRiderSheet();
+    }
+  });
+
   window.panToRider = deviceId => {
     const m = markerById[deviceId];
     if (m) {
-      map.setView(m.getLatLng(), 16);
-      m.openPopup();
+      if (isMobileViewport()) {
+        const rider = riderById[m._riderId || deviceId];
+        if (rider) activateTargetRider(rider);
+      } else {
+        const focusZoom = Math.max(map.getZoom(), 17);
+        m._skipNextPopupPan = true;
+        panMarkerToVisibleCenter(m, { zoom: focusZoom, isDesktopPopup: true });
+        m.openPopup();
+      }
     }
   };
 
@@ -3141,7 +3446,7 @@ async function renderLiveMap(params) {
   }, 10000);
 
   // ── Time Machine Replay Engine State & Lifecycle ──
-  let isReplayActive = false;
+  isReplayActive = false;
   let replayHistoryData = [];      // Raw array of telemetry history points
   let replayFrames = [];           // Array of { timeMs, points: [] }
   let replayPointsByRider = null;  // rider_id -> sorted array of historical telemetry points for lerp
@@ -3761,9 +4066,12 @@ async function renderLiveMap(params) {
       }
     }
 
-    // Collapse elevation drawer on mobile if open to give full view
-    if (isMobile && typeof toggleElevation === 'function') {
-      try { toggleElevation(false); } catch (e) { }
+    // Collapse elevation drawer and mobile rider sheet on mobile if open to give full view
+    if (isMobileViewport()) {
+      closeMobileRiderSheet();
+      if (typeof toggleElevation === 'function') {
+        try { toggleElevation(false); } catch (e) { }
+      }
     }
 
     // 5. Apply first frame and start timer
@@ -3828,7 +4136,8 @@ async function renderLiveMap(params) {
       cotTimer = setInterval(refreshVirtualCot, 20000);
     }
     const btnMobileSidebar = document.getElementById('btnMobileOpenSidebar');
-    if (isMobile && btnMobileSidebar) btnMobileSidebar.style.display = 'inline-flex';
+    if (isMobileViewport() && btnMobileSidebar) btnMobileSidebar.style.display = 'inline-flex';
+    updateFloatingControlsBottom();
 
     if (isFinished) {
       showToast('🏁 Replay selesai — kembali ke Live Tracking', 'info');

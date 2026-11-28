@@ -35,13 +35,20 @@
   flex: 1;
 }
 
+.header-title-stack {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
 .header-logo {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   text-decoration: none;
-  padding-right: 14px;
-  border-right: 1.5px solid #0D1117;
+  padding-right: 0;
+  border-right: none;
   flex-shrink: 0;
   transition: var(--transition);
 }
@@ -52,7 +59,8 @@
   display: none !important;
 }
 .header-logo .logo-text {
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 19px;
   font-weight: 900;
   letter-spacing: -0.04em;
   color: #0D1117;
@@ -132,9 +140,9 @@
 
 .header-event-title {
   font-size: 14px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: #0D1117;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #475569;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -714,8 +722,10 @@
 
 /* ── Enhanced Rider Popup ── */
 .rider-map-popup {
-  min-width: 210px;
-  max-width: 250px;
+  min-width: 230px;
+  max-width: min(295px, calc(100vw - 36px));
+  max-height: min(370px, 62vh);
+  overflow-y: auto;
   font-family: inherit;
 }
 
@@ -948,12 +958,18 @@
 
 
 
-/* ── Popup Share Button ── */
+/* ── Popup Share & Info Graph Buttons ── */
+.popup-og-btn,
+.popup-share-link-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .popup-share-link-btn {
   background: #FFFFFF;
   border: 1.5px solid #0D1117;
   border-radius: 4px;
-  padding: 3px 8px;
+  padding: 5px 10px;
   font-size: 11px;
   font-weight: 800;
   color: #0D1117;
@@ -1395,6 +1411,9 @@
 
 /* ── Desktop Placement (min-width: 769px) ── */
 @media (min-width: 769px) {
+  .mobile-rider-sheet {
+    display: none !important;
+  }
   .supporter-strip {
     bottom: 295px; /* di atas elevation drawer yang sedang terbuka (~270px) */
   }
@@ -1416,12 +1435,18 @@
   .map-container .supporter-strip,
   .map-container:not(.elev-open) .supporter-strip,
   .supporter-strip {
-    /* Wajib berada di atas floating toggle Leaderboard (+14px clearance) */
+    /* Wajib berada di tengah atas floating toggle Leaderboard (+14px clearance) */
+    left: 50%;
+    transform: translateX(-50%);
     bottom: calc(max(24px, calc(16px + env(safe-area-inset-bottom, 0px))) + 58px) !important;
     padding: 6px 14px 7px 14px;
     border-radius: 12px;
     gap: 6px;
     max-width: min(92%, 360px);
+  }
+
+  .map-container.rider-sheet-open .supporter-strip {
+    display: none !important;
   }
 
   .supporter-strip-label {
@@ -1469,10 +1494,11 @@
 
 
 @media (max-width: 768px) {
-  /* ── Clean & Spacious Header on Mobile ── */
+  /* ── Clean Stacked Header on Mobile (Brand Eyebrow + Full Event Title) ── */
   .live-map-header {
-    height: 52px;
-    padding: 0 12px;
+    height: auto;
+    min-height: 54px;
+    padding: 5px 12px;
     gap: 8px;
     display: flex;
     align-items: center;
@@ -1489,13 +1515,23 @@
     max-width: none;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     position: relative;
     width: 100%;
   }
 
   .header-right {
     display: none !important;
+  }
+
+  .header-title-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
   }
 
   .header-logo {
@@ -1512,19 +1548,22 @@
 
   .header-logo .logo-text {
     display: inline-block !important;
-    font-size: 14px;
-    font-weight: 900;
-    letter-spacing: -0.03em;
-    color: var(--color-sage);
-    line-height: 1;
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #475569;
+    line-height: 1.1;
     white-space: nowrap;
   }
 
   .header-back-btn {
-    width: 28px;
-    height: 28px;
-    font-size: 15px;
-    border-radius: 6px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 17px;
+    border-radius: 8px;
     border: 1.5px solid #0F172A;
     position: relative;
     z-index: 5;
@@ -1558,24 +1597,30 @@
   }
 
   .event-info-cluster {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    max-width: calc(100% - 170px);
+    position: static;
+    transform: none;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
     display: flex;
     align-items: center;
-    justify-content: center;
-    pointer-events: none;
+    justify-content: flex-start;
+    pointer-events: auto;
     z-index: 2;
   }
 
   .header-event-title {
+    width: 100%;
     max-width: 100%;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 800;
-    white-space: nowrap;
+    text-align: left;
+    font-size: clamp(13px, 3.6vw, 15px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #0D1117;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
     line-height: 1.2;
@@ -1596,6 +1641,7 @@
   .map-floating-stack {
     top: 12px;
     right: 12px;
+    bottom: auto;
     gap: 8px;
   }
 
@@ -1626,8 +1672,11 @@
   }
 
   .fab-layer-popover {
+    top: 0;
+    bottom: auto;
     right: 52px;
     width: 230px;
+    max-height: none;
     padding: 12px;
     border: 2px solid #0F172A;
   }
@@ -1660,20 +1709,20 @@
     color: #0F172A;
   }
 
-  /* Ergonomic Close Drawer Button (Min 36px) */
+  /* Ergonomic Close Drawer Button (Min 44px Touch Target) */
   .btn-mobile-sidebar-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     border-radius: 50%;
     background: #F1F5F9;
     border: 1.5px solid #0F172A;
     color: #0F172A;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 800;
     cursor: pointer;
     transition: var(--transition);
@@ -1709,6 +1758,228 @@
     gap: 8px;
     transition: var(--transition);
     touch-action: manipulation;
+  }
+
+  /* ── 1-Handed Mobile Rider Detail Bottom Sheet ── */
+  .mobile-rider-sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 860;
+    background: #FFFFFF;
+    border-top: 2px solid #0D1117;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 28px rgba(13, 17, 23, 0.18);
+    padding: 8px 14px max(12px, calc(10px + env(safe-area-inset-bottom, 0px))) 14px;
+    max-height: 62vh;
+    overflow-y: auto;
+    transform: translateY(105%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.18s ease;
+  }
+
+  .mobile-rider-sheet.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sheet-grab-bar {
+    width: 38px;
+    height: 4px;
+    border-radius: 99px;
+    background: #CBD5E1;
+    margin: 0 auto 8px auto;
+  }
+
+  .sheet-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .sheet-rider-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sheet-bib-badge {
+    min-width: 44px;
+    height: 38px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1.5px solid #0D1117;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-weight: 900;
+    font-size: 13px;
+    color: #0D1117;
+    flex-shrink: 0;
+  }
+
+  .sheet-name-col {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sheet-rider-name {
+    font-size: 15px;
+    font-weight: 900;
+    color: #0D1117;
+    line-height: 1.25;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .sheet-role-badge {
+    font-size: 9px;
+    font-weight: 800;
+    color: #FFFFFF;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  .sheet-role-badge.role-sweeper { background: #F97316; }
+  .sheet-role-badge.role-marshall { background: #3B82F6; }
+  .sheet-role-badge.role-medic { background: #EF4444; }
+
+  .sheet-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .sheet-update-age {
+    font-size: 11px;
+    color: #475569;
+  }
+
+  .sheet-close-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    background: #F1F5F9;
+    border: 1.5px solid #0D1117;
+    color: #0D1117;
+    font-size: 15px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    touch-action: manipulation;
+  }
+
+  .sheet-offroute-banner {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #EF4444;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11.5px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .sheet-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .sheet-metric-box {
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 7px 10px;
+  }
+
+  .sheet-cp-section {
+    margin-bottom: 10px;
+  }
+
+  .sheet-cp-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: #334155;
+    letter-spacing: 0.04em;
+    margin-bottom: 5px;
+  }
+
+  .sheet-cp-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .sheet-cp-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .sheet-cp-grid .cp-split-chip {
+    flex-shrink: 0;
+  }
+  .sheet-cp-grid .cp-split-chip.split-pass {
+    background: #ECFDF5;
+    border-color: #6EE7B7;
+    color: #065F46;
+  }
+  .sheet-cp-grid .cp-split-chip.split-fail {
+    background: #FEF2F2;
+    border-color: #FCA5A5;
+    color: #991B1B;
+  }
+
+  .sheet-actions-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .sheet-action-btn {
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid #0D1117;
+    background: #FFFFFF;
+    color: #0D1117;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .sheet-action-btn.sheet-btn-share {
+    background: #0D1117;
+    color: #FFFFFF;
+  }
+
+  .sheet-action-btn .nav-svg-icon {
+    margin-right: 0;
   }
 
   .btn-mobile-sidebar-float:hover {
